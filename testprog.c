@@ -27,7 +27,7 @@ int main(void){
   // values.
   y = sqrt(x + 1.0) - sqrt(x);
 
-  // Recompute that same formula in arbitray precision.
+  // Recompute that same formula in arbitrary precision.
   mpfr_set_default_prec(3472);
   mpfr_init_set_d(m_x, x, MPFR_RNDN);
   mpfr_init_set_d(one, 1.0, MPFR_RNDN);
