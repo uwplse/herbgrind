@@ -4,10 +4,10 @@ valgrind/README:
 	svn co svn://svn.valgrind.org/valgrind/trunk valgrind
 
 valgrind/configure:
-	./valgrind/autogen.sh
+	cd valgrind && ./autogen.sh
 
 valgrind/Makefile: valgrind/configure
-	./valgrind/configure --prefix=$(shell pwd)/valgrind/inst
+	cd valgrind && ./configure --prefix=$(shell pwd)/inst
 
 valgrind/herbgrind/:
 	cp -r herbgrind valgrind/herbgrind 
