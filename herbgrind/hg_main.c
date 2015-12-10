@@ -33,7 +33,7 @@
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
 
-static void ng_post_clo_init(void)
+static void hg_post_clo_init(void)
 {
 }
 
