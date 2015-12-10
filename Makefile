@@ -2,7 +2,7 @@ all: compile
 
 valgrind/README:
 	svn co svn://svn.valgrind.org/valgrind/trunk valgrind
-	./setup/modify_makefiles.sh
+	cd setup && ./modify_makefiles.sh
 	mkdir valgrind/herbgrind
 	cp -r herbgrind/* valgrind/herbgrind/
 
