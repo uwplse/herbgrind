@@ -2,9 +2,11 @@ all: compile
 
 valgrind/README:
 	svn co svn://svn.valgrind.org/valgrind/trunk valgrind
+	./setup/modify_makefiles.sh
+	mkdir valgrind/herbgrind
+	cp -r herbgrind/* valgrind/herbgrind/
 
 valgrind/herbgrind/Makefile: valgrind/README herbgrind/Makefile.am
-	mkdir -p valgrind/herbgrind
 	cp -r herbgrind/* valgrind/herbgrind/
 	cd valgrind && ./autogen.sh
 	cd valgrind && ./configure --prefix=$(shell pwd)/valgrind/inst
