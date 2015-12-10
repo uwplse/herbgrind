@@ -26,6 +26,10 @@ just work.
 If you just want to configure everything, but not compile, run "make
 setup".
 
-If you've modified the source code in the $toplevel/herbgrind
-(**NEVER** modify the code in $toplevel/valgrind/herbgrind), and want
-to get that code into the valgrind code, run "make update".
+**NEVER** modify the code in $toplevel/valgrind/herbgrind, only modify
+$toplevel/herbgrind.
+
+Running
+-------
+
+To run, just run "*path-to-herbgrind*/valgrind/inst/bin/valgrind --tool=herbgrind *executable-to-run-on*"
