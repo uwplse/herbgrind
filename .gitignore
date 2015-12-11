@@ -2,3 +2,5 @@
 *Makefile.in
 herbgrind/.deps/
 valgrind/
+*.out
+bench/*.a
