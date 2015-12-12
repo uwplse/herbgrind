@@ -1,5 +1,5 @@
 
-FLAGS=-g -std=c11 -lm -lmpfr
+FLAGS=-g -std=c11 -lm -lmpfr -I../valgrind/herbgrind
 
 all: testprog.out mini.out miniasm.sout tiny.out
 

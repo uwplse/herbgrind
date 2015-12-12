@@ -1,4 +1,4 @@
-#include "../valgrind/herbgrind/herbgrind.h"
+#include "herbgrind.h"
 
 int main(int argc, char** argv){
   int x;
