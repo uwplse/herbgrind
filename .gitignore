@@ -5,4 +5,3 @@ herbgrind/.deps/
 valgrind/
 *.out
 *.sout
-bench/*.s
