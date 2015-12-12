@@ -33,6 +33,14 @@
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
 
+// For handling client requests. Those are those macros that you can
+// put in your code to be instrumented, which will allow you to talk
+// to the tool. For instance, HERBGRIND_BEGIN() and HERBGRIND_END()
+// will turn the tool on an off for certain sections.
+#include "herbgrind.h"
+
+static int running = 0;
+
 static void hg_post_clo_init(void)
 {
 }
@@ -45,11 +53,44 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
                       const VexArchInfo* archinfo_host,
                       IRType gWordTy, IRType hWordTy )
 {
-    return bb;
+  // For right now, just print out the first print_blocks block's VEX
+  // representation as we process it.
+  if (running == 0) return bb;
+  VG_(printf)("Instrumenting block:\n");
+  for(int i = 0; i < bb->stmts_used; i++){
+    IRStmt* st = bb->stmts[i];
+    ppIRStmt(st);
+    VG_(printf)("\n");
+  }
+  VG_(printf)("\n");
+
+  print_blocks--;
+  
+  return bb;
 }
 
 static void hg_fini(Int exitcode)
 {
+}
+
+static void stopHerbGrind(){
+  running = 0;
+}
+
+static void startHerbGrind(){
+  running = 1;
+}
+
+static void hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
+  switch(arg[0]) {
+  case VG_USERREQ__BEGIN:
+    startHerbGrind();
+    break;
+  case VG_USERREQ__END:
+    stopHerbGrind();
+    break;
+  }
+  return False;
 }
 
 static void hg_pre_clo_init(void)
@@ -65,6 +106,8 @@ static void hg_pre_clo_init(void)
    VG_(basic_tool_funcs)        (hg_post_clo_init,
                                  hg_instrument,
                                  hg_fini);
+
+   VG_(needs_client_requests) (hg_handle_client_request);
 
    /* No needs, no core events to track */
 }
