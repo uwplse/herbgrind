@@ -178,7 +178,6 @@ main:
 	xchgq %rbx,%rbx
 # 0 "" 2
 #NO_APP
-	movq	%rdx, %rax
 .LBE5:
 .LBE4:
 	.loc 2 8 0
@@ -187,7 +186,6 @@ main:
 	movsd	.LC1(%rip), %xmm0
 	addsd	%xmm1, %xmm0
 	sqrtsd	%xmm0, %xmm0
-	movq	%xmm0, %rax
 .LBB6:
 .LBB7:
 	.loc 2 10 0
