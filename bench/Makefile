@@ -11,5 +11,8 @@ all: testprog.out mini.out tiny.out
 	gcc $(FLAGS) -o $@ $<
 	chmod u+x $@
 
+%.s: %.c
+	gcc $(FLAGS) -S -o $@ $<
+
 clean:
 	rm *.out *.sout
