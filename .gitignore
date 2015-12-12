@@ -1,6 +1,8 @@
-*Makefile
+herbgrind/docs/Makefile
+herbgrind/tests/Makefile
 *Makefile.in
 herbgrind/.deps/
 valgrind/
 *.out
-bench/*.a
+*.sout
+bench/*.s
