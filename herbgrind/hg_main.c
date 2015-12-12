@@ -63,8 +63,6 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
     VG_(printf)("\n");
   }
   VG_(printf)("\n");
-
-  print_blocks--;
   
   return bb;
 }
