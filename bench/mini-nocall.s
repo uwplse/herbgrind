@@ -186,6 +186,7 @@ main:
 	movsd	.LC1(%rip), %xmm0
 	addsd	%xmm1, %xmm0
 	sqrtsd	%xmm0, %xmm0
+	movq	%xmm0, -24(%rbp)
 .LBB6:
 .LBB7:
 	.loc 2 10 0
