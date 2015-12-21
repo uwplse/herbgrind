@@ -1,3 +1,7 @@
+extra_deps = \
+	$(top_builddir)/../mpfr/install/lib/libmpfr.a \
+	$(top_builddir)/../gmp/install/lib/libgmp.a
+
 include $(top_srcdir)/Makefile.tool.am
 
 EXTRA_DIST = docs/hg-manual.xml
@@ -18,7 +22,9 @@ herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_SOURCES      = \
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CPPFLAGS     = \
 	$(AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CFLAGS       = \
-	$(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
+	$(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
+	-I$(top_srcdir)/../gmp/install/include/ \
+	-I$(top_srcdir)/../mpfr/install/include/
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_DEPENDENCIES = \
 	$(TOOL_DEPENDENCIES_@VGCONF_PLATFORM_PRI_CAPS@)
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_LDADD        = \
