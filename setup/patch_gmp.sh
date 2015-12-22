@@ -9,8 +9,8 @@
 # the build. So, we comment them out instead, and everything works
 # fine.
 sed -i \
-    -e 's/malloc.*(.*).*;/0;\/\/&/' \
-    -e 's/realloc.*(.*).*;/0;\/\/&/' \
-    -e 's/free.*(.*).*;/\/\/&/' \
-    -e 's/fprintf.*(.*).*;/\/\/&/'\
+    -e 's/malloc.*(.*);/0;\/\/&/' \
+    -e 's/realloc.*(.*);/0;\/\/&/' \
+    -e 's/free.*(.*);/\/\/&/' \
+    -e 's/fprintf.*(.*);/\/\/&/'\
     ../gmp/memory.c
