@@ -61,6 +61,9 @@ gmp/README: setup/gmp-$(GMP_VERSION).tar.xz
 # Touch the README to update its timestamp so that we don't build it
 # again next time unless the archive changes.
 	touch gmp/README
+# Patch the gmp files to remove instances of memory functions which
+# will fail to link with the valgrind partial c library.
+	cd setup && ./patch_gmp.sh
 # Configure and make it, putting its output in the install folder
 # locally instead of in a global location, so it doesn't conflict with
 # other versions of gmp.
@@ -77,6 +80,9 @@ mpfr/README: setup/mpfr-$(MPFR_VERSION).tar.xz
 # Touch the README to update its timestamp so that we don't build it
 # again next time unless the archive changes.
 	touch mpfr/README
+# Patch the mpfr files to allow us to use alternative memory functions
+# which will not fail at link time.
+	cd setup && ./patch_mpfr.sh
 # Configure and make mpfr. We want to use the gmp we built locally for
 # this, and we'll install it locally too for the same reasons as
 # above.
