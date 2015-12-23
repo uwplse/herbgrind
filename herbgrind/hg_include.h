@@ -21,6 +21,10 @@
 // Pull in this header file so that we can pass memory allocation
 // functions to gmp and mpfr.
 #include "pub_tool_mallocfree.h"
+// Pull in this header file so that we can set the strlen, strcpy,
+// memmove, memcmp, and memset functions of mpfr to their valgrind
+// library equivalents.
+#include "pub_tool_libcbase.h"
 
 static int running = 0;
 
