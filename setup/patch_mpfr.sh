@@ -40,3 +40,10 @@ sed -i \
         N
         b fprintf' \
     ../mpfr/src/mpfr-gmp.c
+
+# Add the valgrind additions c file which implements the memory
+# function setters to the project.
+
+cp valgrind_additions.c ../mpfr/src/valgrind_additions.c
+sed -i -e 's/libmpfr_la_SOURCES = .*\\/&\nvalgrind_additions.c \\/' \
+    ../mpfr/src/Makefile.am
