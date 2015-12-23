@@ -5,3 +5,5 @@ herbgrind/.deps/
 valgrind/
 *.out
 *.sout
+gmp/*
+mpfr/*
