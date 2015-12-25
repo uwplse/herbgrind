@@ -45,7 +45,10 @@ herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_SOURCES      = \
 herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_CPPFLAGS     = \
 	$(AM_CPPFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
 herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_CFLAGS       = \
-	$(AM_CFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
+	$(AM_CFLAGS_@VGCONF_PLATFORM_SEC_CAPS@) \
+	-g \
+	-I$(top_srcdir)/../gmp/install/include/ \
+	-I$(top_srcdir)/../mpfr/install/include/
 herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_DEPENDENCIES = \
 	$(TOOL_DEPENDENCIES_@VGCONF_PLATFORM_SEC_CAPS@)
 herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_LDADD        = \
