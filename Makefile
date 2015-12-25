@@ -5,7 +5,9 @@ MPFR_VERSION=3.1.3
 VALGRIND_REPO_LOCATION=svn://svn.valgrind.org/valgrind/trunk
 # The architecture thhat we're buiding herbgrind for, in the syntax of
 # valgrind filename conventions for this sort of thing.
-TARGET_ARCH=amd64-linux
+TARGET_PLAT=amd64-linux
+ARCH_PRI=amd64
+ARCH_SEC=i386
 
 all: compile
 
@@ -31,7 +33,8 @@ valgrind/herbgrind/Makefile: valgrind/README herbgrind/Makefile.am
 # Run the autogen and configure scripts to turn the .am file into a
 # real makefile.
 	cd valgrind && ./autogen.sh
-	cd valgrind && ./configure --prefix=$(shell pwd)/valgrind/inst
+	cd valgrind && ./configure --prefix=$(shell pwd)/valgrind/inst \
+                                   --enable-only64bit
 
 # This is the target we call to bring in the dependencies, like gmp,
 # mpfr, and valgrind, and to make sure the herbgrind files have been
@@ -40,7 +43,7 @@ setup: valgrind/herbgrind/Makefile gmp/README mpfr/README
 
 # This is the target we call to actually get the executable built so
 # we can run herbgrind. 
-valgrind/inst/lib/valgrind/herbgrind-$(TARGET_ARCH): herbgrind/hg_main.c setup
+valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT): herbgrind/hg_main.c setup
 # First, we've got to make sure all the dependencies are extracted and set up.
 	$(MAKE) setup
 # Copy over the herbgrind sources again, because why the hell not.
@@ -50,7 +53,7 @@ valgrind/inst/lib/valgrind/herbgrind-$(TARGET_ARCH): herbgrind/hg_main.c setup
 	$(MAKE) -C valgrind/ install
 
 # Alias the compile target to just "compile" for ease of use
-compile: valgrind/inst/lib/valgrind/herbgrind-$(TARGET_ARCH)
+compile: valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT)
 
 # Use the gmp README to tell if gmp has been extracted yet.
 gmp/README: setup/gmp-$(GMP_VERSION).tar.xz
@@ -67,9 +70,14 @@ gmp/README: setup/gmp-$(GMP_VERSION).tar.xz
 # Configure and make it, putting its output in the install folder
 # locally instead of in a global location, so it doesn't conflict with
 # other versions of gmp.
-	cd gmp/ && ./configure --prefix=$(shell pwd)/gmp/install
+	cd gmp/ && ./configure --prefix=$(shell pwd)/gmp/install-$(ARCH_PRI)
 	$(MAKE) -C gmp
 	$(MAKE) -C gmp install
+# # Make gmp for 32-bit too, so that you can run herbgrind with maximum
+# # portability.
+# 	cd gmp/ && ABI=32 ./configure --prefix=$(shell pwd)/gmp/install-$(ARCH_SEC)
+# 	$(MAKE) -C gmp
+# 	$(MAKE) -C gmp install
 
 # Use the mpfr readme to tell if mpfr has been extracted yet.
 mpfr/README: setup/mpfr-$(MPFR_VERSION).tar.xz
@@ -86,7 +94,13 @@ mpfr/README: setup/mpfr-$(MPFR_VERSION).tar.xz
 # Configure and make mpfr. We want to use the gmp we built locally for
 # this, and we'll install it locally too for the same reasons as
 # above.
-	cd mpfr/ && ./configure --prefix=$(shell pwd)/mpfr/install \
-                                --with-gmp=$(shell pwd)/gmp/install
+	cd mpfr/ && ./configure --prefix=$(shell pwd)/mpfr/install-$(ARCH_PRI) \
+                                --with-gmp=$(shell pwd)/gmp/install-$(ARCH_PRI)
 	$(MAKE) -C mpfr
 	$(MAKE) -C mpfr install
+# # Make mpfr for 32-bit too.
+# 	cd mpfr/ && ./configure --prefix=$(shell pwd)/mpfr/install-$(ARCH_SEC) \
+# 				--with-gmp=$(shell pwd)/gmp/install-$(ARCH_SEC) \
+# 				--build=i386
+#	$(MAKE) -C mpfr
+#	$(MAKE) -C mpfr install
