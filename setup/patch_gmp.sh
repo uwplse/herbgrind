@@ -13,4 +13,4 @@ sed -i \
     -e 's/realloc.*(.*);/0;\/\/&/' \
     -e 's/free.*(.*);/\/\/&/' \
     -e 's/fprintf.*(.*);/\/\/&/'\
-    ../gmp/memory.c
+    ../deps/gmp-$1/memory.c

@@ -1,10 +1,10 @@
-extra_deps_@VGCONF_ARCH_PRI@ = \
-	$(top_builddir)/../mpfr/install-@VGCONF_ARCH_PRI@/lib/libmpfr.a \
-	$(top_builddir)/../gmp/install-@VGCONF_ARCH_PRI@/lib/libgmp.a
+extra_deps_amd64 = \
+	$(top_builddir)/../deps/mpfr-64/install/lib/libmpfr.a \
+	$(top_builddir)/../deps/gmp-64/install/lib/libgmp.a
 
-extra_deps_@VGCONF_ARCH_SEC@ = \
-	$(top_builddir)/../mpfr/install-@VGCONF_ARCH_SEC@/lib/libmpfr.a \
-	$(top_builddir)/../gmp/install-@VGCONF_ARCH_SEC@/lib/libgmp.a
+extra_deps_i386 = \
+	$(top_builddir)/../deps/mpfr-32/install/lib/libmpfr.a \
+	$(top_builddir)/../deps/gmp-32/install/lib/libgmp.a
 
 include $(top_srcdir)/Makefile.tool.am
 
@@ -28,8 +28,8 @@ herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CPPFLAGS     = \
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CFLAGS       = \
 	$(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
 	-g \
-	-I$(top_srcdir)/../gmp/install-@VGCONF_ARCH_PRI@/include/ \
-	-I$(top_srcdir)/../mpfr/install-@VGCONF_ARCH_PRI@/include/
+	-I$(top_srcdir)/../deps/gmp-64/install/include/ \
+	-I$(top_srcdir)/../deps/mpfr-64/install/include/
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_DEPENDENCIES = \
 	$(TOOL_DEPENDENCIES_@VGCONF_PLATFORM_PRI_CAPS@)
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_LDADD        = \
@@ -51,8 +51,8 @@ herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_CPPFLAGS     = \
 herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_CFLAGS       = \
 	$(AM_CFLAGS_@VGCONF_PLATFORM_SEC_CAPS@) \
 	-g \
-	-I$(top_srcdir)/../gmp/install-@VGCONF_ARCH_SEC@/include/ \
-	-I$(top_srcdir)/../mpfr/install-@VGCONF_ARCH_SEC@/include/
+	-I$(top_srcdir)/../deps/gmp-32/install/include/ \
+	-I$(top_srcdir)/../deps/mpfr-32/install/include/
 herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_DEPENDENCIES = \
 	$(TOOL_DEPENDENCIES_@VGCONF_PLATFORM_SEC_CAPS@)
 herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_LDADD        = \

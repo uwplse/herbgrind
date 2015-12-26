@@ -39,7 +39,7 @@ valgrind/herbgrind/Makefile: valgrind/README herbgrind/Makefile.am
 # This is the target we call to bring in the dependencies, like gmp,
 # mpfr, and valgrind, and to make sure the herbgrind files have been
 # initially copied over.
-setup: valgrind/herbgrind/Makefile gmp/README mpfr/README
+setup: valgrind/herbgrind/Makefile deps/gmp-32/README deps/gmp-64/README deps/mpfr-32/README deps/mpfr-64/README
 
 # This is the target we call to actually get the executable built so
 # we can run herbgrind. 
@@ -56,51 +56,51 @@ valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT): herbgrind/hg_main.c setup
 compile: valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT)
 
 # Use the gmp README to tell if gmp has been extracted yet.
-gmp/README: setup/gmp-$(GMP_VERSION).tar.xz
+deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz
 # Extract gmp, and rename its folder so we don't have to use the
 # version number all over the place.
 	tar xf setup/gmp-$(GMP_VERSION).tar.xz
-	mv gmp-$(GMP_VERSION) gmp
+	mkdir -p deps
+	mv gmp-$(GMP_VERSION) deps/gmp-$*
 # Touch the README to update its timestamp so that we don't build it
 # again next time unless the archive changes.
-	touch gmp/README
+	touch deps/gmp-$*/README
 # Patch the gmp files to remove instances of memory functions which
 # will fail to link with the valgrind partial c library.
-	cd setup && ./patch_gmp.sh
+	cd setup && ./patch_gmp.sh $*
 # Configure and make it, putting its output in the install folder
 # locally instead of in a global location, so it doesn't conflict with
 # other versions of gmp.
-	cd gmp/ && ./configure --prefix=$(shell pwd)/gmp/install-$(ARCH_PRI)
-	$(MAKE) -C gmp
-	$(MAKE) -C gmp install
-# # Make gmp for 32-bit too, so that you can run herbgrind with maximum
-# # portability.
-# 	cd gmp/ && ABI=32 ./configure --prefix=$(shell pwd)/gmp/install-$(ARCH_SEC)
-# 	$(MAKE) -C gmp
-# 	$(MAKE) -C gmp install
+	cd deps/gmp-$*/ && ABI=$* ./configure --prefix=$(shell pwd)/deps/gmp-$*/install
+	$(MAKE) -C deps/gmp-$*
+	$(MAKE) -C deps/gmp-$* install
+
+configure-mpfr-32:
+	cd deps/mpfr-32/ && ./configure --prefix=$(shell pwd)/deps/mpfr-32/install \
+				        --with-gmp=$(shell pwd)/deps/gmp-32/install \
+				        --build=i386
+
+configure-mpfr-64:
+	cd deps/mpfr-64/ && ./configure --prefix=$(shell pwd)/deps/mpfr-64/install \
+				        --with-gmp=$(shell pwd)/deps/gmp-64/install \
+				        --build=amd64
 
 # Use the mpfr readme to tell if mpfr has been extracted yet.
-mpfr/README: setup/mpfr-$(MPFR_VERSION).tar.xz
+deps/mpfr-%/README: setup/mpfr-$(MPFR_VERSION).tar.xz
 # Extract mpfr, and rename its folder so we don't have to use the
 # version number all over the place.
 	tar xf setup/mpfr-$(MPFR_VERSION).tar.xz
-	mv mpfr-$(MPFR_VERSION) mpfr
+	mkdir -p deps
+	mv mpfr-$(MPFR_VERSION) deps/mpfr-$*
 # Touch the README to update its timestamp so that we don't build it
 # again next time unless the archive changes.
-	touch mpfr/README
+	touch deps/mpfr-$*/README
 # Patch the mpfr files to allow us to use alternative memory functions
 # which will not fail at link time.
-	cd setup && ./patch_mpfr.sh
+	cd setup && ./patch_mpfr.sh $*
 # Configure and make mpfr. We want to use the gmp we built locally for
 # this, and we'll install it locally too for the same reasons as
 # above.
-	cd mpfr/ && ./configure --prefix=$(shell pwd)/mpfr/install-$(ARCH_PRI) \
-                                --with-gmp=$(shell pwd)/gmp/install-$(ARCH_PRI)
-	$(MAKE) -C mpfr
-	$(MAKE) -C mpfr install
-# # Make mpfr for 32-bit too.
-# 	cd mpfr/ && ./configure --prefix=$(shell pwd)/mpfr/install-$(ARCH_SEC) \
-# 				--with-gmp=$(shell pwd)/gmp/install-$(ARCH_SEC) \
-# 				--build=i386
-#	$(MAKE) -C mpfr
-#	$(MAKE) -C mpfr install
+	$(MAKE) configure-mpfr-$*
+	$(MAKE) -C deps/mpfr-$*
+	$(MAKE) -C deps/mpfr-$* install
