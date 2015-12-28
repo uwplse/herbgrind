@@ -11,6 +11,12 @@ TARGET_PLAT=amd64-linux
 ARCH_PRI=amd64
 ARCH_SEC=i386
 
+ifdef ARCH_SEC
+DEPS = deps/gmp-64/README deps/mpfr-64/README deps/gmp-32/README deps/mpfr-32/README
+else
+DEPS = deps/gmp-64/README deps/mpfr-64/README
+endif
+
 all: compile
 
 # We use the README file of a repo as a proxy for whether or not that
@@ -41,7 +47,7 @@ valgrind/herbgrind/Makefile: valgrind/README herbgrind/Makefile.am
 # This is the target we call to bring in the dependencies, like gmp,
 # mpfr, and valgrind, and to make sure the herbgrind files have been
 # initially copied over.
-setup: valgrind/herbgrind/Makefile deps/gmp-32/README deps/gmp-64/README deps/mpfr-32/README deps/mpfr-64/README
+setup: valgrind/herbgrind/Makefile $(DEPS)
 
 # This is the target we call to actually get the executable built so
 # we can run herbgrind. 
