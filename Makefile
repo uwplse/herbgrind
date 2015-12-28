@@ -1,3 +1,5 @@
+SHELL=/bin/bash
+
 # The versions of gmp and mpfr, for matching on the archive names.
 GMP_VERSION=6.1.0
 MPFR_VERSION=3.1.3
