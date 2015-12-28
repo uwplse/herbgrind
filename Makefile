@@ -50,7 +50,7 @@ setup: valgrind/herbgrind/Makefile $(DEPS)
 
 # This is the target we call to actually get the executable built so
 # we can run herbgrind. 
-valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT): herbgrind/hg_main.c setup
+valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT): herbgrind/hg_main.c herbgrind/hg_include.h setup
 # First, we've got to make sure all the dependencies are extracted and set up.
 	$(MAKE) setup
 # Copy over the herbgrind sources again, because why the hell not.
