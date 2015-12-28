@@ -54,7 +54,7 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
 
   // Do a quick mpfr calculation!
   
-  mpfr_init2(one, 120);
+  mpfr_init(one);
   mpfr_set_d(one, 1.0, MPFR_RNDN);
   
   mpfr_init2(a_billion, 120);
