@@ -20,8 +20,15 @@ FpDebug, and to have some functionality running on a normal platform
 Installation Instructions
 -------------------------
 
-Running just "make" or "make compile" after cloning the repo should
-just work.
+The project was developed on a 64-bit linux platform that supports
+32-bit compilation. If you're running on a platform like this, running
+just "make" or "make compile" after cloning the repo should just work.
+Otherwise, you'll want to open up the toplevel makefile, and modify
+some variables. Set TARGET\_PLAT and ARCH\_PRI appropriately for your
+platform. If you're on a platform for which valgrind wants to build a
+secondary version (certain 64-bit configurations will cause valgrind
+to want to do 32-bit too), then set ARCH\_SEC to that secondary
+architecture.
 
 If you just want to configure everything, but not compile, run "make
 setup".
