@@ -89,7 +89,7 @@ configure-mpfr-32:
 
 configure-mpfr-64:
 	cd deps/mpfr-64/ && ./configure --prefix=$(shell pwd)/deps/mpfr-64/install \
-				        --with-gmp=$(shell pwd)/deps/gmp-64/install \
+				        --with-gmp-build=$(shell pwd)/deps/gmp-64 \
 				        --build=amd64
 
 # Use the mpfr readme to tell if mpfr has been extracted yet.
