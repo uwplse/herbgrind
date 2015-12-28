@@ -41,8 +41,7 @@ valgrind/herbgrind/Makefile: valgrind/README herbgrind/Makefile.am
 # Run the autogen and configure scripts to turn the .am file into a
 # real makefile.
 	cd valgrind && ./autogen.sh
-	cd valgrind && ./configure --prefix=$(shell pwd)/valgrind/inst \
-                                   --enable-only64bit
+	cd valgrind && ./configure --prefix=$(shell pwd)/valgrind/inst
 
 # This is the target we call to bring in the dependencies, like gmp,
 # mpfr, and valgrind, and to make sure the herbgrind files have been
