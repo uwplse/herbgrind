@@ -29,7 +29,6 @@
 
 #include "hg_include.h"
 
-static mpfr_t one, a_billion, result;
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
@@ -52,18 +51,6 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
   }
   VG_(printf)("\n");
 
-  // Do a quick mpfr calculation!
-  
-  mpfr_init(one);
-  mpfr_set_d(one, 1.0, MPFR_RNDN);
-  
-  mpfr_init2(a_billion, 120);
-  mpfr_set_d(a_billion, 1000000000.0, MPFR_RNDN);
-  
-  mpfr_init2(result, 120);
-
-  mpfr_add(result, one, a_billion, MPFR_RNDN);
-  
   return bb;
 }
 
