@@ -32,6 +32,25 @@
 // Whether or not the tool is currently "turned on".
 static int running = 0;
 
+// Here are the data structures we set up to hold shadow values. They
+// take three forms:
+//
+// * Values that are being worked on currently are held in temps by
+//   VEX, so we have an array of shadow values to match each temp
+//   register, up to a limit set in the .h file.
+//
+// * Values that persist between blocks (I think this is how it
+//   works), are held in a per thread datastructure by VEX, so we set
+//   up another array for every thread to hold those, also up to a
+//   limit set in the .h file.
+//
+// * Finally, values might be written to memory, and then read out
+//   later at some arbitrary point. For these, we'll maintain a hash
+//   table that maps addresses to shadow values, so we don't have to
+//   maintain a vast array of shadow values for all of memory.
+static ShadowValue* localTemps[MAX_TEMPS];
+static ShadowValue* threadRegisters[VG_N_THREADS][MAX_REGISTERS];
+static VgHashTable globalMemory = NULL;
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.

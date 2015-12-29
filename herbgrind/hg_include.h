@@ -25,6 +25,26 @@
 // memmove, memcmp, and memset functions of mpfr to their valgrind
 // library equivalents.
 #include "pub_tool_libcbase.h"
+// This header gets us the VG_N_THREADS macro, as well as some other
+// misc thread data.
+#include "pub_tool_threadstate.h"
+// This gets us a hash table data structure that's safe to use with
+// valgrind, so we can set up a memory map for shadowing values that
+// leave our workbench area.
+#include "pub_tool_hashtable.h"
+
+// The maximum number of pre-instrumentation temporary values per
+// block we're willing to deal with.
+#define	MAX_TEMPS 1000
+// The maximum number of per-thread registers we'll account for.
+#define	MAX_REGISTERS 1000
+
+
+// The value we're tracking for each floating point value in the
+// program.
+typedef struct _ShadowValue {
+  mpfr_t value;
+} ShadowValue;
 
 
 // This does any initialization that needs to be done after command
