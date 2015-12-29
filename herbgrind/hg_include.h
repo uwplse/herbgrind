@@ -26,7 +26,6 @@
 // library equivalents.
 #include "pub_tool_libcbase.h"
 
-static int running = 0;
 
 // This does any initialization that needs to be done after command
 // line processing.

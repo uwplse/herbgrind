@@ -29,6 +29,9 @@
 
 #include "hg_include.h"
 
+// Whether or not the tool is currently "turned on".
+static int running = 0;
+
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
