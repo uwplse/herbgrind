@@ -47,3 +47,7 @@ sed -i \
 cp valgrind_additions.c $MPFR_DIR/valgrind_additions.c
 sed -i -e 's/libmpfr_la_SOURCES = .*\\/&\nvalgrind_additions.c \\/' \
     $MPFR_DIR/Makefile.am
+
+# Add debugging symbols
+echo "AM_CFLAGS = -g" >> $MPFR_DIR/Makefile.am
+echo "AM_CFLAGS = -g" >> $MPFR_DIR/../Makefile.am
