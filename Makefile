@@ -82,15 +82,26 @@ deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz
 	$(MAKE) -C deps/gmp-$*
 	$(MAKE) -C deps/gmp-$* install
 
+# Adding this flag ensures that MPFR doesn't allocate any of it's
+# variables as thread local. This is important because valgrind moves
+# around all the tool memory, so we get lots of problems if we let the
+# linker try to put thread local variables on our stack. Luckily,
+# herbgrind doesn't need threads, nor does valgrind, and client
+# programs will be serialized by valgrind, so it's safe to disable
+# these.
+MPFR_CONFIGURE_FLAGS = --disable-thread-safe
+
 configure-mpfr-32:
 	cd deps/mpfr-32/ && ./configure --prefix=$(shell pwd)/deps/mpfr-32/install \
-				        --with-gmp=$(shell pwd)/deps/gmp-32/install \
-				        --build=i386
+				        --with-gmp-build=$(shell pwd)/deps/gmp-32 \
+				        --build=i386 \
+                                        $(MPFR_CONFIGURE_FLAGS)
 
 configure-mpfr-64:
 	cd deps/mpfr-64/ && ./configure --prefix=$(shell pwd)/deps/mpfr-64/install \
 				        --with-gmp-build=$(shell pwd)/deps/gmp-64 \
-				        --build=amd64
+				        --build=amd64 \
+					$(MPFR_CONFIGURE_FLAGS)
 
 # Use the mpfr readme to tell if mpfr has been extracted yet.
 deps/mpfr-%/README: setup/mpfr-$(MPFR_VERSION).tar.xz
