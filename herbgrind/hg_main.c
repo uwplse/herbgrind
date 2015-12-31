@@ -40,7 +40,7 @@ static int running = 0;
 //   register, up to a limit set in the .h file.
 //
 // * Values that persist between blocks (I think this is how it
-//   works), are held in a per thread datastructure by VEX, so we set
+//   works), are held in a per thread data structure by VEX, so we set
 //   up another array for every thread to hold those, also up to a
 //   limit set in the .h file.
 //
@@ -103,7 +103,125 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
       // shadow value locations, or they can involve doing an MPFR
       // calculation, depending on what sort of expression we're
       // getting from.
+      IRExpr* expr = st->Put.data;
       addStmtToIRSB(sbOut, st);
+      switch (expr->tag) {
+      case Iex_Binder:
+        // As far as I can tell, we're never supposed to see this
+        // here, and it's not really documented. So, if we get it,
+        // let's just throw an error and then pass it through.
+        VG_(dmsg)("We hit a binder while processing VEX. This should never happen!\n");
+        break;
+      case Iex_Get:
+        // This case is simply getting a value from one part of the
+        // guest state, and putting it into another. Transferring
+        // shadow values in this case is about as simple as it gets.
+        IRDirty* copyShadowValue =
+          unsafeIRDirty_0_N(// The number of arguments to
+                            // copyShadowValue.
+                            2, 
+                            // The name of copyShadowValue, used for
+                            // printing.
+                            "copyShadowTStoTS",
+                            // The actual function. This helper
+                            // function is usually a noop, but can do
+                            // something on weird architectures.
+                            VG_(fnptr_to_fnentry)(&copyShadowTStoTS),
+                            // Finally, the two arguments. Since both
+                            // our source and destination are at
+                            // constant offsets in the thread state in
+                            // this case, we just pass source offset
+                            // and destination offset.
+                            mkIRExprVec_2(mkU64(expr->Get.offset),
+                                          mkU64(st->Put.offset)));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+        break;
+      case Iex_GetI:
+        // Mostly like the above, but the location that we're getting
+        // from is calculated at run time.
+        IRDirty* copyShadowValue =
+          unsafeIRDirty_0_N(2,
+                            "copyShadowTStoTS",
+                            VG_(fnptr_to_fnentry)(&copyShadowTStoTS),
+                            mkIRExprVec_2(// Calculate array_base +
+                                          // (ix + bias) % array_len
+                                          // at run time. This will
+                                          // give us the offset into
+                                          // the thread state at which
+                                          // the actual get is
+                                          // happening, so we can use
+                                          // that same offset for the
+                                          // shadow get.
+                                          IRExpr_Binop( // +
+                                                       Iop_Add64,
+                                                       // array_base
+                                                       mkU64(expr->GetI.descr->base),
+                                                       // These two ops together are %
+                                                       IRExpr_Unop(Iop_64HIto32,
+                                                                   IRExpr_Binop(IOp_DivModU64to32,
+                                                                                // +
+                                                                                IRExpr_Binop(IOp_Add64,
+                                                                                             // ix
+                                                                                             //
+                                                                                             // This
+                                                                                             // is
+                                                                                             // the
+                                                                                             // only
+                                                                                             // part
+                                                                                             // that's
+                                                                                             // not
+                                                                                             // constant.
+                                                                                             expr->GetI.ix,
+                                                                                             // bias
+                                                                                             mkU64(expr->GetI.bias)),
+                                                                                // array_len
+                                                                                mkU64(expr->GetI.descr->nElems)))),
+                                          mkU64(st->Put.offset)));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+        break;
+      case Iex_RdTmp:
+        // Okay, in this one we're reading from a temp instead of the
+        // thread state, but otherwise it's pretty much like above.
+        IRDirty* copyShadowValue =
+          unsafeIRDirty_0_N(2,
+                            "copyShadowTmptoTS",
+                            VG_(fnptr_to_fnentry)(&copyShadowTmptoTS),
+                            mkIRExprVec_2(// The number of the temporary
+                                          mkU64(expr->RdTmp.tmp),
+                                          // The thread state offset,
+                                          // as above.
+                                          mkU64(st->Put.offset)));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+        break;
+      case Iex_Qop:
+      case Iex_Triop:
+      case Iex_Binop:
+      case Iex_Unop:
+        instrumentOpPut(sbOut, offset, expr);
+        break;
+      case Iex_Load:
+        IRDirty* copyShadowValue =
+          unsafeIRDirty_0_N(2,
+                            "copyShadowMemtoTS",
+                            VG_(fnptr_to_fnentry)(&copyShadowMemtoTS),
+                            mkIRExprVec_2(addr,
+                                          mkU64(st->Put.offset)));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+        break;
+        // Pure function calls shouldn't show up in the input, from
+        // what I know, so we don't have to do anything for them. If
+        // they did show up in the input, there isn't really anything
+        // we can do with them anyway, since they're so opaque about
+        // what they're doing.
+      case Iex_CCall:
+        VG_(dmsg)("There's a pure c call in our input! I wonder why...\n");
+        // We don't need to instrument constants being loaded in,
+        // because we're not going to start treating a value like a
+        // float until a float operation happens to it. We follow
+        // FpDebug in this regard.
+      case Iex_Const:
+        break;
+      }
       break;
     case Ist_PutI:
       // This will look a lot like above, but we have to deal with not
@@ -208,6 +326,10 @@ static void hg_pre_clo_init(void)
    mpfr_set_memmove_function(VG_(memmove));
    mpfr_set_memcmp_function(VG_(memcmp));
    mpfr_set_memset_function(VG_(memset));
+
+   // Set up the data structures we'll need to keep track of our MPFR
+   // shadow values.
+   VG(HT_construct)
 }
 
 VG_DETERMINE_INTERFACE_VERSION(hg_pre_clo_init)

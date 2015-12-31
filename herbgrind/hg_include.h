@@ -81,4 +81,10 @@ static void* gmp_alloc(size_t t);
 static void* gmp_realloc(void* p, size_t t1, size_t t2);
 static void gmp_free(void* p, size_t t);
 
+// The functions that we'll insert into the program to move around
+// shadow values at run time.
+static VG_REGPARM(2) void copyShadowTStoTS(UWord src_reg, UWord dest_reg);
+static VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg);
+static VG_REGPARM(2) void copyShadowMemtoTS(Addr src_mem, UWord dest_reg);
+
 #endif
