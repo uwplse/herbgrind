@@ -39,6 +39,10 @@
 // The maximum number of per-thread registers we'll account for.
 #define	MAX_REGISTERS 1000
 
+// Some helpful macros to have around. Some of these are from FpDebug.
+#define mkU32(_n) IRExpr_Const(IRConst_U32(_n))
+#define mkU64(_n) IRExpr_Const(IRConst_U64(_n))
+
 
 // The value we're tracking for each floating point value in the
 // program.
