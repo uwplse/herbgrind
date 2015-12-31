@@ -73,7 +73,88 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
   }
   VG_(printf)("\n");
 
-  return bb;
+  // Let's do some light instrumentation!
+
+  // First, we'll set up a data structure to hold our instrumented IR.
+  // We'll copy the typing environment, and the next block to jump to,
+  // as well as some info about the exit jump, from the old superblock.
+  IRSB* sbOut = deepCopyIRSBExceptStmts(bb);
+
+  // Now, let's loop through these statements, and instrument them to
+  // add our shadow values.
+  for (int i = 0; i < bb->stmts_used; i++){
+    IRStmt* st = bb->stmts[i];
+
+    switch (st->tag) {
+      // If it's a no op, or just metadata, we'll just pass it into
+      // the result IR.
+    case Ist_NoOp:
+    case Ist_IMark:
+    case Ist_AbiHint:
+      // If it's a memory bus event or an exit, we shouldn't have to
+      // do much with it either.
+    case Ist_MBE:
+    case Ist_Exit:
+      addStmtToIRSB(sbOut, st);
+      break;
+    case Ist_Put:
+      // Here we'll want to instrument moving Shadow values into
+      // thread state. These can either be direct copies from other
+      // shadow value locations, or they can involve doing an MPFR
+      // calculation, depending on what sort of expression we're
+      // getting from.
+      addStmtToIRSB(sbOut, st);
+      break;
+    case Ist_PutI:
+      // This will look a lot like above, but we have to deal with not
+      // knowing at compile time which piece of thread state we're
+      // putting into. This will probably involve putting more burden
+      // on the runtime c function which we'll insert after the put to
+      // process it.
+      addStmtToIRSB(sbOut, st);
+      break;
+    case Ist_WrTmp:
+      // Here we'll instrument moving Shadow values into temps. See
+      // above.
+      addStmtToIRSB(sbOut, st);
+      break;
+    case Ist_Store:
+      // Here we'll instrument moving Shadow values into memory,
+      // unconditionally.
+      addStmtToIRSB(sbOut, st);
+      break;
+    case Ist_StoreG:
+      // Same as above, but only assigns the value to memory if a
+      // guard returns true.
+      addStmtToIRSB(sbOut, st);
+      break;
+    case Ist_LoadG:
+      // Guarded load. This will load a value from memory, and write
+      // it to a temp, but only if a condition returns true.
+      addStmtToIRSB(sbOut, st);
+      break;
+    case Ist_CAS:
+      // This is an atomic compare and swap operation. Basically, has
+      // three parts: a destination, a value address, an expected
+      // value, and a result value. If the value at the value address
+      // is equal to the expected value, then the result value is
+      // stored in the destination temp.
+      addStmtToIRSB(sbOut, st);
+      break;
+    case Ist_LLSC:
+      // I honestly have no goddamn idea what this does. See: libvex_ir.h:2816
+      addStmtToIRSB(sbOut, st);
+      break;
+    case Ist_Dirty:
+      // Call a C function, possibly with side affects. The possible
+      // side effects should be denoted in the attributes of this
+      // instruction.
+      addStmtToIRSB(sbOut, st);
+      break;
+    }
+  }
+
+  return sbOut;
 }
 
 // This handles client requests, the macros that client programs stick
