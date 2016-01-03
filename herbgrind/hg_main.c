@@ -203,7 +203,25 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
       case Iex_Const:
         break;
       case Iex_ITE:
-        // TODO: Handle these.
+        copyShadowValue =
+          unsafeIRDirty_0_N(2,
+                            "copyShadowTmptoTS",
+                            VG_(fnptr_to_fnentry)(&copyShadowTmptoTS),
+                            mkIRExprVec_2(IRExpr_ITE(expr->Iex.ITE.cond,
+                                                     // The branches
+                                                     // of the "if"
+                                                     // should be
+                                                     // temps, since
+                                                     // the IR is
+                                                     // flattened at
+                                                     // instrumentation
+                                                     // time. If they
+                                                     // aren't, we're
+                                                     // in trouble.
+                                                     mkU64(expr->Iex.ITE.iftrue->Iex.RdTmp.tmp),
+                                                     mkU64(expr->Iex.ITE.iffalse->Iex.RdTmp.tmp)),
+                                          mkU64(st->Ist.Put.offset)));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
         break;
       }
       break;
