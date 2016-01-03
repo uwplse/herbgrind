@@ -35,5 +35,70 @@ void* gmp_realloc(void* p, size_t t1, size_t t2){ return VG_(realloc)("hg.gmp_re
 void gmp_free(void* p, size_t t){ VG_(free)(p); }
 
 void init_runtime(){
-  VG_(HT_construct)("memory_shadows");
+  globalMemory = VG_(HT_construct)("memory_shadows");
+}
+
+// Copy a shadow value from somewhere in the current threads state to
+// somewhere else in the current threads state.
+VG_REGPARM(2) void copyShadowTStoTS(UWord src_reg, UWord dest_reg){
+  threadRegisters[VG_(get_running_tid)()][dest_reg] = threadRegisters[VG_(get_running_tid)()][dest_reg];
+}
+
+// Copy a shadow value from a temporary to somewhere in the current
+// threads state.
+VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg){
+  threadRegisters[VG_(get_running_tid)()][dest_reg] = localTemps[src_tmp];
+}
+
+// Copy a shadow value from memory to somewhere in the current threads state.
+VG_REGPARM(2) void copyShadowMemtoTS(Addr src_mem, UWord dest_reg){
+  threadRegisters[VG_(get_running_tid)()][dest_reg] = VG_(HT_lookup)(globalMemory, src_mem);
+}
+
+// Copy a shadow value from somewhere in the thread state to a temporary.
+VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, UWord dest_tmp){
+  localTemps[dest_tmp] = threadRegisters[VG_(get_running_tid)()][src_reg];
+}
+
+// Copy a shadow value from a temporary to a temporary.
+VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
+  localTemps[dest_tmp] = localTemps[src_tmp];
+}
+
+// Copy a shadow value from memory to a temporary
+VG_REGPARM(2) void copyShadowMemtoTmp(Addr src_mem, UWord dest_tmp){
+  localTemps[dest_tmp] = VG_(HT_lookup)(globalMemory, src_mem);
+}
+
+// Copy a shadow value from somewhere in the thread state to memory.
+VG_REGPARM(2) void copyShadowTStoMem(UWord src_reg, Addr dest_mem){
+  ShadowValue* val = threadRegisters[VG_(get_running_tid)()][src_reg];
+  // In all of the above cases, we don't bother checking for null,
+  // since it there's no harm in passing a null through. In this case
+  // though, and the ones below it, we don't want to bloat the hash
+  // table with a bunch of null entries, so we check if the val is
+  // null before adding a node. Null indicates that the value shadowed
+  // is not believed to be a float.
+  if (val != NULL){
+    val->addr = dest_mem;
+    VG_(HT_add_node)(globalMemory, val);
+  }
+}
+
+// Copy a shadow value from a temporary to memory.
+VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem){
+  ShadowValue* val = localTemps[src_tmp];
+  if (val != NULL){
+    val->addr = dest_mem;
+    VG_(HT_add_node)(globalMemory, val);
+  }
+}
+
+// Copy a shadow value from one memory location to another.
+VG_REGPARM(2) void copyShadowMemtoMem(Addr src_mem, Addr dest_mem){
+  ShadowValue* val = VG_(HT_lookup)(globalMemory, src_mem);
+  if (val != NULL){
+    val->addr = dest_mem;
+    VG_(HT_add_node)(globalMemory, val);
+  }
 }

@@ -40,10 +40,25 @@ void gmp_free(void* p, size_t t);
 VG_REGPARM(2) void copyShadowTStoTS(UWord src_reg, UWord dest_reg);
 VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg);
 VG_REGPARM(2) void copyShadowMemtoTS(Addr src_mem, UWord dest_reg);
+VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, UWord dest_tmp);
+VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp);
+VG_REGPARM(2) void copyShadowMemtoTmp(Addr src_mem, UWord dest_tmp);
+VG_REGPARM(2) void copyShadowTStoMem(UWord src_reg, Addr dest_mem);
+VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem);
+VG_REGPARM(2) void copyShadowMemtoMem(Addr src_mem, Addr dest_mem);
 
 // The value we're tracking for each floating point value in the
 // program.
 typedef struct _ShadowValue {
+  // This member is here to make this structure compatible with the
+  // hash table implementation in pub_tool_hashtable. None of our code
+  // will actually use it.
+  struct _ShadowValue* next;
+  // This part is also here for the hash table structure, but we'll
+  // actually be messing with it as we'll set it to the address of any
+  // memory location we want to store a shadow value for.
+  UWord addr;
+  // The actual high precision value shadowing a float.
   mpfr_t value;
 } ShadowValue;
 
