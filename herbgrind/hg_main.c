@@ -78,85 +78,27 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
       break;
     case Ist_Put:
       // Here we'll want to instrument moving Shadow values into
-      // thread state. These can either be direct copies from other
-      // shadow value locations, or they can involve doing an MPFR
-      // calculation, depending on what sort of expression we're
-      // getting from.
+      // thread state. In flattened IR, these shadow values should
+      // always come from temporaries.
       expr = st->Ist.Put.data;
       addStmtToIRSB(sbOut, st);
       switch (expr->tag) {
       case Iex_Binder:
-        // As far as I can tell, we're never supposed to see this
-        // here, and it's not really documented. So, if we get it,
-        // let's just throw an error and then pass it through.
-        VG_(dmsg)("We hit a binder while processing VEX. This should never happen!\n");
-        break;
       case Iex_Get:
-        // This case is simply getting a value from one part of the
-        // guest state, and putting it into another. Transferring
-        // shadow values in this case is about as simple as it gets.
-        copyShadowValue =
-          unsafeIRDirty_0_N(// The number of arguments to
-                            // copyShadowValue.
-                            2, 
-                            // The name of copyShadowValue, used for
-                            // printing.
-                            "copyShadowTStoTS",
-                            // The actual function. This helper
-                            // function is usually a noop, but can do
-                            // something on weird architectures.
-                            VG_(fnptr_to_fnentry)(&copyShadowTStoTS),
-                            // Finally, the two arguments. Since both
-                            // our source and destination are at
-                            // constant offsets in the thread state in
-                            // this case, we just pass source offset
-                            // and destination offset.
-                            mkIRExprVec_2(mkU64(expr->Iex.Get.offset),
-                                          mkU64(st->Ist.Put.offset)));
-        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
-        break;
       case Iex_GetI:
-        // Mostly like the above, but the location that we're getting
-        // from is calculated at run time.
-        copyShadowValue =
-          unsafeIRDirty_0_N(2,
-                            "copyShadowTStoTS",
-                            VG_(fnptr_to_fnentry)(&copyShadowTStoTS),
-                            mkIRExprVec_2(// Calculate array_base +
-                                          // (ix + bias) % array_len
-                                          // at run time. This will
-                                          // give us the offset into
-                                          // the thread state at which
-                                          // the actual get is
-                                          // happening, so we can use
-                                          // that same offset for the
-                                          // shadow get.
-                                          IRExpr_Binop( // +
-                                                       Iop_Add64,
-                                                       // array_base
-                                                       mkU64(expr->Iex.GetI.descr->base),
-                                                       // These two ops together are %
-                                                       IRExpr_Unop(Iop_64HIto32,
-                                                                   IRExpr_Binop(Iop_DivModU64to32,
-                                                                                // +
-                                                                                IRExpr_Binop(Iop_Add64,
-                                                                                             // ix
-                                                                                             //
-                                                                                             // This
-                                                                                             // is
-                                                                                             // the
-                                                                                             // only
-                                                                                             // part
-                                                                                             // that's
-                                                                                             // not
-                                                                                             // constant.
-                                                                                             expr->Iex.GetI.ix,
-                                                                                             // bias
-                                                                                             mkU64(expr->Iex.GetI.bias)),
-                                                                                // array_len
-                                                                                mkU64(expr->Iex.GetI.descr->nElems)))),
-                                          mkU64(st->Ist.Put.offset)));
-        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+      case Iex_Qop:
+      case Iex_Triop:
+      case Iex_Binop:
+      case Iex_Unop:
+      case Iex_Load:
+      case Iex_ITE:
+      case Iex_CCall:
+      case Iex_VECRET:
+      case Iex_BBPTR:
+        // None of these should happen in flattened IR.
+        VG_(dmsg)("A non-constant or temp is being placed into thread state in a single IR statement! That doesn't seem flattened...\n");
+        break;
+      case Iex_Const:
         break;
       case Iex_RdTmp:
         // Okay, in this one we're reading from a temp instead of the
@@ -169,57 +111,6 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
                                           mkU64(expr->Iex.RdTmp.tmp),
                                           // The thread state offset,
                                           // as above.
-                                          mkU64(st->Ist.Put.offset)));
-        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
-        break;
-      case Iex_Qop:
-      case Iex_Triop:
-      case Iex_Binop:
-      case Iex_Unop:
-        instrumentOpPut(sbOut, st->Ist.Put.offset, expr);
-        break;
-      case Iex_Load:
-        copyShadowValue =
-          unsafeIRDirty_0_N(2,
-                            "copyShadowMemtoTS",
-                            VG_(fnptr_to_fnentry)(&copyShadowMemtoTS),
-                            mkIRExprVec_2(expr->Iex.Load.addr,
-                                          mkU64(st->Ist.Put.offset)));
-        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
-        break;
-        // Pure function calls shouldn't show up in the input, from
-        // what I know, so we don't have to do anything for them. If
-        // they did show up in the input, there isn't really anything
-        // we can do with them anyway, since they're so opaque about
-        // what they're doing.
-      case Iex_VECRET:
-      case Iex_BBPTR:
-      case Iex_CCall:
-        VG_(dmsg)("There's a pure c call in our input! I wonder why...\n");
-        // We don't need to instrument constants being loaded in,
-        // because we're not going to start treating a value like a
-        // float until a float operation happens to it. We follow
-        // FpDebug in this regard.
-      case Iex_Const:
-        break;
-      case Iex_ITE:
-        copyShadowValue =
-          unsafeIRDirty_0_N(2,
-                            "copyShadowTmptoTS",
-                            VG_(fnptr_to_fnentry)(&copyShadowTmptoTS),
-                            mkIRExprVec_2(IRExpr_ITE(expr->Iex.ITE.cond,
-                                                     // The branches
-                                                     // of the "if"
-                                                     // should be
-                                                     // temps, since
-                                                     // the IR is
-                                                     // flattened at
-                                                     // instrumentation
-                                                     // time. If they
-                                                     // aren't, we're
-                                                     // in trouble.
-                                                     mkU64(expr->Iex.ITE.iftrue->Iex.RdTmp.tmp),
-                                                     mkU64(expr->Iex.ITE.iffalse->Iex.RdTmp.tmp)),
                                           mkU64(st->Ist.Put.offset)));
         addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
         break;
