@@ -83,21 +83,6 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
       expr = st->Ist.Put.data;
       addStmtToIRSB(sbOut, st);
       switch (expr->tag) {
-      case Iex_Binder:
-      case Iex_Get:
-      case Iex_GetI:
-      case Iex_Qop:
-      case Iex_Triop:
-      case Iex_Binop:
-      case Iex_Unop:
-      case Iex_Load:
-      case Iex_ITE:
-      case Iex_CCall:
-      case Iex_VECRET:
-      case Iex_BBPTR:
-        // None of these should happen in flattened IR.
-        VG_(dmsg)("A non-constant or temp is being placed into thread state in a single IR statement! That doesn't seem flattened...\n");
-        break;
       case Iex_Const:
         break;
       case Iex_RdTmp:
@@ -114,6 +99,10 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
                                           mkU64(st->Ist.Put.offset)));
         addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
         break;
+      default:
+        // This shouldn't happen in flattened IR.
+        VG_(dmsg)("A non-constant or temp is being placed into thread state in a single IR statement! That doesn't seem flattened...\n");
+        break;
       }
       break;
     case Ist_PutI:
@@ -122,7 +111,52 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
       // putting into. This will probably involve putting more burden
       // on the runtime c function which we'll insert after the put to
       // process it.
+      expr = st->Ist.Put.data;
       addStmtToIRSB(sbOut, st);
+      switch (expr->tag) {
+      case Iex_Const:
+        break;
+      case Iex_RdTmp:
+        copyShadowValue =
+          unsafeIRDirty_0_N(2,
+                            "copyShadowTmptoTS",
+                            VG_(fnptr_to_fnentry)(&copyShadowTmptoTS)
+                            mkIRExprVec_2(mkU64(expr->Iex.RdTmp.tmp),
+                                          // Calculate array_base +
+                                          // (ix + bias) % array_len
+                                          // at run time. This will
+                                          // give us the offset into
+                                          // the thread state at which
+                                          // the actual get is
+                                          // happening, so we can use
+                                          // that same offset for the
+                                          // shadow get.
+                                          IRExpr_Binop( // +
+                                                       Iop_Add64,
+                                                       // array_base
+                                                       mkU64(st->Ist.PutI.descr->base),
+                                                       // These two ops together are %
+                                                       IRExpr_Unop(Iop_64HIto32,
+                                                                   IRExpr_Binop(Iop_DivModU64to32,
+                                                                                // +
+                                                                                IRExpr_Binop(Iop_Add64,
+                                                                                             // ix
+                                                                                             //
+                                                                                             // This
+                                                                                             // is
+                                                                                             // the
+                                                                                             // only
+                                                                                             // part
+                                                                                             // that's
+                                                                                             // not
+                                                                                             // constant.
+                                                                                             st->Ist.PutI.details->ix,
+                                                                                             // bias
+                                                                                             mkU64(st->Ist.PutI.details->bias)),
+                                                                                // array_len
+                                                                                mkU64(st->Ist.PutI.details->descr->nElems))))));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+      }
       break;
     case Ist_WrTmp:
       // Here we'll instrument moving Shadow values into temps. See
