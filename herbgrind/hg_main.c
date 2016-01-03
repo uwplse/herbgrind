@@ -29,29 +29,6 @@
 
 #include "hg_include.h"
 
-// Whether or not the tool is currently "turned on".
-static int running = 0;
-
-// Here are the data structures we set up to hold shadow values. They
-// take three forms:
-//
-// * Values that are being worked on currently are held in temps by
-//   VEX, so we have an array of shadow values to match each temp
-//   register, up to a limit set in the .h file.
-//
-// * Values that persist between blocks (I think this is how it
-//   works), are held in a per thread data structure by VEX, so we set
-//   up another array for every thread to hold those, also up to a
-//   limit set in the .h file.
-//
-// * Finally, values might be written to memory, and then read out
-//   later at some arbitrary point. For these, we'll maintain a hash
-//   table that maps addresses to shadow values, so we don't have to
-//   maintain a vast array of shadow values for all of memory.
-static ShadowValue* localTemps[MAX_TEMPS];
-static ShadowValue* threadRegisters[VG_N_THREADS][MAX_REGISTERS];
-static VgHashTable globalMemory = NULL;
-
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
 static
@@ -84,6 +61,8 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
   // add our shadow values.
   for (int i = 0; i < bb->stmts_used; i++){
     IRStmt* st = bb->stmts[i];
+    IRExpr* expr;
+    IRDirty* copyShadowValue;
 
     switch (st->tag) {
       // If it's a no op, or just metadata, we'll just pass it into
@@ -103,7 +82,7 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
       // shadow value locations, or they can involve doing an MPFR
       // calculation, depending on what sort of expression we're
       // getting from.
-      IRExpr* expr = st->Put.data;
+      expr = st->Ist.Put.data;
       addStmtToIRSB(sbOut, st);
       switch (expr->tag) {
       case Iex_Binder:
@@ -116,7 +95,7 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
         // This case is simply getting a value from one part of the
         // guest state, and putting it into another. Transferring
         // shadow values in this case is about as simple as it gets.
-        IRDirty* copyShadowValue =
+        copyShadowValue =
           unsafeIRDirty_0_N(// The number of arguments to
                             // copyShadowValue.
                             2, 
@@ -132,14 +111,14 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
                             // constant offsets in the thread state in
                             // this case, we just pass source offset
                             // and destination offset.
-                            mkIRExprVec_2(mkU64(expr->Get.offset),
-                                          mkU64(st->Put.offset)));
+                            mkIRExprVec_2(mkU64(expr->Iex.Get.offset),
+                                          mkU64(st->Ist.Put.offset)));
         addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
         break;
       case Iex_GetI:
         // Mostly like the above, but the location that we're getting
         // from is calculated at run time.
-        IRDirty* copyShadowValue =
+        copyShadowValue =
           unsafeIRDirty_0_N(2,
                             "copyShadowTStoTS",
                             VG_(fnptr_to_fnentry)(&copyShadowTStoTS),
@@ -155,12 +134,12 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
                                           IRExpr_Binop( // +
                                                        Iop_Add64,
                                                        // array_base
-                                                       mkU64(expr->GetI.descr->base),
+                                                       mkU64(expr->Iex.GetI.descr->base),
                                                        // These two ops together are %
                                                        IRExpr_Unop(Iop_64HIto32,
-                                                                   IRExpr_Binop(IOp_DivModU64to32,
+                                                                   IRExpr_Binop(Iop_DivModU64to32,
                                                                                 // +
-                                                                                IRExpr_Binop(IOp_Add64,
+                                                                                IRExpr_Binop(Iop_Add64,
                                                                                              // ix
                                                                                              //
                                                                                              // This
@@ -171,41 +150,41 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
                                                                                              // that's
                                                                                              // not
                                                                                              // constant.
-                                                                                             expr->GetI.ix,
+                                                                                             expr->Iex.GetI.ix,
                                                                                              // bias
-                                                                                             mkU64(expr->GetI.bias)),
+                                                                                             mkU64(expr->Iex.GetI.bias)),
                                                                                 // array_len
-                                                                                mkU64(expr->GetI.descr->nElems)))),
-                                          mkU64(st->Put.offset)));
+                                                                                mkU64(expr->Iex.GetI.descr->nElems)))),
+                                          mkU64(st->Ist.Put.offset)));
         addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
         break;
       case Iex_RdTmp:
         // Okay, in this one we're reading from a temp instead of the
         // thread state, but otherwise it's pretty much like above.
-        IRDirty* copyShadowValue =
+        copyShadowValue =
           unsafeIRDirty_0_N(2,
                             "copyShadowTmptoTS",
                             VG_(fnptr_to_fnentry)(&copyShadowTmptoTS),
                             mkIRExprVec_2(// The number of the temporary
-                                          mkU64(expr->RdTmp.tmp),
+                                          mkU64(expr->Iex.RdTmp.tmp),
                                           // The thread state offset,
                                           // as above.
-                                          mkU64(st->Put.offset)));
+                                          mkU64(st->Ist.Put.offset)));
         addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
         break;
       case Iex_Qop:
       case Iex_Triop:
       case Iex_Binop:
       case Iex_Unop:
-        instrumentOpPut(sbOut, offset, expr);
+        instrumentOpPut(sbOut, st->Ist.Put.offset, expr);
         break;
       case Iex_Load:
-        IRDirty* copyShadowValue =
+        copyShadowValue =
           unsafeIRDirty_0_N(2,
                             "copyShadowMemtoTS",
                             VG_(fnptr_to_fnentry)(&copyShadowMemtoTS),
-                            mkIRExprVec_2(addr,
-                                          mkU64(st->Put.offset)));
+                            mkIRExprVec_2(expr->Iex.Load.addr,
+                                          mkU64(st->Ist.Put.offset)));
         addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
         break;
         // Pure function calls shouldn't show up in the input, from
@@ -213,6 +192,8 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
         // they did show up in the input, there isn't really anything
         // we can do with them anyway, since they're so opaque about
         // what they're doing.
+      case Iex_VECRET:
+      case Iex_BBPTR:
       case Iex_CCall:
         VG_(dmsg)("There's a pure c call in our input! I wonder why...\n");
         // We don't need to instrument constants being loaded in,
@@ -220,6 +201,9 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
         // float until a float operation happens to it. We follow
         // FpDebug in this regard.
       case Iex_Const:
+        break;
+      case Iex_ITE:
+        // TODO: Handle these.
         break;
       }
       break;
@@ -275,6 +259,10 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
   return sbOut;
 }
 
+static void instrumentOpPut(IRSB* sb, Int offset, IRExpr* expr){
+  // TODO: Do something here.
+}
+
 // This handles client requests, the macros that client programs stick
 // in to send messages to the tool.
 static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
@@ -294,12 +282,6 @@ static void hg_fini(Int exitcode){}
 // This does any initialization that needs to be done after command
 // line processing.
 static void hg_post_clo_init(void){}
-
-// This disables the instrumentation of this tool.
-static void stopHerbGrind(void){ running = 0; }
-
-// This enables the instrumentation of this tool.
-static void startHerbGrind(void){ running = 1; }
 
 // This is where we initialize everything
 static void hg_pre_clo_init(void)
@@ -329,15 +311,10 @@ static void hg_pre_clo_init(void)
 
    // Set up the data structures we'll need to keep track of our MPFR
    // shadow values.
-   VG(HT_construct)
+   init_runtime();
 }
 
 VG_DETERMINE_INTERFACE_VERSION(hg_pre_clo_init)
-
-// Some memory allocation functions for gmp support
-static void* gmp_alloc(size_t t){ return VG_(malloc)("hg.gmp_alloc.1", t); }
-static void* gmp_realloc(void* p, size_t t1, size_t t2){ return VG_(realloc)("hg.gmp_realloc.1", p, t1); }
-static void gmp_free(void* p, size_t t){ return VG_(free)(p); }
 
 /*--------------------------------------------------------------------*/
 /*--- end                                                          ---*/

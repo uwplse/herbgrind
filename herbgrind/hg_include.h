@@ -9,6 +9,9 @@
 // to the tool. For instance, HERBGRIND_BEGIN() and HERBGRIND_END()
 // will turn the tool on an off for certain sections.
 #include "herbgrind.h"
+// This file has all the functions and data structures that will be
+// called by the instrumented program.
+#include "hg_runtime.h"
 
 // For arbitrary precision arithmetic. Might have to mess with this a
 // bit to get it to work.
@@ -18,38 +21,16 @@
 // Pull in this header file so that we can call the valgrind version
 // of printf.
 #include "pub_tool_libcprint.h"
-// Pull in this header file so that we can pass memory allocation
-// functions to gmp and mpfr.
-#include "pub_tool_mallocfree.h"
 // Pull in this header file so that we can set the strlen, strcpy,
 // memmove, memcmp, and memset functions of mpfr to their valgrind
 // library equivalents.
 #include "pub_tool_libcbase.h"
-// This header gets us the VG_N_THREADS macro, as well as some other
-// misc thread data.
-#include "pub_tool_threadstate.h"
-// This gets us a hash table data structure that's safe to use with
-// valgrind, so we can set up a memory map for shadowing values that
-// leave our workbench area.
-#include "pub_tool_hashtable.h"
-
-// The maximum number of pre-instrumentation temporary values per
-// block we're willing to deal with.
-#define	MAX_TEMPS 1000
-// The maximum number of per-thread registers we'll account for.
-#define	MAX_REGISTERS 1000
+// This gets us the fnptr_to_fnentry function.
+#include "pub_tool_machine.h"
 
 // Some helpful macros to have around. Some of these are from FpDebug.
 #define mkU32(_n) IRExpr_Const(IRConst_U32(_n))
 #define mkU64(_n) IRExpr_Const(IRConst_U64(_n))
-
-
-// The value we're tracking for each floating point value in the
-// program.
-typedef struct _ShadowValue {
-  mpfr_t value;
-} ShadowValue;
-
 
 // This does any initialization that needs to be done after command
 // line processing.
@@ -71,20 +52,6 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret);
 // This is where we initialize everything
 static void hg_pre_clo_init(void);
 
-// This disables the instrumentation of this tool.
-static void stopHerbGrind(void);
-// This enables the instrumentation of this tool.
-static void startHerbGrind(void);
-
-// Some memory allocation functions for gmp support
-static void* gmp_alloc(size_t t);
-static void* gmp_realloc(void* p, size_t t1, size_t t2);
-static void gmp_free(void* p, size_t t);
-
-// The functions that we'll insert into the program to move around
-// shadow values at run time.
-static VG_REGPARM(2) void copyShadowTStoTS(UWord src_reg, UWord dest_reg);
-static VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg);
-static VG_REGPARM(2) void copyShadowMemtoTS(Addr src_mem, UWord dest_reg);
+static void instrumentOpPut(IRSB* sb, Int offset, IRExpr* expr);
 
 #endif
