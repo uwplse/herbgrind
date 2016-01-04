@@ -2,7 +2,7 @@
 
 void instrumentStatement(IRStmt* st, IRSB* sbOut){
   IRExpr* expr;
-  IRDirty* copyShadowValue;
+  IRDirty* copyShadowLocation;
 
   switch (st->tag) {
     // If it's a no op, or just metadata, we'll just pass it into
@@ -26,7 +26,7 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut){
     case Iex_RdTmp:
       // Okay, in this one we're reading from a temp instead of the
       // thread state, but otherwise it's pretty much like above.
-      copyShadowValue =
+      copyShadowLocation =
         unsafeIRDirty_0_N(2,
                           "copyShadowTmptoTS",
                           VG_(fnptr_to_fnentry)(&copyShadowTmptoTS),
@@ -35,7 +35,7 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut){
                                         // The thread state offset,
                                         // as above.
                                         mkU64(st->Ist.Put.offset)));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
     case Iex_Const:
       break;
@@ -57,7 +57,7 @@ That doesn't seem flattened...\n");
     addStmtToIRSB(sbOut, st);
     switch (expr->tag) {
     case Iex_RdTmp:
-      copyShadowValue =
+      copyShadowLocation =
         unsafeIRDirty_0_N(
                           2,
                           "copyShadowTmptoTS",
@@ -73,7 +73,7 @@ That doesn't seem flattened...\n");
                                                           st->Ist.PutI.details->ix,
                                                           st->Ist.PutI.details->bias,
                                                           st->Ist.PutI.details->descr->nElems)));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
     case Iex_Const:
       break;
@@ -92,17 +92,17 @@ That doesn't seem flattened...\n");
     expr = st->Ist.WrTmp.data;
     switch(expr->tag) {
     case Iex_Get:
-      copyShadowValue =
+      copyShadowLocation =
         unsafeIRDirty_0_N(2,
                           "copyShadowTStoTmp",
                           VG_(fnptr_to_fnentry)(&copyShadowTStoTmp),
                           mkIRExprVec_2(mkU64(expr->Iex.Get.offset),
                                         mkU64(st->Ist.WrTmp.tmp)));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
     case Iex_GetI:
       // See comments above on PutI to make sense of this thing.
-      copyShadowValue =
+      copyShadowLocation =
         unsafeIRDirty_0_N(2,
                           "copyShadowTStoTmp",
                           VG_(fnptr_to_fnentry)(&copyShadowTStoTmp),
@@ -111,19 +111,19 @@ That doesn't seem flattened...\n");
                                                           expr->Iex.GetI.bias,
                                                           expr->Iex.GetI.descr->nElems),
                                         mkU64(st->Ist.WrTmp.tmp)));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
     case Iex_RdTmp:
-      copyShadowValue =
+      copyShadowLocation =
         unsafeIRDirty_0_N(2,
                           "copyShadowTmptoTmp",
                           VG_(fnptr_to_fnentry)(&copyShadowTmptoTmp),
                           mkIRExprVec_2(mkU64(expr->Iex.RdTmp.tmp),
                                         mkU64(st->Ist.WrTmp.tmp)));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
     case Iex_ITE:
-      copyShadowValue =
+      copyShadowLocation =
         unsafeIRDirty_0_N(2,
                           "copyShadowTmptoTmp",
                           VG_(fnptr_to_fnentry)(&copyShadowTmptoTmp),
@@ -141,15 +141,15 @@ That doesn't seem flattened...\n");
                                                    mkU64(expr->Iex.ITE.iftrue->Iex.RdTmp.tmp),
                                                    mkU64(expr->Iex.ITE.iffalse->Iex.RdTmp.tmp)),
                                         mkU64(st->Ist.WrTmp.tmp)));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
     case Iex_Load:
-      copyShadowValue =
+      copyShadowLocation =
         unsafeIRDirty_0_N(2,
                           "copyShadowMemtoTmp",
                           VG_(fnptr_to_fnentry)(&copyShadowMemtoTmp),
                           mkIRExprVec_2(expr->Iex.Load.addr,
                                         mkU64(st->Ist.WrTmp.tmp)));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
     case Iex_Qop:
     case Iex_Triop:
     case Iex_Binop:
@@ -175,13 +175,13 @@ That doesn't seem flattened...\n");
     expr = st->Ist.Store.data;
     switch (expr->tag) {
     case Iex_RdTmp:
-      copyShadowValue =
+      copyShadowLocation =
         unsafeIRDirty_0_N(2,
                           "copyShadowTmptoMem",
                           VG_(fnptr_to_fnentry)(&copyShadowTmptoMem),
                           mkIRExprVec_2(mkU64(expr->Iex.RdTmp.tmp),
                                         st->Ist.Store.addr));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
     case Iex_Const:
       break;
@@ -200,14 +200,14 @@ That doesn't seem flattened...\n");
     expr = st->Ist.Store.data;
     switch(expr->tag) {
     case Iex_RdTmp:
-      copyShadowValue =
+      copyShadowLocation =
         unsafeIRDirty_0_N(3,
                           "copyShadowTmptoMemG",
                           VG_(fnptr_to_fnentry)(&copyShadowTmptoMemG),
                           mkIRExprVec_3(st->Ist.StoreG.details->guard,
                                         mkU64(expr->Iex.RdTmp.tmp),
                                         st->Ist.Store.addr));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
     case Iex_Const:
       break;
     default:
@@ -222,7 +222,7 @@ That doesn't seem flattened...\n");
     // Guarded load. This will load a value from memory, and write
     // it to a temp, but only if a condition returns true.
     addStmtToIRSB(sbOut, st);
-    copyShadowValue =
+    copyShadowLocation =
       unsafeIRDirty_0_N(4,
                         "copyShadowMemtoTmpIf",
                         VG_(fnptr_to_fnentry)(&copyShadowMemtoTmpIf),
@@ -230,7 +230,7 @@ That doesn't seem flattened...\n");
                                       st->Ist.LoadG.details->addr,
                                       st->Ist.LoadG.details->alt,
                                       mkU64(st->Ist.LoadG.details->dst)));
-    addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowValue));
+    addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
     break;
   case Ist_CAS:
     // This is an atomic compare and swap operation. Basically, has

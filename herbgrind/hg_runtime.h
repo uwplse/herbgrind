@@ -49,16 +49,27 @@ VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem)
 
 // The value we're tracking for each floating point value in the
 // program.
-typedef struct _ShadowValue {
+typedef struct _ShadowLocation {
   // This member is here to make this structure compatible with the
   // hash table implementation in pub_tool_hashtable. None of our code
   // will actually use it.
-  struct _ShadowValue* next;
+  struct _ShadowLocation* next;
   // This part is also here for the hash table structure, but we'll
   // actually be messing with it as we'll set it to the address of any
   // memory location we want to store a shadow value for.
   UWord addr;
-  // The actual high precision value shadowing a float.
+  // The actual high precision value shadowing a float. In most cases
+  // this should be a pointer to a single value, but in cases where we
+  // move, for instance, two 64-bit floats into a 128 bit location, we
+  // might need to store multiple shadow values in a single location.
+  ShadowValue* values;
+  // Stores how many shadow values are packed into this shadow
+  // location. As described above, this should be one most of the
+  // time.
+  UWord numValues;
+} ShadowLocation;
+
+typedef struct _ShadowValue {
   mpfr_t value;
 } ShadowValue;
 

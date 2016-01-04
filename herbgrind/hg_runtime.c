@@ -19,8 +19,8 @@ int running = 0;
 //   later at some arbitrary point. For these, we'll maintain a hash
 //   table that maps addresses to shadow values, so we don't have to
 //   maintain a vast array of shadow values for all of memory.
-static ShadowValue* localTemps[MAX_TEMPS];
-static ShadowValue* threadRegisters[MAX_THREADS][MAX_REGISTERS];
+static ShadowLocation* localTemps[MAX_TEMPS];
+static ShadowLocation* threadRegisters[MAX_THREADS][MAX_REGISTERS];
 static VgHashTable* globalMemory = NULL;
 
 // This disables the instrumentation of this tool.
@@ -75,7 +75,7 @@ VG_REGPARM(4) void copyShadowMemtoTmpIf(UWord cond, Addr src_mem, UWord alt_tmp,
 
 // Copy a shadow value from a temporary to memory.
 VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem){
-  ShadowValue* val = localTemps[src_tmp];
+  ShadowLocation* val = localTemps[src_tmp];
   // In all of the above cases, we don't bother checking for null,
   // since it there's no harm in passing a null through. In this case
   // though, and the ones below it, we don't want to bloat the hash
@@ -91,7 +91,7 @@ VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem){
 // Copy a shadow value from a temporary to memory, only if cond
 // evaluates to true. Otherwise, do nothing.
 VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem){
-  ShadowValue* val = localTemps[src_tmp];
+  ShadowLocation* val = localTemps[src_tmp];
   if (val != NULL && cond){
     val->addr = dest_mem;
     VG_(HT_add_node)(globalMemory, val);
