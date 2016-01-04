@@ -206,6 +206,23 @@ static void instrumentOpPut(IRSB* sb, Int offset, IRExpr* expr){
   // TODO: Do something here.
 }
 
+// Produce an expression to calculate (base + ((idx + bias) % len)),
+// where base, bias, and len are fixed, and idx can vary at runtime.
+static IRExpr mkArrayLookupExpr(Int base, IRExpr idx, Int bias, Int len){
+  return IExpr_Binop(// +
+                     Iop_Add64,
+                     // base
+                     mkU64(base),
+                     // These two ops together are %
+                     IRExpr_Unop(Iop_64HIto32,
+                     IRExpr_Binop(Iop_DivModU64to32,
+                                  IRExpr_Binop(// +
+                                               Iop_Add64,
+                                               idx,
+                                               mkU64(bias)),
+                                  mkU64(len))));
+}
+
 // This handles client requests, the macros that client programs stick
 // in to send messages to the tool.
 static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
