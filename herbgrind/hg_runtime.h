@@ -1,4 +1,5 @@
 #ifndef _HG_RUNTIME
+#define _HG_RUNTIME
 
 // This gets us a hash table data structure that's safe to use with
 // valgrind, so we can set up a memory map for shadowing values that
