@@ -1,26 +1,5 @@
 #include "hg_instrument.h"
 
-static void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
-  // TODO: Do something here.
-}
-
-// Produce an expression to calculate (base + ((idx + bias) % len)),
-// where base, bias, and len are fixed, and idx can vary at runtime.
-static IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len){
-  return IRExpr_Binop(// +
-                      Iop_Add64,
-                      // base
-                      mkU64(base),
-                      // These two ops together are %
-                      IRExpr_Unop(Iop_64HIto32,
-                      IRExpr_Binop(Iop_DivModU64to32,
-                                   IRExpr_Binop(// +
-                                                Iop_Add64,
-                                                idx,
-                                                mkU64(bias)),
-                                   mkU64(len))));
-}
-
 void instrumentStatement(IRStmt* st, IRSB* sbOut){
   IRExpr* expr;
   IRDirty* copyShadowValue;
@@ -286,5 +265,26 @@ set of instructions, because we don't support multithreaded programs.");
 There's a dirty function call in the tool input! That can't be right...");
     break;
   }
+}
+
+static void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
+  // TODO: Do something here.
+}
+
+// Produce an expression to calculate (base + ((idx + bias) % len)),
+// where base, bias, and len are fixed, and idx can vary at runtime.
+static IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len){
+  return IRExpr_Binop(// +
+                      Iop_Add64,
+                      // base
+                      mkU64(base),
+                      // These two ops together are %
+                      IRExpr_Unop(Iop_64HIto32,
+                      IRExpr_Binop(Iop_DivModU64to32,
+                                   IRExpr_Binop(// +
+                                                Iop_Add64,
+                                                idx,
+                                                mkU64(bias)),
+                                   mkU64(len))));
 }
 
