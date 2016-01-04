@@ -24,6 +24,7 @@
 #define MAX_THREADS 16
 
 void init_runtime(void);
+void cleanup_runtime(void);
 
 // This disables the instrumentation of this tool.
 void stopHerbGrind(void);

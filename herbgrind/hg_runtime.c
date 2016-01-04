@@ -38,6 +38,9 @@ void init_runtime(){
   globalMemory = VG_(HT_construct)("memory_shadows");
 }
 
+void cleanup_runtime(){
+}
+
 // Copy a shadow value from a temporary to a temporary.
 VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
   localTemps[dest_tmp] = localTemps[src_tmp];

@@ -366,7 +366,9 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
 }
 
 // This is called after the program exits, for cleanup and such.
-static void hg_fini(Int exitcode){}
+static void hg_fini(Int exitcode){
+  cleanup_runtime();
+}
 // This does any initialization that needs to be done after command
 // line processing.
 static void hg_post_clo_init(void){}
