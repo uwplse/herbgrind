@@ -23,6 +23,7 @@
 // The maximum number of per-thread registers we'll account for.
 #define	MAX_REGISTERS 1000
 #define MAX_THREADS 16
+#define PRECISION 1000
 
 void init_runtime(void);
 void cleanup_runtime(void);
