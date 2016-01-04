@@ -52,9 +52,11 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret);
 // This is where we initialize everything
 static void hg_pre_clo_init(void);
 
-static void instrumentOpPut(IRSB* sb, Int offset, IRExpr* expr);
+// Add instrumenting expressions to sb for an operation, storing the
+// result in the temporary at offset.
+static void instrumentOp(IRSB* sb, Int offset, IRExpr* expr);
 
 // Create an expression which calculates (base + ((idx + bias) % len)).
-static IRExpr mkArrayLookupExpr(Int base, IRExpr idx, Int bias, Int len);
+static IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len);
 
 #endif

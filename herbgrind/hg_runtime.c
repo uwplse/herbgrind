@@ -38,10 +38,9 @@ void init_runtime(){
   globalMemory = VG_(HT_construct)("memory_shadows");
 }
 
-// Copy a shadow value from somewhere in the current threads state to
-// somewhere else in the current threads state.
-VG_REGPARM(2) void copyShadowTStoTS(UWord src_reg, UWord dest_reg){
-  threadRegisters[VG_(get_running_tid)()][dest_reg] = threadRegisters[VG_(get_running_tid)()][dest_reg];
+// Copy a shadow value from a temporary to a temporary.
+VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
+  localTemps[dest_tmp] = localTemps[src_tmp];
 }
 
 // Copy a shadow value from a temporary to somewhere in the current
@@ -50,19 +49,9 @@ VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg){
   threadRegisters[VG_(get_running_tid)()][dest_reg] = localTemps[src_tmp];
 }
 
-// Copy a shadow value from memory to somewhere in the current threads state.
-VG_REGPARM(2) void copyShadowMemtoTS(Addr src_mem, UWord dest_reg){
-  threadRegisters[VG_(get_running_tid)()][dest_reg] = VG_(HT_lookup)(globalMemory, src_mem);
-}
-
 // Copy a shadow value from somewhere in the thread state to a temporary.
 VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, UWord dest_tmp){
   localTemps[dest_tmp] = threadRegisters[VG_(get_running_tid)()][src_reg];
-}
-
-// Copy a shadow value from a temporary to a temporary.
-VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
-  localTemps[dest_tmp] = localTemps[src_tmp];
 }
 
 // Copy a shadow value from memory to a temporary
@@ -70,9 +59,20 @@ VG_REGPARM(2) void copyShadowMemtoTmp(Addr src_mem, UWord dest_tmp){
   localTemps[dest_tmp] = VG_(HT_lookup)(globalMemory, src_mem);
 }
 
-// Copy a shadow value from somewhere in the thread state to memory.
-VG_REGPARM(2) void copyShadowTStoMem(UWord src_reg, Addr dest_mem){
-  ShadowValue* val = threadRegisters[VG_(get_running_tid)()][src_reg];
+// Copy a shadow value from memory to a temporary, only if cond
+// evaluates to true. Otherwise, copy the shadow value from another
+// temporary, "alt_tmp".
+VG_REGPARM(4) void copyShadowMemtoTmpIf(UWord cond, Addr src_mem, UWord alt_tmp, UWord dest_tmp){
+  if (cond) {
+    localTemps[dest_tmp] = VG_(HT_lookup)(globalMemory, src_mem);
+  } else {
+    localTemps[dest_tmp] = localTemps[alt_tmp];
+  }
+}
+
+// Copy a shadow value from a temporary to memory.
+VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem){
+  ShadowValue* val = localTemps[src_tmp];
   // In all of the above cases, we don't bother checking for null,
   // since it there's no harm in passing a null through. In this case
   // though, and the ones below it, we don't want to bloat the hash
@@ -85,19 +85,11 @@ VG_REGPARM(2) void copyShadowTStoMem(UWord src_reg, Addr dest_mem){
   }
 }
 
-// Copy a shadow value from a temporary to memory.
-VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem){
+// Copy a shadow value from a temporary to memory, only if cond
+// evaluates to true. Otherwise, do nothing.
+VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem){
   ShadowValue* val = localTemps[src_tmp];
-  if (val != NULL){
-    val->addr = dest_mem;
-    VG_(HT_add_node)(globalMemory, val);
-  }
-}
-
-// Copy a shadow value from one memory location to another.
-VG_REGPARM(2) void copyShadowMemtoMem(Addr src_mem, Addr dest_mem){
-  ShadowValue* val = VG_(HT_lookup)(globalMemory, src_mem);
-  if (val != NULL){
+  if (val != NULL && cond){
     val->addr = dest_mem;
     VG_(HT_add_node)(globalMemory, val);
   }

@@ -37,15 +37,13 @@ void gmp_free(void* p, size_t t);
 
 // The functions that we'll insert into the program to move around
 // shadow values at run time.
-VG_REGPARM(2) void copyShadowTStoTS(UWord src_reg, UWord dest_reg);
-VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg);
-VG_REGPARM(2) void copyShadowMemtoTS(Addr src_mem, UWord dest_reg);
-VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, UWord dest_tmp);
 VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp);
+VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg);
+VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, UWord dest_tmp);
 VG_REGPARM(2) void copyShadowMemtoTmp(Addr src_mem, UWord dest_tmp);
-VG_REGPARM(2) void copyShadowTStoMem(UWord src_reg, Addr dest_mem);
+VG_REGPARM(4) void copyShadowMemtoTmpIf(UWord cond, Addr src_mem, UWord alt_tmp, UWord dest_tmp);
 VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem);
-VG_REGPARM(2) void copyShadowMemtoMem(Addr src_mem, Addr dest_mem);
+VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem);
 
 // The value we're tracking for each floating point value in the
 // program.
