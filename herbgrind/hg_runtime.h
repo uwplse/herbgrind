@@ -48,6 +48,19 @@ VG_REGPARM(4) void copyShadowMemtoTmpIf(UWord cond, Addr src_mem, UWord alt_tmp,
 VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem);
 VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem);
 
+// The functions that we'll insert into the program to execute shadow
+// operations alongside the normal operations.
+VG_REGPARM(3) void executeUnaryShadowOp(UWord op, UWord arg_tmp, UWord dest_tmp);
+VG_REGPARM(4) void executeBinaryShadowOp(UWord op, UWord arg1_tmp, UWord arg2_tmp, UWord dest_tmp);
+VG_REGPARM(5) void executeTriShadowOp(UWord op, UWord arg1_tmp, UWord arg2_tmp, UWord arg3_tmp,
+                                      UWord dest_tmp);
+VG_REGPARM(6) void executeQuadShadowOp(UWord op, UWord arg1_tmp, UWord arg2_tmp, UWord arg3_tmp,
+                                       UWord arg4_tmp, UWord dest_tmp);
+
+typedef struct _ShadowValue {
+  mpfr_t value;
+} ShadowValue;
+
 // The value we're tracking for each floating point value in the
 // program.
 typedef struct _ShadowLocation {
@@ -69,10 +82,6 @@ typedef struct _ShadowLocation {
   // time.
   UWord numValues;
 } ShadowLocation;
-
-typedef struct _ShadowValue {
-  mpfr_t value;
-} ShadowValue;
 
 extern int running;
 

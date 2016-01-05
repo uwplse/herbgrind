@@ -6,6 +6,9 @@
 
 // This gets us the fnptr_to_fnentry function.
 #include "pub_tool_machine.h"
+// Pull in this header file so that we can call the valgrind version
+// of printf.
+#include "pub_tool_libcprint.h"
 
 // For arbitrary precision arithmetic. Might have to mess with this a
 // bit to get it to work.
@@ -26,9 +29,9 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut);
 
 // Add instrumenting expressions to sb for an operation, storing the
 // result in the temporary at offset.
-static void instrumentOp(IRSB* sb, Int offset, IRExpr* expr);
+void instrumentOp(IRSB* sb, Int offset, IRExpr* expr);
 
 // Create an expression which calculates (base + ((idx + bias) % len)).
-static IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len);
+IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len);
 
 #endif

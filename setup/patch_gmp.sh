@@ -12,11 +12,7 @@ sed -i \
     -e 's/malloc.*(.*);/0;\/\/&/' \
     -e 's/realloc.*(.*);/0;\/\/&/' \
     -e 's/free.*(.*);/\/\/&/' \
-    -e 's/fprintf.*(.*);/\/\/&/'\
-    ../deps/gmp-$1/memory.c
-sed -i \
-    -e 's/malloc.*(.*);/0;\/\/&/' \
-    -e 's/realloc.*(.*);/0;\/\/&/' \
-    -e 's/free.*(.*);/\/\/&/' \
     -e 's/fprintf.*(.*);/;\/\/&/'\
-    ../deps/gmp-$1/assert.c
+    ../deps/gmp-$1/memory.c \
+    ../deps/gmp-$1/assert.c \
+    ../deps/gmp-$1/mpz/realloc.c

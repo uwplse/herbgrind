@@ -17,6 +17,9 @@ else
 DEPS = deps/gmp-64/README deps/mpfr-64/README
 endif
 
+SOURCES=herbgrind/hg_main.c herbgrind/hg_include.h herbgrind/hg_instrument.c herbgrind/hg_instrument.h \
+herbgrind/hg_runtime.c herbgrind/hg_runtime.h
+
 all: compile
 
 # We use the README file of a repo as a proxy for whether or not that
@@ -50,7 +53,7 @@ setup: valgrind/herbgrind/Makefile $(DEPS)
 
 # This is the target we call to actually get the executable built so
 # we can run herbgrind. 
-valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT): herbgrind/hg_main.c herbgrind/hg_include.h setup
+valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) herbgrind/hg_main.c herbgrind/hg_include.h setup
 # First, we've got to make sure all the dependencies are extracted and set up.
 	$(MAKE) setup
 # Copy over the herbgrind sources again, because why the hell not.

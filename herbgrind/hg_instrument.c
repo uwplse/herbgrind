@@ -266,14 +266,66 @@ There's a dirty function call in the tool input! That can't be right...");
     break;
   }
 }
+// Add instrumenting expressions to sb for an operation, storing the
+// result in the temporary at offset.
+void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
+  IRDirty* executeShadowOp;
 
-static void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
-  // TODO: Do something here.
+  switch (expr->tag){
+  case Iex_Unop:
+    executeShadowOp =
+      unsafeIRDirty_0_N(3,
+                        "executeUnaryShadowOp",
+                        VG_(fnptr_to_fnentry)(&executeUnaryShadowOp),
+                        mkIRExprVec_3(mkU64(expr->Iex.Unop.op),
+                                      mkU64(expr->Iex.Unop.arg->Iex.RdTmp.tmp),
+                                      mkU64(offset)));
+    addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+    break;
+  case Iex_Binop:
+    executeShadowOp =
+      unsafeIRDirty_0_N(4,
+                        "executeBinaryShadowOp",
+                        VG_(fnptr_to_fnentry)(&executeBinaryShadowOp),
+                        mkIRExprVec_4(mkU64(expr->Iex.Binop.op),
+                                      mkU64(expr->Iex.Binop.arg1->Iex.RdTmp.tmp),
+                                      mkU64(expr->Iex.Binop.arg2->Iex.RdTmp.tmp),
+                                      mkU64(offset)));
+    addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+    break;
+  case Iex_Triop:
+    executeShadowOp =
+      unsafeIRDirty_0_N(5,
+                        "executeTriShadowOp",
+                        VG_(fnptr_to_fnentry)(&executeTriShadowOp),
+                        mkIRExprVec_5(mkU64(expr->Iex.Triop.details->op),
+                                      mkU64(expr->Iex.Triop.details->arg1->Iex.RdTmp.tmp),
+                                      mkU64(expr->Iex.Triop.details->arg2->Iex.RdTmp.tmp),
+                                      mkU64(expr->Iex.Triop.details->arg3->Iex.RdTmp.tmp),
+                                      mkU64(offset)));
+    addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+    break;
+  case Iex_Qop:
+    executeShadowOp =
+      unsafeIRDirty_0_N(6,
+                        "executeQuadShadowOp",
+                        VG_(fnptr_to_fnentry)(&executeQuadShadowOp),
+                        mkIRExprVec_6(mkU64(expr->Iex.Qop.details->op),
+                                      mkU64(expr->Iex.Qop.details->arg1->Iex.RdTmp.tmp),
+                                      mkU64(expr->Iex.Qop.details->arg2->Iex.RdTmp.tmp),
+                                      mkU64(expr->Iex.Qop.details->arg3->Iex.RdTmp.tmp),
+                                      mkU64(expr->Iex.Qop.details->arg4->Iex.RdTmp.tmp),
+                                      mkU64(offset)));
+    addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+    break;
+  default:
+    VG_(dmsg)("BAD THINGS!!!!\n");
+  }
 }
 
 // Produce an expression to calculate (base + ((idx + bias) % len)),
 // where base, bias, and len are fixed, and idx can vary at runtime.
-static IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len){
+IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len){
   return IRExpr_Binop(// +
                       Iop_Add64,
                       // base

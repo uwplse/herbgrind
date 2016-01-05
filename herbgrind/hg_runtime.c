@@ -123,3 +123,18 @@ VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem)
     VG_(HT_add_node)(globalMemory, val);
   }
 }
+// Execute a shadow operation, storing the result of the high
+// precision operation applied to the shadow value at the arg_tmp
+// offset, into the shadow value at the dest_tmp offset. Depending on
+// the value of op, we'll know which operation to apply. op will be
+// mapped to operations by the enumeration at libvex_ir.h:415.
+VG_REGPARM(3) void executeUnaryShadowOp(UWord op, UWord arg_tmp, UWord dest_tmp){
+}
+VG_REGPARM(4) void executeBinaryShadowOp(UWord op, UWord arg1_tmp, UWord arg2_tmp, UWord dest_tmp){
+}
+VG_REGPARM(5) void executeTriShadowOp(UWord op, UWord arg1_tmp, UWord arg2_tmp, UWord arg3_tmp,
+                                      UWord dest_tmp){
+}
+VG_REGPARM(6) void executeQuadShadowOp(UWord op, UWord arg1_tmp, UWord arg2_tmp, UWord arg3_tmp,
+                                       UWord arg4_tmp, UWord dest_tmp){
+}
