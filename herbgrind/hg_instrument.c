@@ -142,6 +142,7 @@ That doesn't seem flattened...\n");
                                                    mkU64(expr->Iex.ITE.iffalse->Iex.RdTmp.tmp)),
                                         mkU64(st->Ist.WrTmp.tmp)));
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      break;
     case Iex_Load:
       copyShadowLocation =
         unsafeIRDirty_0_N(2,
@@ -150,6 +151,7 @@ That doesn't seem flattened...\n");
                           mkIRExprVec_2(expr->Iex.Load.addr,
                                         mkU64(st->Ist.WrTmp.tmp)));
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      break;
     case Iex_Qop:
     case Iex_Triop:
     case Iex_Binop:
