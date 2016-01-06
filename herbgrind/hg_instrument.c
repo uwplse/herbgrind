@@ -3,6 +3,7 @@
 void instrumentStatement(IRStmt* st, IRSB* sbOut){
   IRExpr* expr;
   IRDirty* copyShadowLocation;
+  LoadG_Info* loadGInfo;
 
   switch (st->tag) {
     // If it's a no op, or just metadata, we'll just pass it into
@@ -224,14 +225,29 @@ That doesn't seem flattened...\n");
     // Guarded load. This will load a value from memory, and write
     // it to a temp, but only if a condition returns true.
     addStmtToIRSB(sbOut, st);
+    loadGInfo = VG_(malloc)("hg.loadGmalloc.1", sizeof(LoadG_Info));
+    // These are the lines we'd like to write. Unfortunately, we
+    // can't, because these values in theory are not known until the
+    // block is run. So, we're going to do the same thing, but at
+    // runtime, by inserting store instructions.
+
+    /* loadGInfo->cond = st->Ist.LoadG.details->guard; */
+    /* loadGInfo->src_mem = st->Ist.LoadG.details->addr; */
+    /* loadGInfo->alt_tmp = st->Ist.LoadG.details->alt; */
+
+    addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((ULong)&(loadGInfo->cond)),
+                                      st->Ist.LoadG.details->guard));
+    addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((ULong)&(loadGInfo->src_mem)),
+                                      st->Ist.LoadG.details->addr));
+    addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((ULong)&(loadGInfo->alt_tmp)),
+                                      st->Ist.LoadG.details->alt));
+    loadGInfo->dest_tmp = st->Ist.LoadG.details->dst;
+
     copyShadowLocation =
-      unsafeIRDirty_0_N(4,
+      unsafeIRDirty_0_N(1,
                         "copyShadowMemtoTmpIf",
                         VG_(fnptr_to_fnentry)(&copyShadowMemtoTmpIf),
-                        mkIRExprVec_4(st->Ist.LoadG.details->guard,
-                                      st->Ist.LoadG.details->addr,
-                                      st->Ist.LoadG.details->alt,
-                                      mkU64(st->Ist.LoadG.details->dst)));
+                        mkIRExprVec_1(mkU64((ULong)loadGInfo)));
     addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
     break;
   case Ist_CAS:
@@ -272,51 +288,74 @@ There's a dirty function call in the tool input! That can't be right...");
 // result in the temporary at offset.
 void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
   IRDirty* executeShadowOp;
+  IRTemp* argTemps;
 
+  // So, I recently learned that valgrind doesn't like passing more
+  // than three arguments to a c function called by client code. I
+  // couldn't find any documentation on why this might be, or even any
+  // concrete documentation that this was the case, but it looks like
+  // an assertion fails when trying to make the call in
+  // unsafeIRDirty_0_N if you try to use a function with more than
+  // three arguments. For this reason, instead of passing each of the
+  // arguments to the operations as separate arguments to the client
+  // called function, I'm going to try passing them as a malloc'd
+  // array.
   switch (expr->tag){
   case Iex_Unop:
+    argTemps = VG_(malloc)("hg.args_alloc.1", sizeof(IRTemp));
+    argTemps[0] = expr->Iex.Unop.arg->Iex.RdTmp.tmp;
+
     executeShadowOp =
       unsafeIRDirty_0_N(3,
                         "executeUnaryShadowOp",
                         VG_(fnptr_to_fnentry)(&executeUnaryShadowOp),
                         mkIRExprVec_3(mkU64(expr->Iex.Unop.op),
-                                      mkU64(expr->Iex.Unop.arg->Iex.RdTmp.tmp),
+                                      mkU64((ULong)argTemps),
                                       mkU64(offset)));
     addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
     break;
   case Iex_Binop:
+    argTemps = VG_(malloc)("hg.args_alloc.1", sizeof(IRTemp) * 2);
+    argTemps[0] = expr->Iex.Binop.arg1->Iex.RdTmp.tmp;
+    argTemps[1] = expr->Iex.Binop.arg2->Iex.RdTmp.tmp;
+
     executeShadowOp =
-      unsafeIRDirty_0_N(4,
+      unsafeIRDirty_0_N(3,
                         "executeBinaryShadowOp",
                         VG_(fnptr_to_fnentry)(&executeBinaryShadowOp),
-                        mkIRExprVec_4(mkU64(expr->Iex.Binop.op),
-                                      mkU64(expr->Iex.Binop.arg1->Iex.RdTmp.tmp),
-                                      mkU64(expr->Iex.Binop.arg2->Iex.RdTmp.tmp),
+                        mkIRExprVec_3(mkU64(expr->Iex.Binop.op),
+                                      mkU64((ULong)argTemps),
                                       mkU64(offset)));
     addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
     break;
   case Iex_Triop:
+    argTemps = VG_(malloc)("hg.args_alloc.1", sizeof(IRTemp) * 3);
+    argTemps[0] = expr->Iex.Triop.details->arg1->Iex.RdTmp.tmp;
+    argTemps[1] = expr->Iex.Triop.details->arg2->Iex.RdTmp.tmp;
+    argTemps[2] = expr->Iex.Triop.details->arg3->Iex.RdTmp.tmp;
+
     executeShadowOp =
-      unsafeIRDirty_0_N(5,
+      unsafeIRDirty_0_N(3,
                         "executeTriShadowOp",
                         VG_(fnptr_to_fnentry)(&executeTriShadowOp),
-                        mkIRExprVec_5(mkU64(expr->Iex.Triop.details->op),
-                                      mkU64(expr->Iex.Triop.details->arg1->Iex.RdTmp.tmp),
-                                      mkU64(expr->Iex.Triop.details->arg2->Iex.RdTmp.tmp),
-                                      mkU64(expr->Iex.Triop.details->arg3->Iex.RdTmp.tmp),
+                        mkIRExprVec_3(mkU64(expr->Iex.Triop.details->op),
+                                      mkU64((ULong)argTemps),
                                       mkU64(offset)));
     addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
     break;
   case Iex_Qop:
+    argTemps = VG_(malloc)("hg.args_alloc.1", sizeof(IRTemp) * 4);
+    argTemps[0] = expr->Iex.Qop.details->arg1->Iex.RdTmp.tmp;
+    argTemps[1] = expr->Iex.Qop.details->arg2->Iex.RdTmp.tmp;
+    argTemps[2] = expr->Iex.Qop.details->arg3->Iex.RdTmp.tmp;
+    argTemps[3] = expr->Iex.Qop.details->arg4->Iex.RdTmp.tmp;
+
     executeShadowOp =
-      unsafeIRDirty_0_N(6,
+      unsafeIRDirty_0_N(3,
                         "executeQuadShadowOp",
                         VG_(fnptr_to_fnentry)(&executeQuadShadowOp),
-                        mkIRExprVec_6(mkU64(expr->Iex.Qop.details->op),
-                                      mkU64(expr->Iex.Qop.details->arg1->Iex.RdTmp.tmp),
-                                      mkU64(expr->Iex.Qop.details->arg2->Iex.RdTmp.tmp),
-                                      mkU64(expr->Iex.Qop.details->arg3->Iex.RdTmp.tmp),
-                                      mkU64(expr->Iex.Qop.details->arg4->Iex.RdTmp.tmp),
+                        mkIRExprVec_3(mkU64(expr->Iex.Qop.details->op),
+                                      mkU64((ULong)argTemps),
                                       mkU64(offset)));
     addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
     break;

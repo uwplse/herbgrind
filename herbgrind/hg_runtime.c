@@ -91,11 +91,11 @@ VG_REGPARM(2) void copyShadowMemtoTmp(Addr src_mem, UWord dest_tmp){
 // Copy a shadow value from memory to a temporary, only if cond
 // evaluates to true. Otherwise, copy the shadow value from another
 // temporary, "alt_tmp".
-VG_REGPARM(4) void copyShadowMemtoTmpIf(UWord cond, Addr src_mem, UWord alt_tmp, UWord dest_tmp){
-  if (cond) {
-    localTemps[dest_tmp] = VG_(HT_lookup)(globalMemory, src_mem);
+VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
+  if (info->cond) {
+    localTemps[info->dest_tmp] = VG_(HT_lookup)(globalMemory, info->src_mem);
   } else {
-    localTemps[dest_tmp] = localTemps[alt_tmp];
+    localTemps[info->dest_tmp] = localTemps[info->alt_tmp];
   }
 }
 
@@ -128,13 +128,11 @@ VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem)
 // offset, into the shadow value at the dest_tmp offset. Depending on
 // the value of op, we'll know which operation to apply. op will be
 // mapped to operations by the enumeration at libvex_ir.h:415.
-VG_REGPARM(3) void executeUnaryShadowOp(UWord op, UWord arg_tmp, UWord dest_tmp){
+VG_REGPARM(3) void executeUnaryShadowOp(UWord op, UWord* args, UWord dest_tmp){
 }
-VG_REGPARM(4) void executeBinaryShadowOp(UWord op, UWord arg1_tmp, UWord arg2_tmp, UWord dest_tmp){
+VG_REGPARM(3) void executeBinaryShadowOp(UWord op, UWord* args, UWord dest_tmp){
 }
-VG_REGPARM(5) void executeTriShadowOp(UWord op, UWord arg1_tmp, UWord arg2_tmp, UWord arg3_tmp,
-                                      UWord dest_tmp){
+VG_REGPARM(3) void executeTriShadowOp(UWord op, UWord* args, UWord dest_tmp){
 }
-VG_REGPARM(6) void executeQuadShadowOp(UWord op, UWord arg1_tmp, UWord arg2_tmp, UWord arg3_tmp,
-                                       UWord arg4_tmp, UWord dest_tmp){
+VG_REGPARM(3) void executeQuadShadowOp(UWord op, UWord* args, UWord dest_tmp){
 }

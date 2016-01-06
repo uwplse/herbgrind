@@ -23,6 +23,12 @@
 #define mkU32(_n) IRExpr_Const(IRConst_U32(_n))
 #define mkU64(_n) IRExpr_Const(IRConst_U64(_n))
 
+#ifdef VG_LITTLEENDIAN
+#define ENDIAN Iend_LE
+#elif
+#define ENDIAN Iend_BE;
+#endif
+
 // Instrument a single statement, adding the instrumented statements
 // to sbOut.
 void instrumentStatement(IRStmt* st, IRSB* sbOut);

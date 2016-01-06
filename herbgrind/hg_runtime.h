@@ -38,24 +38,40 @@ void* gmp_alloc(size_t t);
 void* gmp_realloc(void* p, size_t t1, size_t t2);
 void gmp_free(void* p, size_t t);
 
+// When I was looking through the FpDebug source as inspiration for
+// this project, I kept seeing these structures all over the place
+// that looked like they only were really meant to be used and passed
+// around in one place, and I kept wondering why you would use them
+// when there are easier ways to pass things around, like usually as
+// seperate arguments. Now that I've messed around with valgrind
+// enough, I finally understand that these weird structures are used
+// to get around the three argument restriction that valgrind puts on
+// inserting client calls. It's possible that by the time I'm done
+// here, I'll have recreated everything I didn't like about the
+// FpDebug code base.
+typedef struct _LoadG_Info {
+  UWord cond;
+  Addr src_mem;
+  UWord alt_tmp;
+  UWord dest_tmp;
+} LoadG_Info;
+
 // The functions that we'll insert into the program to move around
 // shadow values at run time.
 VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp);
 VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg);
 VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, UWord dest_tmp);
 VG_REGPARM(2) void copyShadowMemtoTmp(Addr src_mem, UWord dest_tmp);
-VG_REGPARM(4) void copyShadowMemtoTmpIf(UWord cond, Addr src_mem, UWord alt_tmp, UWord dest_tmp);
+VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info);
 VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem);
 VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem);
 
 // The functions that we'll insert into the program to execute shadow
 // operations alongside the normal operations.
-VG_REGPARM(3) void executeUnaryShadowOp(UWord op, UWord arg_tmp, UWord dest_tmp);
-VG_REGPARM(4) void executeBinaryShadowOp(UWord op, UWord arg1_tmp, UWord arg2_tmp, UWord dest_tmp);
-VG_REGPARM(5) void executeTriShadowOp(UWord op, UWord arg1_tmp, UWord arg2_tmp, UWord arg3_tmp,
-                                      UWord dest_tmp);
-VG_REGPARM(6) void executeQuadShadowOp(UWord op, UWord arg1_tmp, UWord arg2_tmp, UWord arg3_tmp,
-                                       UWord arg4_tmp, UWord dest_tmp);
+VG_REGPARM(3) void executeUnaryShadowOp(UWord op, UWord* args, UWord dest_tmp);
+VG_REGPARM(3) void executeBinaryShadowOp(UWord op, UWord* args, UWord dest_tmp);
+VG_REGPARM(3) void executeTriShadowOp(UWord op, UWord* args, UWord dest_tmp);
+VG_REGPARM(3) void executeQuadShadowOp(UWord op, UWord* args, UWord dest_tmp);
 
 typedef struct _ShadowValue {
   mpfr_t value;
