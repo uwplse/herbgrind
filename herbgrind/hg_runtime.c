@@ -130,9 +130,72 @@ VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem)
 // mapped to operations by the enumeration at libvex_ir.h:415.
 VG_REGPARM(3) void executeUnaryShadowOp(UWord op, UWord* args, UWord dest_tmp){
 }
-VG_REGPARM(3) void executeBinaryShadowOp(UWord op, UWord* args, UWord dest_tmp){
+VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
+  // The shadowing locations for the first argument, second argument,
+  // and destination respectively.
+  ShadowLocation* arg1Location;
+  ShadowLocation* arg2Location;
+  ShadowLocation* destLocation;
+  switch(opInfo->op){
+  case Iop_Add64F0x2:
+    // Pull the shadow values for the arguments. If we don't already
+    // have shadow values for these arguments, we'll generate fresh
+    // ones from the runtime float values.
+    arg1Location =
+      getShadowLocation(opInfo->arg1_tmp, Lt_Doublex2, opInfo->arg1_value);
+    arg2Location =
+      getShadowLocation(opInfo->arg2_tmp, Lt_Doublex2, opInfo->arg2_value);
+
+    // Now we'll allocate memory for the shadowed result of this
+    // operation, which is a 128-bit SIMD value. The high order
+    // 64-bits are taken from the first argument, while the low order
+    // 64-bits are the result of the operation.
+    destLocation = VG_(malloc)("hg.shadow_loc.1", sizeof(ShadowLocation));
+    // Our location will store two shadow values each shadowing a
+    // 64-bit float.
+    destLocation->values = VG_(malloc)("hg.shadow_val.2", sizeof(ShadowValue));
+    destLocation->numValues = 2;
+    // Copy across the high order bits shadow value.
+    destLocation->values[1] = arg1Location->values[1];
+    // Set the low order bits to the result of the addition, but in
+    // higher precision.
+    mpfr_init(destLocation->values[0].value);
+    mpfr_add(destLocation->values[0].value, arg1Location->values[0].value,
+             arg2Location->values[0].value, MPFR_RNDN);
+    // We don't have any aliasing information here, and since multiple
+    // places (temps, memory, guest registers) can refer to the same
+    // shadow location, we can't really do anything smart with memory.
+    localTemps[opInfo->dest_tmp] = destLocation;
+    break;
+  default:
+    break;
+  }
 }
 VG_REGPARM(3) void executeTriShadowOp(UWord op, UWord* args, UWord dest_tmp){
 }
 VG_REGPARM(3) void executeQuadShadowOp(UWord op, UWord* args, UWord dest_tmp){
+}
+
+ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_val){
+  ShadowLocation* location = localTemps[tmp_num];
+  if (location != NULL) return location;
+  location = VG_(malloc)("hg.shadow_loc.1", sizeof(ShadowLocation));
+  switch(type){
+  case Lt_Doublex2:
+    location->numValues = 2;
+    location->values = VG_(malloc)("hg.shadow_val.2", sizeof(ShadowValue) * 2);
+    mpfr_init_set_d(location->values[0].value, float_val[0], MPFR_RNDN);
+    mpfr_init_set_d(location->values[1].value, float_val[1], MPFR_RNDN);
+    return location;
+  default:
+    VG_(dmsg)("We don't know how to initialize shadow locations of that type!");
+    return NULL;
+  }
+}
+
+void cleanupShadowLocation(ShadowLocation* loc){
+  for(int i = 0; i < loc->numValues; ++i){
+    VG_(free)(&(loc->values[i]));
+  }
+  VG_(free)(loc);
 }

@@ -302,31 +302,43 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
   // array.
   switch (expr->tag){
   case Iex_Unop:
-    argTemps = VG_(malloc)("hg.args_alloc.1", sizeof(IRTemp));
-    argTemps[0] = expr->Iex.Unop.arg->Iex.RdTmp.tmp;
-
-    executeShadowOp =
-      unsafeIRDirty_0_N(3,
-                        "executeUnaryShadowOp",
-                        VG_(fnptr_to_fnentry)(&executeUnaryShadowOp),
-                        mkIRExprVec_3(mkU64(expr->Iex.Unop.op),
-                                      mkU64((ULong)argTemps),
-                                      mkU64(offset)));
-    addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
     break;
   case Iex_Binop:
-    argTemps = VG_(malloc)("hg.args_alloc.1", sizeof(IRTemp) * 2);
-    argTemps[0] = expr->Iex.Binop.arg1->Iex.RdTmp.tmp;
-    argTemps[1] = expr->Iex.Binop.arg2->Iex.RdTmp.tmp;
+    switch (expr->Iex.Binop.op){
+    case Iop_Add64F0x2:
+      {
+        BinaryOp_Info* opInfo;
+        opInfo = VG_(malloc)("hg.op_alloc.1", sizeof(BinaryOp_Info));
+        // Information about the operation that we know at
+        // instrumentation time
+        opInfo->op = expr->Iex.Binop.op;
+        opInfo->arg1_tmp = expr->Iex.Binop.arg1->Iex.RdTmp.tmp;
+        opInfo->arg2_tmp = expr->Iex.Binop.arg2->Iex.RdTmp.tmp;
+        opInfo->dest_tmp = offset;
 
-    executeShadowOp =
-      unsafeIRDirty_0_N(3,
-                        "executeBinaryShadowOp",
-                        VG_(fnptr_to_fnentry)(&executeBinaryShadowOp),
-                        mkIRExprVec_3(mkU64(expr->Iex.Binop.op),
-                                      mkU64((ULong)argTemps),
-                                      mkU64(offset)));
-    addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+        // We know how big the values are going to be at
+        // instrumentation time, so we'll malloc that space now.
+        opInfo->arg1_value = VG_(malloc)("hg.arg_alloc.1", sizeof(UWord) * 2);
+        opInfo->arg2_value = VG_(malloc)("hg.arg_alloc.1", sizeof(UWord) * 2);
+
+        // Information about the operation that
+        // we can't figure out until runtime.
+        addStmtToIRSB(sb, IRStmt_Store(ENDIAN, mkU64((ULong)opInfo->arg1_value),
+                                       expr->Iex.Binop.arg1));
+        addStmtToIRSB(sb, IRStmt_Store(ENDIAN, mkU64((ULong)opInfo->arg2_value),
+                                       expr->Iex.Binop.arg2));
+
+        executeShadowOp =
+          unsafeIRDirty_0_N(1,
+                            "executeBinaryShadowOp",
+                            VG_(fnptr_to_fnentry)(&executeBinaryShadowOp),
+                            mkIRExprVec_1(mkU64((ULong)opInfo)));
+        addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+      }
+      break;
+    default:
+      break;
+    }
     break;
   case Iex_Triop:
     argTemps = VG_(malloc)("hg.args_alloc.1", sizeof(IRTemp) * 3);

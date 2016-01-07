@@ -7,7 +7,7 @@
 // This gets us the fnptr_to_fnentry function.
 #include "pub_tool_machine.h"
 // Pull in this header file so that we can call the valgrind version
-// of printf.
+// of printf and dmsg.
 #include "pub_tool_libcprint.h"
 
 // For arbitrary precision arithmetic. Might have to mess with this a
