@@ -43,28 +43,33 @@ void cleanup_runtime(){
   // Free up the MPFR cache.
   mpfr_free_cache();
 
-  // Free up the temps
-  for (int i = 0; i < MAX_TEMPS; ++i){
-    if (localTemps[i] != NULL){
-      for (int j = 0; j < localTemps[i]->numValues; ++j)
-        mpfr_clear(localTemps[i]->values[j].value);
-    }
-  }
-  // Free up the thread state.
-  for (int i = 0; i < MAX_THREADS; ++i){
-    for (int j = 0; j < MAX_REGISTERS; ++j){
-      if (threadRegisters[i][j] != NULL){
-        for (int k = 0; k < threadRegisters[i][j]->numValues; ++k)
-          mpfr_clear(threadRegisters[i][j]->values[k].value);
-      }
-    }
-  }
-  // Free up the shadowed memory.
-  VG_(HT_ResetIter)(globalMemory);
-  for (ShadowLocation* next = VG_(HT_Next)(globalMemory); next != NULL; next = VG_(HT_Next)(globalMemory)){
-    for (int j = 0; j < next->numValues; ++j)
-      mpfr_clear(next->values[j].value);
-  }
+  // This stuff doesn't work yet. Ideally what we'll do eventually is
+  // reference count our shadow locations, so that we can clear them
+  // up properly. We can kill temp references at the end of every
+  // block, and we'll clear up the thread state and memory at the end
+  // of the program in this function.
+  /* // Free up the temps */
+  /* for (int i = 0; i < MAX_TEMPS; ++i){ */
+  /*   if (localTemps[i] != NULL){ */
+  /*     for (int j = 0; j < localTemps[i]->numValues; ++j) */
+  /*       mpfr_clear(localTemps[i]->values[j].value); */
+  /*   } */
+  /* } */
+  /* // Free up the thread state. */
+  /* for (int i = 0; i < MAX_THREADS; ++i){ */
+  /*   for (int j = 0; j < MAX_REGISTERS; ++j){ */
+  /*     if (threadRegisters[i][j] != NULL){ */
+  /*       for (int k = 0; k < threadRegisters[i][j]->numValues; ++k) */
+  /*         mpfr_clear(threadRegisters[i][j]->values[k].value); */
+  /*     } */
+  /*   } */
+  /* } */
+  /* // Free up the shadowed memory. */
+  /* VG_(HT_ResetIter)(globalMemory); */
+  /* for (ShadowLocation* next = VG_(HT_Next)(globalMemory); next != NULL; next = VG_(HT_Next)(globalMemory)){ */
+  /*   for (int j = 0; j < next->numValues; ++j) */
+  /*     mpfr_clear(next->values[j].value); */
+  /* } */
 }
 
 // Copy a shadow value from a temporary to a temporary.
@@ -153,7 +158,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     destLocation = VG_(malloc)("hg.shadow_loc.1", sizeof(ShadowLocation));
     // Our location will store two shadow values each shadowing a
     // 64-bit float.
-    destLocation->values = VG_(malloc)("hg.shadow_val.2", sizeof(ShadowValue));
+    destLocation->values = VG_(malloc)("hg.shadow_val.2", sizeof(ShadowValue)*2);
     destLocation->numValues = 2;
     // Copy across the high order bits shadow value.
     destLocation->values[1] = arg1Location->values[1];
@@ -164,7 +169,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
              arg2Location->values[0].value, MPFR_RNDN);
     // We don't have any aliasing information here, and since multiple
     // places (temps, memory, guest registers) can refer to the same
-    // shadow location, we can't really do anything smart with memory.
+    // shadow location, we can't really do anything smart with
+    // memory... yet.
     localTemps[opInfo->dest_tmp] = destLocation;
     break;
   default:

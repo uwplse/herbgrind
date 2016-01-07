@@ -284,6 +284,7 @@ There's a dirty function call in the tool input! That can't be right...");
     break;
   }
 }
+
 // Add instrumenting expressions to sb for an operation, storing the
 // result in the temporary at offset.
 void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
