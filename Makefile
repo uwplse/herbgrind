@@ -127,3 +127,6 @@ deps/mpfr-%/README: setup/mpfr-$(MPFR_VERSION).tar.xz
 	$(MAKE) configure-mpfr-$*
 	$(MAKE) -C deps/mpfr-$*
 	$(MAKE) -C deps/mpfr-$* install
+
+wc:
+	wc $(SOURCES) $(HEADERS)
