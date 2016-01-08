@@ -9,16 +9,18 @@ VALGRIND_REPO_LOCATION=svn://svn.valgrind.org/valgrind/trunk
 # valgrind filename conventions for this sort of thing.
 TARGET_PLAT=amd64-linux
 ARCH_PRI=amd64
-ARCH_SEC=i386
+ARCH_SEC=
 
 ifdef ARCH_SEC
 DEPS = deps/gmp-64/README deps/mpfr-64/README deps/gmp-32/README deps/mpfr-32/README
 else
 DEPS = deps/gmp-64/README deps/mpfr-64/README
 endif
+HEADERS=herbgrind/hg_include.h herbgrind/hg_instrument.h		\
+herbgrind/hg_runtime.h herbgrind/hg_types.h herbgrind/hg_evaluate.h
 
-SOURCES=herbgrind/hg_main.c herbgrind/hg_include.h herbgrind/hg_instrument.c herbgrind/hg_instrument.h \
-herbgrind/hg_runtime.c herbgrind/hg_runtime.h
+SOURCES=herbgrind/hg_main.c herbgrind/hg_instrument.c			\
+herbgrind/hg_runtime.c herbgrind/hg_types.c herbgrind/hg_evaluate.c
 
 all: compile
 
@@ -53,7 +55,7 @@ setup: valgrind/herbgrind/Makefile $(DEPS)
 
 # This is the target we call to actually get the executable built so
 # we can run herbgrind. 
-valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) herbgrind/hg_main.c herbgrind/hg_include.h setup
+valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) setup
 # First, we've got to make sure all the dependencies are extracted and set up.
 	$(MAKE) setup
 # Copy over the herbgrind sources again, because why the hell not.
