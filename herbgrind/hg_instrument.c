@@ -293,6 +293,7 @@ There's a dirty function call in the tool input! That can't be right...");
 void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
   IRDirty* executeShadowOp;
   IRTemp* argTemps;
+  size_t arg_size, result_size;
 
   // So, I recently learned that valgrind doesn't like passing more
   // than three arguments to a c function called by client code. I
@@ -308,10 +309,58 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
   // TODO: Fill in these cases.
   switch (expr->tag){
   case Iex_Unop:
+    {
+      UnaryOp_Info* opInfo;
+      // Determine the argument sizes of each operation we might
+      // encounter so we can allocate the right amount of space in the
+      // argument structure to the runtime shadow execution code.
+      switch(expr->Iex.Binop.op){
+      case Iop_Sqrt64F0x2:
+        arg_size = sizeof(double) * 2;
+        result_size = sizeof(double) * 2;
+        break;
+      default:
+        break;
+      }
+
+      // Only bother instrumenting operations that we care about and
+      // can do something useful with.
+      switch (expr->Iex.Unop.op){
+        // Add all supported unary ops to this list.
+      case Iop_Sqrt64F0x2:
+        // Allocate the memory for the argument structure
+        opInfo = VG_(malloc)("hg.op_alloc.1", sizeof(UnaryOp_Info));
+
+        // Populate the values we know at instrument time now.
+        opInfo->op = expr->Iex.Binop.op;
+        opInfo->arg_tmp = expr->Iex.Unop.arg->Iex.RdTmp.tmp;
+        opInfo->dest_tmp = offset;
+
+        // Allocate the space for the values we won't know until
+        // runtime, but know their size now.
+        opInfo->arg_value = VG_(malloc)("hg.arg_alloc", arg_size);
+        opInfo->dest_value = VG_(malloc)("hg.arg_alloc", result_size);
+
+        // Add statements to populate the values we don't know until
+        // runtime.
+        addStore(sb, expr->Iex.Unop.arg, opInfo->arg_value);
+        addStore(sb, IRExpr_RdTmp(offset), opInfo->dest_value);
+
+        // Finally, add the statement to call the shadow op procedure.
+        executeShadowOp =
+          unsafeIRDirty_0_N(1,
+                            "executeUnaryShadowOp",
+                            VG_(fnptr_to_fnentry)(&executeUnaryShadowOp),
+                            mkIRExprVec_1(mkU64((ULong)opInfo)));
+        addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+        break;
+      default:
+        break;
+      }
+    }
     break;
   case Iex_Binop:
     {
-      size_t arg_size, result_size;
       BinaryOp_Info* opInfo;
       // Determine the argument sizes of each operation we might
       // encounter so we can allocate the right amount of space in the
@@ -329,9 +378,9 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // Only bother instrumenting operations that we care about and
       // can do something useful with.
       switch (expr->Iex.Binop.op){
-        // Add all supported ops to this list
-      case Iop_SetV128lo64:
+        // Add all supported binary ops to this list
       case Iop_Add64F0x2:
+      case Iop_SetV128lo64:
         // Allocate the memory for the argument structure
         opInfo = VG_(malloc)("hg.op_alloc.1", sizeof(BinaryOp_Info));
 

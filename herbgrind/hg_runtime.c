@@ -191,7 +191,42 @@ VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem)
 // offset, into the shadow value at the dest_tmp offset. Depending on
 // the value of op, we'll know which operation to apply. op will be
 // mapped to operations by the enumeration at libvex_ir.h:415.
-VG_REGPARM(3) void executeUnaryShadowOp(UWord op, UWord* args, UWord dest_tmp){
+VG_REGPARM(3) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
+  ShadowLocation* argLocation;
+  ShadowLocation* destLocation;
+
+  switch(opInfo->op){
+  case Iop_Sqrt64F0x2:
+    // Pull the shadow location for the argument. If we don't already
+    // have a shadow location for this argument, we'll generate a fresh
+    // one from the runtime float value.
+    argLocation = getShadowLocation(opInfo->arg_tmp, Lt_Doublex2, opInfo->arg_value);
+
+    // Now we'll allocate memory for the shadowed result of this
+    // operation, which is a 128-bit SIMD value. The high order
+    // 64-bits are taken from the first argument, while the low order
+    // 64-bits are the result of the operation.
+    destLocation = mkShadowLocation(Lt_Doublex2);
+
+    // Copy across the high order bits shadow value.
+    destLocation->values[1] = argLocation->values[1];
+
+    // Set the low order bits to the result of the sqrt, but in
+    // higher precision.
+    mpfr_init(destLocation->values[0].value);
+    mpfr_sqrt(destLocation->values[0].value, argLocation->values[0].value, MPFR_RNDN);
+
+    // Put the resulting location in the space for the dest temp.
+    localTemps[opInfo->dest_tmp] = destLocation;
+
+    // Now, we'll evaluate the low order shadow value against the low
+    // order 64-bits of the result value.
+    evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
+
+    break;
+  default:
+    break;
+  }
 }
 VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   // The shadowing locations for the first argument, second argument,
@@ -243,7 +278,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     // Now we'll allocate memory for the shadowed result of this
     // operation, which is a 128-bit SIMD value. The high order
     // 64-bits are taken from the first argument, while the low order
-    // 64-bits are the result of the operation.
+    // 64-bits are taken from the second argument.
     destLocation = mkShadowLocation(Lt_Doublex2);
 
     // Copy across the high order bits shadow value from the first

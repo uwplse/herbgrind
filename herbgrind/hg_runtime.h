@@ -61,7 +61,7 @@ VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem)
 
 // The functions that we'll insert into the program to execute shadow
 // operations alongside the normal operations.
-VG_REGPARM(3) void executeUnaryShadowOp(UWord op, UWord* args, UWord dest_tmp);
+VG_REGPARM(3) void executeUnaryShadowOp(UnaryOp_Info* opInfo);
 VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo);
 VG_REGPARM(3) void executeTriShadowOp(UWord op, UWord* args, UWord dest_tmp);
 VG_REGPARM(3) void executeQuadShadowOp(UWord op, UWord* args, UWord dest_tmp);

@@ -68,6 +68,24 @@ typedef struct _LoadG_Info {
   UWord dest_tmp;
 } LoadG_Info;
 
+typedef struct _UnaryOp_Info {
+  UWord op;
+  // This is the index of the temporary that holds these values. We'll
+  // use this index to index into the shadow value array too.
+  UWord arg_tmp;
+  // If we don't have a shadow value yet for these arguments, we're
+  // going to use the existing float value to create one. This float
+  // value can be as big as 256 bits, since we account for SIMD
+  // locations, so we're going to store it as an array that's
+  // malloc'd when we know how big it's going to be.
+  UWord* arg_value;
+  // This is the index into where we're putting the result.
+  UWord dest_tmp;
+  // This is the actual computed value of the result, for checking
+  // accuracy.
+  UWord* dest_value;
+} UnaryOp_Info;
+
 typedef struct _BinaryOp_Info {
   UWord op;
   // These are the indicies of the temporaries that hold these
