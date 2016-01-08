@@ -330,6 +330,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // can do something useful with.
       switch (expr->Iex.Binop.op){
         // Add all supported ops to this list
+      case Iop_SetV128lo64:
       case Iop_Add64F0x2:
         // Allocate the memory for the argument structure
         opInfo = VG_(malloc)("hg.op_alloc.1", sizeof(BinaryOp_Info));
