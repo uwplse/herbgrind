@@ -155,11 +155,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     // operation, which is a 128-bit SIMD value. The high order
     // 64-bits are taken from the first argument, while the low order
     // 64-bits are the result of the operation.
-    destLocation = VG_(malloc)("hg.shadow_loc.1", sizeof(ShadowLocation));
-    // Our location will store two shadow values each shadowing a
-    // 64-bit float.
-    destLocation->values = VG_(malloc)("hg.shadow_val.2", sizeof(ShadowValue)*2);
-    destLocation->numValues = 2;
+    destLocation = mkShadowLocation(Lt_Doublex2);
     // Copy across the high order bits shadow value.
     destLocation->values[1] = arg1Location->values[1];
     // Set the low order bits to the result of the addition, but in
@@ -182,26 +178,29 @@ VG_REGPARM(3) void executeTriShadowOp(UWord op, UWord* args, UWord dest_tmp){
 VG_REGPARM(3) void executeQuadShadowOp(UWord op, UWord* args, UWord dest_tmp){
 }
 
-ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_val){
+ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_vals){
+  // If we already have a shadow location here, just return it.
   ShadowLocation* location = localTemps[tmp_num];
   if (location != NULL) return location;
-  location = VG_(malloc)("hg.shadow_loc.1", sizeof(ShadowLocation));
+
+  // Otherwise we need to create a new one. How we do this will depend
+  // on the expected type of the location, passed as "type".
+  location = mkShadowLocation(type);
   switch(type){
   case Lt_Doublex2:
-    location->numValues = 2;
-    location->values = VG_(malloc)("hg.shadow_val.2", sizeof(ShadowValue) * 2);
-    mpfr_init_set_d(location->values[0].value, float_val[0], MPFR_RNDN);
-    mpfr_init_set_d(location->values[1].value, float_val[1], MPFR_RNDN);
+    // Intialize the shadow values from the float_vals we were
+    // given.
+    //
+    // The casts here are actually super important. Without casting
+    // the array, we'll pull out the bits that make up the double as
+    // basically an int, and then do a semantic conversion of that int
+    // to a double, instead of reinterpreting the bytes as they should
+    // have always been interpreted, as double bytes.
+    mpfr_init_set_d(location->values[0].value, ((double*)float_vals)[0], MPFR_RNDN);
+    mpfr_init_set_d(location->values[1].value, ((double*)float_vals)[1], MPFR_RNDN);
     return location;
   default:
     VG_(dmsg)("We don't know how to initialize shadow locations of that type!");
     return NULL;
   }
-}
-
-void cleanupShadowLocation(ShadowLocation* loc){
-  for(int i = 0; i < loc->numValues; ++i){
-    VG_(free)(&(loc->values[i]));
-  }
-  VG_(free)(loc);
 }
