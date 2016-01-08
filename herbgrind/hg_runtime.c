@@ -89,8 +89,33 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, UWord dest_tmp){
 }
 
 // Copy a shadow value from memory to a temporary
-VG_REGPARM(2) void copyShadowMemtoTmp(Addr src_mem, UWord dest_tmp){
-  localTemps[dest_tmp] = VG_(HT_lookup)(globalMemory, src_mem);
+VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp){
+  ShadowLocation* memoryLoc = VG_(HT_lookup)(globalMemory, src_mem);
+  // If we didn't think this location held a float before, then we
+  // don't think that wherever we're assigning to does now.
+  if (memoryLoc == NULL) localTemps[dest_tmp] = NULL;
+  // Based on the type, we may have to pull only one of the shadow
+  // values out of a multiple-value location.
+  switch(type){
+  case Ity_I64:
+    switch(memoryLoc->type){
+    case Lt_Doublex2:
+      {
+        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
+        tmpLoc->values[0] = memoryLoc->values[0];
+      }
+      break;
+    case Lt_Double:
+    case Lt_Floatx2:
+      localTemps[dest_tmp] = memoryLoc;
+    default:
+      VG_(dmsg)("We don't support that mixed size memory get!\n");
+    }
+    break;
+  default:
+    VG_(dmsg)("We don't support that mixed size memory get!\n");
+    break;
+  }
 }
 
 // Copy a shadow value from memory to a temporary, only if cond

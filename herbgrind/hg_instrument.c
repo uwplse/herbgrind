@@ -94,23 +94,25 @@ That doesn't seem flattened...\n");
     switch(expr->tag) {
     case Iex_Get:
       copyShadowLocation =
-        unsafeIRDirty_0_N(2,
+        unsafeIRDirty_0_N(3,
                           "copyShadowTStoTmp",
                           VG_(fnptr_to_fnentry)(&copyShadowTStoTmp),
-                          mkIRExprVec_2(mkU64(expr->Iex.Get.offset),
+                          mkIRExprVec_3(mkU64(expr->Iex.Get.offset),
+                                        mkU64(expr->Iex.Get.ty),
                                         mkU64(st->Ist.WrTmp.tmp)));
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
     case Iex_GetI:
       // See comments above on PutI to make sense of this thing.
       copyShadowLocation =
-        unsafeIRDirty_0_N(2,
+        unsafeIRDirty_0_N(3,
                           "copyShadowTStoTmp",
                           VG_(fnptr_to_fnentry)(&copyShadowTStoTmp),
-                          mkIRExprVec_2(mkArrayLookupExpr(expr->Iex.GetI.descr->base,
+                          mkIRExprVec_3(mkArrayLookupExpr(expr->Iex.GetI.descr->base,
                                                           expr->Iex.GetI.ix,
                                                           expr->Iex.GetI.bias,
                                                           expr->Iex.GetI.descr->nElems),
+                                        mkU64(expr->Iex.Get.ty),
                                         mkU64(st->Ist.WrTmp.tmp)));
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
@@ -319,8 +321,9 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
 
         // We know how big the values are going to be at
         // instrumentation time, so we'll malloc that space now.
-        opInfo->arg1_value = VG_(malloc)("hg.arg_alloc.1", sizeof(UWord) * 2);
-        opInfo->arg2_value = VG_(malloc)("hg.arg_alloc.1", sizeof(UWord) * 2);
+        opInfo->arg1_value = VG_(malloc)("hg.arg_alloc.2", sizeof(UWord) * 2);
+        opInfo->arg2_value = VG_(malloc)("hg.arg_alloc.2", sizeof(UWord) * 2);
+        opInfo->dest_value = VG_(malloc)("hg.arg_alloc.2", sizeof(UWord) * 2);
 
         // Information about the operation that
         // we can't figure out until runtime.
