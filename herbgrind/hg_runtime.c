@@ -96,6 +96,7 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
   // values out of a multiple-value location.
   switch(type){
   case Ity_I64:
+  case Ity_F64:
     switch(tsLoc->type){
     case Lt_Doublex2:
       {
@@ -104,13 +105,25 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
       }
       break;
     case Lt_Double:
-    case Lt_Floatx2:
       localTemps[dest_tmp] = tsLoc;
     default:
-      //TODO: Fill in these cases
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
     }
     break;
+  case Ity_I32:
+  case Ity_F32:
+    switch(tsLoc->type){
+    case Lt_Floatx2:
+      {
+        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Float);
+        tmpLoc->values[0] = tsLoc->values[0];
+      }
+      break;
+    case Lt_Float:
+      localTemps[dest_tmp] = tsLoc;
+    default:
+      VG_(dmsg)("We don't support that mixed size thread state get!\n");
+    }
   default:
     VG_(dmsg)("We don't support that mixed size thread state get!\n");
     break;
@@ -130,6 +143,7 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
   // values out of a multiple-value location.
   switch(type){
   case Ity_I64:
+  case Ity_F64:
     switch(memoryLoc->type){
     case Lt_Doublex2:
       {
@@ -138,13 +152,25 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
       }
       break;
     case Lt_Double:
-    case Lt_Floatx2:
       localTemps[dest_tmp] = memoryLoc;
     default:
-      // TODO: Fill in these cases
       VG_(dmsg)("We don't support that mixed size memory get!\n");
     }
     break;
+  case Ity_I32:
+  case Ity_F32:
+    switch(memoryLoc->type){
+    case Lt_Floatx2:
+      {
+        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
+        tmpLoc->values[0] = memoryLoc->values[0];
+      }
+      break;
+    case Lt_Float:
+      localTemps[dest_tmp] = memoryLoc;
+    default:
+      VG_(dmsg)("We don't support that mixed size memory get!\n");
+    }
   default:
     VG_(dmsg)("We don't support that mixed size memory get!\n");
     break;
