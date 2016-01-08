@@ -3,7 +3,11 @@
 
 // For mpfr_t
 #include "mpfr.h"
+
+// Some basic valgrind tool stuff
+#include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
+#include "pub_tool_mallocfree.h"
 
 // The shadow value for each logical floating point value
 typedef struct _ShadowValue {
@@ -84,5 +88,11 @@ typedef struct _BinaryOp_Info {
   // accuracy.
   UWord* dest_value;
 } BinaryOp_Info;
+
+#ifdef VG_LITTLEENDIAN
+#define ENDIAN Iend_LE
+#elif
+#define ENDIAN Iend_BE;
+#endif
 
 #endif

@@ -18,16 +18,14 @@
 // This file has all the functions and data structures that will be
 // called by the instrumented program.
 #include "hg_runtime.h"
+#include "hg_types.h"
 
 // Some helpful macros to have around. Some of these are from FpDebug.
 #define mkU32(_n) IRExpr_Const(IRConst_U32(_n))
 #define mkU64(_n) IRExpr_Const(IRConst_U64(_n))
 
-#ifdef VG_LITTLEENDIAN
-#define ENDIAN Iend_LE
-#elif
-#define ENDIAN Iend_BE;
-#endif
+#define addStore(sb, src_expr, dest_addr) \
+  addStmtToIRSB(sb, IRStmt_Store(ENDIAN, mkU64((ULong)dest_addr), src_expr));
 
 // Instrument a single statement, adding the instrumented statements
 // to sbOut.

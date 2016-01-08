@@ -84,8 +84,37 @@ VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg){
 }
 
 // Copy a shadow value from somewhere in the thread state to a temporary.
-VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, UWord dest_tmp){
-  localTemps[dest_tmp] = threadRegisters[VG_(get_running_tid)()][src_reg];
+VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp){
+  ShadowLocation* tsLoc = threadRegisters[VG_(get_running_tid)()][src_reg];
+  // If we didn't think this location held a float before, then we
+  // don't think that wherever we're assigning to does now.
+  if (tsLoc == NULL){
+    localTemps[dest_tmp] = NULL;
+    return;
+  }
+  // Based on the type, we may have to pull only one of the shadow
+  // values out of a multiple-value location.
+  switch(type){
+  case Ity_I64:
+    switch(tsLoc->type){
+    case Lt_Doublex2:
+      {
+        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
+        tmpLoc->values[0] = tsLoc->values[0];
+      }
+      break;
+    case Lt_Double:
+    case Lt_Floatx2:
+      localTemps[dest_tmp] = tsLoc;
+    default:
+      //TODO: Fill in these cases
+      VG_(dmsg)("We don't support that mixed size thread state get!\n");
+    }
+    break;
+  default:
+    VG_(dmsg)("We don't support that mixed size thread state get!\n");
+    break;
+  }
 }
 
 // Copy a shadow value from memory to a temporary
@@ -93,7 +122,10 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
   ShadowLocation* memoryLoc = VG_(HT_lookup)(globalMemory, src_mem);
   // If we didn't think this location held a float before, then we
   // don't think that wherever we're assigning to does now.
-  if (memoryLoc == NULL) localTemps[dest_tmp] = NULL;
+  if (memoryLoc == NULL) {
+    localTemps[dest_tmp] = NULL;
+    return;
+  }
   // Based on the type, we may have to pull only one of the shadow
   // values out of a multiple-value location.
   switch(type){
@@ -109,6 +141,7 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
     case Lt_Floatx2:
       localTemps[dest_tmp] = memoryLoc;
     default:
+      // TODO: Fill in these cases
       VG_(dmsg)("We don't support that mixed size memory get!\n");
     }
     break;
@@ -181,21 +214,50 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     // 64-bits are taken from the first argument, while the low order
     // 64-bits are the result of the operation.
     destLocation = mkShadowLocation(Lt_Doublex2);
+
     // Copy across the high order bits shadow value.
     destLocation->values[1] = arg1Location->values[1];
+
     // Set the low order bits to the result of the addition, but in
     // higher precision.
     mpfr_init(destLocation->values[0].value);
     mpfr_add(destLocation->values[0].value, arg1Location->values[0].value,
              arg2Location->values[0].value, MPFR_RNDN);
-    // We don't have any aliasing information here, and since multiple
-    // places (temps, memory, guest registers) can refer to the same
-    // shadow location, we can't really do anything smart with
-    // memory... yet.
+
+    // Put the resulting location in the space for the dest temp.
     localTemps[opInfo->dest_tmp] = destLocation;
+
     // Now, we'll evaluate the low order shadow value against the low
     // order 64-bits of the result value.
     evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
+    break;
+  case Iop_SetV128lo64:
+    // Pull the shadow values for the arguments. If we don't already
+    // have shadow values for these arguments, we'll generate fresh
+    // ones from the runtime float values.
+    arg1Location =
+      getShadowLocation(opInfo->arg1_tmp, Lt_Doublex2, opInfo->arg1_value);
+    arg2Location =
+      getShadowLocation(opInfo->arg2_tmp, Lt_Doublex2, opInfo->arg2_value);
+
+    // Now we'll allocate memory for the shadowed result of this
+    // operation, which is a 128-bit SIMD value. The high order
+    // 64-bits are taken from the first argument, while the low order
+    // 64-bits are the result of the operation.
+    destLocation = mkShadowLocation(Lt_Doublex2);
+
+    // Copy across the high order bits shadow value from the first
+    // argument.
+    destLocation->values[1] = arg1Location->values[1];
+
+    // Copy the low order bits shadow value from the second argument.
+    destLocation->values[0] = arg2Location->values[0];
+
+    // Put the resulting location in the space for the dest temp.
+    localTemps[opInfo->dest_tmp] = destLocation;
+
+    // This isn't really a "real" op in the math-y sense, so let's not
+    // evaluate it's error.
     break;
   default:
     break;

@@ -148,10 +148,11 @@ That doesn't seem flattened...\n");
       break;
     case Iex_Load:
       copyShadowLocation =
-        unsafeIRDirty_0_N(2,
+        unsafeIRDirty_0_N(3,
                           "copyShadowMemtoTmp",
                           VG_(fnptr_to_fnentry)(&copyShadowMemtoTmp),
-                          mkIRExprVec_2(expr->Iex.Load.addr,
+                          mkIRExprVec_3(expr->Iex.Load.addr,
+                                        mkU64(expr->Iex.Load.ty),
                                         mkU64(st->Ist.WrTmp.tmp)));
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
@@ -303,47 +304,65 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
   // arguments to the operations as separate arguments to the client
   // called function, I'm going to try passing them as a malloc'd
   // array.
+  //
+  // TODO: Fill in these cases.
   switch (expr->tag){
   case Iex_Unop:
     break;
   case Iex_Binop:
-    switch (expr->Iex.Binop.op){
-    case Iop_Add64F0x2:
-      {
-        BinaryOp_Info* opInfo;
+    {
+      size_t arg_size, result_size;
+      BinaryOp_Info* opInfo;
+      // Determine the argument sizes of each operation we might
+      // encounter so we can allocate the right amount of space in the
+      // argument structure to the runtime shadow execution code.
+      switch (expr->Iex.Binop.op){
+      case Iop_Add64F0x2:
+      case Iop_SetV128lo64:
+        arg_size = sizeof(double) * 2;
+        result_size = sizeof(double) * 2;
+        break;
+      default:
+        break;
+      }
+
+      // Only bother instrumenting operations that we care about and
+      // can do something useful with.
+      switch (expr->Iex.Binop.op){
+        // Add all supported ops to this list
+      case Iop_Add64F0x2:
+        // Allocate the memory for the argument structure
         opInfo = VG_(malloc)("hg.op_alloc.1", sizeof(BinaryOp_Info));
-        // Information about the operation that we know at
-        // instrumentation time
+
+        // Populate the values we know at instrument time now.
         opInfo->op = expr->Iex.Binop.op;
         opInfo->arg1_tmp = expr->Iex.Binop.arg1->Iex.RdTmp.tmp;
         opInfo->arg2_tmp = expr->Iex.Binop.arg2->Iex.RdTmp.tmp;
         opInfo->dest_tmp = offset;
 
-        // We know how big the values are going to be at
-        // instrumentation time, so we'll malloc that space now.
-        opInfo->arg1_value = VG_(malloc)("hg.arg_alloc.2", sizeof(UWord) * 2);
-        opInfo->arg2_value = VG_(malloc)("hg.arg_alloc.2", sizeof(UWord) * 2);
-        opInfo->dest_value = VG_(malloc)("hg.arg_alloc.2", sizeof(UWord) * 2);
+        // Allocate the space for the values we won't know until
+        // runtime, but know their size now.
+        opInfo->arg1_value = VG_(malloc)("hg.arg_alloc", arg_size);
+        opInfo->arg2_value = VG_(malloc)("hg.arg_alloc", arg_size);
+        opInfo->dest_value = VG_(malloc)("hg.arg_alloc", result_size);
 
-        // Information about the operation that
-        // we can't figure out until runtime.
-        addStmtToIRSB(sb, IRStmt_Store(ENDIAN, mkU64((ULong)opInfo->arg1_value),
-                                       expr->Iex.Binop.arg1));
-        addStmtToIRSB(sb, IRStmt_Store(ENDIAN, mkU64((ULong)opInfo->arg2_value),
-                                       expr->Iex.Binop.arg2));
-        addStmtToIRSB(sb, IRStmt_Store(ENDIAN, mkU64((ULong)opInfo->dest_value),
-                                       IRExpr_RdTmp(offset)));
+        // Add statements to populate the values we don't know until
+        // runtime.
+        addStore(sb, expr->Iex.Binop.arg1, opInfo->arg1_value);
+        addStore(sb, expr->Iex.Binop.arg2, opInfo->arg2_value);
+        addStore(sb, IRExpr_RdTmp(offset), opInfo->dest_value);
 
+        // Finally, add the statement to call the shadow op procedure.
         executeShadowOp =
           unsafeIRDirty_0_N(1,
                             "executeBinaryShadowOp",
                             VG_(fnptr_to_fnentry)(&executeBinaryShadowOp),
                             mkIRExprVec_1(mkU64((ULong)opInfo)));
         addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+        break;
+      default:
+        break;
       }
-      break;
-    default:
-      break;
     }
     break;
   case Iex_Triop:

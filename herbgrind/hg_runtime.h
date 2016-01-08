@@ -53,7 +53,7 @@ void gmp_free(void* p, size_t t);
 // shadow values at run time.
 VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp);
 VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg);
-VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, UWord dest_tmp);
+VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp);
 VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp);
 VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info);
 VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem);
