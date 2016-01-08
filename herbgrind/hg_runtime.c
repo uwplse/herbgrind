@@ -168,6 +168,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     // shadow location, we can't really do anything smart with
     // memory... yet.
     localTemps[opInfo->dest_tmp] = destLocation;
+    // Now, we'll evaluate the low order shadow value against the low
+    // order 64-bits of the result value.
+    evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
     break;
   default:
     break;

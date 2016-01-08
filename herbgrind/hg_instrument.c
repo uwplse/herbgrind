@@ -328,6 +328,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
                                        expr->Iex.Binop.arg1));
         addStmtToIRSB(sb, IRStmt_Store(ENDIAN, mkU64((ULong)opInfo->arg2_value),
                                        expr->Iex.Binop.arg2));
+        addStmtToIRSB(sb, IRStmt_Store(ENDIAN, mkU64((ULong)opInfo->dest_value),
+                                       IRExpr_RdTmp(offset)));
 
         executeShadowOp =
           unsafeIRDirty_0_N(1,
