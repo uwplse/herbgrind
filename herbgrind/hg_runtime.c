@@ -31,7 +31,7 @@ void startHerbGrind(void){ running = 1; }
 
 // Some memory allocation functions for gmp support
 void* gmp_alloc(size_t t){ return VG_(malloc)("hg.gmp_alloc.1", t); }
-void* gmp_realloc(void* p, size_t t1, size_t t2){ return VG_(realloc)("hg.gmp_realloc.1", p, t1); }
+void* gmp_realloc(void* p, size_t t1, size_t t2){ return VG_(realloc)("hg.gmp_realloc.1", p, t2); }
 void gmp_free(void* p, size_t t){ VG_(free)(p); }
 
 void init_runtime(){
