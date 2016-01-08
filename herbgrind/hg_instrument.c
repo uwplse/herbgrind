@@ -366,35 +366,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
     }
     break;
   case Iex_Triop:
-    argTemps = VG_(malloc)("hg.args_alloc.1", sizeof(IRTemp) * 3);
-    argTemps[0] = expr->Iex.Triop.details->arg1->Iex.RdTmp.tmp;
-    argTemps[1] = expr->Iex.Triop.details->arg2->Iex.RdTmp.tmp;
-    argTemps[2] = expr->Iex.Triop.details->arg3->Iex.RdTmp.tmp;
-
-    executeShadowOp =
-      unsafeIRDirty_0_N(3,
-                        "executeTriShadowOp",
-                        VG_(fnptr_to_fnentry)(&executeTriShadowOp),
-                        mkIRExprVec_3(mkU64(expr->Iex.Triop.details->op),
-                                      mkU64((ULong)argTemps),
-                                      mkU64(offset)));
-    addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
     break;
   case Iex_Qop:
-    argTemps = VG_(malloc)("hg.args_alloc.1", sizeof(IRTemp) * 4);
-    argTemps[0] = expr->Iex.Qop.details->arg1->Iex.RdTmp.tmp;
-    argTemps[1] = expr->Iex.Qop.details->arg2->Iex.RdTmp.tmp;
-    argTemps[2] = expr->Iex.Qop.details->arg3->Iex.RdTmp.tmp;
-    argTemps[3] = expr->Iex.Qop.details->arg4->Iex.RdTmp.tmp;
-
-    executeShadowOp =
-      unsafeIRDirty_0_N(3,
-                        "executeQuadShadowOp",
-                        VG_(fnptr_to_fnentry)(&executeQuadShadowOp),
-                        mkIRExprVec_3(mkU64(expr->Iex.Qop.details->op),
-                                      mkU64((ULong)argTemps),
-                                      mkU64(offset)));
-    addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
     break;
   default:
     VG_(dmsg)("BAD THINGS!!!!\n");
