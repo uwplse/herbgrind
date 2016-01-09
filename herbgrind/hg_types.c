@@ -13,7 +13,11 @@ ShadowLocation* mkShadowLocation(LocType type){
     location->values = VG_(malloc)("hg.shadow_value.2", sizeof(ShadowValue) * 2);
     break;
   case Lt_Floatx4:
+  case Lt_Doublex4:
     location->values = VG_(malloc)("hg.shadow_value.4", sizeof(ShadowValue) * 4);
+    break;
+  case Lt_Floatx8:
+    location->values = VG_(malloc)("hg.shadow_value.8", sizeof(ShadowValue) * 8);
     break;
   }
   return location;

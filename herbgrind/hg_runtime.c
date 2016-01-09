@@ -98,6 +98,7 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
   case Ity_I64:
   case Ity_F64:
     switch(tsLoc->type){
+    case Lt_Doublex4:
     case Lt_Doublex2:
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
@@ -113,6 +114,8 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
   case Ity_I32:
   case Ity_F32:
     switch(tsLoc->type){
+    case Lt_Floatx8:
+    case Lt_Floatx4:
     case Lt_Floatx2:
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Float);
@@ -123,6 +126,23 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
       localTemps[dest_tmp] = tsLoc;
     default:
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
+    }
+  case Ity_F128:
+  case Ity_V128:
+    switch (tsLoc->type){
+    case Lt_Doublex2:
+    case Lt_Floatx4:
+      localTemps[dest_tmp] = tsLoc;
+    default:
+      VG_(dmsg)("We don't support that mixed size memory get!\n");
+    }
+  case Ity_V256:
+    switch(tsLoc->type){
+    case Lt_Doublex4:
+    case Lt_Floatx8:
+      localTemps[dest_tmp] = tsLoc;
+    default:
+      VG_(dmsg)("We don't support that mixed size memory get!\n");
     }
   default:
     VG_(dmsg)("We don't support that mixed size thread state get!\n");
@@ -145,6 +165,7 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
   case Ity_I64:
   case Ity_F64:
     switch(memoryLoc->type){
+    case Lt_Doublex4:
     case Lt_Doublex2:
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
@@ -160,6 +181,8 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
   case Ity_I32:
   case Ity_F32:
     switch(memoryLoc->type){
+    case Lt_Floatx8:
+    case Lt_Floatx4:
     case Lt_Floatx2:
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
@@ -167,6 +190,23 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
       }
       break;
     case Lt_Float:
+      localTemps[dest_tmp] = memoryLoc;
+    default:
+      VG_(dmsg)("We don't support that mixed size memory get!\n");
+    }
+  case Ity_F128:
+  case Ity_V128:
+    switch (memoryLoc->type){
+    case Lt_Doublex2:
+    case Lt_Floatx4:
+      localTemps[dest_tmp] = memoryLoc;
+    default:
+      VG_(dmsg)("We don't support that mixed size memory get!\n");
+    }
+  case Ity_V256:
+    switch(memoryLoc->type){
+    case Lt_Doublex4:
+    case Lt_Floatx8:
       localTemps[dest_tmp] = memoryLoc;
     default:
       VG_(dmsg)("We don't support that mixed size memory get!\n");
@@ -338,7 +378,6 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_vals
   // on the expected type of the location, passed as "type".
   location = mkShadowLocation(type);
   switch(type){
-  case Lt_Doublex2:
     // Intialize the shadow values from the float_vals we were
     // given.
     //
@@ -347,8 +386,26 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_vals
     // basically an int, and then do a semantic conversion of that int
     // to a double, instead of reinterpreting the bytes as they should
     // have always been interpreted, as double bytes.
+  case Lt_Double:
     mpfr_init_set_d(location->values[0].value, ((double*)float_vals)[0], MPFR_RNDN);
+  case Lt_Doublex2:
     mpfr_init_set_d(location->values[1].value, ((double*)float_vals)[1], MPFR_RNDN);
+  case Lt_Doublex4:
+    mpfr_init_set_d(location->values[2].value, ((double*)float_vals)[2], MPFR_RNDN);
+    mpfr_init_set_d(location->values[3].value, ((double*)float_vals)[3], MPFR_RNDN);
+    return location;
+  case Lt_Float:
+    mpfr_init_set_d(location->values[0].value, ((float*)float_vals)[0], MPFR_RNDN);
+  case Lt_Floatx2:
+    mpfr_init_set_d(location->values[1].value, ((float*)float_vals)[1], MPFR_RNDN);
+  case Lt_Floatx4:
+    mpfr_init_set_d(location->values[2].value, ((float*)float_vals)[2], MPFR_RNDN);
+    mpfr_init_set_d(location->values[3].value, ((float*)float_vals)[3], MPFR_RNDN);
+  case Lt_Floatx8:
+    mpfr_init_set_d(location->values[4].value, ((float*)float_vals)[4], MPFR_RNDN);
+    mpfr_init_set_d(location->values[5].value, ((float*)float_vals)[5], MPFR_RNDN);
+    mpfr_init_set_d(location->values[6].value, ((float*)float_vals)[6], MPFR_RNDN);
+    mpfr_init_set_d(location->values[7].value, ((float*)float_vals)[7], MPFR_RNDN);
     return location;
   default:
     VG_(dmsg)("We don't know how to initialize shadow locations of that type!");
