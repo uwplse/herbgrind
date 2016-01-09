@@ -16,11 +16,13 @@ DEPS = deps/gmp-64/README deps/mpfr-64/README deps/gmp-32/README deps/mpfr-32/RE
 else
 DEPS = deps/gmp-64/README deps/mpfr-64/README
 endif
+
 HEADERS=herbgrind/hg_include.h herbgrind/hg_instrument.h		\
 herbgrind/hg_runtime.h herbgrind/hg_types.h herbgrind/hg_evaluate.h
 
 SOURCES=herbgrind/hg_main.c herbgrind/hg_instrument.c			\
-herbgrind/hg_runtime.c herbgrind/hg_types.c herbgrind/hg_evaluate.c
+herbgrind/hg_runtime.c herbgrind/hg_types.c herbgrind/hg_evaluate.c	\
+herbgrind/hg_mathreplace.c
 
 all: compile
 

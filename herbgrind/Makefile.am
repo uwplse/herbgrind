@@ -20,7 +20,7 @@ noinst_PROGRAMS += herbgrind-@VGCONF_ARCH_SEC@-@VGCONF_OS@
 endif
 
 HERBGRIND_SOURCES_COMMON = hg_main.c hg_runtime.c hg_instrument.c	\
-hg_evaluate.c hg_types.c
+hg_evaluate.c hg_types.c hg_mathreplace.c
 
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_SOURCES      = \
 	$(HERBGRIND_SOURCES_COMMON)
