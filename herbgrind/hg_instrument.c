@@ -292,7 +292,6 @@ There's a dirty function call in the tool input! That can't be right...");
 // result in the temporary at offset.
 void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
   IRDirty* executeShadowOp;
-  IRTemp* argTemps;
   size_t arg_size, result_size;
 
   // So, I recently learned that valgrind doesn't like passing more
