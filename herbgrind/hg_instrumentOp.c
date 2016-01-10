@@ -26,6 +26,16 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // encounter so we can allocate the right amount of space in the
       // argument structure to the runtime shadow execution code.
       switch(expr->Iex.Unop.op){
+      case Iop_NegF32:
+      case Iop_AbsF32:
+        arg_size = sizeof(float);
+        result_size = sizeof(float);
+        break;
+      case Iop_NegF64:
+      case Iop_AbsF64:
+        arg_size = sizeof(double);
+        result_size = sizeof(double);
+        break;
       case Iop_Sqrt64F0x2:
         arg_size = sizeof(double) * 2;
         result_size = sizeof(double) * 2;
@@ -38,6 +48,10 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // can do something useful with.
       switch (expr->Iex.Unop.op){
         // Add all supported unary ops to this list.
+      case Iop_NegF32:
+      case Iop_AbsF32:
+      case Iop_NegF64:
+      case Iop_AbsF64:
       case Iop_Sqrt64F0x2:
         // Allocate the memory for the argument structure
         opInfo = VG_(malloc)("hg.op_alloc.1", sizeof(UnaryOp_Info));
@@ -138,8 +152,18 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_SubF64:
       case Iop_MulF64:
       case Iop_DivF64:
+      case Iop_AddF64r32:
+      case Iop_SubF64r32:
+      case Iop_MulF64r32:
+      case Iop_DivF64r32:
         arg_size = sizeof(double);
         result_size = sizeof(double);
+      case Iop_AddF32:
+      case Iop_SubF32:
+      case Iop_MulF32:
+      case Iop_DivF32:
+        arg_size = sizeof(float);
+        result_size = sizeof(float);
       default:
         break;
       }
@@ -152,6 +176,14 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_SubF64:
       case Iop_MulF64:
       case Iop_DivF64:
+      case Iop_AddF32:
+      case Iop_SubF32:
+      case Iop_MulF32:
+      case Iop_DivF32:
+      case Iop_AddF64r32:
+      case Iop_SubF64r32:
+      case Iop_MulF64r32:
+      case Iop_DivF64r32:
         // Allocate the memory for the argument structure
         opInfo = VG_(malloc)("hg.op_alloc.1", sizeof(TernaryOp_Info));
 

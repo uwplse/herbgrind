@@ -10,37 +10,81 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   ShadowLocation* destLocation;
 
   switch(opInfo->op){
+  case Iop_NegF32:
+  case Iop_AbsF32:
+  case Iop_NegF64:
+  case Iop_AbsF64:
   case Iop_Sqrt64F0x2:
-    // Pull the shadow location for the argument. If we don't already
-    // have a shadow location for this argument, we'll generate a fresh
-    // one from the runtime float value.
-    argLocation = getShadowLocation(opInfo->arg_tmp, Lt_Doublex2, opInfo->arg_value);
+    {
+      LocType argType;
+      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_rnd_t);
 
-    // Now we'll allocate memory for the shadowed result of this
-    // operation, which is a 128-bit SIMD value. The high order
-    // 64-bits are taken from the first argument, while the low order
-    // 64-bits are the result of the operation.
-    destLocation = mkShadowLocation(Lt_Doublex2);
+      // Determine the type of the arguments
+      switch(opInfo->op){
+      case Iop_NegF32:
+      case Iop_AbsF32:
+        argType = Lt_Float;
+        break;
+      case Iop_NegF64:
+      case Iop_AbsF64:
+        argType = Lt_Double;
+        break;
+      case Iop_Sqrt64F0x2:
+        argType = Lt_Doublex2;
+        break;
+      default:
+        break;
+      }
+      // Determine the mpfr shadow function
+      switch(opInfo->op){
+      case Iop_NegF64:
+      case Iop_NegF32:
+        mpfr_func = mpfr_neg;
+        break;
+      case Iop_AbsF64:
+      case Iop_AbsF32:
+        mpfr_func = mpfr_abs;
+        break;
+      case Iop_Sqrt64F0x2:
+        mpfr_func = mpfr_sqrt;
+      }
 
-    // Copy across the high order bits shadow value.
-    destLocation->values[1] = argLocation->values[1];
+      // Pull the shadow location for the argument. If we don't already
+      // have a shadow location for this argument, we'll generate a fresh
+      // one from the runtime float value.
+      argLocation = getShadowLocation(opInfo->arg_tmp, argType, opInfo->arg_value);
+    
+      // Now we'll allocate memory for the shadowed result of this
+      // operation.
+      destLocation = mkShadowLocation(argType);
 
-    // Set the low order bits to the result of the sqrt, but in
-    // higher precision.
-    mpfr_init(destLocation->values[0].value);
-    mpfr_sqrt(destLocation->values[0].value, argLocation->values[0].value, MPFR_RNDN);
+      // Set the low order bits to the result of the sqrt, but in
+      // higher precision.
+      mpfr_init(destLocation->values[0].value);
+      mpfr_func(destLocation->values[0].value, argLocation->values[0].value, MPFR_RNDN);
 
-    // Put the resulting location in the space for the dest temp.
-    localTemps[opInfo->dest_tmp] = destLocation;
+      // Do any extra work for transferring shadow values.
+      switch(opInfo->op){
+      case Iop_Sqrt64F0x2:
+        // Copy across the high order bits shadow value.
+        destLocation->values[1] = argLocation->values[1];
+        break;
+      default:
+        break;
+      }
 
-    // Now, we'll evaluate the low order shadow value against the low
-    // order 64-bits of the result value.
-    evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
-
+      // Now, we'll evaluate the shadow value against the result value.
+      evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
+    }
     break;
+
   default:
     break;
   }
+
+  // Put the resulting location in the space for the dest temp.
+  localTemps[opInfo->dest_tmp] = destLocation;
+
 }
 VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   // The shadowing locations for the first argument, second argument,
@@ -115,99 +159,102 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
 VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
   // The shadowing locations for the arguments and the destination.
   ShadowLocation *arg1Location, *arg2Location, *arg3Location, *destLocation;
+  // We're going to use a lot of switch statements here because there
+  // are a lot of similar cases, and we don't want to repeat too much
+  // code. Hopefully, it will be moderately well organized.
   switch(opInfo->op){
+    // This class of operations is all pretty similar
   case Iop_AddF64:
-    // Pull the shadow values for the arguments. If we don't already
-    // have shadow values for these arguments, we'll generate fresh
-    // ones from the runtime float values.
-    arg2Location =
-      getShadowLocation(opInfo->arg2_tmp, Lt_Double, opInfo->arg2_value);
-    arg3Location =
-      getShadowLocation(opInfo->arg3_tmp, Lt_Double, opInfo->arg3_value);
-
-    // Now we'll allocate memory for the shadowed result of this
-    // operation.
-    destLocation = mkShadowLocation(Lt_Double);
-
-    // Set the destination shadow value to the result of a
-    // high-precision shadowing addition.
-    mpfr_init(destLocation->values[0].value);
-    mpfr_add(destLocation->values[0].value, arg2Location->values[0].value,
-             arg3Location->values[0].value, roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
-    
-    // Now, we'll evaluate the shadow value against the result value.
-    evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
-    break;
-
   case Iop_SubF64:
-    // Pull the shadow values for the arguments. If we don't already
-    // have shadow values for these arguments, we'll generate fresh
-    // ones from the runtime float values.
-    arg2Location =
-      getShadowLocation(opInfo->arg2_tmp, Lt_Double, opInfo->arg2_value);
-    arg3Location =
-      getShadowLocation(opInfo->arg3_tmp, Lt_Double, opInfo->arg3_value);
-
-    // Now we'll allocate memory for the shadowed result of this
-    // operation.
-    destLocation = mkShadowLocation(Lt_Double);
-
-    // Set the destination shadow value to the result of a
-    // high-precision shadowing addition.
-    mpfr_init(destLocation->values[0].value);
-    mpfr_sub(destLocation->values[0].value, arg2Location->values[0].value,
-             arg3Location->values[0].value, roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
-    
-    // Now, we'll evaluate the shadow value against the result value.
-    evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
-    break;
-
   case Iop_MulF64:
-    // Pull the shadow values for the arguments. If we don't already
-    // have shadow values for these arguments, we'll generate fresh
-    // ones from the runtime float values.
-    arg2Location =
-      getShadowLocation(opInfo->arg2_tmp, Lt_Double, opInfo->arg2_value);
-    arg3Location =
-      getShadowLocation(opInfo->arg3_tmp, Lt_Double, opInfo->arg3_value);
-
-    // Now we'll allocate memory for the shadowed result of this
-    // operation.
-    destLocation = mkShadowLocation(Lt_Double);
-
-    // Set the destination shadow value to the result of a
-    // high-precision shadowing addition.
-    mpfr_init(destLocation->values[0].value);
-    mpfr_mul(destLocation->values[0].value, arg2Location->values[0].value,
-             arg3Location->values[0].value, roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
-    
-    // Now, we'll evaluate the shadow value against the result value.
-    evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
-    break;
-
   case Iop_DivF64:
-    // Pull the shadow values for the arguments. If we don't already
-    // have shadow values for these arguments, we'll generate fresh
-    // ones from the runtime float values.
-    arg2Location =
-      getShadowLocation(opInfo->arg2_tmp, Lt_Double, opInfo->arg2_value);
-    arg3Location =
-      getShadowLocation(opInfo->arg3_tmp, Lt_Double, opInfo->arg3_value);
+  case Iop_AddF32:
+  case Iop_SubF32:
+  case Iop_MulF32:
+  case Iop_DivF32:
+  case Iop_AddF64r32:
+  case Iop_SubF64r32:
+  case Iop_MulF64r32:
+  case Iop_DivF64r32:
+    {
+      LocType argType;
+      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+      // Determine the type of the arguments
+      switch(opInfo->op){
+      case Iop_AddF64:
+      case Iop_SubF64:
+      case Iop_MulF64:
+      case Iop_DivF64:
+      case Iop_AddF64r32:
+      case Iop_SubF64r32:
+      case Iop_MulF64r32:
+      case Iop_DivF64r32:
+        argType = Lt_Double;
+        break;
+      case Iop_AddF32:
+      case Iop_SubF32:
+      case Iop_MulF32:
+      case Iop_DivF32:
+        argType = Lt_Float;
+      default:
+        break;
+      }
+      // Determine the mpfr shadow function
+      switch(opInfo->op){
+      case Iop_AddF64:
+      case Iop_AddF32:
+      case Iop_AddF64r32:
+        mpfr_func = mpfr_add;
+        break;
+      case Iop_SubF64:
+      case Iop_SubF32:
+      case Iop_SubF64r32:
+        mpfr_func = mpfr_sub;
+        break;
+      case Iop_MulF64:
+      case Iop_MulF32:
+      case Iop_MulF64r32:
+        mpfr_func = mpfr_mul;
+        break;
+      case Iop_DivF64:
+      case Iop_DivF32:
+      case Iop_DivF64r32:
+        mpfr_func = mpfr_div;
+        break;
+      default:
+        break;
+      }
+      // Pull the shadow values for the arguments. If we don't already
+      // have shadow values for these arguments, we'll generate fresh
+      // ones from the runtime float values.
+      arg2Location =
+        getShadowLocation(opInfo->arg2_tmp, argType, opInfo->arg2_value);
+      arg3Location =
+        getShadowLocation(opInfo->arg3_tmp, argType, opInfo->arg3_value);
 
-    // Now we'll allocate memory for the shadowed result of this
-    // operation.
-    destLocation = mkShadowLocation(Lt_Double);
+      // Now we'll allocate memory for the shadowed result of this
+      // operation.
+      destLocation = mkShadowLocation(argType);
 
-    // Set the destination shadow value to the result of a
-    // high-precision shadowing addition.
-    mpfr_init(destLocation->values[0].value);
-    mpfr_div(destLocation->values[0].value, arg2Location->values[0].value,
-             arg3Location->values[0].value, roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
+      // Set the destination shadow value to the result of a
+      // high-precision shadowing addition.
+      mpfr_init(destLocation->values[0].value);
+      mpfr_func(destLocation->values[0].value, arg2Location->values[0].value,
+               arg3Location->values[0].value, roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
     
-    // Now, we'll evaluate the shadow value against the result value.
-    evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
+      // Now, we'll evaluate the shadow value against the result value.
+      switch(argType){
+      case Lt_Double:
+        evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
+        break;
+      case Lt_Float:
+        evaluateOpError(&(destLocation->values[0]), ((float*)opInfo->dest_value)[0]);
+        break;
+      default:
+        break;
+      }
+    }
     break;
-
   default:
     break;
   }
