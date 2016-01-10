@@ -99,7 +99,11 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   ShadowLocation* destLocation;
   switch(opInfo->op){
   case Iop_F64toF32:
-    destLocation = getShadowLocation(opInfo->arg2_tmp, Lt_Double, opInfo->arg2_value);
+    // For semantic conversions between floating point types we can
+    // just copy across the values.
+    arg2Location = getShadowLocation(opInfo->arg2_tmp, Lt_Double, opInfo->arg2_value);
+    destLocation = mkShadowLocation(Lt_Float);
+    destLocation->values[0] = arg2Location->values[0];
     break;
   case Iop_SqrtF64:
   case Iop_SqrtF32:
