@@ -91,6 +91,14 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // encounter so we can allocate the right amount of space in the
       // argument structure to the runtime shadow execution code.
       switch (expr->Iex.Binop.op){
+      case IopSqrtF64:
+        arg_size = sizeof(double);
+        result_size = sizeof(double);
+        break;
+      case IopSqrtF32:
+        arg_size = sizeof(float);
+        result_size = sizeof(float);
+        break;
       case Iop_Add64F0x2:
       case Iop_SetV128lo64:
         arg_size = sizeof(double) * 2;
@@ -104,6 +112,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // can do something useful with.
       switch (expr->Iex.Binop.op){
         // Add all supported binary ops to this list
+      case Iop_SqrtF64:
+      case Iop_SqrtF32:
       case Iop_Add64F0x2:
       case Iop_SetV128lo64:
         // Allocate the memory for the argument structure

@@ -93,6 +93,62 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   ShadowLocation* arg2Location;
   ShadowLocation* destLocation;
   switch(opInfo->op){
+  case Iop_SqrtF64:
+  case Iop_SqrtF32:
+    {
+      LocType argType;
+      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+
+      // Determine the type of the arguments.
+      switch(opInfo->op){
+      case Iop_SqrtF32:
+        argType = Lt_Float;
+        break;
+      case Iop_SqrtF64:
+        argType = Lt_Double;
+        break;
+      default:
+        break;
+      }
+
+      // Determine the mpfr shadow function
+      switch(opInfo->op){
+      case Iop_SqrtF32:
+      case Iop_SqrtF64:
+        mpfr_func = mpfr_sqrt;
+        break;
+      default:
+        break;
+      }
+      // Pull the shadow values for the arguments. If we don't already
+      // have shadow values for these arguments, we'll generate fresh
+      // ones from the runtime float values.
+      arg2Location =
+        getShadowLocation(opInfo->arg2_tmp, argType, opInfo->arg2_value);
+
+      // Now we'll allocate memory for the shadowed result of this
+      // operation.
+      destLocation = mkShadowLocation(argType);
+
+      // Set the low order bits to the result of the addition, but in
+      // higher precision.
+      mpfr_init(destLocation->values[0].value);
+      mpfr_func(destLocation->values[0].value, arg1Location->values[0].value,
+               arg2Location->values[0].value, MPFR_RNDN);
+
+      // Now, we'll evaluate the low order shadow value against the low
+      // order 64-bits of the result value.
+      switch(argType){
+      case Lt_Double:
+        evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
+        break;
+      case Lt_Float:
+        evaluateOpError(&(destLocation->values[0]), ((float*)opInfo->dest_value)[0]);
+        break;
+      default:
+        break;
+      }
+    }
   case Iop_Add64F0x2:
     // Pull the shadow values for the arguments. If we don't already
     // have shadow values for these arguments, we'll generate fresh
@@ -116,9 +172,6 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     mpfr_init(destLocation->values[0].value);
     mpfr_add(destLocation->values[0].value, arg1Location->values[0].value,
              arg2Location->values[0].value, MPFR_RNDN);
-
-    // Put the resulting location in the space for the dest temp.
-    localTemps[opInfo->dest_tmp] = destLocation;
 
     // Now, we'll evaluate the low order shadow value against the low
     // order 64-bits of the result value.
@@ -146,15 +199,15 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     // Copy the low order bits shadow value from the second argument.
     destLocation->values[0] = arg2Location->values[0];
 
-    // Put the resulting location in the space for the dest temp.
-    localTemps[opInfo->dest_tmp] = destLocation;
-
     // This isn't really a "real" op in the math-y sense, so let's not
     // evaluate it's error.
     break;
   default:
     break;
   }
+  // Put the resulting location in the space for the dest temp.
+  localTemps[opInfo->dest_tmp] = destLocation;
+
 }
 VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
   // The shadowing locations for the arguments and the destination.
