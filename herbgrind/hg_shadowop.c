@@ -98,6 +98,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   ShadowLocation* arg2Location;
   ShadowLocation* destLocation;
   switch(opInfo->op){
+  case Iop_F64toF32:
+    destLocation = getShadowLocation(opInfo->arg2_tmp, Lt_Double, opInfo->arg2_value);
+    break;
   case Iop_SqrtF64:
   case Iop_SqrtF32:
     {
