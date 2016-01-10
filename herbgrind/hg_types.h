@@ -109,6 +109,54 @@ typedef struct _BinaryOp_Info {
   UWord* dest_value;
 } BinaryOp_Info;
 
+typedef struct _TernaryOp_Info {
+  UWord op;
+  // These are the indicies of the temporaries that hold these
+  // values. We'll use these indices to index into the shadow value
+  // array too.
+  UWord arg1_tmp;
+  UWord arg2_tmp;
+  UWord arg3_tmp;
+  // If we don't have a shadow value yet for these arguments, we're
+  // going to use the existing float values to create one. These float
+  // values can be as big as 256 bits, since we account for SIMD
+  // locations, so we're going to store them as an array that's
+  // malloc'd when we know how big they're going to be.
+  UWord* arg1_value;
+  UWord* arg2_value;
+  UWord* arg3_value;
+  // This is the index into where we're putting the result.
+  UWord dest_tmp;
+  // This is the actual computed value of the result, for checking
+  // accuracy.
+  UWord* dest_value;
+} TernaryOp_Info;
+
+typedef struct _QuadnaryOp_Info {
+  UWord op;
+  // These are the indicies of the temporaries that hold these
+  // values. We'll use these indices to index into the shadow value
+  // array too.
+  UWord arg1_tmp;
+  UWord arg2_tmp;
+  UWord arg3_tmp;
+  UWord arg4_tmp;
+  // If we don't have a shadow value yet for these arguments, we're
+  // going to use the existing float values to create one. These float
+  // values can be as big as 256 bits, since we account for SIMD
+  // locations, so we're going to store them as an array that's
+  // malloc'd when we know how big they're going to be.
+  UWord* arg1_value;
+  UWord* arg2_value;
+  UWord* arg3_value;
+  UWord* arg4_value;
+  // This is the index into where we're putting the result.
+  UWord dest_tmp;
+  // This is the actual computed value of the result, for checking
+  // accuracy.
+  UWord* dest_value;
+} QuadnaryOp_Info;
+
 #ifdef VG_LITTLEENDIAN
 #define ENDIAN Iend_LE
 #elif

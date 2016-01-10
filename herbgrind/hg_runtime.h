@@ -35,6 +35,8 @@
 #define PRECISION 1000
 
 extern int running;
+extern ShadowLocation* localTemps[MAX_TEMPS];
+extern VgHashTable* globalMemory;
 
 void init_runtime(void);
 void cleanup_runtime(void);
@@ -63,8 +65,8 @@ VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem)
 // operations alongside the normal operations.
 VG_REGPARM(3) void executeUnaryShadowOp(UnaryOp_Info* opInfo);
 VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo);
-VG_REGPARM(3) void executeTriShadowOp(UWord op, UWord* args, UWord dest_tmp);
-VG_REGPARM(3) void executeQuadShadowOp(UWord op, UWord* args, UWord dest_tmp);
+VG_REGPARM(3) void executeTernaryShadowOp(UWord op, UWord* args, UWord dest_tmp);
+VG_REGPARM(3) void executeQuadnaryShadowOp(UWord op, UWord* args, UWord dest_tmp);
 
 // Get's the shadow location associated with a particular tmp
 // index. If there is no shadow location currently associated with

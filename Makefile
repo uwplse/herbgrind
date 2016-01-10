@@ -21,8 +21,9 @@ HEADERS=herbgrind/hg_include.h herbgrind/hg_instrument.h		\
 herbgrind/hg_runtime.h herbgrind/hg_types.h herbgrind/hg_evaluate.h
 
 SOURCES=herbgrind/hg_main.c herbgrind/hg_instrument.c			\
-herbgrind/hg_runtime.c herbgrind/hg_types.c herbgrind/hg_evaluate.c	\
-herbgrind/hg_mathreplace.c
+herbgrind/hg_runtime.c herbgrind/hg_storage_runtime.c			\
+herbgrind/hg_shadowop.c herbgrind/hg_types.c herbgrind/hg_evaluate.c	\
+herbgrind/hg_instrumentOp.c
 
 all: compile
 
