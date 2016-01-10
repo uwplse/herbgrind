@@ -63,16 +63,19 @@ VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem)
 
 // The functions that we'll insert into the program to execute shadow
 // operations alongside the normal operations.
-VG_REGPARM(3) void executeUnaryShadowOp(UnaryOp_Info* opInfo);
+VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo);
 VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo);
-VG_REGPARM(3) void executeTernaryShadowOp(UWord op, UWord* args, UWord dest_tmp);
-VG_REGPARM(3) void executeQuadnaryShadowOp(UWord op, UWord* args, UWord dest_tmp);
+VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo);
+VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo);
 
 // Get's the shadow location associated with a particular tmp
 // index. If there is no shadow location currently associated with
 // that type, constructs one which contains a single shadow value,
 // constructed from float_val, assuming float_val is of type 'type'.
 ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_val);
+
+// Convert IR rounding mode codes to MPFR rounding mode codes.
+mpfr_rnd_t roundmodeIRtoMPFR(IRRoundingMode round);
 
 // Frees the memory associated with a shadow locatin.
 void cleanupShadowLocation(ShadowLocation* loc);
