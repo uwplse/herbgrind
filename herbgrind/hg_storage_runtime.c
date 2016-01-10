@@ -55,8 +55,10 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
       break;
     case Lt_Double:
       localTemps[dest_tmp] = tsLoc;
+      break;
     default:
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
+      VG_(printf)("(the shadow value had type %d, but we're trying to get a double.)\n", tsLoc->type);
     }
     break;
   case Ity_I32:
@@ -72,28 +74,41 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
       break;
     case Lt_Float:
       localTemps[dest_tmp] = tsLoc;
+      break;
     default:
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
+      VG_(printf)("(the shadow value had type %d)", tsLoc->type);
+      break;
     }
+    break;
   case Ity_F128:
   case Ity_V128:
     switch (tsLoc->type){
     case Lt_Doublex2:
     case Lt_Floatx4:
       localTemps[dest_tmp] = tsLoc;
+      break;
     default:
-      VG_(dmsg)("We don't support that mixed size memory get!\n");
+      VG_(dmsg)("We don't support that mixed size thread state get!\n");
+      VG_(printf)("(the shadow value had type %d, but we're trying to get at 128-bit location.)\n", tsLoc->type);
+      break;
     }
+    break;
   case Ity_V256:
     switch(tsLoc->type){
     case Lt_Doublex4:
     case Lt_Floatx8:
       localTemps[dest_tmp] = tsLoc;
+      break;
     default:
-      VG_(dmsg)("We don't support that mixed size memory get!\n");
+      VG_(dmsg)("We don't support that mixed size thread state get!\n");
+      VG_(printf)("(the shadow value had type %d, but we're trying to get a 256-bit location.)\n", tsLoc->type);
+      break;
     }
+    break;
   default:
     VG_(dmsg)("We don't support that mixed size thread state get!\n");
+    VG_(printf)("(we're trying to get a value of type %x\n", type);
     break;
   }
 }
@@ -122,8 +137,10 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
       break;
     case Lt_Double:
       localTemps[dest_tmp] = memoryLoc;
+      break;
     default:
       VG_(dmsg)("We don't support that mixed size memory get!\n");
+      break;
     }
     break;
   case Ity_I32:
@@ -139,26 +156,35 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
       break;
     case Lt_Float:
       localTemps[dest_tmp] = memoryLoc;
+      break;
     default:
       VG_(dmsg)("We don't support that mixed size memory get!\n");
+      break;
     }
+    break;
   case Ity_F128:
   case Ity_V128:
     switch (memoryLoc->type){
     case Lt_Doublex2:
     case Lt_Floatx4:
       localTemps[dest_tmp] = memoryLoc;
+      break;
     default:
       VG_(dmsg)("We don't support that mixed size memory get!\n");
+      break;
     }
+    break;
   case Ity_V256:
     switch(memoryLoc->type){
     case Lt_Doublex4:
     case Lt_Floatx8:
       localTemps[dest_tmp] = memoryLoc;
+      break;
     default:
       VG_(dmsg)("We don't support that mixed size memory get!\n");
+      break;
     }
+    break;
   default:
     VG_(dmsg)("We don't support that mixed size memory get!\n");
     break;
