@@ -10,6 +10,11 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   ShadowLocation* destLocation;
 
   switch(opInfo->op){
+  case Iop_F32toF64:
+    argLocation = getShadowLocation(opInfo->arg_tmp, Lt_Float, opInfo->arg_value);
+    destLocation = mkShadowLocation(Lt_Double);
+    destLocation = argLocation;
+    break;
   case Iop_NegF32:
   case Iop_AbsF32:
   case Iop_NegF64:
