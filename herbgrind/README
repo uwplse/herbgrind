@@ -1,0 +1,61 @@
+=====================================================================
+Here, I'm compiling some basic notes about this codebase as they come
+to me, in the hopes that it will be mildly useful in the future.
+=====================================================================
+
+How to add a new supported operation to the code base:
+
+You may at some point decide that you want Herbgrind shadow values
+tracking an operation that they didn't previously track. To do this,
+you need to insert the operation in several different places in the
+code base, unfortunately, so I'm going to go over what those are here.
+
+First, you'll want to find the ir code for the operation you want to
+support. All VEX ops are listed in an enumeration in the valgrind
+source directory, at VEX/pub/libvex_ir.h:415.
+
+Once you have the enumeration value for that operation, you'll want to
+go into hg_instrumentOp.c, and change the instrumentOp function. This
+is the function which is called for every Unop, Binop, Triop, or Qop
+expression in the flattened VEX IR. It inserts the calls which shadow
+these operations with values. Figure out the arity of the operation
+(number of arguments, including rounding mode arguments). Usually this
+will be apparent in the comments in libvex_ir.h.
+
+Depending on which one it is, you'll want to look at the cooresponding
+case of the main switch statement in instrumentOp. In here there are
+two switch statements which branch on the op. The first will set the
+arg_size and result_size parameters which will be used to allocate
+memory for the arguments when passing them to the inserted c
+functions. The second is just to check whether the operation that is
+currently being instrumented is supported at all, so that we don't add
+useless instrumentaiton to unsupported operations.
+
+Add your new op to both of these, and in the first one set it's result
+and arg size, like the others. The second just add it to the top so
+that your op doesn't hit the default case.
+
+Now, we'll want to actually write the runtime instrumentation behavior
+of your new op. Go to hg_shadowop.c, and again, depending on the
+arity, you'll want to either look at executeUnaryShadowOp,
+executeBinaryShadowOp, executeTrinaryShadowOp, or
+executeQuadnaryShadowOp. These functions are called after every
+execution of your operation, and their opInfo structures contain
+information about where all your arguments are located, what their
+values are, what value was computed by the operation, and where it was
+placed.
+
+The organization of this is a little haphazard, because many
+operations do very similar things, and some do very, very different
+things, and I'd like to have as little redundancy as possible. As
+such, I don't have super straight-forward instructions on what you'll
+want to put here, and it varies very much based on your
+operation. You'll definitely want to put some sort of case for your
+new operation here, otherwise all the allocating of memory and
+instrumenting of code will be for naught. Generally, try to find an
+operation that does something similar to yours, and add a case near
+it, either copying and changing what you need, or, hopefully, falling
+through to it's code, and adding a case to one of it's inner switch
+statements.
+
+Good luck!
