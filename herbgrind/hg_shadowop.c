@@ -347,8 +347,8 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
       switch(argType){
       case Lt_DoubleDouble:
         VG_(dmsg)("\
-Wow, you're working with some really big floats. We can't evaluate the \n
-precision of those operations right now, but we're sure as hell \n
+Wow, you're working with some really big floats. We can't evaluate the \n\
+precision of those operations right now, but we're sure as hell \n\
 keeping track of them.");
         break;
       case Lt_Double:
