@@ -1,7 +1,7 @@
 HerbGrind -- A Valgrind Tool For Herbie
 =======================================
 
-<img src="logo.jpg" alt="Herbgrind logo" style="width: 150px;"/>
+<img src="logo.jpg" alt="Herbgrind logo" width="150"/>
 
 While I'm not sure yet whether the best move is to work with FpDebug
 to get the results we want, or to write our own valgrind tool, both
