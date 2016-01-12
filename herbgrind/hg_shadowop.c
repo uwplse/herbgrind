@@ -251,6 +251,10 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
   // code. Hopefully, it will be moderately well organized.
   switch(opInfo->op){
     // This class of operations is all pretty similar
+  case Iop_AddF128:
+  case Iop_SubF128:
+  case Iop_MulF128:
+  case Iop_DivF128:
   case Iop_AddF64:
   case Iop_SubF64:
   case Iop_MulF64:
@@ -268,6 +272,12 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
       // Determine the type of the arguments
       switch(opInfo->op){
+      case Iop_AddF128:
+      case Iop_SubF128:
+      case Iop_MulF128:
+      case Iop_DivF128:
+        argType = Lt_DoubleDouble;
+        break;
       case Iop_AddF64:
       case Iop_SubF64:
       case Iop_MulF64:
@@ -288,21 +298,25 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
       }
       // Determine the mpfr shadow function
       switch(opInfo->op){
+      case Iop_AddF128:
       case Iop_AddF64:
       case Iop_AddF32:
       case Iop_AddF64r32:
         mpfr_func = mpfr_add;
         break;
+      case Iop_SubF128:
       case Iop_SubF64:
       case Iop_SubF32:
       case Iop_SubF64r32:
         mpfr_func = mpfr_sub;
         break;
+      case Iop_MulF128:
       case Iop_MulF64:
       case Iop_MulF32:
       case Iop_MulF64r32:
         mpfr_func = mpfr_mul;
         break;
+      case Iop_DivF128:
       case Iop_DivF64:
       case Iop_DivF32:
       case Iop_DivF64r32:
@@ -331,6 +345,12 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
     
       // Now, we'll evaluate the shadow value against the result value.
       switch(argType){
+      case Lt_DoubleDouble:
+        VG_(dmsg)("\
+Wow, you're working with some really big floats. We can't evaluate the \n
+precision of those operations right now, but we're sure as hell \n
+keeping track of them.");
+        break;
       case Lt_Double:
         evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
         break;

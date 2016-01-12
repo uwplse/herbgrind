@@ -24,7 +24,9 @@ typedef enum {
   Lt_Floatx8,
   Lt_Double,
   Lt_Doublex2,
-  Lt_Doublex4
+  Lt_Doublex4,
+  Lt_DoubleDouble,
+  Lt_DoubleDoubleDouble,
 } LocType;
 
 // The value we're tracking for each floating point storage location
