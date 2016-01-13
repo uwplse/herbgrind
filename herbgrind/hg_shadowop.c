@@ -174,7 +174,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   case Iop_SqrtF32:
     {
       LocType argType;
-      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_rnd_t);
 
       // Determine the type of the arguments.
       switch(opInfo->op){
@@ -224,8 +224,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
 
       // Set the low order bits to the result of the addition, but in
       // higher precision.
-      mpfr_func(destLocation->values[0].value, arg1Location->values[0].value,
-               arg2Location->values[0].value, MPFR_RNDN);
+      mpfr_func(destLocation->values[0].value, arg2Location->values[0].value, MPFR_RNDN);
 
       // Now, we'll evaluate the low order shadow value against the low
       // order 64-bits of the result value.
