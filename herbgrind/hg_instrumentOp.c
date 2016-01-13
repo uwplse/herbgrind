@@ -180,12 +180,6 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // encounter so we can allocate the right amount of space in the
       // argument structure to the runtime shadow execution code.
       switch (expr->Iex.Triop.details->op){
-      case Iop_AddF128:
-      case Iop_SubF128:
-      case Iop_MulF128:
-      case Iop_DivF128:
-        arg_size = sizeof(double)*2;
-        result_size = sizeof(double)*2;
       case Iop_AddF64:
       case Iop_SubF64:
       case Iop_MulF64:
