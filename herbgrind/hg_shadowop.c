@@ -246,6 +246,65 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         break;
       }
     }
+  case Iop_QAdd32S:
+  case Iop_QSub32S:
+    {
+      LocType argType;
+      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+      switch(opInfo->op){
+      case Iop_QAdd32S:
+      case Iop_QSub32S:
+        argType = Lt_Float;
+        break;
+      default:
+        break;
+      }
+      switch(opInfo->op){
+      case Iop_QAdd32S:
+        mpfr_func = mpfr_add;
+        break;
+      case Iop_QSub32S:
+        mpfr_func = mpfr_sub;
+        break;
+      default:
+        break;
+      }
+      // Pull the shadow values for the arguments. If we don't already
+      // have shadow values for these arguments, we'll generate fresh
+      // ones from the runtime float values.
+      arg1Location =
+        getShadowLocation(opInfo->arg1_tmp, Lt_Doublex2, opInfo->arg1_value);
+      arg2Location =
+        getShadowLocation(opInfo->arg2_tmp, Lt_Doublex2, opInfo->arg2_value);
+
+      // Now we'll allocate memory for the shadowed result of this
+      // operation.
+      destLocation = mkShadowLocation(argType);
+
+      // Set the destination shadow value to the result of a
+      // high-precision shadowing addition.
+      mpfr_func(destLocation->values[0].value, arg1Location->values[0].value,
+                arg1Location->values[0].value, MPFR_RNDN);
+
+      // Now, we'll evaluate the shadow value against the result value.
+      switch(argType){
+      case Lt_DoubleDouble:
+        VG_(dmsg)("\
+Wow, you're working with some really big floats. We can't evaluate the \n\
+precision of those operations right now, but we're sure as hell \n\
+keeping track of them.");
+        break;
+      case Lt_Double:
+        evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
+        break;
+      case Lt_Float:
+        evaluateOpError(&(destLocation->values[0]), ((float*)opInfo->dest_value)[0]);
+        break;
+      default:
+        break;
+      }
+    }
+    break;
   case Iop_Add64F0x2:
     // Pull the shadow values for the arguments. If we don't already
     // have shadow values for these arguments, we'll generate fresh
@@ -408,7 +467,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
       // Set the destination shadow value to the result of a
       // high-precision shadowing addition.
       mpfr_func(destLocation->values[0].value, arg2Location->values[0].value,
-               arg3Location->values[0].value, roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
+                arg3Location->values[0].value, roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
     
       // Now, we'll evaluate the shadow value against the result value.
       switch(argType){

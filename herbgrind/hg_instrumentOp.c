@@ -138,6 +138,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(double);
         result_size = sizeof(double);
         break;
+      case Iop_QAdd32S:
+      case Iop_QSub32S:
       case Iop_RecpExpF32:
       case Iop_RoundF32toInt:
       case Iop_SqrtF32:
@@ -157,6 +159,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // can do something useful with.
       switch (expr->Iex.Binop.op){
         // Add all supported binary ops to this list
+      case Iop_QAdd32S:
+      case Iop_QSub32S:
       case Iop_RecpExpF64:
       case Iop_RecpExpF32:
       case Iop_RoundF64toInt:
