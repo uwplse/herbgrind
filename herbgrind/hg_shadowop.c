@@ -1,4 +1,5 @@
 #include "hg_runtime.h"
+#include "hg_hiprec_ops.h"
 
 // Execute a shadow operation, storing the result of the high
 // precision operation applied to the shadow value at the arg_tmp
