@@ -81,7 +81,6 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
 
       // Set the low order bits to the result of the sqrt, but in
       // higher precision.
-      mpfr_init(destLocation->values[0].value);
       mpfr_func(destLocation->values[0].value, argLocation->values[0].value, MPFR_RNDN);
 
       // Do any extra work for transferring shadow values.
@@ -186,7 +185,6 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
 
       // Set the low order bits to the result of the addition, but in
       // higher precision.
-      mpfr_init(destLocation->values[0].value);
       mpfr_func(destLocation->values[0].value, arg1Location->values[0].value,
                arg2Location->values[0].value, MPFR_RNDN);
 
@@ -223,7 +221,6 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
 
     // Set the low order bits to the result of the addition, but in
     // higher precision.
-    mpfr_init(destLocation->values[0].value);
     mpfr_add(destLocation->values[0].value, arg1Location->values[0].value,
              arg2Location->values[0].value, MPFR_RNDN);
 
@@ -365,7 +362,6 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
 
       // Set the destination shadow value to the result of a
       // high-precision shadowing addition.
-      mpfr_init(destLocation->values[0].value);
       mpfr_func(destLocation->values[0].value, arg2Location->values[0].value,
                arg3Location->values[0].value, roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
     
@@ -456,7 +452,6 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo){
 
       // Set the destination shadow value to the result of a
       // high-precision shadowing addition.
-      mpfr_init(destLocation->values[0].value);
       mpfr_func(destLocation->values[0].value, arg2Location->values[0].value,
                 arg3Location->values[0].value, arg4Location->values[0].value,
                 roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
@@ -524,25 +519,25 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_vals
     // to a double, instead of reinterpreting the bytes as they should
     // have always been interpreted, as double bytes.
   case Lt_Doublex4:
-    mpfr_init_set_d(location->values[3].value, ((double*)float_vals)[3], MPFR_RNDN);
-    mpfr_init_set_d(location->values[2].value, ((double*)float_vals)[2], MPFR_RNDN);
+    mpfr_set_d(location->values[3].value, ((double*)float_vals)[3], MPFR_RNDN);
+    mpfr_set_d(location->values[2].value, ((double*)float_vals)[2], MPFR_RNDN);
   case Lt_Doublex2:
-    mpfr_init_set_d(location->values[1].value, ((double*)float_vals)[1], MPFR_RNDN);
+    mpfr_set_d(location->values[1].value, ((double*)float_vals)[1], MPFR_RNDN);
   case Lt_Double:
-    mpfr_init_set_d(location->values[0].value, ((double*)float_vals)[0], MPFR_RNDN);
+    mpfr_set_d(location->values[0].value, ((double*)float_vals)[0], MPFR_RNDN);
     return location;
   case Lt_Floatx8:
-    mpfr_init_set_d(location->values[7].value, ((float*)float_vals)[7], MPFR_RNDN);
-    mpfr_init_set_d(location->values[6].value, ((float*)float_vals)[6], MPFR_RNDN);
-    mpfr_init_set_d(location->values[5].value, ((float*)float_vals)[5], MPFR_RNDN);
-    mpfr_init_set_d(location->values[4].value, ((float*)float_vals)[4], MPFR_RNDN);
+    mpfr_set_d(location->values[7].value, ((float*)float_vals)[7], MPFR_RNDN);
+    mpfr_set_d(location->values[6].value, ((float*)float_vals)[6], MPFR_RNDN);
+    mpfr_set_d(location->values[5].value, ((float*)float_vals)[5], MPFR_RNDN);
+    mpfr_set_d(location->values[4].value, ((float*)float_vals)[4], MPFR_RNDN);
   case Lt_Floatx4:
-    mpfr_init_set_d(location->values[3].value, ((float*)float_vals)[3], MPFR_RNDN);
-    mpfr_init_set_d(location->values[2].value, ((float*)float_vals)[2], MPFR_RNDN);
+    mpfr_set_d(location->values[3].value, ((float*)float_vals)[3], MPFR_RNDN);
+    mpfr_set_d(location->values[2].value, ((float*)float_vals)[2], MPFR_RNDN);
   case Lt_Floatx2:
-    mpfr_init_set_d(location->values[1].value, ((float*)float_vals)[1], MPFR_RNDN);
+    mpfr_set_d(location->values[1].value, ((float*)float_vals)[1], MPFR_RNDN);
   case Lt_Float:
-    mpfr_init_set_d(location->values[0].value, ((float*)float_vals)[0], MPFR_RNDN);
+    mpfr_set_d(location->values[0].value, ((float*)float_vals)[0], MPFR_RNDN);
     return location;
   default:
     VG_(dmsg)("We don't know how to initialize shadow locations of that type!");
