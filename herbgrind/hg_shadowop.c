@@ -31,11 +31,35 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
     destLocation = mkShadowLocation(Lt_Double);
     destLocation->values[0] = argLocation->values[0];
     break;
+  case Iop_RoundF64toF64_NEAREST:
+  case Iop_RoundF64toF64_NegINF:
+  case Iop_RoundF64toF64_PosINF:
+  case Iop_RoundF64toF64_ZERO:
+    argLocation = getShadowLocation(opInfo->arg_tmp, Lt_Double, opInfo->arg_value);
+    destLocation = mkShadowLocation(Lt_Double);
+    switch(opInfo->op){
+    case Iop_RoundF64toF64_NEAREST:
+      mpfr_round(destLocation->values[0].value, argLocation->values[0].value);
+      break;
+    case Iop_RoundF64toF64_NegINF:
+      mpfr_floor(destLocation->values[0].value, argLocation->values[0].value);
+      break;
+    case Iop_RoundF64toF64_PosINF:
+      mpfr_ceil(destLocation->values[0].value, argLocation->values[0].value);
+      break;
+    case Iop_RoundF64toF64_ZERO:
+      mpfr_trunc(destLocation->values[0].value, argLocation->values[0].value);
+      break;
+    default:
+      break;
+    }
+    break;
   case Iop_NegF32:
   case Iop_AbsF32:
   case Iop_NegF64:
   case Iop_AbsF64:
   case Iop_Sqrt64F0x2:
+  case Iop_RSqrtEst5GoodF64:
     {
       LocType argType;
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_rnd_t);
@@ -119,6 +143,12 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     destLocation = mkShadowLocation(Lt_Doublex2);
     destLocation->values[0] = arg1Location->values[0];
     destLocation->values[1] = arg2Location->values[0];
+    break;
+  case Iop_RoundF64toInt:
+    destLocation = getShadowLocation(opInfo->arg2_tmp, Lt_Double, opInfo->arg2_value);
+    break;
+  case Iop_RoundF32toInt:
+    destLocation = getShadowLocation(opInfo->arg2_tmp, Lt_Float, opInfo->arg2_value);
     break;
   case Iop_F64toF32:
     // For semantic conversions between floating point types we can
@@ -404,7 +434,7 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo){
   case Iop_MSubF64r32:
     {
       LocType argType;
-      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
       // Determine the type of the arguments
       switch(opInfo->op){
       case Iop_MAddF32:
