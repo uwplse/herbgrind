@@ -281,6 +281,18 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // encounter so we can allocate the right amount of space in the
       // argument structure to the runtime shadow execution code.
       switch (expr->Iex.Qop.details->op){
+      case Iop_MAddF32:
+      case Iop_MSubF32:
+        arg_size = sizeof(float);
+        result_size = sizeof(float);
+        break;
+      case Iop_MAddF64:
+      case Iop_MSubF64:
+      case Iop_MAddF64r32:
+      case Iop_MSubF64r32:
+        arg_size = sizeof(double);
+        result_size = sizeof(double);
+        break;
       default:
         break;
       }
@@ -289,42 +301,47 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // can do something useful with.
       switch (expr->Iex.Qop.details->op){
         // Add all supported quadnary ops to this list
-      /* case 1: */
-      /*   // Allocate the memory for the argument structure */
-      /*   opInfo = VG_(malloc)("hg.op_alloc.1", sizeof(QuadnaryOp_Info)); */
+      case Iop_MAddF32:
+      case Iop_MSubF32:
+      case Iop_MAddF64:
+      case Iop_MSubF64:
+      case Iop_MAddF64r32:
+      case Iop_MSubF64r32:
+        // Allocate the memory for the argument structure
+        opInfo = VG_(malloc)("hg.op_alloc.1", sizeof(QuadnaryOp_Info));
 
-      /*   // Populate the values we know at instrument time now. */
-      /*   opInfo->op = expr->Iex.Qop.details->op; */
-      /*   opInfo->arg1_tmp = expr->Iex.Qop.details->arg1->Iex.RdTmp.tmp; */
-      /*   opInfo->arg2_tmp = expr->Iex.Qop.details->arg2->Iex.RdTmp.tmp; */
-      /*   opInfo->arg3_tmp = expr->Iex.Qop.details->arg3->Iex.RdTmp.tmp; */
-      /*   opInfo->arg4_tmp = expr->Iex.Qop.details->arg4->Iex.RdTmp.tmp; */
-      /*   opInfo->dest_tmp = offset; */
+        // Populate the values we know at instrument time now.
+        opInfo->op = expr->Iex.Qop.details->op;
+        opInfo->arg1_tmp = expr->Iex.Qop.details->arg1->Iex.RdTmp.tmp;
+        opInfo->arg2_tmp = expr->Iex.Qop.details->arg2->Iex.RdTmp.tmp;
+        opInfo->arg3_tmp = expr->Iex.Qop.details->arg3->Iex.RdTmp.tmp;
+        opInfo->arg4_tmp = expr->Iex.Qop.details->arg4->Iex.RdTmp.tmp;
+        opInfo->dest_tmp = offset;
 
-      /*   // Allocate the space for the values we won't know until */
-      /*   // runtime, but know their size now. */
-      /*   opInfo->arg1_value = VG_(malloc)("hg.arg_alloc", arg_size); */
-      /*   opInfo->arg2_value = VG_(malloc)("hg.arg_alloc", arg_size); */
-      /*   opInfo->arg3_value = VG_(malloc)("hg.arg_alloc", arg_size); */
-      /*   opInfo->arg4_value = VG_(malloc)("hg.arg_alloc", arg_size); */
-      /*   opInfo->dest_value = VG_(malloc)("hg.arg_alloc", result_size); */
+        // Allocate the space for the values we won't know until
+        // runtime, but know their size now.
+        opInfo->arg1_value = VG_(malloc)("hg.arg_alloc", arg_size);
+        opInfo->arg2_value = VG_(malloc)("hg.arg_alloc", arg_size);
+        opInfo->arg3_value = VG_(malloc)("hg.arg_alloc", arg_size);
+        opInfo->arg4_value = VG_(malloc)("hg.arg_alloc", arg_size);
+        opInfo->dest_value = VG_(malloc)("hg.arg_alloc", result_size);
 
-      /*   // Add statements to populate the values we don't know until */
-      /*   // runtime. */
-      /*   addStore(sb, expr->Iex.Qop.details->arg1, opInfo->arg1_value); */
-      /*   addStore(sb, expr->Iex.Qop.details->arg2, opInfo->arg2_value); */
-      /*   addStore(sb, expr->Iex.Qop.details->arg3, opInfo->arg3_value); */
-      /*   addStore(sb, expr->Iex.Qop.details->arg3, opInfo->arg4_value); */
-      /*   addStore(sb, IRExpr_RdTmp(offset), opInfo->dest_value); */
+        // Add statements to populate the values we don't know until
+        // runtime.
+        addStore(sb, expr->Iex.Qop.details->arg1, opInfo->arg1_value);
+        addStore(sb, expr->Iex.Qop.details->arg2, opInfo->arg2_value);
+        addStore(sb, expr->Iex.Qop.details->arg3, opInfo->arg3_value);
+        addStore(sb, expr->Iex.Qop.details->arg3, opInfo->arg4_value);
+        addStore(sb, IRExpr_RdTmp(offset), opInfo->dest_value);
 
-      /*   // Finally, add the statement to call the shadow op procedure. */
-      /*   executeShadowOp = */
-      /*     unsafeIRDirty_0_N(1, */
-      /*                       "executeQuadnaryShadowOp", */
-      /*                       VG_(fnptr_to_fnentry)(&executeQuadnaryShadowOp), */
-      /*                       mkIRExprVec_1(mkU64((ULong)opInfo))); */
-      /*   addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp)); */
-      /*   break; */
+        // Finally, add the statement to call the shadow op procedure.
+        executeShadowOp =
+          unsafeIRDirty_0_N(1,
+                            "executeQuadnaryShadowOp",
+                            VG_(fnptr_to_fnentry)(&executeQuadnaryShadowOp),
+                            mkIRExprVec_1(mkU64((ULong)opInfo)));
+        addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+        break;
       default:
         break;
       }

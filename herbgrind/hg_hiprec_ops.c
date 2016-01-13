@@ -19,3 +19,13 @@ int hiprec_scale(mpfr_t result, mpfr_t arg1, mpfr_t arg2, mpfr_rnd_t round){
   mpfr_exp2(result, result, round);
   return mpfr_mul(result, arg1, result, round);
 }
+
+int hiprec_fma(mpfr_t result, mpfr_t arg1, mpfr_t arg2, mpfr_t arg3, mpfr_rnd_t round){
+  mpfr_mul(result, arg1, arg2, round);
+  return mpfr_add(result, result, arg3, round);
+}
+
+int hiprec_fms(mpfr_t result, mpfr_t arg1, mpfr_t arg2, mpfr_t arg3, mpfr_rnd_t round){
+  mpfr_mul(result, arg1, arg2, round);
+  return mpfr_sub(result, result, arg3, round);
+}
