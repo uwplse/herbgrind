@@ -15,11 +15,14 @@
 // One argument
 int hiprec_2xm1(mpfr_t result, mpfr_t arg, mpfr_rnd_t round);
 int hiprec_recpexp(mpfr_t result, mpfr_t arg, mpfr_rnd_t round);
+int hiprec_recip(mpfr_t result, mpfr_t arg, mpfr_rnd_t round);
 
 // Two argument
 int hiprec_yl2x(mpfr_t result, mpfr_t arg1, mpfr_t arg2, mpfr_rnd_t round);
 int hiprec_yl2xp1(mpfr_t result, mpfr_t arg1, mpfr_t arg2, mpfr_rnd_t round);
 int hiprec_scale(mpfr_t result, mpfr_t arg1, mpfr_t arg2, mpfr_rnd_t round);
+int hiprec_recipstep(mpfr_t result, mpfr_t arg1, mpfr_t arg2, mpfr_rnd_t round);
+int hiprec_rsqrtstep(mpfr_t result, mpfr_t arg, mpfr_t arg2, mpfr_rnd_t round);
 
 // Three argument
 int hiprec_fma(mpfr_t result, mpfr_t arg1, mpfr_t arg2, mpfr_t arg3, mpfr_rnd_t round);

@@ -11,6 +11,34 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   ShadowLocation* destLocation;
 
   switch(opInfo->op){
+  case Iop_RecipEst32Fx2:
+  case Iop_RSqrtEst32Fx2:
+  case Iop_Neg32Fx2:
+  case Iop_Abs32Fx2:
+    {
+      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_rnd_t);
+      switch(opInfo->op){
+      case Iop_RecipEst32Fx2:
+        mfpr_func = highprec_recip;
+        break;
+      case Iop_RSqrtEst32Fx2:
+        mpfr_func = mpfr_rec_sqrt;
+        break;
+      case Iop_Neg32Fx2:
+        mpfr_func = mpfr_neg;
+        break;
+      case Iop_Abs32Fx2:
+        mpfr_func = mpfr_abs;
+        break;
+      default:
+        break;
+      }
+      argLocation = getShadowLocation(opInfo->arg_tmp, Lt_Floatx2, opInfo->arg_value);
+      destLocation = mkShadowLocation(Lt_Floatx2);
+      mpfr_func(destLocation->values[0], argLocation->values[0], MPFR_RNDN);
+      mpfr_func(destLocation->values[1], argLocation->values[1], MPFR_RNDN);
+    }
+    break;
   case Iop_F128HItoF64:
   case Iop_F128LOtoF64:
     argLocation = getShadowLocation(opInfo->arg_tmp, Lt_Doublex2, opInfo->arg_value);
@@ -246,12 +274,18 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         break;
       }
     }
+  case Iop_RSqrtStep32Fx2:
+  case Iop_RecipStep32Fx2:
   case Iop_QAdd32S:
   case Iop_QSub32S:
     {
       LocType argType;
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
       switch(opInfo->op){
+      case Iop_RSqrtStep32Fx2:
+      case Iop_RecipStep32Fx2:
+        argType = Lt_Floatx2;
+        break;
       case Iop_QAdd32S:
       case Iop_QSub32S:
         argType = Lt_Float;
@@ -260,6 +294,12 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         break;
       }
       switch(opInfo->op){
+      case Iop_RSqrtStep32Fx2:
+        mpfr_func = highprec_rsqrtstep;
+        break;
+      case Iop_RecipStep32Fx2:
+        mpfr_func = highprec_recipstep;
+        break;
       case Iop_QAdd32S:
         mpfr_func = mpfr_add;
         break;
