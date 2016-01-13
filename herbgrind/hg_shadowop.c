@@ -251,6 +251,10 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
   // code. Hopefully, it will be moderately well organized.
   switch(opInfo->op){
     // This class of operations is all pretty similar
+  case Iop_AtanF64:
+  case Iop_Yl2xF64:
+  case Iop_Yl2xp1F64:
+  case Iop_ScaleF64:
   case Iop_AddF64:
   case Iop_SubF64:
   case Iop_MulF64:
@@ -268,6 +272,10 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
       // Determine the type of the arguments
       switch(opInfo->op){
+      case Iop_AtanF64:
+      case Iop_Yl2xF64:
+      case Iop_Yl2xp1F64:
+      case Iop_ScaleF64:
       case Iop_AddF64:
       case Iop_SubF64:
       case Iop_MulF64:
@@ -288,6 +296,18 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
       }
       // Determine the mpfr shadow function
       switch(opInfo->op){
+      case Iop_AtanF64:
+        mpfr_func = mpfr_atan2;
+        break;
+      case Iop_Yl2xF64:
+        mpfr_func = hiprec_yl2x;
+        break;
+      case Iop_Yl2xp1F64:
+        mpfr_func = hiprec_yl2xp1;
+        break;
+      case Iop_ScaleF64:
+        mpfr_func = hiprec_scale;
+        break;
       case Iop_AddF64:
       case Iop_AddF32:
       case Iop_AddF64r32:
