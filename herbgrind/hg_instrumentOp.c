@@ -111,6 +111,10 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(double);
         result_size = sizeof(float);
         break;
+      case Iop_SinF64:
+      case Iop_CosF64:
+      case Iop_TanF64:
+      case Iop_2xm1F64:
       case Iop_SqrtF64:
         arg_size = sizeof(double);
         result_size = sizeof(double);
@@ -134,6 +138,10 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         // Add all supported binary ops to this list
       case Iop_F64HLtoF128:
       case Iop_F64toF32:
+      case Iop_SinF64:
+      case Iop_CosF64:
+      case Iop_TanF64:
+      case Iop_2xm1F64:
       case Iop_SqrtF64:
       case Iop_SqrtF32:
       case Iop_Add64F0x2:

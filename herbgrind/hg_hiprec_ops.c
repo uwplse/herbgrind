@@ -1,5 +1,10 @@
 #include "hg_hiprec_ops.h"
 
+int hiprec_2xm1(mpfr_t result, mpfr_t arg, mpfr_rnd_t round){
+  mpfr_exp2(result, arg, round);
+  return mpfr_sub_d(result, result, 1.0, round);
+}
+
 int hiprec_yl2x(mpfr_t result, mpfr_t arg1, mpfr_t arg2, mpfr_rnd_t round){
   mpfr_log2(result, arg2, round);
   return mpfr_mul(result, arg1, result, round);
