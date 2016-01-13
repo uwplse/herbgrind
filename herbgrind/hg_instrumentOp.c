@@ -35,11 +35,16 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(float);
         result_size = sizeof(double);
         break;
+      case Iop_TruncF64asF32:
+        arg_size = sizeof(double);
+        result_size = sizeof(float);
+        break;
       case Iop_NegF32:
       case Iop_AbsF32:
         arg_size = sizeof(float);
         result_size = sizeof(float);
         break;
+      case Iop_RoundF64toF32:
       case Iop_RSqrtEst5GoodF64:
       case Iop_RoundF64toF64_NEAREST:
       case Iop_RoundF64toF64_NegINF:
@@ -62,6 +67,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // can do something useful with.
       switch (expr->Iex.Unop.op){
         // Add all supported unary ops to this list.
+      case Iop_RoundF64toF32:
+      case Iop_TruncF64asF32:
       case Iop_RSqrtEst5GoodF64:
       case Iop_RoundF64toF64_NEAREST:
       case Iop_RoundF64toF64_NegINF:

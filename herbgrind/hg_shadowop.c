@@ -31,6 +31,15 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
     destLocation = mkShadowLocation(Lt_Double);
     destLocation->values[0] = argLocation->values[0];
     break;
+  case Iop_TruncF64asF32:
+    argLocation = getShadowLocation(opInfo->arg_tmp, Lt_Double, opInfo->arg_value);
+    destLocation = mkShadowLocation(Lt_Float);
+    destLocation->values[0] = argLocation->values[0];
+    break;
+  case Iop_RoundF64toF32:
+    // no op, just copy across the shadow.
+    destLocation = getShadowLocation(opInfo->arg_tmp, Lt_Double, opInfo->arg_value);
+    break;
   case Iop_RoundF64toF64_NEAREST:
   case Iop_RoundF64toF64_NegINF:
   case Iop_RoundF64toF64_PosINF:
