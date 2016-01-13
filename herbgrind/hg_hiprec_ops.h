@@ -14,6 +14,7 @@
 
 // One argument
 int hiprec_2xm1(mpfr_t result, mpfr_t arg, mpfr_rnd_t round);
+int hiprec_recpexp(mpfr_t result, mpfr_t arg, mpfr_rnd_t round);
 
 // Two argument
 int hiprec_yl2x(mpfr_t result, mpfr_t arg1, mpfr_t arg2, mpfr_rnd_t round);

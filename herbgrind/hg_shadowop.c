@@ -166,6 +166,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     destLocation = mkShadowLocation(Lt_Float);
     destLocation->values[0] = arg2Location->values[0];
     break;
+  case Iop_RecpExpF64:
+  case Iop_RecpExpF32:
   case Iop_SinF64:
   case Iop_CosF64:
   case Iop_TanF64:
@@ -178,9 +180,11 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
 
       // Determine the type of the arguments.
       switch(opInfo->op){
+      case Iop_RecpExpF32:
       case Iop_SqrtF32:
         argType = Lt_Float;
         break;
+      case Iop_RecpExpF64:
       case Iop_SinF64:
       case Iop_CosF64:
       case Iop_TanF64:
@@ -194,6 +198,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
 
       // Determine the mpfr shadow function
       switch(opInfo->op){
+      case Iop_RecpExpF64:
+      case Iop_RecpExpF32:
+        mpfr_func = hiprec_recpexp;
       case Iop_SinF64:
         mpfr_func = mpfr_sin;
         break;
