@@ -11,12 +11,14 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   ShadowLocation* destLocation;
 
   switch(opInfo->op){
+  case Iop_RecipEst32Fx4:
+  case Iop_RSqrtEst32Fx4:
   case Iop_RecipEst64Fx2:
   case Iop_RSqrtEst64Fx2:
-  case Iop_Abs64Fx2:
-  case Iop_Neg64Fx2:
   case Iop_RecipEst32Fx2:
   case Iop_RSqrtEst32Fx2:
+  case Iop_Abs64Fx2:
+  case Iop_Neg64Fx2:
   case Iop_Neg32Fx2:
   case Iop_Abs32Fx2:
   case Iop_Neg32Fx4:
@@ -27,10 +29,12 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_rnd_t);
 
       switch(opInfo->op){
+      case Iop_RecipEst32Fx4:
       case Iop_RecipEst32Fx2:
       case Iop_RecipEst64Fx2:
         mpfr_func = hiprec_recip;
         break;
+      case Iop_RSqrtEst32Fx4:
       case Iop_RSqrtEst32Fx2:
       case Iop_RSqrtEst64Fx2:
         mpfr_func = mpfr_rec_sqrt;
@@ -63,6 +67,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
         argType = Lt_Doublex2;
         num_vals = 2;
         break;
+      case Iop_RecipEst32Fx4:
+      case Iop_RSqrtEst32Fx4:
       case Iop_Neg32Fx4:
       case Iop_Abs32Fx4:
         argType = Lt_Floatx4;
@@ -468,6 +474,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       destLocation->values[3] = arg1Location->values[3];
     }
     break;
+  case Iop_RecipStep32Fx4:
+  case Iop_RSqrtStep32Fx4:
   case Iop_RSqrtStep32Fx2:
   case Iop_RecipStep32Fx2:
   case Iop_RecipStep64Fx2:
@@ -477,11 +485,14 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     {
       LocType argType;
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+      size_t num_values;
       switch(opInfo->op){
+      case Iop_RSqrtStep32Fx4:
       case Iop_RSqrtStep32Fx2:
       case Iop_RSqrtStep64Fx2:
         mpfr_func = hiprec_rsqrtstep;
         break;
+      case Iop_RecipStep32Fx4:
       case Iop_RecipStep32Fx2:
       case Iop_RecipStep64Fx2:
         mpfr_func = hiprec_recipstep;
@@ -501,10 +512,17 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       case Iop_RSqrtStep32Fx2:
       case Iop_RecipStep32Fx2:
         argType = Lt_Floatx2;
+        num_values = 2;
         break;
       case Iop_RecipStep64Fx2:
       case Iop_RSqrtStep64Fx2:
         argType = Lt_Doublex2;
+        num_values = 2;
+        break;
+      case Iop_RecipStep32Fx4:
+      case Iop_RSqrtStep32Fx4:
+        argType = Lt_Doublex4;
+        num_values = 4;
         break;
       default:
         break;
@@ -521,17 +539,29 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       // operation.
       destLocation = mkShadowLocation(argType);
 
-      // Set the destination shadow values to the result of a
-      // high-precision shadowing operation, for each channel in which
-      // it occurs.
-      for (int i = 0; i < 2; ++i)
+      for (int i = 0; i < num_values; ++i){
+        // Set the destination shadow values to the result of a
+        // high-precision shadowing operation, for each channel in which
+        // it occurs.
         mpfr_func(destLocation->values[i].value, arg1Location->values[i].value,
                   arg2Location->values[i].value, MPFR_RNDN);
+        // Now, we'll evaluate the shadow value against the result
+        // value, for each of it's channels.
+        switch(argType){
+        case Lt_Float:
+        case Lt_Floatx2:
+        case Lt_Floatx4:
+          evaluateOpError(&(destLocation->values[i]), ((float*)opInfo->dest_value)[i]);
+          break;
+        case Lt_Double:
+        case Lt_Doublex2:
+          evaluateOpError(&(destLocation->values[i]), ((double*)opInfo->dest_value)[i]);
+          break;
+        default:
+          break;
+        }
+      }
 
-      // Now, we'll evaluate the shadow value against the result
-      // value, for each of it's channels.
-      evaluateOpError(&(destLocation->values[0]), ((float*)opInfo->dest_value)[0]);
-      evaluateOpError(&(destLocation->values[1]), ((float*)opInfo->dest_value)[1]);
     }
     break;
   case Iop_QAdd32S:
