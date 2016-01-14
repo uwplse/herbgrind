@@ -96,6 +96,9 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   case Iop_NegF64:
   case Iop_AbsF64:
   case Iop_Sqrt64F0x2:
+  case Iop_RecipEst32F0x4:
+  case Iop_Sqrt32F0x4:
+  case Iop_RSqrtEst32F0x4:
   case Iop_RSqrtEst5GoodF64:
     {
       LocType argType;
@@ -111,6 +114,10 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       case Iop_AbsF64:
         argType = Lt_Double;
         break;
+      case Iop_RecipEst32F0x4:
+      case Iop_Sqrt32F0x4:
+      case Iop_RSqrtEst32F0x4:
+        argType = Lt_Floatx4;
       case Iop_Sqrt64F0x2:
         argType = Lt_Doublex2;
         break;
@@ -127,8 +134,18 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       case Iop_AbsF32:
         mpfr_func = mpfr_abs;
         break;
+      case Iop_Sqrt32F0x4:
       case Iop_Sqrt64F0x2:
         mpfr_func = mpfr_sqrt;
+        break;
+      case Iop_RecipEst32F0x4:
+        mpfr_func = hiprec_recip;
+        break;
+      case Iop_RSqrtEst32F0x4:
+        mpfr_func = mpfr_rec_sqrt;
+        break;
+      default:
+        break;
       }
 
       // Pull the shadow location for the argument. If we don't already
