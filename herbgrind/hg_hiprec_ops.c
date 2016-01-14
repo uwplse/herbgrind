@@ -30,7 +30,7 @@ int hiprec_recipstep(mpfr_t result, mpfr_t arg1, mpfr_t arg2, mpfr_rnd_t round){
   mpfr_mul(result, arg1, arg2, round);
   return mpfr_d_sub(result, 2.0, result, round);
 }
-int hiprec_rsqrtstep(mpfr_t result, mpfr_t arg, mpfr_rnd_t round){
+int hiprec_rsqrtstep(mpfr_t result, mpfr_t arg1, mpfr_t arg2, mpfr_rnd_t round){
   mpfr_mul(result, arg1, arg2, round);
   mpfr_d_sub(result, 3.0, result, round);
   return mpfr_div_d(result, result, 2.0, round);

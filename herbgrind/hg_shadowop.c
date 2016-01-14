@@ -19,7 +19,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_rnd_t);
       switch(opInfo->op){
       case Iop_RecipEst32Fx2:
-        mfpr_func = highprec_recip;
+        mpfr_func = hiprec_recip;
         break;
       case Iop_RSqrtEst32Fx2:
         mpfr_func = mpfr_rec_sqrt;
@@ -35,8 +35,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       }
       argLocation = getShadowLocation(opInfo->arg_tmp, Lt_Floatx2, opInfo->arg_value);
       destLocation = mkShadowLocation(Lt_Floatx2);
-      mpfr_func(destLocation->values[0], argLocation->values[0], MPFR_RNDN);
-      mpfr_func(destLocation->values[1], argLocation->values[1], MPFR_RNDN);
+      mpfr_func(destLocation->values[0].value, argLocation->values[0].value, MPFR_RNDN);
+      mpfr_func(destLocation->values[1].value, argLocation->values[1].value, MPFR_RNDN);
     }
     break;
   case Iop_F128HItoF64:
