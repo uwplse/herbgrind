@@ -81,7 +81,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   case Iop_TruncF64asF32:
   case Iop_RoundF64toF32:
     {
-      LocType argType, resultType
+      LocType argType, resultType;
       switch(opInfo->op){
       case Iop_F32toF64:
         argType = Lt_Float;
@@ -257,10 +257,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       default:
         break;
       }
-    }
     arg2Location = getShadowLocation(opInfo->arg2_tmp, argType, opInfo->arg2_value);
     destLocation = mkShadowLocation(argType);
-    mpfr_round(destLocation->values[0], arg2Location->values[0]);
+    mpfr_round(destLocation->values[0].value, arg2Location->values[0].value);
     }
     break;
   case Iop_F64toF32:
@@ -305,6 +304,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       case Iop_RecpExpF64:
       case Iop_RecpExpF32:
         mpfr_func = hiprec_recpexp;
+        break;
       case Iop_SinF64:
         mpfr_func = mpfr_sin;
         break;
@@ -315,6 +315,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         mpfr_func = mpfr_tan;
         break;
       case Iop_2xm1F64:
+        mpfr_func = hiprec_2xm1;
         break;
       case Iop_SqrtF32:
       case Iop_SqrtF64:
@@ -692,7 +693,7 @@ keeping track of them.");
 
       // Now we'll allocate memory for the shadowed result of this
       // operation.
-      destLocation = mkShadowLocation(argType);
+      destLocation = mkShadowLocation(Lt_Doublex2);
 
       // Set the destination shadow value to the result of a
       // high-precision shadowing operation.
