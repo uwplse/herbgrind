@@ -63,6 +63,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(float)*4;
         result_size = sizeof(float)*4;
         break;
+      case Iop_RecipEst64Fx2:
+      case Iop_RSqrtEst64Fx2:
       case Iop_Abs64Fx2:
       case Iop_Neg64Fx2:
       case Iop_Sqrt64F0x2:
@@ -77,6 +79,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // can do something useful with.
       switch (expr->Iex.Unop.op){
         // Add all supported unary ops to this list.
+      case Iop_RecipEst64Fx2:
+      case Iop_RSqrtEst64Fx2:
       case Iop_Abs64Fx2:
       case Iop_Neg64Fx2:
       case Iop_RecipEst32F0x4:
@@ -170,6 +174,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(float) * 2;
         result_size = sizeof(float) * 2;
         break;
+      case Iop_RecipStep64Fx2:
+      case Iop_RSqrtStep64Fx2:
       case Iop_Sqrt64Fx2:
       case Iop_Add64F0x2:
       case Iop_SetV128lo64:
@@ -189,8 +195,10 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_Sub32F0x4:
       case Iop_Mul32F0x4:
       case Iop_Div32F0x4:
-      case Iop_RecipEst32Fx2:
-      case Iop_RSqrtEst32Fx2:
+      case Iop_RecipStep32Fx2:
+      case Iop_RSqrtStep32Fx2:
+      case Iop_RecipStep64Fx2:
+      case Iop_RSqrtStep64Fx2:
       case Iop_Neg32Fx2:
       case Iop_Abs32Fx2:
       case Iop_QAdd32S:

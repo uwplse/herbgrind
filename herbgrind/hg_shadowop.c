@@ -11,6 +11,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   ShadowLocation* destLocation;
 
   switch(opInfo->op){
+  case Iop_RecipEst64Fx2:
+  case Iop_RSqrtEst64Fx2:
   case Iop_Abs64Fx2:
   case Iop_Neg64Fx2:
   case Iop_RecipEst32Fx2:
@@ -23,9 +25,11 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
 
       switch(opInfo->op){
       case Iop_RecipEst32Fx2:
+      case Iop_RecipEst64Fx2:
         mpfr_func = hiprec_recip;
         break;
       case Iop_RSqrtEst32Fx2:
+      case Iop_RSqrtEst64Fx2:
         mpfr_func = mpfr_rec_sqrt;
         break;
       case Iop_Neg64Fx2:
@@ -46,6 +50,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       case Iop_Abs32Fx2:
         argType = Lt_Floatx2;
         break;
+      case Iop_RecipEst64Fx2:
+      case Iop_RSqrtEst64Fx2:
       case Iop_Abs64Fx2:
       case Iop_Neg64Fx2:
         argType = Lt_Doublex2;
@@ -421,14 +427,31 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     break;
   case Iop_RSqrtStep32Fx2:
   case Iop_RecipStep32Fx2:
+  case Iop_RecipStep64Fx2:
+  case Iop_RSqrtStep64Fx2:
     {
+      LocType argType;
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
       switch(opInfo->op){
       case Iop_RSqrtStep32Fx2:
+      case Iop_RSqrtStep64Fx2:
         mpfr_func = hiprec_rsqrtstep;
         break;
       case Iop_RecipStep32Fx2:
+      case Iop_RecipStep64Fx2:
         mpfr_func = hiprec_recipstep;
+        break;
+      default:
+        break;
+      }
+      switch(opInfo->op){
+      case Iop_RSqrtStep32Fx2:
+      case Iop_RecipStep32Fx2:
+        argType = Lt_Floatx2;
+        break;
+      case Iop_RecipStep64Fx2:
+      case Iop_RSqrtStep64Fx2:
+        argType = Lt_Doublex2;
         break;
       default:
         break;
@@ -437,13 +460,13 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       // have shadow values for these arguments, we'll generate fresh
       // ones from the runtime float values.
       arg1Location =
-        getShadowLocation(opInfo->arg1_tmp, Lt_Floatx2, opInfo->arg1_value);
+        getShadowLocation(opInfo->arg1_tmp, argType, opInfo->arg1_value);
       arg2Location =
-        getShadowLocation(opInfo->arg2_tmp, Lt_Floatx2, opInfo->arg2_value);
+        getShadowLocation(opInfo->arg2_tmp, argType, opInfo->arg2_value);
 
       // Now we'll allocate memory for the shadowed result of this
       // operation.
-      destLocation = mkShadowLocation(Lt_Floatx2);
+      destLocation = mkShadowLocation(argType);
 
       // Set the destination shadow value to the result of a
       // high-precision shadowing operation, for each channel in which
