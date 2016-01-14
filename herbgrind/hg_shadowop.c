@@ -11,6 +11,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   ShadowLocation* destLocation;
 
   switch(opInfo->op){
+  case Iop_RecipEst32Fx8:
+  case Iop_RSqrtEst32Fx8:
   case Iop_RecipEst32Fx4:
   case Iop_RSqrtEst32Fx4:
   case Iop_RecipEst64Fx2:
@@ -29,11 +31,13 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_rnd_t);
 
       switch(opInfo->op){
+      case Iop_RecipEst32Fx8:
       case Iop_RecipEst32Fx4:
       case Iop_RecipEst32Fx2:
       case Iop_RecipEst64Fx2:
         mpfr_func = hiprec_recip;
         break;
+      case Iop_RSqrtEst32Fx8:
       case Iop_RSqrtEst32Fx4:
       case Iop_RSqrtEst32Fx2:
       case Iop_RSqrtEst64Fx2:
@@ -74,6 +78,11 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
         argType = Lt_Floatx4;
         num_vals = 4;
         break;
+      case Iop_RecipEst32Fx8:
+      case Iop_RSqrtEst32Fx8:
+        argType = Lt_Floatx8;
+        num_vals = 8;
+        break;
       default:
         break;
       }
@@ -82,8 +91,20 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       // one from the runtime float value.
       argLocation = getShadowLocation(opInfo->arg_tmp, argType, opInfo->arg_value);
       destLocation = mkShadowLocation(argType);
-      for (int i = 0; i < num_vals; ++i)
+      for (int i = 0; i < num_vals; ++i){
         mpfr_func(destLocation->values[i].value, argLocation->values[i].value, MPFR_RNDN);
+        // Evaluate the computed value against the high precision shadow result.
+        switch(argType){
+        case Lt_Floatx2:
+        case Lt_Floatx4:
+        case Lt_Floatx8:
+          evaluateOpError(&(destLocation->values[i]), ((float*)opInfo->dest_value)[i]);
+          break;
+        case Lt_Doublex2:
+          evaluateOpError(&(destLocation->values[i]), ((double*)opInfo->dest_value)[i]);
+          break;
+        }
+      }
     }
     break;
   case Iop_ZeroHI64ofV128:
@@ -328,7 +349,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     destLocation = mkShadowLocation(Lt_Float);
     destLocation->values[0] = arg2Location->values[0];
     break;
+  case Iop_Sqrt32Fx8:
   case Iop_Sqrt32Fx4:
+  case Iop_Sqrt64Fx4:
   case Iop_Sqrt64Fx2:
   case Iop_RecpExpF64:
   case Iop_RecpExpF32:
@@ -359,13 +382,21 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         argType = Lt_Double;
         num_values = 1;
         break;
+      case Iop_Sqrt32Fx8:
+        argType = Lt_Floatx8;
+        num_values = 8;
+        break;
+      case Iop_Sqrt32Fx4:
+        argType = Lt_Floatx4;
+        num_values = 4;
+        break;
+      case Iop_SqrtF64x4:
+        argType = Lt_Doublex4;
+        num_values = 4;
+        break;
       case Iop_Sqrt64Fx2:
         argType = Lt_Doublex2;
         num_values = 2;
-        break;
-      case Iop_Sqrt32Fx4:
-        argType = Lt_Doublex4;
-        num_values = 4;
         break;
       default:
         break;
@@ -389,8 +420,10 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       case Iop_2xm1F64:
         mpfr_func = hiprec_2xm1;
         break;
+      case Iop_Sqrt32Fx8:
       case Iop_Sqrt32Fx4:
       case Iop_Sqrt64Fx2:
+      case Iop_Sqrt64Fx4:
       case Iop_SqrtF32:
       case Iop_SqrtF64:
         mpfr_func = mpfr_sqrt;

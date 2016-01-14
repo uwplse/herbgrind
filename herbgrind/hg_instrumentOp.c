@@ -73,6 +73,11 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(float)*4;
         result_size = sizeof(float)*4;
         break;
+      case Iop_RSqrtEst32Fx8:
+      case Iop_RecipEst32Fx8:
+        arg_size = sizeof(float) * 8;
+        result_size = sizeof(float) * 8;
+        break;
       case Iop_ZeroHI64ofV128:
       case Iop_RecipEst64Fx2:
       case Iop_RSqrtEst64Fx2:
@@ -204,6 +209,10 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(float) * 4;
         result_size = sizeof(float) * 4;
         break;
+      case Iop_Sqrt32Fx8:
+        arg_size = sizeof(float) * 8;
+        result_size = sizeof(float) * 8;
+        break;
       case Iop_RecipStep64Fx2:
       case Iop_RSqrtStep64Fx2:
       case Iop_Sqrt64Fx2:
@@ -214,6 +223,10 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_SetV128lo64:
         arg_size = sizeof(double) * 2;
         result_size = sizeof(double) * 2;
+        break;
+      case Iop_Sqrt64Fx4:
+        arg_size = sizeof(double) * 4;
+        result_size = sizeof(double) * 4;
         break;
       default:
         break;
