@@ -208,9 +208,18 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   ShadowLocation* destLocation;
   switch(opInfo->op){
   case Iop_F64HLtoF128:
+    // Pull the shadow values for the arguments. If we don't already
+    // have shadow values for these arguments, we'll generate fresh
+    // ones from the runtime float values.
     arg1Location = getShadowLocation(opInfo->arg1_tmp, Lt_Double, opInfo->arg1_value);
     arg2Location = getShadowLocation(opInfo->arg2_tmp, Lt_Double, opInfo->arg2_value);
+
+    // Now we'll allocate memory for the shadowed result of this
+    // operation.
     destLocation = mkShadowLocation(Lt_Doublex2);
+
+    // Finally, take the 64 bits of each argument, and put them in the
+    // two halves of the result.
     destLocation->values[0] = arg1Location->values[0];
     destLocation->values[1] = arg2Location->values[0];
     break;
@@ -630,23 +639,23 @@ keeping track of them.");
       }
     }
     break;
-  case Iop_Add64F2:
-  case Iop_Sub64F2:
-  case Iop_Mul64F2:
-  case Iop_Div64F2:
+  case Iop_Add64Fx2:
+  case Iop_Sub64Fx2:
+  case Iop_Mul64Fx2:
+  case Iop_Div64Fx2:
     {
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
       switch(opInfo->op){
-      case Iop_Add64F2:
+      case Iop_Add64Fx2:
         mpfr_func = mpfr_add;
         break;
-      case Iop_Sub64F2:
+      case Iop_Sub64Fx2:
         mpfr_func = mpfr_sub;
         break;
-      case Iop_Mul64F2:
+      case Iop_Mul64Fx2:
         mpfr_func = mpfr_mul;
         break;
-      case Iop_Div64F2:
+      case Iop_Div64Fx2:
         mpfr_func = mpfr_div;
         break;
       default:
