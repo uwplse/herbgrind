@@ -11,12 +11,16 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   ShadowLocation* destLocation;
 
   switch(opInfo->op){
+  case Iop_Abs64Fx2:
+  case Iop_Neg64Fx2:
   case Iop_RecipEst32Fx2:
   case Iop_RSqrtEst32Fx2:
   case Iop_Neg32Fx2:
   case Iop_Abs32Fx2:
     {
+      LocType argType;
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_rnd_t);
+
       switch(opInfo->op){
       case Iop_RecipEst32Fx2:
         mpfr_func = hiprec_recip;
@@ -24,11 +28,27 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       case Iop_RSqrtEst32Fx2:
         mpfr_func = mpfr_rec_sqrt;
         break;
+      case Iop_Neg64Fx2:
       case Iop_Neg32Fx2:
         mpfr_func = mpfr_neg;
         break;
+      case Iop_Abs64Fx2:
       case Iop_Abs32Fx2:
         mpfr_func = mpfr_abs;
+        break;
+      default:
+        break;
+      }
+      switch(opInfo->op){
+      case Iop_RecipEst32Fx2:
+      case Iop_RSqrtEst32Fx2:
+      case Iop_Neg32Fx2:
+      case Iop_Abs32Fx2:
+        argType = Lt_Floatx2;
+        break;
+      case Iop_Abs64Fx2:
+      case Iop_Neg64Fx2:
+        argType = Lt_Doublex2;
         break;
       default:
         break;
@@ -36,8 +56,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       // Pull the shadow values for the argument. If we don't already
       // have shadow values for this argument, we'll generate a fresh
       // one from the runtime float value.
-      argLocation = getShadowLocation(opInfo->arg_tmp, Lt_Floatx2, opInfo->arg_value);
-      destLocation = mkShadowLocation(Lt_Floatx2);
+      argLocation = getShadowLocation(opInfo->arg_tmp, argType, opInfo->arg_value);
+      destLocation = mkShadowLocation(argType);
       for (int i = 0; i < 2; ++i)
         mpfr_func(destLocation->values[i].value, argLocation->values[i].value, MPFR_RNDN);
     }
