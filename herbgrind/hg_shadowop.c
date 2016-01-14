@@ -68,23 +68,46 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
         mpfr_func(destLocation->values[i].value, argLocation->values[i].value, MPFR_RNDN);
     }
     break;
+  case Iop_ZeroHI64ofV128:
+  case Iop_ZeroHI96ofV128:
   case Iop_F128HItoF64:
   case Iop_F128LOtoF64:
   case Iop_V128to64:
   case Iop_V128HIto64:
-    argLocation = getShadowLocation(opInfo->arg_tmp, Lt_Doublex2, opInfo->arg_value);
-    destLocation = mkShadowLocation(Lt_Double);
-    switch(opInfo->op){
-    case Iop_V128HIto64:
-    case Iop_F128HItoF64:
-      destLocation->values[0] = argLocation->values[1];
-      break;
-    case Iop_V128to64:
-    case Iop_F128LOtoF64:
-      destLocation->values[0] = argLocation->values[0];
-      break;
-    default:
-      break;
+    {
+      LocType argType, resultType;
+      switch(opInfo->op){
+      case Iop_ZeroHI64ofV128:
+        argType = Lt_Doublex2;
+        resultType = Lt_Doublex2;
+        break;
+      case Iop_ZeroHI96ofV128:
+        argType = Lt_Floatx4;
+        resultType = Lt_Floatx4;
+        break;
+      case Iop_F128HItoF64:
+      case Iop_F128LOtoF64:
+      case Iop_V128to64:
+      case Iop_V128HIto64:
+        argType = Lt_Doublex2;
+        resultType = Lt_Doublex4;
+      }
+      argLocation = getShadowLocation(opInfo->arg_tmp, argType, opInfo->arg_value);
+      destLocation = mkShadowLocation(resultType);
+      switch(opInfo->op){
+      case Iop_V128HIto64:
+      case Iop_F128HItoF64:
+        destLocation->values[0] = argLocation->values[1];
+        break;
+      case Iop_ZeroHI64ofV128:
+      case Iop_ZeroHI96ofV128:
+      case Iop_V128to64:
+      case Iop_F128LOtoF64:
+        destLocation->values[0] = argLocation->values[0];
+        break;
+      default:
+        break;
+      }
     }
     break;
   case Iop_F32toF64:
@@ -237,6 +260,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   ShadowLocation* arg2Location;
   ShadowLocation* destLocation;
   switch(opInfo->op){
+  case Iop_64HLtoV128:
   case Iop_F64HLtoF128:
     // Pull the shadow values for the arguments. If we don't already
     // have shadow values for these arguments, we'll generate fresh

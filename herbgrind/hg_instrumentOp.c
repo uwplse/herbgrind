@@ -59,12 +59,14 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(double);
         result_size = sizeof(double);
         break;
+      case Iop_ZeroHI96ofV128:
       case Iop_RecipEst32F0x4:
       case Iop_Sqrt32F0x4:
       case Iop_RSqrtEst32F0x4:
         arg_size = sizeof(float)*4;
         result_size = sizeof(float)*4;
         break;
+      case Iop_ZeroHI64ofV128:
       case Iop_RecipEst64Fx2:
       case Iop_RSqrtEst64Fx2:
       case Iop_Abs64Fx2:
@@ -81,6 +83,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // can do something useful with.
       switch (expr->Iex.Unop.op){
         // Add all supported unary ops to this list.
+      case Iop_ZeroHI96ofV128:
+      case Iop_ZeroHI64ofV128:
       case Iop_V128to64:
       case Iop_V128HIto64:
       case Iop_RecipEst64Fx2:
@@ -145,6 +149,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // encounter so we can allocate the right amount of space in the
       // argument structure to the runtime shadow execution code.
       switch (expr->Iex.Binop.op){
+      case Iop_64HLtoV128:
       case Iop_F64HLtoF128:
         arg_size = sizeof(double);
         result_size = sizeof(double)*2;
@@ -214,6 +219,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_RecpExpF32:
       case Iop_RoundF64toInt:
       case Iop_RoundF32toInt:
+      case Iop_64HLtoV128:
       case Iop_F64HLtoF128:
       case Iop_F64toF32:
       case Iop_SinF64:
