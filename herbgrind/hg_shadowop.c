@@ -269,6 +269,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     destLocation = mkShadowLocation(Lt_Float);
     destLocation->values[0] = arg2Location->values[0];
     break;
+  case Iop_Sqrt64Fx2:
   case Iop_RecpExpF64:
   case Iop_RecpExpF32:
   case Iop_SinF64:
@@ -279,6 +280,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   case Iop_SqrtF32:
     {
       LocType argType;
+      size_t num_values;
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_rnd_t);
 
       // Determine the type of the arguments.
@@ -294,6 +296,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       case Iop_2xm1F64:
       case Iop_SqrtF64:
         argType = Lt_Double;
+        break;
+      case Iop_Sqrt64Fx2:
+        argType = Lt_Doublex2;
         break;
       default:
         break;
@@ -317,11 +322,28 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       case Iop_2xm1F64:
         mpfr_func = hiprec_2xm1;
         break;
+      case Iop_Sqrt64Fx2:
       case Iop_SqrtF32:
       case Iop_SqrtF64:
         mpfr_func = mpfr_sqrt;
         break;
       default:
+        break;
+      }
+      // Determine the number of values
+      switch(opInfo->op){
+      case Iop_RecpExpF64:
+      case Iop_RecpExpF32:
+      case Iop_SinF64:
+      case Iop_CosF64:
+      case Iop_TanF64:
+      case Iop_2xm1F64:
+      case Iop_SqrtF64:
+      case Iop_SqrtF32:
+        num_values = 1;
+        break;
+      case Iop_Sqrt64Fx2:
+        num_values = 2;
         break;
       }
       // Pull the shadow values for the arguments. If we don't already
@@ -334,21 +356,23 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       // operation.
       destLocation = mkShadowLocation(argType);
 
-      // Set the low order bits to the result of the addition, but in
-      // higher precision.
-      mpfr_func(destLocation->values[0].value, arg2Location->values[0].value, MPFR_RNDN);
+      for (int i = 0; i < num_values; ++i){
+        // Set the low order bits to the result of the addition, but in
+        // higher precision.
+        mpfr_func(destLocation->values[i].value, arg2Location->values[i].value, MPFR_RNDN);
 
-      // Now, we'll evaluate the low order shadow value against the low
-      // order 64-bits of the result value.
-      switch(argType){
-      case Lt_Double:
-        evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
-        break;
-      case Lt_Float:
-        evaluateOpError(&(destLocation->values[0]), ((float*)opInfo->dest_value)[0]);
-        break;
-      default:
-        break;
+        // Now, we'll evaluate the low order shadow value against the low
+        // order 64-bits of the result value.
+        switch(argType){
+        case Lt_Double:
+          evaluateOpError(&(destLocation->values[i]), ((double*)opInfo->dest_value)[i]);
+          break;
+        case Lt_Float:
+          evaluateOpError(&(destLocation->values[i]), ((float*)opInfo->dest_value)[i]);
+          break;
+        default:
+          break;
+        }
       }
     }
   case Iop_Add32F0x4:
