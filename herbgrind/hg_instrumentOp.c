@@ -193,6 +193,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(float) * 2;
         result_size = sizeof(float) * 2;
         break;
+      case Iop_Sqrt32Fx4:
       case Iop_SetV128lo32:
         arg_size = sizeof(float) * 4;
         result_size = sizeof(float) * 4;

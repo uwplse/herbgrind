@@ -322,6 +322,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     destLocation = mkShadowLocation(Lt_Float);
     destLocation->values[0] = arg2Location->values[0];
     break;
+  case Iop_Sqrt32Fx4:
   case Iop_Sqrt64Fx2:
   case Iop_RecpExpF64:
   case Iop_RecpExpF32:
@@ -341,6 +342,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       case Iop_RecpExpF32:
       case Iop_SqrtF32:
         argType = Lt_Float;
+        num_values = 1;
         break;
       case Iop_RecpExpF64:
       case Iop_SinF64:
@@ -349,9 +351,15 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       case Iop_2xm1F64:
       case Iop_SqrtF64:
         argType = Lt_Double;
+        num_values = 1;
         break;
       case Iop_Sqrt64Fx2:
         argType = Lt_Doublex2;
+        num_values = 2;
+        break;
+      case Iop_Sqrt32Fx4:
+        argType = Lt_Doublex4;
+        num_values = 4;
         break;
       default:
         break;
@@ -375,28 +383,13 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       case Iop_2xm1F64:
         mpfr_func = hiprec_2xm1;
         break;
+      case Iop_Sqrt32Fx4:
       case Iop_Sqrt64Fx2:
       case Iop_SqrtF32:
       case Iop_SqrtF64:
         mpfr_func = mpfr_sqrt;
         break;
       default:
-        break;
-      }
-      // Determine the number of values
-      switch(opInfo->op){
-      case Iop_RecpExpF64:
-      case Iop_RecpExpF32:
-      case Iop_SinF64:
-      case Iop_CosF64:
-      case Iop_TanF64:
-      case Iop_2xm1F64:
-      case Iop_SqrtF64:
-      case Iop_SqrtF32:
-        num_values = 1;
-        break;
-      case Iop_Sqrt64Fx2:
-        num_values = 2;
         break;
       }
       // Pull the shadow values for the arguments. If we don't already
@@ -417,9 +410,12 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         // Now, we'll evaluate the low order shadow value against the low
         // order 64-bits of the result value.
         switch(argType){
+        case Lt_Doublex2:
         case Lt_Double:
           evaluateOpError(&(destLocation->values[i]), ((double*)opInfo->dest_value)[i]);
           break;
+        case Lt_Floatx4:
+        case Lt_Floatx2:
         case Lt_Float:
           evaluateOpError(&(destLocation->values[i]), ((float*)opInfo->dest_value)[i]);
           break;
