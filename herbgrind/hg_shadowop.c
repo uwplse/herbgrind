@@ -600,6 +600,47 @@ keeping track of them.");
       }
     }
     break;
+  case Iop_Add64F2:
+  case Iop_Sub64F2:
+  case Iop_Mul64F2:
+  case Iop_Div64F2:
+    {
+      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+      switch(opInfo->op){
+      case Iop_Add64F2:
+        mpfr_func = mpfr_add;
+        break;
+      case Iop_Sub64F2:
+        mpfr_func = mpfr_sub;
+        break;
+      case Iop_Mul64F2:
+        mpfr_func = mpfr_mul;
+        break;
+      case Iop_Div64F2:
+        mpfr_func = mpfr_div;
+        break;
+      default:
+        break;
+      }
+
+      // Pull the shadow values for the arguments. If we don't already
+      // have shadow values for these arguments, we'll generate fresh
+      // ones from the runtime float values.
+      arg2Location =
+        getShadowLocation(opInfo->arg2_tmp, Lt_Doublex2, opInfo->arg2_value);
+      arg3Location =
+        getShadowLocation(opInfo->arg3_tmp, Lt_Doublex2, opInfo->arg3_value);
+
+      // Now we'll allocate memory for the shadowed result of this
+      // operation.
+      destLocation = mkShadowLocation(argType);
+
+      // Set the destination shadow value to the result of a
+      // high-precision shadowing operation.
+      for (int i = 0; i < 2; ++i)
+        mpfr_func(destLocation->values[i].value, arg2Location->values[i].value,
+                  arg2Location->values[i].value, roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
+    }
   default:
     break;
   }
