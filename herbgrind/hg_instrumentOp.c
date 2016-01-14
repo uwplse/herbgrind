@@ -270,12 +270,14 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_DivF64r32:
         arg_size = sizeof(double);
         result_size = sizeof(double);
+        break;
       case Iop_AddF32:
       case Iop_SubF32:
       case Iop_MulF32:
       case Iop_DivF32:
         arg_size = sizeof(float);
         result_size = sizeof(float);
+        break;
       default:
         break;
       }
