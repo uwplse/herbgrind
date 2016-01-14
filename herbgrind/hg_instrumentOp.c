@@ -337,6 +337,19 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(double) * 2;
         result_size = sizeof(double) * 2;
         break;
+      case Iop_Add32Fx8:
+      case Iop_Sub32Fx8:
+      case Iop_Mul32Fx8:
+      case Iop_Div32Fx8:
+        arg_size = sizeof(float) * 8;
+        result_size = sizeof(float) * 8;
+      case Iop_Add64Fx4:
+      case Iop_Sub64Fx4:
+      case Iop_Mul64Fx4:
+      case Iop_Div64Fx4:
+        arg_size = sizeof(double) * 4;
+        result_size = sizeof(double) * 4;
+        break;
       default:
         break;
       }
@@ -345,6 +358,14 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // can do something useful with.
       switch (expr->Iex.Triop.details->op){
         // Add all supported ternary ops to this list
+      case Iop_Add32Fx8:
+      case Iop_Sub32Fx8:
+      case Iop_Mul32Fx8:
+      case Iop_Div32Fx8:
+      case Iop_Add64Fx4:
+      case Iop_Sub64Fx4:
+      case Iop_Mul64Fx4:
+      case Iop_Div64Fx4:
       case Iop_Add32Fx4:
       case Iop_Sub32Fx4:
       case Iop_Mul32Fx4:

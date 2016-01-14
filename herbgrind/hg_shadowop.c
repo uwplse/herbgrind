@@ -829,6 +829,14 @@ keeping track of them.");
       }
     }
     break;
+  case Iop_Add32Fx8:
+  case Iop_Sub32Fx8:
+  case Iop_Mul32Fx8:
+  case Iop_Div32Fx8:
+  case Iop_Add64Fx4:
+  case Iop_Sub64Fx4:
+  case Iop_Mul64Fx4:
+  case Iop_Div64Fx4:
   case Iop_Add64Fx2:
   case Iop_Sub64Fx2:
   case Iop_Mul64Fx2:
@@ -843,19 +851,27 @@ keeping track of them.");
       int num_vals;
       switch(opInfo->op){
       case Iop_Add32Fx4:
+      case Iop_Add32Fx8:
       case Iop_Add64Fx2:
+      case Iop_Add64Fx4:
         mpfr_func = mpfr_add;
         break;
-      case Iop_Sub32Fx2:
+      case Iop_Sub32Fx4:
+      case Iop_Sub32Fx8:
       case Iop_Sub64Fx2:
+      case Iop_Sub64Fx4:
         mpfr_func = mpfr_sub;
         break;
-      case Iop_Mul32Fx2:
+      case Iop_Mul32Fx4:
+      case Iop_Mul32Fx8:
       case Iop_Mul64Fx2:
+      case Iop_Mul64Fx4:
         mpfr_func = mpfr_mul;
         break;
-      case Iop_Div32Fx2:
+      case Iop_Div32Fx4:
+      case Iop_Div32Fx8:
       case Iop_Div64Fx2:
+      case Iop_Div64Fx4:
         mpfr_func = mpfr_div;
         break;
       default:
@@ -869,12 +885,26 @@ keeping track of them.");
         type = Lt_Doublex2;
         num_vals = 2;
         break;
+      case Iop_Add64Fx4:
+      case Iop_Sub64Fx4:
+      case Iop_Mul64Fx4:
+      case Iop_Div64Fx4:
+        type = Lt_Doublex4;
+        num_vals = 4;
+        break;
       case Iop_Add32Fx4:
       case Iop_Sub32Fx4:
       case Iop_Mul32Fx4:
       case Iop_Div32Fx4:
         type = Lt_Floatx4;
         num_vals = 4;
+        break;
+      case Iop_Add32Fx8:
+      case Iop_Sub32Fx8:
+      case Iop_Mul32Fx8:
+      case Iop_Div32Fx8:
+        type = Lt_Floatx8;
+        num_vals = 8;
         break;
       default:
         break;
@@ -899,9 +929,11 @@ keeping track of them.");
                   arg2Location->values[i].value, roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
         // Now let's compare the computed value to the high precision result.
         switch(type){
+        case Lt_Doublex4:
         case Lt_Doublex2:
           evaluateOpError(&(destLocation->values[i]), ((double*)opInfo->dest_value)[i]);
           break;
+        case Lt_Floatx8:
         case Lt_Floatx4:
           evaluateOpError(&(destLocation->values[i]), ((float*)opInfo->dest_value)[i]);
           break;
