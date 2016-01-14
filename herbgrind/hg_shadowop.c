@@ -274,31 +274,101 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         break;
       }
     }
-  case Iop_RSqrtStep32Fx2:
-  case Iop_RecipStep32Fx2:
-  case Iop_QAdd32S:
-  case Iop_QSub32S:
+  case Iop_Add32F0x4:
+  case Iop_Sub32F0x4:
+  case Iop_Mul32F0x4:
+  case Iop_Div32F0x4:
     {
-      LocType argType;
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
       switch(opInfo->op){
-      case Iop_RSqrtStep32Fx2:
-      case Iop_RecipStep32Fx2:
-        argType = Lt_Floatx2;
+      case Iop_Add32F0x4:
+        mpfr_func = mpfr_add;
         break;
-      case Iop_QAdd32S:
-      case Iop_QSub32S:
-        argType = Lt_Float;
+      case Iop_Sub32F0x4:
+        mpfr_func = mpfr_sub;
+        break;
+      case Iop_Mul32F0x4:
+        mpfr_func = mpfr_mul;
+        break;
+      case Iop_Div32F0x4:
+        mpfr_func = mpfr_div;
         break;
       default:
         break;
       }
+      // Pull the shadow values for the arguments. If we don't already
+      // have shadow values for these arguments, we'll generate fresh
+      // ones from the runtime float values.
+      arg1Location =
+        getShadowLocation(opInfo->arg1_tmp, Lt_Floatx4, opInfo->arg1_value);
+      arg2Location =
+        getShadowLocation(opInfo->arg2_tmp, Lt_Floatx4, opInfo->arg2_value);
+
+      // Now we'll allocate memory for the shadowed result of this
+      // operation.
+      destLocation = mkShadowLocation(Lt_Floatx4);
+
+      // Set the low order destination shadow value to the result of
+      // the operation, and the other shadow values to the the shadow
+      // values from the first argument.
+      mpfr_func(destLocation->values[0].value, arg1Location->values[0].value,
+                arg2Location->values[0].value, MPFR_RNDN);
+      mpfr_set(destLocation->values[1].value, arg1Location->values[1].value, MPFR_RNDN);
+      mpfr_set(destLocation->values[2].value, arg1Location->values[2].value, MPFR_RNDN);
+      mpfr_set(destLocation->values[3].value, arg1Location->values[3].value, MPFR_RNDN);
+    }
+    break;
+  case Iop_RSqrtStep32Fx2:
+  case Iop_RecipStep32Fx2:
+    {
+      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
       switch(opInfo->op){
       case Iop_RSqrtStep32Fx2:
-        mpfr_func = highprec_rsqrtstep;
+        mpfr_func = hiprec_rsqrtstep;
         break;
       case Iop_RecipStep32Fx2:
-        mpfr_func = highprec_recipstep;
+        mpfr_func = hiprec_recipstep;
+        break;
+      default:
+        break;
+      }
+      // Pull the shadow values for the arguments. If we don't already
+      // have shadow values for these arguments, we'll generate fresh
+      // ones from the runtime float values.
+      arg1Location =
+        getShadowLocation(opInfo->arg1_tmp, Lt_Floatx2, opInfo->arg1_value);
+      arg2Location =
+        getShadowLocation(opInfo->arg2_tmp, Lt_Floatx2, opInfo->arg2_value);
+
+      // Now we'll allocate memory for the shadowed result of this
+      // operation.
+      destLocation = mkShadowLocation(Lt_Floatx2);
+
+      // Set the destination shadow value to the result of a
+      // high-precision shadowing operation, for each channel in which
+      // it occurs.
+      mpfr_func(destLocation->values[0].value, arg1Location->values[0].value,
+                arg2Location->values[0].value, MPFR_RNDN);
+      mpfr_func(destLocation->values[1].value, arg1Location->values[1].value,
+                arg2Location->values[1].value, MPFR_RNDN);
+
+      // Now, we'll evaluate the shadow value against the result
+      // value, for each of it's channels.
+      evaluateOpError(&(destLocation->values[0]), ((float*)opInfo->dest_value)[0]);
+      evaluateOpError(&(destLocation->values[1]), ((float*)opInfo->dest_value)[1]);
+    }
+    break;
+  case Iop_QAdd32S:
+  case Iop_QSub32S:
+    {
+      // Determine what the underlying operation is
+      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+      switch(opInfo->op){
+      case Iop_RSqrtStep32Fx2:
+        mpfr_func = hiprec_rsqrtstep;
+        break;
+      case Iop_RecipStep32Fx2:
+        mpfr_func = hiprec_recipstep;
         break;
       case Iop_QAdd32S:
         mpfr_func = mpfr_add;
@@ -313,36 +383,21 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       // have shadow values for these arguments, we'll generate fresh
       // ones from the runtime float values.
       arg1Location =
-        getShadowLocation(opInfo->arg1_tmp, Lt_Doublex2, opInfo->arg1_value);
+        getShadowLocation(opInfo->arg1_tmp, Lt_Float, opInfo->arg1_value);
       arg2Location =
-        getShadowLocation(opInfo->arg2_tmp, Lt_Doublex2, opInfo->arg2_value);
+        getShadowLocation(opInfo->arg2_tmp, Lt_Float, opInfo->arg2_value);
 
       // Now we'll allocate memory for the shadowed result of this
       // operation.
-      destLocation = mkShadowLocation(argType);
+      destLocation = mkShadowLocation(Lt_Float);
 
       // Set the destination shadow value to the result of a
-      // high-precision shadowing addition.
+      // high-precision shadowing operation.
       mpfr_func(destLocation->values[0].value, arg1Location->values[0].value,
-                arg1Location->values[0].value, MPFR_RNDN);
+                arg2Location->values[0].value, MPFR_RNDN);
 
       // Now, we'll evaluate the shadow value against the result value.
-      switch(argType){
-      case Lt_DoubleDouble:
-        VG_(dmsg)("\
-Wow, you're working with some really big floats. We can't evaluate the \n\
-precision of those operations right now, but we're sure as hell \n\
-keeping track of them.");
-        break;
-      case Lt_Double:
-        evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
-        break;
-      case Lt_Float:
-        evaluateOpError(&(destLocation->values[0]), ((float*)opInfo->dest_value)[0]);
-        break;
-      default:
-        break;
-      }
+      evaluateOpError(&(destLocation->values[0]), ((float*)opInfo->dest_value)[0]);
     }
     break;
   case Iop_Add64F0x2:

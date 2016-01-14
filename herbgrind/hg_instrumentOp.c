@@ -150,6 +150,10 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(float);
         result_size = sizeof(float);
         break;
+      case Iop_Add32F0x4:
+      case Iop_Sub32F0x4:
+      case Iop_Mul32F0x4:
+      case Iop_Div32F0x4:
       case Iop_RecipStep32Fx2:
       case Iop_RSqrtStep32Fx2:
       case Iop_Neg32Fx2:
@@ -170,6 +174,10 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // can do something useful with.
       switch (expr->Iex.Binop.op){
         // Add all supported binary ops to this list
+      case Iop_Add32F0x4:
+      case Iop_Sub32F0x4:
+      case Iop_Mul32F0x4:
+      case Iop_Div32F0x4:
       case Iop_RecipEst32Fx2:
       case Iop_RSqrtEst32Fx2:
       case Iop_Neg32Fx2:
