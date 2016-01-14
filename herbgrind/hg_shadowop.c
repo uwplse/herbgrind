@@ -464,6 +464,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   case Iop_RecipStep32Fx2:
   case Iop_RecipStep64Fx2:
   case Iop_RSqrtStep64Fx2:
+  case Iop_Add32Fx2:
+  case Iop_Sub32Fx2:
     {
       LocType argType;
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
@@ -476,10 +478,18 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       case Iop_RecipStep64Fx2:
         mpfr_func = hiprec_recipstep;
         break;
+      case Iop_Add32Fx2:
+        mpfr_func = mpfr_add;
+        break;
+      case Iop_Sub32Fx2:
+        mpfr_func = mpfr_sub;
+        break;
       default:
         break;
       }
       switch(opInfo->op){
+      case Iop_Add32Fx2:
+      case Iop_Sub32Fx2:
       case Iop_RSqrtStep32Fx2:
       case Iop_RecipStep32Fx2:
         argType = Lt_Floatx2;
@@ -503,13 +513,12 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       // operation.
       destLocation = mkShadowLocation(argType);
 
-      // Set the destination shadow value to the result of a
+      // Set the destination shadow values to the result of a
       // high-precision shadowing operation, for each channel in which
       // it occurs.
-      mpfr_func(destLocation->values[0].value, arg1Location->values[0].value,
-                arg2Location->values[0].value, MPFR_RNDN);
-      mpfr_func(destLocation->values[1].value, arg1Location->values[1].value,
-                arg2Location->values[1].value, MPFR_RNDN);
+      for (int i = 0; i < 2; ++i)
+        mpfr_func(destLocation->values[i].value, arg1Location->values[i].value,
+                  arg2Location->values[i].value, MPFR_RNDN);
 
       // Now, we'll evaluate the shadow value against the result
       // value, for each of it's channels.
@@ -786,20 +795,48 @@ keeping track of them.");
   case Iop_Sub64Fx2:
   case Iop_Mul64Fx2:
   case Iop_Div64Fx2:
+  case Iop_Add32Fx4:
+  case Iop_Sub32Fx4:
+  case Iop_Mul32Fx4:
+  case Iop_Div32Fx4:
     {
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+      LocType type;
+      int num_vals;
       switch(opInfo->op){
+      case Iop_Add32Fx4:
       case Iop_Add64Fx2:
         mpfr_func = mpfr_add;
         break;
+      case Iop_Sub32Fx2:
       case Iop_Sub64Fx2:
         mpfr_func = mpfr_sub;
         break;
+      case Iop_Mul32Fx2:
       case Iop_Mul64Fx2:
         mpfr_func = mpfr_mul;
         break;
+      case Iop_Div32Fx2:
       case Iop_Div64Fx2:
         mpfr_func = mpfr_div;
+        break;
+      default:
+        break;
+      }
+      switch(opInfo->op){
+      case Iop_Add64Fx2:
+      case Iop_Sub64Fx2:
+      case Iop_Mul64Fx2:
+      case Iop_Div64Fx2:
+        type = Lt_Doublex2;
+        num_vals = 2;
+        break;
+      case Iop_Add32Fx4:
+      case Iop_Sub32Fx4:
+      case Iop_Mul32Fx4:
+      case Iop_Div32Fx4:
+        type = Lt_Floatx4;
+        num_vals = 4;
         break;
       default:
         break;
@@ -809,19 +846,31 @@ keeping track of them.");
       // have shadow values for these arguments, we'll generate fresh
       // ones from the runtime float values.
       arg2Location =
-        getShadowLocation(opInfo->arg2_tmp, Lt_Doublex2, opInfo->arg2_value);
+        getShadowLocation(opInfo->arg2_tmp, type, opInfo->arg2_value);
       arg3Location =
-        getShadowLocation(opInfo->arg3_tmp, Lt_Doublex2, opInfo->arg3_value);
+        getShadowLocation(opInfo->arg3_tmp, type, opInfo->arg3_value);
 
       // Now we'll allocate memory for the shadowed result of this
       // operation.
-      destLocation = mkShadowLocation(Lt_Doublex2);
+      destLocation = mkShadowLocation(type);
 
-      // Set the destination shadow value to the result of a
-      // high-precision shadowing operation.
-      for (int i = 0; i < 2; ++i)
+      for (int i = 0; i < num_vals; ++i){
+        // Set the destination shadow value to the result of a
+        // high-precision shadowing operation.
         mpfr_func(destLocation->values[i].value, arg2Location->values[i].value,
                   arg2Location->values[i].value, roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
+        // Now let's compare the computed value to the high precision result.
+        switch(type){
+        case Lt_Doublex2:
+          evaluateOpError(&(destLocation->values[i]), ((double*)opInfo->dest_value)[i]);
+          break;
+        case Lt_Floatx4:
+          evaluateOpError(&(destLocation->values[i]), ((float*)opInfo->dest_value)[i]);
+          break;
+        default:
+          break;
+        }
+      }
     }
   default:
     break;

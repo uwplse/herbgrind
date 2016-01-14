@@ -184,6 +184,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_RSqrtStep32Fx2:
       case Iop_Neg32Fx2:
       case Iop_Abs32Fx2:
+      case Iop_Add32Fx2:
+      case Iop_Sub32Fx2:
         arg_size = sizeof(float) * 2;
         result_size = sizeof(float) * 2;
         break;
@@ -210,6 +212,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // can do something useful with.
       switch (expr->Iex.Binop.op){
         // Add all supported binary ops to this list
+      case Iop_Add32Fx2:
+      case Iop_Sub32Fx2:
       case Iop_Sqrt64Fx2:
       case Iop_Add32F0x4:
       case Iop_Sub32F0x4:
@@ -306,6 +310,13 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(float);
         result_size = sizeof(float);
         break;
+      case Iop_Add32Fx4:
+      case Iop_Sub32Fx4:
+      case Iop_Mul32Fx4:
+      case Iop_Div32Fx4:
+        arg_size = sizeof(float) * 4;
+        result_size = sizeof(float) * 4;
+        break;
       case Iop_Add64Fx2:
       case Iop_Sub64Fx2:
       case Iop_Mul64Fx2:
@@ -321,6 +332,10 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // can do something useful with.
       switch (expr->Iex.Triop.details->op){
         // Add all supported ternary ops to this list
+      case Iop_Add32Fx4:
+      case Iop_Sub32Fx4:
+      case Iop_Mul32Fx4:
+      case Iop_Div32Fx4:
       case Iop_Add64Fx2:
       case Iop_Sub64Fx2:
       case Iop_Mul64Fx2:
