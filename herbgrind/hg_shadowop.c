@@ -390,7 +390,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         argType = Lt_Floatx4;
         num_values = 4;
         break;
-      case Iop_SqrtF64x4:
+      case Iop_Sqrt64Fx4:
         argType = Lt_Doublex4;
         num_values = 4;
         break;
