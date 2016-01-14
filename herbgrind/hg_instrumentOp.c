@@ -178,6 +178,9 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_RSqrtStep64Fx2:
       case Iop_Sqrt64Fx2:
       case Iop_Add64F0x2:
+      case Iop_Sub64F0x2:
+      case Iop_Mul64F0x2:
+      case Iop_Div64F0x2:
       case Iop_SetV128lo64:
         arg_size = sizeof(double) * 2;
         result_size = sizeof(double) * 2;
@@ -216,6 +219,9 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_SqrtF64:
       case Iop_SqrtF32:
       case Iop_Add64F0x2:
+      case Iop_Sub64F0x2:
+      case Iop_Mul64F0x2:
+      case Iop_Div64F0x2:
       case Iop_SetV128lo64:
         // Allocate the memory for the argument structure
         opInfo = VG_(malloc)("hg.op_alloc.1", sizeof(BinaryOp_Info));

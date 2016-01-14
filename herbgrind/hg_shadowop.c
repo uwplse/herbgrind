@@ -525,31 +525,53 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     }
     break;
   case Iop_Add64F0x2:
-    // Pull the shadow values for the arguments. If we don't already
-    // have shadow values for these arguments, we'll generate fresh
-    // ones from the runtime float values.
-    arg1Location =
-      getShadowLocation(opInfo->arg1_tmp, Lt_Doublex2, opInfo->arg1_value);
-    arg2Location =
-      getShadowLocation(opInfo->arg2_tmp, Lt_Doublex2, opInfo->arg2_value);
+  case Iop_Sub64F0x2:
+  case Iop_Mul64F0x2:
+  case Iop_Div64F0x2:
+    {
+      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+      switch(opInfo->op){
+      case Iop_Add64F0x2:
+        mpfr_func = mpfr_add;
+        break;
+      case Iop_Sub64F0x2:
+        mpfr_func = mpfr_sub;
+        break;
+      case Iop_Mul64F0x2:
+        mpfr_func = mpfr_mul;
+        break;
+      case Iop_Div64F0x2:
+        mpfr_func = mpfr_div;
+        break;
+      default:
+        break;
+      }
+      // Pull the shadow values for the arguments. If we don't already
+      // have shadow values for these arguments, we'll generate fresh
+      // ones from the runtime float values.
+      arg1Location =
+        getShadowLocation(opInfo->arg1_tmp, Lt_Doublex2, opInfo->arg1_value);
+      arg2Location =
+        getShadowLocation(opInfo->arg2_tmp, Lt_Doublex2, opInfo->arg2_value);
 
-    // Now we'll allocate memory for the shadowed result of this
-    // operation, which is a 128-bit SIMD value. The high order
-    // 64-bits are taken from the first argument, while the low order
-    // 64-bits are the result of the operation.
-    destLocation = mkShadowLocation(Lt_Doublex2);
+      // Now we'll allocate memory for the shadowed result of this
+      // operation, which is a 128-bit SIMD value. The high order
+      // 64-bits are taken from the first argument, while the low order
+      // 64-bits are the result of the operation.
+      destLocation = mkShadowLocation(Lt_Doublex2);
 
-    // Copy across the high order bits shadow value.
-    destLocation->values[1] = arg1Location->values[1];
+      // Copy across the high order bits shadow value.
+      destLocation->values[1] = arg1Location->values[1];
 
-    // Set the low order bits to the result of the addition, but in
-    // higher precision.
-    mpfr_add(destLocation->values[0].value, arg1Location->values[0].value,
-             arg2Location->values[0].value, MPFR_RNDN);
+      // Set the low order bits to the result of the operation, but in
+      // higher precision.
+      mpfr_func(destLocation->values[0].value, arg1Location->values[0].value,
+                arg2Location->values[0].value, MPFR_RNDN);
 
-    // Now, we'll evaluate the low order shadow value against the low
-    // order 64-bits of the result value.
-    evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
+      // Now, we'll evaluate the low order shadow value against the low
+      // order 64-bits of the result value.
+      evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
+    }
     break;
   case Iop_SetV128lo64:
     // Pull the shadow values for the arguments. If we don't already
