@@ -74,6 +74,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   case Iop_F128LOtoF64:
   case Iop_V128to64:
   case Iop_V128HIto64:
+  case Iop_V128to32:
     {
       LocType argType, resultType;
       switch(opInfo->op){
@@ -90,7 +91,12 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       case Iop_V128to64:
       case Iop_V128HIto64:
         argType = Lt_Doublex2;
-        resultType = Lt_Doublex4;
+        resultType = Lt_Double;
+        break;
+      case Iop_V128to32:
+        argType = Lt_Floatx4;
+        resultType = Lt_Float;
+        break;
       }
       argLocation = getShadowLocation(opInfo->arg_tmp, argType, opInfo->arg_value);
       destLocation = mkShadowLocation(resultType);
@@ -102,6 +108,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       case Iop_ZeroHI64ofV128:
       case Iop_ZeroHI96ofV128:
       case Iop_V128to64:
+      case Iop_V128to32:
       case Iop_F128LOtoF64:
         destLocation->values[0] = argLocation->values[0];
         break;
@@ -601,30 +608,48 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
     }
     break;
+  case Iop_SetV128lo32:
   case Iop_SetV128lo64:
-    // Pull the shadow values for the arguments. If we don't already
-    // have shadow values for these arguments, we'll generate fresh
-    // ones from the runtime float values.
-    arg1Location =
-      getShadowLocation(opInfo->arg1_tmp, Lt_Doublex2, opInfo->arg1_value);
-    arg2Location =
-      getShadowLocation(opInfo->arg2_tmp, Lt_Doublex2, opInfo->arg2_value);
+    {
+      LocType type;
+      size_t num_vals;
+      switch(opInfo->op){
+      case Iop_SetV128lo32:
+        type = Lt_Floatx4;
+        num_vals = 4;
+        break;
+      case Iop_SetV128lo64:
+        type = Lt_Doublex2;
+        num_vals = 2;
+        break;
+      default:
+        break;
+      }
+      // Pull the shadow values for the arguments. If we don't already
+      // have shadow values for these arguments, we'll generate fresh
+      // ones from the runtime float values.
+      arg1Location =
+        getShadowLocation(opInfo->arg1_tmp, type, opInfo->arg1_value);
+      arg2Location =
+        getShadowLocation(opInfo->arg2_tmp, type, opInfo->arg2_value);
 
-    // Now we'll allocate memory for the shadowed result of this
-    // operation, which is a 128-bit SIMD value. The high order
-    // 64-bits are taken from the first argument, while the low order
-    // 64-bits are taken from the second argument.
-    destLocation = mkShadowLocation(Lt_Doublex2);
+      // Now we'll allocate memory for the shadowed result of this
+      // operation, which is a 128-bit SIMD value. The high order
+      // 64-bits are taken from the first argument, while the low order
+      // 64-bits are taken from the second argument.
+      destLocation = mkShadowLocation(type);
 
-    // Copy across the high order bits shadow value from the first
-    // argument.
-    destLocation->values[1] = arg1Location->values[1];
+      // Copy the low order bits shadow value from the second argument.
+      destLocation->values[0] = arg2Location->values[0];
 
-    // Copy the low order bits shadow value from the second argument.
-    destLocation->values[0] = arg2Location->values[0];
+      // Copy across the higher order bits shadow value from the first
+      // argument.
+      for (int i = 1; i < num_vals; ++i)
+        destLocation->values[i] = arg1Location->values[i];
 
-    // This isn't really a "real" op in the math-y sense, so let's not
-    // evaluate it's error.
+      // This isn't really a "real" op in the math-y sense, so let's not
+      // evaluate it's error.
+    }
     break;
   default:
     break;

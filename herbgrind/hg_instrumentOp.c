@@ -33,6 +33,9 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(double) * 2;
         result_size = sizeof(double);
         break;
+      case Iop_V128to32:
+        arg_size = sizeof(float) * 4;
+        result_size = sizeof(float);
       case Iop_F32toF64:
         arg_size = sizeof(float);
         result_size = sizeof(double);
@@ -85,6 +88,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         // Add all supported unary ops to this list.
       case Iop_ZeroHI96ofV128:
       case Iop_ZeroHI64ofV128:
+      case Iop_V128to32:
       case Iop_V128to64:
       case Iop_V128HIto64:
       case Iop_RecipEst64Fx2:
@@ -183,6 +187,10 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         arg_size = sizeof(float) * 2;
         result_size = sizeof(float) * 2;
         break;
+      case Iop_SetV128lo32:
+        arg_size = sizeof(float) * 4;
+        result_size = sizeof(float) * 4;
+        break;
       case Iop_RecipStep64Fx2:
       case Iop_RSqrtStep64Fx2:
       case Iop_Sqrt64Fx2:
@@ -232,6 +240,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_Sub64F0x2:
       case Iop_Mul64F0x2:
       case Iop_Div64F0x2:
+      case Iop_SetV128lo32:
       case Iop_SetV128lo64:
         // Allocate the memory for the argument structure
         opInfo = VG_(malloc)("hg.op_alloc.1", sizeof(BinaryOp_Info));
