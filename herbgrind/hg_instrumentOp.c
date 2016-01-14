@@ -26,6 +26,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // encounter so we can allocate the right amount of space in the
       // argument structure to the runtime shadow execution code.
       switch(expr->Iex.Unop.op){
+      case Iop_V128to64:
+      case Iop_V128HIto64:
       case Iop_F128HItoF64:
       case Iop_F128LOtoF64:
         arg_size = sizeof(double) * 2;
@@ -79,6 +81,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       // can do something useful with.
       switch (expr->Iex.Unop.op){
         // Add all supported unary ops to this list.
+      case Iop_V128to64:
+      case Iop_V128HIto64:
       case Iop_RecipEst64Fx2:
       case Iop_RSqrtEst64Fx2:
       case Iop_Abs64Fx2:
