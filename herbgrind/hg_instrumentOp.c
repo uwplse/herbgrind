@@ -53,12 +53,12 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_RecipEst32Fx2:
       case Iop_RoundF64toF32:
       case Iop_RSqrtEst5GoodF64:
+      case Iop_NegF64:
+      case Iop_AbsF64:
       case Iop_RoundF64toF64_NEAREST:
       case Iop_RoundF64toF64_NegINF:
       case Iop_RoundF64toF64_PosINF:
       case Iop_RoundF64toF64_ZERO:
-      case Iop_NegF64:
-      case Iop_AbsF64:
         arg_size = sizeof(double);
         result_size = sizeof(double);
         break;

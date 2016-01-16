@@ -27,6 +27,25 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal){
   VG_(printf)("The bits error of that operation was: %f.\n", bitsError);
 }
 
+void evaluateOpError_helper(ShadowValue* shadowVal, UWord* valbytes, LocType bytestype, int el_index){
+  switch(bytestype){
+  case Lt_Float:
+  case Lt_Floatx2:
+  case Lt_Floatx4:
+  case Lt_Floatx8:
+    evaluateOpError(shadowVal, ((float*)opInfo->dest_value)[el_index]);
+    break;
+  case Lt_Double:
+  case Lt_Doublex2:
+  case Lt_Doublex4:
+    evaluateOpError(shadowVal, ((double*)opInfo->dest_value)[el_index]);
+    break;
+  default:
+    VG_(dmsg)("Hey, those are some big floats! We can't handle those floats!");
+    break;
+  }
+}
+
 unsigned long long ulpd(double x, double y) {
   if (x == 0) x = 0; // -0 == 0
   if (y == 0) y = 0; // -0 == 0

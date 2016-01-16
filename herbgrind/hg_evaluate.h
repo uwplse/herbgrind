@@ -10,6 +10,6 @@ unsigned long long ulpd(double x, double y);
 
 // Evaluate the error of an executed operation.
 void evaluateOpError(ShadowValue* shadowVal, double actualVal);
-
+void evaluateOpError_helper(ShadowValue* shadowVal, UWord* valbytes, LocType bytestype, int el_index)
 
 #endif
