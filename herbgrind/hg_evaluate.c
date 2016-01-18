@@ -33,12 +33,12 @@ void evaluateOpError_helper(ShadowValue* shadowVal, UWord* valbytes, LocType byt
   case Lt_Floatx2:
   case Lt_Floatx4:
   case Lt_Floatx8:
-    evaluateOpError(shadowVal, ((float*)opInfo->dest_value)[el_index]);
+    evaluateOpError(shadowVal, ((float*)valbytes)[el_index]);
     break;
   case Lt_Double:
   case Lt_Doublex2:
   case Lt_Doublex4:
-    evaluateOpError(shadowVal, ((double*)opInfo->dest_value)[el_index]);
+    evaluateOpError(shadowVal, ((double*)valbytes)[el_index]);
     break;
   default:
     VG_(dmsg)("Hey, those are some big floats! We can't handle those floats!");

@@ -82,7 +82,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       case Iop_AbsF32:
       case Iop_Abs32Fx2:
       case Iop_Abs32Fx4:
-      case Iop_Abs64:
+      case Iop_AbsF64:
       case Iop_Abs64Fx2:
         mpfr_func = mpfr_abs;
         break;
@@ -457,7 +457,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   case Iop_Add32Fx2:
   case Iop_Sub32Fx2:
   case Iop_Mul32Fx2:
-  case Iop_Div32Fx2:
+    //case Iop_Div32Fx2: // This op doesn't actually exist, not clear why.
   case Iop_RecipStep32Fx4:
   case Iop_RSqrtStep32Fx4:
   case Iop_RSqrtStep32Fx2:
@@ -509,7 +509,6 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         break;
       case Iop_Div64F0x2:
       case Iop_Div32F0x4:
-      case Iop_Div32Fx2:
         mpfr_func = mpfr_div;
         break;
       default:
@@ -522,7 +521,6 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       case Iop_Add32Fx2:
       case Iop_Sub32Fx2:
       case Iop_Mul32Fx2:
-      case Iop_Div32Fx2:
       case Iop_RSqrtStep32Fx2:
       case Iop_RecipStep32Fx2:
         argType = Lt_Floatx2;
@@ -635,8 +633,10 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
 
 }
 VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
-  // The shadowing locations for the arguments and the destination.
-  ShadowLocation *arg1Location, *arg2Location, *arg3Location, *destLocation;
+  // The shadowing locations for the arguments and the
+  // destination. The rounding mode (first argument) needs no shadow
+  // location, since it's an int.
+  ShadowLocation *arg2Location, *arg3Location, *destLocation;
   // We're going to use a lot of switch statements here because there
   // are a lot of similar cases, and we don't want to repeat too much
   // code. Hopefully, it will be moderately well organized. In the
@@ -688,11 +688,11 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
   case Iop_Mul64Fx4:
     mpfr_func = mpfr_mul;
     break;
-  case Iop_MulF32:
+  case Iop_DivF32:
   case Iop_Div32Fx4:
   case Iop_Div32Fx8:
-  case Iop_MulF64r32:
-  case Iop_MulF64:
+  case Iop_DivF64r32:
+  case Iop_DivF64:
   case Iop_Div64Fx2:
   case Iop_Div64Fx4:
     mpfr_func = mpfr_div;
@@ -701,10 +701,10 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
     mpfr_func = mpfr_atan;
     break;
   case Iop_Yl2xF64:
-    mpfr_func = hiprec_y12x;
+    mpfr_func = hiprec_yl2x;
     break;
   case Iop_Yl2xp1F64:
-    mpfr_func = hiprec_y12xp1;
+    mpfr_func = hiprec_yl2xp1;
     break;
   case Iop_ScaleF64:
     mpfr_func = hiprec_scale;
@@ -785,17 +785,19 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
     // Set the destination shadow value to the result of a
     // high-precision shadowing operation.
     mpfr_func(destLocation->values[i].value, arg2Location->values[i].value,
-              arg2Location->values[i].value, roundmodeIRtoMPFR(*((IRRoundingMode*)opInfo->arg1_value)));
+              arg3Location->values[i].value, roundmodeIRtoMPFR(*((IRRoundingMode*)opInfo->arg1_value)));
     // Now let's compare the computed value to the high precision result.
-    evaluateOpError_helper(&(destLocation->values[i], opInfo->dest_value, type, i));
+    evaluateOpError_helper(&(destLocation->values[i]), opInfo->dest_value, type, i);
   }
 
   // Put the resulting location in the space for the dest temp.
   localTemps[opInfo->dest_tmp] = destLocation;
 }
 VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo){
-  // The shadowing locations for the arguments and the destination.
-  ShadowLocation *arg1Location, *arg2Location, *arg3Location, *arg4Location, *destLocation;
+  // The shadowing locations for the arguments and the
+  // destination. The rounding mode (first argument) needs no shadow
+  // location, since it's an int.
+  ShadowLocation *arg2Location, *arg3Location, *arg4Location, *destLocation;
   // We're going to use a lot of switch statements here because there
   // are a lot of similar cases, and we don't want to repeat too much
   // code. Hopefully, it will be moderately well organized.
@@ -859,7 +861,7 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo){
             roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
 
   // Now, we'll evaluate the shadow value against the result value.
-  evaluateOpError_helper(&(destLocation->values[0], opInfo->dest_value, argType, 0));
+  evaluateOpError_helper(&(destLocation->values[0]), opInfo->dest_value, argType, 0);
 
   // Put the resulting location in the space for the dest temp.
   localTemps[opInfo->dest_tmp] = destLocation;
@@ -901,6 +903,7 @@ size_t capacity(LocType bytestype){
   case Lt_Floatx8:
     return 8;
   }
+  return 0;
 }
 
 ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_vals){

@@ -81,21 +81,5 @@ mpfr_rnd_t roundmodeIRtoMPFR(IRRoundingMode round);
 void cleanupShadowLocation(ShadowLocation* loc);
 
 // The capacity of any particular location type.
-size_t capacity(LocType bytestype){
-  switch(bytestype){
-  case Lt_Float:
-  case Lt_Double:
-  case Lt_DoubleDouble:
-  case Lt_DoubleDoubleDouble:
-    return 1;
-  case Lt_Floatx2:
-  case Lt_Doublex2:
-    return 2;
-  case Lt_Floatx4:
-  case Lt_Doublex4:
-    return 4;
-  case Lt_Floatx8:
-    return 8;
-  }
-}
+size_t capacity(LocType bytestype);
 #endif
