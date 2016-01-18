@@ -89,6 +89,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       default:
         break;
       }
+
       // Now we're going to determine the size, and how many values
       // should be operated on (the rest will be copied).
       switch(opInfo->op){
@@ -161,7 +162,12 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       }
     }
     break;
-    // Operations for copying across part of a larger number.
+    // Operations for copying across part of or all of a number.
+  case Iop_F32toF64:
+    // These next two we'll treat as no-ops, since we're shadowing
+    // either type of value with the same number of bits.
+  case Iop_TruncF64asF32:
+  case Iop_RoundF64toF32:
   case Iop_ZeroHI64ofV128:
   case Iop_ZeroHI96ofV128:
   case Iop_F128HItoF64:
@@ -171,7 +177,18 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   case Iop_V128to32:
     {
       LocType argType, resultType;
+      // Get the input and output location types for allocating
+      // storage for each.
       switch(opInfo->op){
+      case Iop_F32toF64:
+        argType = Lt_Float;
+        resultType = Lt_Double;
+        break;
+      case Iop_TruncF64asF32:
+      case Iop_RoundF64toF32:
+        argType = Lt_Double;
+        resultType = Lt_Float;
+        break;
       case Iop_ZeroHI64ofV128:
         argType = Lt_Doublex2;
         resultType = Lt_Doublex2;
@@ -192,13 +209,23 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
         resultType = Lt_Float;
         break;
       }
+      // Get the input locations. If they don't exist, create them and initialize them with the runtime values.
       argLocation = getShadowLocation(opInfo->arg_tmp, argType, opInfo->arg_value);
+      // Initialize the output location.
       destLocation = mkShadowLocation(resultType);
+
+      // Depending on the op, either copy across the first half of the
+      // argument, or the second half. Some of these ops copy across
+      // the whole thing, but since the types are set right, that's
+      // like copying across the first element.
       switch(opInfo->op){
       case Iop_V128HIto64:
       case Iop_F128HItoF64:
         destLocation->values[0] = argLocation->values[1];
         break;
+      case Iop_F32toF64:
+      case Iop_TruncF64asF32:
+      case Iop_RoundF64toF32:
       case Iop_ZeroHI64ofV128:
       case Iop_ZeroHI96ofV128:
       case Iop_V128to64:
@@ -211,34 +238,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       }
     }
     break;
-    // Operations for converting between types
-  case Iop_F32toF64:
-  case Iop_TruncF64asF32:
-  case Iop_RoundF64toF32:
-    {
-      LocType argType, resultType;
-      switch(opInfo->op){
-      case Iop_F32toF64:
-        argType = Lt_Float;
-        resultType = Lt_Double;
-        break;
-      case Iop_TruncF64asF32:
-        argType = Lt_Double;
-        resultType = Lt_Float;
-        break;
-      case Iop_RoundF64toF32:
-        argType = Lt_Double;
-        resultType = Lt_Double;
-        break;
-      default:
-        break;
-      }
-      argLocation = getShadowLocation(opInfo->arg_tmp, argType, opInfo->arg_value);
-      destLocation = mkShadowLocation(resultType);
-      destLocation->values[0] = argLocation->values[0];
-    }
-    break;
-    // Operations for rounding
+    // Operations for rounding floats to integer values, but keeping
+    // them as float types.
   case Iop_RoundF64toF64_NEAREST:
   case Iop_RoundF64toF64_NegINF:
   case Iop_RoundF64toF64_PosINF:
@@ -277,6 +278,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   ShadowLocation* arg2Location;
   ShadowLocation* destLocation;
   switch(opInfo->op){
+
   case Iop_64HLtoV128:
   case Iop_F64HLtoF128:
     // Pull the shadow values for the arguments. If we don't already
@@ -294,6 +296,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     destLocation->values[0] = arg1Location->values[0];
     destLocation->values[1] = arg2Location->values[0];
     break;
+
   case Iop_RoundF64toInt:
   case Iop_RoundF32toInt:
     {
@@ -313,6 +316,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     mpfr_round(destLocation->values[0].value, arg2Location->values[0].value);
     }
     break;
+
   case Iop_F64toF32:
     // For semantic conversions between floating point types we can
     // just copy across the values.
@@ -320,6 +324,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     destLocation = mkShadowLocation(Lt_Float);
     destLocation->values[0] = arg2Location->values[0];
     break;
+
+    // Ops that have a rounding mode and a single floating point argument
   case Iop_Sqrt32Fx8:
   case Iop_Sqrt32Fx4:
   case Iop_Sqrt64Fx4:
@@ -333,11 +339,54 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   case Iop_SqrtF64:
   case Iop_SqrtF32:
     {
+      // We keep track of three attributes for each of these
+      // instructions: what function it performs, what register
+      // size/type does it expect to work with, and how many values of
+      // it's input should be processed. This last one isn't
+      // inherently tied to the register type because some
+      // instructions here will act on a four channel float, but only
+      // perform an operation on one channel, and copy the others across.
+      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_rnd_t);
       LocType argType;
       size_t num_values;
-      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_rnd_t);
 
-      // Determine the type of the arguments.
+
+      // Figure out the underlying math function of the
+      // operation. Some are not in the mpfr library directly, but are
+      // a combination of mpfr functions with the right arguments, so
+      // I added wrappers in hg_hiprec_ops.c to let us do this
+      // uniformly.
+      switch(opInfo->op){
+      case Iop_RecpExpF64:
+      case Iop_RecpExpF32:
+        mpfr_func = hiprec_recpexp;
+        break;
+      case Iop_SinF64:
+        mpfr_func = mpfr_sin;
+        break;
+      case Iop_CosF64:
+        mpfr_func = mpfr_cos;
+        break;
+      case Iop_TanF64:
+        mpfr_func = mpfr_tan;
+        break;
+      case Iop_2xm1F64:
+        mpfr_func = hiprec_2xm1;
+        break;
+      case Iop_Sqrt32Fx8:
+      case Iop_Sqrt32Fx4:
+      case Iop_Sqrt64Fx2:
+      case Iop_Sqrt64Fx4:
+      case Iop_SqrtF32:
+      case Iop_SqrtF64:
+        mpfr_func = mpfr_sqrt;
+        break;
+      default:
+        break;
+      }
+
+      // Now we're going to determine the size, and how many values
+      // should be operated on.
       switch(opInfo->op){
       case Iop_RecpExpF32:
       case Iop_SqrtF32:
@@ -372,36 +421,6 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       default:
         break;
       }
-
-      // Determine the mpfr shadow function
-      switch(opInfo->op){
-      case Iop_RecpExpF64:
-      case Iop_RecpExpF32:
-        mpfr_func = hiprec_recpexp;
-        break;
-      case Iop_SinF64:
-        mpfr_func = mpfr_sin;
-        break;
-      case Iop_CosF64:
-        mpfr_func = mpfr_cos;
-        break;
-      case Iop_TanF64:
-        mpfr_func = mpfr_tan;
-        break;
-      case Iop_2xm1F64:
-        mpfr_func = hiprec_2xm1;
-        break;
-      case Iop_Sqrt32Fx8:
-      case Iop_Sqrt32Fx4:
-      case Iop_Sqrt64Fx2:
-      case Iop_Sqrt64Fx4:
-      case Iop_SqrtF32:
-      case Iop_SqrtF64:
-        mpfr_func = mpfr_sqrt;
-        break;
-      default:
-        break;
-      }
       // Pull the shadow values for the arguments. If we don't already
       // have shadow values for these arguments, we'll generate fresh
       // ones from the runtime float values.
@@ -417,79 +436,47 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         // higher precision.
         mpfr_func(destLocation->values[i].value, arg2Location->values[i].value, MPFR_RNDN);
 
-        // Now, we'll evaluate the low order shadow value against the low
-        // order 64-bits of the result value.
-        switch(argType){
-        case Lt_Doublex2:
-        case Lt_Double:
-          evaluateOpError(&(destLocation->values[i]), ((double*)opInfo->dest_value)[i]);
-          break;
-        case Lt_Floatx4:
-        case Lt_Floatx2:
-        case Lt_Float:
-          evaluateOpError(&(destLocation->values[i]), ((float*)opInfo->dest_value)[i]);
-          break;
-        default:
-          break;
-        }
+        // Now, we'll evaluate the shadow values against each
+        // channel of the computed result.
+        evaluateOpError_helper(&(destLocation->values[i]), opInfo->dest_value, argType, i);
       }
     }
+    // Ops that have two floating point arguments
   case Iop_Add32F0x4:
   case Iop_Sub32F0x4:
   case Iop_Mul32F0x4:
   case Iop_Div32F0x4:
-    {
-      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
-      switch(opInfo->op){
-      case Iop_Add32F0x4:
-        mpfr_func = mpfr_add;
-        break;
-      case Iop_Sub32F0x4:
-        mpfr_func = mpfr_sub;
-        break;
-      case Iop_Mul32F0x4:
-        mpfr_func = mpfr_mul;
-        break;
-      case Iop_Div32F0x4:
-        mpfr_func = mpfr_div;
-        break;
-      default:
-        break;
-      }
-      // Pull the shadow values for the arguments. If we don't already
-      // have shadow values for these arguments, we'll generate fresh
-      // ones from the runtime float values.
-      arg1Location =
-        getShadowLocation(opInfo->arg1_tmp, Lt_Floatx4, opInfo->arg1_value);
-      arg2Location =
-        getShadowLocation(opInfo->arg2_tmp, Lt_Floatx4, opInfo->arg2_value);
-
-      // Now we'll allocate memory for the shadowed result of this
-      // operation.
-      destLocation = mkShadowLocation(Lt_Floatx4);
-
-      // Set the low order destination shadow value to the result of
-      // the operation, and the other shadow values to the the shadow
-      // values from the first argument.
-      mpfr_func(destLocation->values[0].value, arg1Location->values[0].value,
-                arg2Location->values[0].value, MPFR_RNDN);
-      destLocation->values[1] = arg1Location->values[1];
-      destLocation->values[2] = arg1Location->values[2];
-      destLocation->values[3] = arg1Location->values[3];
-    }
-    break;
+  case Iop_Add64F0x2:
+  case Iop_Sub64F0x2:
+  case Iop_Mul64F0x2:
+  case Iop_Div64F0x2:
+  case Iop_Add32Fx2:
+  case Iop_Sub32Fx2:
+  case Iop_Mul32Fx2:
+  case Iop_Div32Fx2:
   case Iop_RecipStep32Fx4:
   case Iop_RSqrtStep32Fx4:
   case Iop_RSqrtStep32Fx2:
   case Iop_RecipStep32Fx2:
   case Iop_RecipStep64Fx2:
   case Iop_RSqrtStep64Fx2:
-  case Iop_Add32Fx2:
-  case Iop_Sub32Fx2:
     {
-      LocType argType;
+      // We keep track of three attributes for each of these
+      // instructions: what function it performs, what register
+      // size/type does it expect to work with, and how many values of
+      // it's input should be processed. This last one isn't
+      // inherently tied to the register type because some
+      // instructions here will act on a four channel float, but only
+      // perform an operation on one channel, and copy the others across.
       int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+      LocType argType;
       size_t num_values;
+
+      // Figure out the underlying math function of the
+      // operation. Some are not in the mpfr library directly, but are
+      // a combination of mpfr functions with the right arguments, so
+      // I added wrappers in hg_hiprec_ops.c to let us do this
+      // uniformly.
       switch(opInfo->op){
       case Iop_RSqrtStep32Fx4:
       case Iop_RSqrtStep32Fx2:
@@ -501,18 +488,37 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       case Iop_RecipStep64Fx2:
         mpfr_func = hiprec_recipstep;
         break;
+      case Iop_Add64F0x2:
+      case Iop_Add32F0x4:
       case Iop_Add32Fx2:
         mpfr_func = mpfr_add;
         break;
+      case Iop_Sub64F0x2:
+      case Iop_Sub32F0x4:
       case Iop_Sub32Fx2:
         mpfr_func = mpfr_sub;
+        break;
+      case Iop_Mul64F0x2:
+      case Iop_Mul32F0x4:
+      case Iop_Mul32Fx2:
+        mpfr_func = mpfr_mul;
+        break;
+      case Iop_Div64F0x2:
+      case Iop_Div32F0x4:
+      case Iop_Div32Fx2:
+        mpfr_func = mpfr_div;
         break;
       default:
         break;
       }
+
+      // Now we're going to determine the size, and how many values
+      // should be operated on (the rest will be copied).
       switch(opInfo->op){
       case Iop_Add32Fx2:
       case Iop_Sub32Fx2:
+      case Iop_Mul32Fx2:
+      case Iop_Div32Fx2:
       case Iop_RSqrtStep32Fx2:
       case Iop_RecipStep32Fx2:
         argType = Lt_Floatx2;
@@ -525,8 +531,22 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         break;
       case Iop_RecipStep32Fx4:
       case Iop_RSqrtStep32Fx4:
-        argType = Lt_Doublex4;
+        argType = Lt_Floatx4;
         num_values = 4;
+        break;
+      case Iop_Add32F0x4:
+      case Iop_Sub32F0x4:
+      case Iop_Mul32F0x4:
+      case Iop_Div32F0x4:
+        argType = Lt_Floatx4;
+        num_values = 1;
+        break;
+      case Iop_Add64F0x2:
+      case Iop_Sub64F0x2:
+      case Iop_Mul64F0x2:
+      case Iop_Div64F0x2:
+        argType = Lt_Doublex2;
+        num_values = 1;
         break;
       default:
         break;
@@ -543,7 +563,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       // operation.
       destLocation = mkShadowLocation(argType);
 
-      for (int i = 0; i < num_values; ++i){
+      int i;
+      for (i = 0; i < num_values; ++i){
         // Set the destination shadow values to the result of a
         // high-precision shadowing operation, for each channel in which
         // it occurs.
@@ -551,112 +572,12 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
                   arg2Location->values[i].value, MPFR_RNDN);
         // Now, we'll evaluate the shadow value against the result
         // value, for each of it's channels.
-        switch(argType){
-        case Lt_Float:
-        case Lt_Floatx2:
-        case Lt_Floatx4:
-          evaluateOpError(&(destLocation->values[i]), ((float*)opInfo->dest_value)[i]);
-          break;
-        case Lt_Double:
-        case Lt_Doublex2:
-          evaluateOpError(&(destLocation->values[i]), ((double*)opInfo->dest_value)[i]);
-          break;
-        default:
-          break;
-        }
+        evaluateOpError_helper(&(destLocation->values[i]), opInfo->dest_value, argType, i);
       }
-
-    }
-    break;
-  case Iop_QAdd32S:
-  case Iop_QSub32S:
-    {
-      // Determine what the underlying operation is
-      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
-      switch(opInfo->op){
-      case Iop_RSqrtStep32Fx2:
-        mpfr_func = hiprec_rsqrtstep;
-        break;
-      case Iop_RecipStep32Fx2:
-        mpfr_func = hiprec_recipstep;
-        break;
-      case Iop_QAdd32S:
-        mpfr_func = mpfr_add;
-        break;
-      case Iop_QSub32S:
-        mpfr_func = mpfr_sub;
-        break;
-      default:
-        break;
+      // Copy across the rest of the values from the first argument
+      for (;i < capacity(argType); ++i){
+        destLocation->values[i] = arg1Location->values[i];
       }
-      // Pull the shadow values for the arguments. If we don't already
-      // have shadow values for these arguments, we'll generate fresh
-      // ones from the runtime float values.
-      arg1Location =
-        getShadowLocation(opInfo->arg1_tmp, Lt_Float, opInfo->arg1_value);
-      arg2Location =
-        getShadowLocation(opInfo->arg2_tmp, Lt_Float, opInfo->arg2_value);
-
-      // Now we'll allocate memory for the shadowed result of this
-      // operation.
-      destLocation = mkShadowLocation(Lt_Float);
-
-      // Set the destination shadow value to the result of a
-      // high-precision shadowing operation.
-      mpfr_func(destLocation->values[0].value, arg1Location->values[0].value,
-                arg2Location->values[0].value, MPFR_RNDN);
-
-      // Now, we'll evaluate the shadow value against the result value.
-      evaluateOpError(&(destLocation->values[0]), ((float*)opInfo->dest_value)[0]);
-    }
-    break;
-  case Iop_Add64F0x2:
-  case Iop_Sub64F0x2:
-  case Iop_Mul64F0x2:
-  case Iop_Div64F0x2:
-    {
-      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
-      switch(opInfo->op){
-      case Iop_Add64F0x2:
-        mpfr_func = mpfr_add;
-        break;
-      case Iop_Sub64F0x2:
-        mpfr_func = mpfr_sub;
-        break;
-      case Iop_Mul64F0x2:
-        mpfr_func = mpfr_mul;
-        break;
-      case Iop_Div64F0x2:
-        mpfr_func = mpfr_div;
-        break;
-      default:
-        break;
-      }
-      // Pull the shadow values for the arguments. If we don't already
-      // have shadow values for these arguments, we'll generate fresh
-      // ones from the runtime float values.
-      arg1Location =
-        getShadowLocation(opInfo->arg1_tmp, Lt_Doublex2, opInfo->arg1_value);
-      arg2Location =
-        getShadowLocation(opInfo->arg2_tmp, Lt_Doublex2, opInfo->arg2_value);
-
-      // Now we'll allocate memory for the shadowed result of this
-      // operation, which is a 128-bit SIMD value. The high order
-      // 64-bits are taken from the first argument, while the low order
-      // 64-bits are the result of the operation.
-      destLocation = mkShadowLocation(Lt_Doublex2);
-
-      // Copy across the high order bits shadow value.
-      destLocation->values[1] = arg1Location->values[1];
-
-      // Set the low order bits to the result of the operation, but in
-      // higher precision.
-      mpfr_func(destLocation->values[0].value, arg1Location->values[0].value,
-                arg2Location->values[0].value, MPFR_RNDN);
-
-      // Now, we'll evaluate the low order shadow value against the low
-      // order 64-bits of the result value.
-      evaluateOpError(&(destLocation->values[0]), ((double*)opInfo->dest_value)[0]);
     }
     break;
   case Iop_SetV128lo32:
