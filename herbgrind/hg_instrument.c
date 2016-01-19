@@ -295,8 +295,6 @@ set of instructions, because we don't support multithreaded programs.\n");
     // side effects should be denoted in the attributes of this
     // instruction.
     addStmtToIRSB(sbOut, st);
-    VG_(dmsg)("\
-There's a dirty function call in the tool input! That can't be right...\n");
     break;
   }
 }
