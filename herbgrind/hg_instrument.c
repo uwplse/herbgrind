@@ -126,25 +126,40 @@ That doesn't seem flattened...\n");
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
     case Iex_ITE:
-      copyShadowLocation =
-        unsafeIRDirty_0_N(2,
-                          "copyShadowTmptoTmp",
-                          VG_(fnptr_to_fnentry)(&copyShadowTmptoTmp),
-                          mkIRExprVec_2(IRExpr_ITE(expr->Iex.ITE.cond,
-                                                   // The branches
-                                                   // of the "if"
-                                                   // should be
-                                                   // temps, since
-                                                   // the IR is
-                                                   // flattened at
-                                                   // instrumentation
-                                                   // time. If they
-                                                   // aren't, we're
-                                                   // in trouble.
-                                                   mkU64(expr->Iex.ITE.iftrue->Iex.RdTmp.tmp),
-                                                   mkU64(expr->Iex.ITE.iffalse->Iex.RdTmp.tmp)),
-                                        mkU64(st->Ist.WrTmp.tmp)));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      {
+        // When we have an ITE, we want to transfer across the shadow
+        // value for one temp if the cond is true, and the other if
+        // the cond is false. We do that by branching on the cond, and
+        // assigning the temp number of the temp we want to transfer
+        // from to condTmp. This means that condTmp is a temp that
+        // stores a temp. Or, at least, a reference to one.
+        IRTemp condTmp = newIRTemp(sbOut->tyenv, Ity_I64);
+        IRStmt* pickTmp = IRStmt_WrTmp(condTmp,
+                                       IRExpr_ITE(expr->Iex.ITE.cond,
+                                                  // The branches of
+                                                  // the "if" should
+                                                  // be temps, since
+                                                  // the IR is
+                                                  // flattened at
+                                                  // instrumentation
+                                                  // time. If they
+                                                  // aren't, we're in
+                                                  // trouble.
+                                                  mkU64(expr->Iex.ITE.iftrue->Iex.RdTmp.tmp),
+                                                  mkU64(expr->Iex.ITE.iffalse->Iex.RdTmp.tmp)));
+        addStmtToIRSB(sbOut, pickTmp);
+
+        // Once we have the temp we want to transfer from in condTmp,
+        // we can call our shadow value transfering function for temps
+        // like normal.
+        copyShadowLocation =
+          unsafeIRDirty_0_N(2,
+                            "copyShadowTmptoTmp",
+                            VG_(fnptr_to_fnentry)(&copyShadowTmptoTmp),
+                            mkIRExprVec_2(condTmp,
+                                          mkU64(st->Ist.WrTmp.tmp)));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      }
       break;
     case Iex_Load:
       copyShadowLocation =
