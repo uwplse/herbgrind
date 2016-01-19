@@ -36,6 +36,6 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut);
 void instrumentOp(IRSB* sb, Int offset, IRExpr* expr);
 
 // Create an expression which calculates (base + ((idx + bias) % len)).
-IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len);
+IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len, IRSB* sbOut);
 
 #endif

@@ -303,7 +303,7 @@ set of instructions, because we don't support multithreaded programs.\n");
 
 // Produce an expression to calculate (base + ((idx + bias) % len)),
 // where base, bias, and len are fixed, and idx can vary at runtime.
-IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len){
+IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len, IRSB* sbOut){
   IRTemp idxPLUSbias = newIRTemp(sbOut->tyenv, Ity_I64);
   addStmtToIRSB(sbOut,
                 IRStmt_WrTmp(idxPLUSbias,
@@ -320,7 +320,7 @@ IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len){
   IRTemp idxPLUSbiasMODlen = newIRTemp(sbOut->tyenv, Ity_I64);
   addStmtToIRSB(sbOut,
                 IRStmt_WrTmp(idxPLUSbiasMODlen,
-                             IRExpr_Unop(Iop64HIto32,
+                             IRExpr_Unop(Iop_64HIto32,
                                          IRExpr_RdTmp(idxPLUSbiasDIVMODlen))));
   IRTemp idxPLUSbiasMODlenPLUSbase = newIRTemp(sbOut->tyenv, Ity_I64);
   addStmtToIRSB(sbOut,
