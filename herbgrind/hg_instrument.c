@@ -73,7 +73,8 @@ That doesn't seem flattened...\n");
                                         mkArrayLookupExpr(st->Ist.PutI.details->descr->base,
                                                           st->Ist.PutI.details->ix,
                                                           st->Ist.PutI.details->bias,
-                                                          st->Ist.PutI.details->descr->nElems)));
+                                                          st->Ist.PutI.details->descr->nElems,
+                                                          sbOut)));
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
     case Iex_Const:
@@ -111,7 +112,8 @@ That doesn't seem flattened...\n");
                           mkIRExprVec_3(mkArrayLookupExpr(expr->Iex.GetI.descr->base,
                                                           expr->Iex.GetI.ix,
                                                           expr->Iex.GetI.bias,
-                                                          expr->Iex.GetI.descr->nElems),
+                                                          expr->Iex.GetI.descr->nElems,
+                                                          sbOut),
                                         mkU64(expr->Iex.Get.ty),
                                         mkU64(st->Ist.WrTmp.tmp)));
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
@@ -302,17 +304,30 @@ set of instructions, because we don't support multithreaded programs.\n");
 // Produce an expression to calculate (base + ((idx + bias) % len)),
 // where base, bias, and len are fixed, and idx can vary at runtime.
 IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len){
-  return IRExpr_Binop(// +
-                      Iop_Add64,
-                      // base
-                      mkU64(base),
-                      // These two ops together are %
-                      IRExpr_Unop(Iop_64HIto32,
-                      IRExpr_Binop(Iop_DivModU64to32,
-                                   IRExpr_Binop(// +
-                                                Iop_Add64,
-                                                idx,
-                                                mkU64(bias)),
-                                   mkU64(len))));
+  IRTemp idxPLUSbias = newIRTemp(sbOut->tyenv, Ity_I64);
+  addStmtToIRSB(sbOut,
+                IRStmt_WrTmp(idxPLUSbias,
+                             IRExpr_Binop(Iop_Add64,
+                                          idx,
+                                          mkU64(bias))));
+  IRTemp idxPLUSbiasDIVMODlen = newIRTemp(sbOut->tyenv, Ity_I64);
+  addStmtToIRSB(sbOut,
+                IRStmt_WrTmp(idxPLUSbiasDIVMODlen,
+                             IRExpr_Binop(Iop_DivModU64to32,
+                                          IRExpr_RdTmp(idxPLUSbias),
+                                          mkU64(len))));
+
+  IRTemp idxPLUSbiasMODlen = newIRTemp(sbOut->tyenv, Ity_I64);
+  addStmtToIRSB(sbOut,
+                IRStmt_WrTmp(idxPLUSbiasMODlen,
+                             IRExpr_Unop(Iop64HIto32,
+                                         IRExpr_RdTmp(idxPLUSbiasDIVMODlen))));
+  IRTemp idxPLUSbiasMODlenPLUSbase = newIRTemp(sbOut->tyenv, Ity_I64);
+  addStmtToIRSB(sbOut,
+                IRStmt_WrTmp(idxPLUSbiasMODlenPLUSbase,
+                             IRExpr_Binop(Iop_Add64,
+                                          IRExpr_RdTmp(idxPLUSbiasMODlen),
+                                          mkU64(base))));
+  return IRExpr_RdTmp(idxPLUSbiasMODlenPLUSbase);
 }
 
