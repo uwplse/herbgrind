@@ -183,9 +183,7 @@ That doesn't seem flattened...\n");
       break;
     default:
       // This shouldn't happen in flattened IR.
-      VG_(dmsg)("\
-A non-constant or temp is being placed into thread state in a single IR statement! \
-That doesn't seem flattened...\n");
+      VG_(dmsg)("We don't recognize this expression!\n");
       break;
     }
     break;
@@ -209,7 +207,7 @@ That doesn't seem flattened...\n");
     default:
       // This shouldn't happen in flattened IR.
       VG_(dmsg)("\
-A non-constant or temp is being placed into thread state in a single IR statement! \
+A non-constant or temp is being placed into memory in a single IR statement! \
 That doesn't seem flattened...\n");
       break;
     }
@@ -234,7 +232,7 @@ That doesn't seem flattened...\n");
     default:
       // This shouldn't happen in flattened IR.
       VG_(dmsg)("\
-A non-constant or temp is being placed into thread state in a single IR statement! \
+A non-constant or temp is being placed into memory in a single IR statement! \
 That doesn't seem flattened...\n");
       break;
     }
@@ -280,7 +278,7 @@ That doesn't seem flattened...\n");
     addStmtToIRSB(sbOut, st);
     VG_(dmsg)("\
 Warning! Herbgrind does not currently support the Compare and Swap instruction, \
-because we don't support multithreaded programs.");
+because we don't support multithreaded programs.\n");
     break;
   case Ist_LLSC:
     // I honestly have no goddamn idea what this does. See: libvex_ir.h:2816
@@ -290,7 +288,7 @@ because we don't support multithreaded programs.");
     addStmtToIRSB(sbOut, st);
     VG_(dmsg)("\
 Warning! Herbgrind does not currently support the Load Linked / Store Conditional \
-set of instructions, because we don't support multithreaded programs.");
+set of instructions, because we don't support multithreaded programs.\n");
     break;
   case Ist_Dirty:
     // Call a C function, possibly with side affects. The possible
@@ -298,7 +296,7 @@ set of instructions, because we don't support multithreaded programs.");
     // instruction.
     addStmtToIRSB(sbOut, st);
     VG_(dmsg)("\
-There's a dirty function call in the tool input! That can't be right...");
+There's a dirty function call in the tool input! That can't be right...\n");
     break;
   }
 }
