@@ -24,11 +24,13 @@ early in development, but it's goals are:
 
 - Determining whether a program is generally accurate
 
-- Identifying places in source code of a binary program where inaccuracy occurs
+- Identifying places in source code of a binary program where
+  inaccuracy occurs
 
 - Identifying input distributions of unstable numerical code
 
-- Extracting enough other information from programs to make improvement with herbie easy
+- Extracting enough other information from programs to make
+  improvement with herbie easy
 
 Installation Instructions
 -------------------------
