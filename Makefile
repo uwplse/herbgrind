@@ -27,7 +27,7 @@ SOURCES=herbgrind/hg_main.c herbgrind/hg_instrument.c			\
 herbgrind/hg_instrumentOp.c herbgrind/hg_types.c			\
 herbgrind/runtime/hg_runtime.c herbgrind/runtime/hg_evaluate.c		\
 herbgrind/runtime/hg_hiprec_ops.c herbgrind/runtime/hg_shadowop.c	\
-herbgrind/runtime/hg_storage_runtime.c
+herbgrind/runtime/hg_storage_runtime.c herbgrind/hg_mathreplace.c
 
 all: compile
 

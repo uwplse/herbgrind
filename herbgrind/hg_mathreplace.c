@@ -3,8 +3,9 @@
 
 double VG_WRAP_FUNCTION_ZU(sqrt, hg_sqrt)(double x){
   double result;
+  OrigFn sqrt;
   HERBGRIND_END();
-  result = sqrt(x);
+  CALL_FN_W_W(result, sqrt, x);
   HERBGRIND_BEGIN();
   return result;
 }
