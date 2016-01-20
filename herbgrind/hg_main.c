@@ -58,6 +58,9 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
     // Take a look at hg_instrument.c to see what's going on here.
     instrumentStatement(st, sbOut);
   }
+
+  finalizeBlock(sbOut);
+
   return sbOut;
 }
 

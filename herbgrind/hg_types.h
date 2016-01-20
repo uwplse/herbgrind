@@ -16,7 +16,7 @@ typedef struct _ShadowValue {
 
 // Approximately what you expect. copySV will do a deep copy for you,
 // freeSV will free up the structure.
-void freeSV(ShadowValue* val);
+void cleanupSV(ShadowValue* val);
 ShadowValue* copySV(ShadowValue* src);
 
 // The type of a floating point location. Many locations contain just

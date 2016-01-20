@@ -54,6 +54,7 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
         tmpLoc->values[0] = *copySV(&tsLoc->values[0]);
+        localTemps[dest_tmp] = tmpLoc;
       }
       break;
     case Lt_Double:
@@ -73,6 +74,7 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Float);
         tmpLoc->values[0] = *copySV(&tsLoc->values[0]);
+        localTemps[dest_tmp] = tmpLoc;
       }
       break;
     case Lt_Float:
@@ -141,6 +143,7 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
         tmpLoc->values[0] = *copySV(&memoryLoc->values[0]);
+        localTemps[dest_tmp] = tmpLoc;
       }
       break;
     case Lt_Double:
@@ -160,6 +163,7 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
         tmpLoc->values[0] = *copySV(&memoryLoc->values[0]);
+        localTemps[dest_tmp] = tmpLoc;
       }
       break;
     case Lt_Float:
@@ -203,11 +207,13 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
 // evaluates to true. Otherwise, copy the shadow value from another
 // temporary, "alt_tmp".
 VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
+  ShadowLocation* src;
   if (info->cond) {
-    copySL(VG_(HT_lookup)(globalMemory, info->src_mem), &localTemps[info->dest_tmp]);;
+    src = VG_(HT_lookup)(globalMemory, info->src_mem);
   } else {
-    copySL(localTemps[info->alt_tmp], &localTemps[info->dest_tmp]);
+    src = localTemps[info->alt_tmp];
   }
+  copySL(src, &localTemps[info->dest_tmp]);
 }
 
 // Copy a shadow value from a temporary to memory.

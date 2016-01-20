@@ -280,6 +280,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   }
 
   // Put the resulting location in the space for the dest temp.
+  if (localTemps[opInfo->dest_tmp] != NULL) disownSL(localTemps[opInfo->dest_tmp]);
   localTemps[opInfo->dest_tmp] = destLocation;
 
 }
@@ -654,6 +655,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     break;
   }
   // Put the resulting location in the space for the dest temp.
+  if (localTemps[opInfo->dest_tmp] != NULL) disownSL(localTemps[opInfo->dest_tmp]);
   localTemps[opInfo->dest_tmp] = destLocation;
 
 }
@@ -816,6 +818,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
   }
 
   // Put the resulting location in the space for the dest temp.
+  if (localTemps[opInfo->dest_tmp] != NULL) disownSL(localTemps[opInfo->dest_tmp]);
   localTemps[opInfo->dest_tmp] = destLocation;
 }
 VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo){
@@ -889,6 +892,7 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo){
   evaluateOpError_helper(&(destLocation->values[0]), opInfo->dest_value, argType, 0);
 
   // Put the resulting location in the space for the dest temp.
+  if (localTemps[opInfo->dest_tmp] != NULL) disownSL(localTemps[opInfo->dest_tmp]);
   localTemps[opInfo->dest_tmp] = destLocation;
 }
 
@@ -920,6 +924,7 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_vals
   // Otherwise we need to create a new one. How we do this will depend
   // on the expected type of the location, passed as "type".
   location = mkShadowLocation(type);
+  localTemps[tmp_num] = location;
   switch(type){
     // Intialize the shadow values from the float_vals we were
     // given.
