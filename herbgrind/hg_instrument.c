@@ -299,6 +299,11 @@ set of instructions, because we don't support multithreaded programs.\n");
     addStmtToIRSB(sbOut, st);
     break;
   }
+
+  // Finalize the block
+  IRDirty* cleanupTemps =
+    unsafeIRDirty_0_N(0, "freeTemps", VG_(fnptr_to_fnentry)(&cleanupBlock), mkIRExprVec_0());
+  addStmtToIRSB(sbOut, IRStmt_Dirty(cleanupTemps));
 }
 
 // Produce an expression to calculate (base + ((idx + bias) % len)),

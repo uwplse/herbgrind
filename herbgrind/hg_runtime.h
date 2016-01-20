@@ -60,6 +60,9 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
 VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info);
 VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem);
 VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem);
+// Disown all shadow values held in temporaries and set the
+// temporaries array to nulls.
+VG_REGPARM(0) void cleanupBlock(void);
 
 // The functions that we'll insert into the program to execute shadow
 // operations alongside the normal operations.
@@ -76,9 +79,6 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_val)
 
 // Convert IR rounding mode codes to MPFR rounding mode codes.
 mpfr_rnd_t roundmodeIRtoMPFR(IRRoundingMode round);
-
-// Frees the memory associated with a shadow locatin.
-void cleanupShadowLocation(ShadowLocation* loc);
 
 // The capacity of any particular location type.
 size_t capacity(LocType bytestype);

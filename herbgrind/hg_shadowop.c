@@ -209,9 +209,13 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
         resultType = Lt_Float;
         break;
       }
-      // Get the input locations. If they don't exist, create them and initialize them with the runtime values.
-      argLocation = getShadowLocation(opInfo->arg_tmp, argType, opInfo->arg_value);
+      // Get the input locations. If they don't exist, skip the whole thing.
+      argLocation = localTemps[opInfo->arg_tmp];
       // Initialize the output location.
+      if (argLocation == NULL){
+        destLocation = NULL;
+        break;
+      }
       destLocation = mkShadowLocation(resultType);
 
       // Depending on the op, either copy across the first half of the
@@ -245,7 +249,11 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   case Iop_RoundF64toF64_PosINF:
   case Iop_RoundF64toF64_ZERO:
     // Set up space for the argument and result shadow values.
-    argLocation = getShadowLocation(opInfo->arg_tmp, Lt_Double, opInfo->arg_value);
+    argLocation = localTemps[opInfo->arg_tmp];
+    if (argLocation == NULL){
+      destLocation = NULL;
+      break;
+    }
     destLocation = mkShadowLocation(Lt_Double);
 
     // Perform the mpfr rounding to int that matches the requested
@@ -285,9 +293,14 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
 
   case Iop_64HLtoV128:
   case Iop_F64HLtoF128:
-    // Pull the shadow values for the arguments. If we don't already
-    // have shadow values for these arguments, we'll generate fresh
-    // ones from the runtime float values.
+    // Pull the shadow locations for the arguments. If we don't
+    // already have a shadow location for one argument, but we do for
+    // the other, we'll generate a fresh location from the runtime
+    // float value.
+    if (localTemps[opInfo->arg1_tmp] == NULL && localTemps[opInfo->arg2_tmp] == NULL){
+      destLocation = NULL;
+      break;
+    }
     arg1Location = getShadowLocation(opInfo->arg1_tmp, Lt_Double, opInfo->arg1_value);
     arg2Location = getShadowLocation(opInfo->arg2_tmp, Lt_Double, opInfo->arg2_value);
 
@@ -305,6 +318,10 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   case Iop_RoundF32toInt:
     {
       LocType argType;
+      if (localTemps[opInfo->arg2_tmp] == NULL){
+        destLocation = NULL;
+        break;
+      }
       switch(opInfo->op){
       case Iop_RoundF64toInt:
         argType = Lt_Double;
@@ -323,7 +340,11 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
 
   case Iop_F64toF32:
     // For semantic conversions between floating point types we can
-    // just copy across the values.
+    // just copy across the values, if they're there.
+    if (localTemps[opInfo->arg2_tmp] == NULL){
+      destLocation = NULL;
+      break;
+    }
     arg2Location = getShadowLocation(opInfo->arg2_tmp, Lt_Double, opInfo->arg2_value);
     destLocation = mkShadowLocation(Lt_Float);
     destLocation->values[0] = arg2Location->values[0];
@@ -587,6 +608,10 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     {
       LocType type;
       size_t num_vals;
+      if (localTemps[opInfo->arg1_tmp] == NULL && localTemps[opInfo->arg2_tmp] == NULL){
+        destLocation = NULL;
+        break;
+      }
       switch(opInfo->op){
       case Iop_SetV128lo32:
         type = Lt_Floatx4;
@@ -885,25 +910,6 @@ mpfr_rnd_t roundmodeIRtoMPFR(IRRoundingMode round){
   default:
     return MPFR_RNDN;
   }
-}
-
-size_t capacity(LocType bytestype){
-  switch(bytestype){
-  case Lt_Float:
-  case Lt_Double:
-  case Lt_DoubleDouble:
-  case Lt_DoubleDoubleDouble:
-    return 1;
-  case Lt_Floatx2:
-  case Lt_Doublex2:
-    return 2;
-  case Lt_Floatx4:
-  case Lt_Doublex4:
-    return 4;
-  case Lt_Floatx8:
-    return 8;
-  }
-  return 0;
 }
 
 ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_vals){
