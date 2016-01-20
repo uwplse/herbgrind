@@ -158,7 +158,7 @@ That doesn't seem flattened...\n");
           unsafeIRDirty_0_N(2,
                             "copyShadowTmptoTmp",
                             VG_(fnptr_to_fnentry)(&copyShadowTmptoTmp),
-                            mkIRExprVec_2(condTmp,
+                            mkIRExprVec_2(mkU64(condTmp),
                                           mkU64(st->Ist.WrTmp.tmp)));
         addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       }
