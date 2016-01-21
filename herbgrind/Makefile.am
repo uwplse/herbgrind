@@ -22,7 +22,7 @@ endif
 HERBGRIND_SOURCES_COMMON = hg_main.c hg_types.c hg_instrument.c	\
 hg_instrumentOp.c runtime/hg_runtime.c runtime/hg_evaluate.c	\
 runtime/hg_storage_runtime.c runtime/hg_shadowop.c		\
-runtime/hg_hiprec_ops.c hg_mathreplace.c
+runtime/hg_hiprec_ops.c
 
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_SOURCES      = \
 	$(HERBGRIND_SOURCES_COMMON)
@@ -70,4 +70,39 @@ herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_LINK = \
 	$(herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_LDFLAGS)
 endif
 
+#----------------------------------------------------------------------------
+# vgpreload_herbgrind-<platform>.so
+#----------------------------------------------------------------------------
 
+noinst_PROGRAMS += vgpreload_herbgrind-@VGCONF_ARCH_PRI@-@VGCONF_OS@.so
+if VGCONF_HAVE_PLATFORM_SEC
+noinst_PROGRAMS += vgpreload_herbgrind-@VGCONF_ARCH_SEC@-@VGCONF_OS@.so
+endif
+
+VGPRELOAD_HERBGRIND_SOURCES_COMMON = hg_mathreplace.c
+
+vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_SOURCES      = \
+	$(VGPRELOAD_HERBGRIND_SOURCES_COMMON)
+vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_CPPFLAGS     = \
+	$(AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
+vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_CFLAGS       = \
+	$(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
+vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_DEPENDENCIES = \
+	$(LIBREPLACEMALLOC_@VGCONF_PLATFORM_PRI_CAPS@)
+vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_LDFLAGS      = \
+	$(PRELOAD_LDFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
+	$(LIBREPLACEMALLOC_LDFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
+
+if VGCONF_HAVE_PLATFORM_SEC
+vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_SOURCES      = \
+	$(VGPRELOAD_HERBGRIND_SOURCES_COMMON)
+vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_CPPFLAGS     = \
+	$(AM_CPPFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
+vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_CFLAGS       = \
+	$(AM_CFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
+vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_DEPENDENCIES = \
+	$(LIBREPLACEMALLOC_@VGCONF_PLATFORM_SEC_CAPS@)
+vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_LDFLAGS      = \
+	$(PRELOAD_LDFLAGS_@VGCONF_PLATFORM_SEC_CAPS@) \
+	$(LIBREPLACEMALLOC_LDFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
+endif

@@ -1,7 +1,8 @@
 #include "pub_tool_redir.h"
 #include "herbgrind.h"
 
-double VG_WRAP_FUNCTION_ZU(sqrt, hg_sqrt)(double x){
+double VG_WRAP_FUNCTION_ZU(libmZdso, sqrt)(double x);
+double VG_WRAP_FUNCTION_ZU(libmZdso, sqrt)(double x){
   double result;
   OrigFn sqrt;
   HERBGRIND_END();
