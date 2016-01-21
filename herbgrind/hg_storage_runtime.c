@@ -53,7 +53,7 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
     case Lt_Doublex2:
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
-        tmpLoc->values[0] = *copySV(&tsLoc->values[0]);
+        copySV(&tmpLoc->values[0], &tsLoc->values[0]);
         localTemps[dest_tmp] = tmpLoc;
       }
       break;
@@ -73,7 +73,7 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
     case Lt_Floatx2:
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Float);
-        tmpLoc->values[0] = *copySV(&tsLoc->values[0]);
+        copySV(&tmpLoc->values[0], &tsLoc->values[0]);
         localTemps[dest_tmp] = tmpLoc;
       }
       break;
@@ -142,7 +142,7 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
     case Lt_Doublex2:
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
-        tmpLoc->values[0] = *copySV(&memoryLoc->sl->values[0]);
+        copySV(&tmpLoc->values[0], &memoryLoc->sl->values[0]);
         localTemps[dest_tmp] = tmpLoc;
       }
       break;
@@ -162,7 +162,7 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
     case Lt_Floatx2:
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
-        tmpLoc->values[0] = *copySV(&memoryLoc->sl->values[0]);
+        copySV(&tmpLoc->values[0], &memoryLoc->sl->values[0]);
         localTemps[dest_tmp] = tmpLoc;
       }
       break;

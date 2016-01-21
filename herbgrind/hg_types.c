@@ -55,13 +55,17 @@ void copySL(ShadowLocation* src, ShadowLocation** dest){
   (*dest) = src;
 }
 
-ShadowValue* copySV(ShadowValue* src){
+ShadowValue* copySV_ptr(ShadowValue* src){
   ShadowValue* result = VG_(calloc)("hg.shadow_value.1", 1, sizeof(ShadowValue));
   mpfr_init_set(result->value, src->value, MPFR_RNDN);
   return result;
 }
 
   VG_(printf)("clearing value at 0x%x\n", sv->value);
+void copySV(ShadowValue* src, ShadowValue* dest){
+  mpfr_init_set(dest->value, src->value, MPFR_RNDN);
+}
+
 void cleanupSV(ShadowValue* sv){
   mpfr_clear(sv->value);
 }

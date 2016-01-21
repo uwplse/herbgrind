@@ -158,7 +158,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       }
       // Copy across the rest of the values from the argument
       for (;i < capacity(argType); ++i){
-        destLocation->values[i] = argLocation->values[i];
+        copySV(&destLocation->values[i], &argLocation->values[i]);
       }
     }
     break;
@@ -176,36 +176,30 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   case Iop_V128HIto64:
   case Iop_V128to32:
     {
-      LocType argType, resultType;
+      LocType resultType;
       // Get the input and output location types for allocating
       // storage for each.
       switch(opInfo->op){
       case Iop_F32toF64:
-        argType = Lt_Float;
         resultType = Lt_Double;
         break;
       case Iop_TruncF64asF32:
       case Iop_RoundF64toF32:
-        argType = Lt_Double;
         resultType = Lt_Float;
         break;
       case Iop_ZeroHI64ofV128:
-        argType = Lt_Doublex2;
         resultType = Lt_Doublex2;
         break;
       case Iop_ZeroHI96ofV128:
-        argType = Lt_Floatx4;
         resultType = Lt_Floatx4;
         break;
       case Iop_F128HItoF64:
       case Iop_F128LOtoF64:
       case Iop_V128to64:
       case Iop_V128HIto64:
-        argType = Lt_Doublex2;
         resultType = Lt_Double;
         break;
       case Iop_V128to32:
-        argType = Lt_Floatx4;
         resultType = Lt_Float;
         break;
       }
@@ -225,7 +219,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       switch(opInfo->op){
       case Iop_V128HIto64:
       case Iop_F128HItoF64:
-        destLocation->values[0] = argLocation->values[1];
+        copySV(&destLocation->values[0], &argLocation->values[1]);
         break;
       case Iop_F32toF64:
       case Iop_TruncF64asF32:
@@ -235,7 +229,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       case Iop_V128to64:
       case Iop_V128to32:
       case Iop_F128LOtoF64:
-        destLocation->values[0] = argLocation->values[0];
+        copySV(&destLocation->values[0], &argLocation->values[0]);
         break;
       default:
         break;
@@ -311,8 +305,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
 
     // Finally, take the 64 bits of each argument, and put them in the
     // two halves of the result.
-    destLocation->values[0] = arg1Location->values[0];
-    destLocation->values[1] = arg2Location->values[0];
+    copySV(&destLocation->values[0], &arg1Location->values[0]);
+    copySV(&destLocation->values[1], &arg2Location->values[0]);
     break;
 
   case Iop_RoundF64toInt:
@@ -348,7 +342,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     }
     arg2Location = getShadowLocation(opInfo->arg2_tmp, Lt_Double, opInfo->arg2_value);
     destLocation = mkShadowLocation(Lt_Float);
-    destLocation->values[0] = arg2Location->values[0];
+    copySV(&destLocation->values[0], &arg2Location->values[0]);
     break;
 
     // Ops that have a rounding mode and a single floating point argument
@@ -600,7 +594,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       }
       // Copy across the rest of the values from the first argument
       for (;i < capacity(argType); ++i){
-        destLocation->values[i] = arg1Location->values[i];
+        copySV(&destLocation->values[i], &arg1Location->values[i]));
       }
     }
     break;
@@ -640,12 +634,12 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       destLocation = mkShadowLocation(type);
 
       // Copy the low order bits shadow value from the second argument.
-      destLocation->values[0] = arg2Location->values[0];
+      copySV(&destLocation->values[0], &arg2Location->values[0]);
 
       // Copy across the higher order bits shadow value from the first
       // argument.
       for (int i = 1; i < num_vals; ++i)
-        destLocation->values[i] = arg1Location->values[i];
+        copySV(&destLocation->values[i], &arg1Location->values[i]);
 
       // This isn't really a "real" op in the math-y sense, so let's not
       // evaluate it's error.
