@@ -308,31 +308,44 @@ set of instructions, because we don't support multithreaded programs.\n");
 
 // Produce an expression to calculate (base + ((idx + bias) % len)),
 // where base, bias, and len are fixed, and idx can vary at runtime.
+// The type of the resulting expression is Ity_I32.
 IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len, IRSB* sbOut){
-  IRTemp idxPLUSbias = newIRTemp(sbOut->tyenv, Ity_I64);
+  // Set op the temps to hold all the different intermediary values.
+  IRTemp idxPLUSbias = newIRTemp(sbOut->tyenv, Ity_I32);
+  IRTemp idxPLUSbias64 = newIRTemp(sbOut->tyenv, Ity_I64);
+  IRTemp idxPLUSbiasDIVMODlen = newIRTemp(sbOut->tyenv, Ity_I64);
+  IRTemp idxPLUSbiasMODlen = newIRTemp(sbOut->tyenv, Ity_I32);
+  IRTemp idxPLUSbiasMODlenPLUSbase = newIRTemp(sbOut->tyenv, Ity_I32);
+
+  // idx + bias
   addStmtToIRSB(sbOut,
                 IRStmt_WrTmp(idxPLUSbias,
-                             IRExpr_Binop(Iop_Add64,
+                             IRExpr_Binop(Iop_Add32,
                                           idx,
-                                          mkU64(bias))));
-  IRTemp idxPLUSbiasDIVMODlen = newIRTemp(sbOut->tyenv, Ity_I64);
+                                          mkU32(bias))));
+  // We need to convert to 64 bits so we can do the mod.
+  addStmtToIRSB(sbOut,
+                IRStmt_WrTmp(idxPLUSbias64,
+                             IRExpr_Unop(Iop_32Uto64,
+                                         idxPLUSbias)));
+  // These two operations together are mod.
+  // (idx + bias) % len
   addStmtToIRSB(sbOut,
                 IRStmt_WrTmp(idxPLUSbiasDIVMODlen,
                              IRExpr_Binop(Iop_DivModU64to32,
-                                          IRExpr_RdTmp(idxPLUSbias),
-                                          mkU64(len))));
-
-  IRTemp idxPLUSbiasMODlen = newIRTemp(sbOut->tyenv, Ity_I64);
+                                          IRExpr_RdTmp(idxPLUSbias64),
+                                          mkU32(len))));
   addStmtToIRSB(sbOut,
                 IRStmt_WrTmp(idxPLUSbiasMODlen,
                              IRExpr_Unop(Iop_64HIto32,
                                          IRExpr_RdTmp(idxPLUSbiasDIVMODlen))));
-  IRTemp idxPLUSbiasMODlenPLUSbase = newIRTemp(sbOut->tyenv, Ity_I64);
+  // base + ((idx + bias) % len)
   addStmtToIRSB(sbOut,
                 IRStmt_WrTmp(idxPLUSbiasMODlenPLUSbase,
-                             IRExpr_Binop(Iop_Add64,
+                             IRExpr_Binop(Iop_Add32,
                                           IRExpr_RdTmp(idxPLUSbiasMODlen),
-                                          mkU64(base))));
+                                          mkU32(base))));
+
   return IRExpr_RdTmp(idxPLUSbiasMODlenPLUSbase);
 }
 
