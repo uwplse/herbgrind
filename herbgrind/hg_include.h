@@ -49,5 +49,6 @@ static void hg_pre_clo_init(void);
 static void printSuperBlock(IRSB* superblock);
 
 //#define PRINTBLOCKS
+#define PRINTERRORS
 
 #endif

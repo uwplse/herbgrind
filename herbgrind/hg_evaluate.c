@@ -12,7 +12,9 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal){
   mpfr_t ulpsErrorM, bitsErrorM;
   shadowValD = mpfr_get_d(shadowVal->value, MPFR_RNDN);
 
+  #ifdef PRINTERRORS
   VG_(printf)("The shadowed val is %f, and the actual val is %f.\n", shadowValD, actualVal);
+  #endif
   
   ulpsError = ulpd(shadowValD, actualVal);
   // To calculate bits error, we take the log2 of the ulps error +
@@ -24,7 +26,9 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal){
   mpfr_log2(bitsErrorM, ulpsErrorM, MPFR_RNDN);
   bitsError = mpfr_get_d(bitsErrorM, MPFR_RNDN);
 
+  #ifdef PRINTERRORS
   VG_(printf)("The bits error of that operation was: %f.\n", bitsError);
+  #endif
 }
 
 void evaluateOpError_helper(ShadowValue* shadowVal, UWord* valbytes, LocType bytestype, int el_index){
