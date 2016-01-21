@@ -158,7 +158,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       }
       // Copy across the rest of the values from the argument
       for (;i < capacity(argType); ++i){
-        copySV(&destLocation->values[i], &argLocation->values[i]);
+        copySV(&argLocation->values[i], &destLocation->values[i]);
       }
     }
     break;
@@ -219,7 +219,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       switch(opInfo->op){
       case Iop_V128HIto64:
       case Iop_F128HItoF64:
-        copySV(&destLocation->values[0], &argLocation->values[1]);
+        copySV(&argLocation->values[1], &destLocation->values[0]);
         break;
       case Iop_F32toF64:
       case Iop_TruncF64asF32:
@@ -229,7 +229,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       case Iop_V128to64:
       case Iop_V128to32:
       case Iop_F128LOtoF64:
-        copySV(&destLocation->values[0], &argLocation->values[0]);
+        copySV(&argLocation->values[0], &destLocation->values[0]);
         break;
       default:
         break;
@@ -305,8 +305,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
 
     // Finally, take the 64 bits of each argument, and put them in the
     // two halves of the result.
-    copySV(&destLocation->values[0], &arg1Location->values[0]);
-    copySV(&destLocation->values[1], &arg2Location->values[0]);
+    copySV(&arg1Location->values[0], &destLocation->values[0]);
+    copySV(&arg2Location->values[0], &destLocation->values[1]);
     break;
 
   case Iop_RoundF64toInt:
@@ -342,7 +342,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     }
     arg2Location = getShadowLocation(opInfo->arg2_tmp, Lt_Double, opInfo->arg2_value);
     destLocation = mkShadowLocation(Lt_Float);
-    copySV(&destLocation->values[0], &arg2Location->values[0]);
+    copySV(&arg2Location->values[0], &destLocation->values[0]);
     break;
 
     // Ops that have a rounding mode and a single floating point argument
@@ -594,7 +594,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       }
       // Copy across the rest of the values from the first argument
       for (;i < capacity(argType); ++i){
-        copySV(&destLocation->values[i], &arg1Location->values[i]);
+        copySV(&arg1Location->values[i], &destLocation->values[i]);
       }
     }
     break;
@@ -634,12 +634,12 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       destLocation = mkShadowLocation(type);
 
       // Copy the low order bits shadow value from the second argument.
-      copySV(&destLocation->values[0], &arg2Location->values[0]);
+      copySV(&arg2Location->values[0], &destLocation->values[0]);
 
       // Copy across the higher order bits shadow value from the first
       // argument.
       for (int i = 1; i < num_vals; ++i)
-        copySV(&destLocation->values[i], &arg1Location->values[i]);
+        copySV(&arg1Location->values[i], &destLocation->values[i]);
 
       // This isn't really a "real" op in the math-y sense, so let's not
       // evaluate it's error.
