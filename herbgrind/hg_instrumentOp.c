@@ -16,8 +16,6 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
   // arguments to the operations as separate arguments to the client
   // called function, I'm going to try passing them as a malloc'd
   // array.
-  //
-  // TODO: Fill in these cases.
   switch (expr->tag){
   case Iex_Unop:
     {
