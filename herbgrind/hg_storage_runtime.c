@@ -62,7 +62,7 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
       break;
     default:
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
-      VG_(printf)("(the shadow value had type %d, but we're trying to get a double.)\n", tsLoc->type);
+      VG_(printf)("(the shadow value had type %d, but we're trying to get a double.)\n", (int)tsLoc->type);
     }
     break;
   case Ity_I32:
@@ -82,7 +82,7 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
       break;
     default:
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
-      VG_(printf)("(the shadow value had type %d)", tsLoc->type);
+      VG_(printf)("(the shadow value had type %d)", (int)tsLoc->type);
       break;
     }
     break;
@@ -95,7 +95,7 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
       break;
     default:
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
-      VG_(printf)("(the shadow value had type %d, but we're trying to get at 128-bit location.)\n", tsLoc->type);
+      VG_(printf)("(the shadow value had type %d, but we're trying to get at 128-bit location.)\n", (int)tsLoc->type);
       break;
     }
     break;
@@ -107,7 +107,7 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
       break;
     default:
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
-      VG_(printf)("(the shadow value had type %d, but we're trying to get a 256-bit location.)\n", tsLoc->type);
+      VG_(printf)("(the shadow value had type %d, but we're trying to get a 256-bit location.)\n", (int)tsLoc->type);
       break;
     }
     break;

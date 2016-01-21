@@ -61,7 +61,6 @@ ShadowValue* copySV_ptr(ShadowValue* src){
   return result;
 }
 
-  VG_(printf)("clearing value at 0x%x\n", sv->value);
 void copySV(ShadowValue* src, ShadowValue* dest){
   mpfr_init_set(dest->value, src->value, MPFR_RNDN);
 }
