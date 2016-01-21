@@ -9,6 +9,10 @@
 #include "pub_tool_tooliface.h"
 #include "pub_tool_mallocfree.h"
 
+// Pull in this header file so that we can call the valgrind version
+// of printf and dmsg.
+#include "pub_tool_libcprint.h"
+
 // The shadow value for each logical floating point value
 typedef struct _ShadowValue {
   mpfr_t value;
