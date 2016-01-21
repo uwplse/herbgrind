@@ -132,7 +132,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         opInfo = VG_(calloc)("hg.op_alloc.1", 1, sizeof(UnaryOp_Info));
 
         // Populate the values we know at instrument time now.
-        opInfo->op = expr->Iex.Binop.op;
+        opInfo->op = expr->Iex.Unop.op;
         opInfo->arg_tmp = expr->Iex.Unop.arg->Iex.RdTmp.tmp;
         opInfo->dest_tmp = offset;
 
