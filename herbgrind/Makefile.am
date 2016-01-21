@@ -22,7 +22,7 @@ endif
 HERBGRIND_SOURCES_COMMON = hg_main.c hg_types.c hg_instrument.c	\
 hg_instrumentOp.c runtime/hg_runtime.c runtime/hg_evaluate.c	\
 runtime/hg_storage_runtime.c runtime/hg_shadowop.c		\
-runtime/hg_hiprec_ops.c
+runtime/hg_hiprec_ops.c hg_mathreplace.c
 
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_SOURCES      = \
 	$(HERBGRIND_SOURCES_COMMON)
