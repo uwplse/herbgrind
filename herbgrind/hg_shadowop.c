@@ -594,7 +594,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       }
       // Copy across the rest of the values from the first argument
       for (;i < capacity(argType); ++i){
-        copySV(&destLocation->values[i], &arg1Location->values[i]));
+        copySV(&destLocation->values[i], &arg1Location->values[i]);
       }
     }
     break;
