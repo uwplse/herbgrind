@@ -34,12 +34,8 @@ size_t capacity(LocType bytestype){
 void disownSL(ShadowLocation* sl){
   (sl->ref_count) --;
   if (sl->ref_count < 1){
-    if (sl->ref_count < 0)
-      VG_(printf)("double free!\n");
-    VG_(printf)("Shadow location destroyed at 0x%x.\n", sl);
     for (int i = 0; i < capacity(sl->type); ++i)
       cleanupSV(&(sl->values[i]));
-    VG_(printf)("Cleaned up values.\n");
     VG_(free)(sl->values);
     VG_(free)(sl);
   }
