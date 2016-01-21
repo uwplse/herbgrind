@@ -275,8 +275,30 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
 
         // Populate the values we know at instrument time now.
         opInfo->op = expr->Iex.Binop.op;
-        opInfo->arg1_tmp = expr->Iex.Binop.arg1->Iex.RdTmp.tmp;
-        opInfo->arg2_tmp = expr->Iex.Binop.arg2->Iex.RdTmp.tmp;
+        if (expr->Iex.Binop.arg1->tag == Iex_Const){
+          // If we have a const instead of a temporary going into this
+          // function, store it in a temp first.
+          IRTemp constTemp = newIRTemp(sb->tyenv, typeOfIRConst(expr->Iex.Binop.arg1->Iex.Const.con));
+          IRStmt* storeConst = IRStmt_WrTmp(constTemp, expr->Iex.Binop.arg1);
+          addStmtToIRSB(sb, storeConst);
+          opInfo->arg1_tmp = constTemp;
+        } else {
+          // Otherwise, just pass the temp argument
+          opInfo->arg1_tmp = expr->Iex.Binop.arg1->Iex.RdTmp.tmp;
+        }
+
+        if (expr->Iex.Binop.arg2->tag == Iex_Const){
+          // If we have a const instead of a temporary going into this
+          // function, store it in a temp first.
+          IRTemp constTemp = newIRTemp(sb->tyenv, typeOfIRConst(expr->Iex.Binop.arg2->Iex.Const.con));
+          IRStmt* storeConst = IRStmt_WrTmp(constTemp, expr->Iex.Binop.arg2);
+          addStmtToIRSB(sb, storeConst);
+          opInfo->arg2_tmp = constTemp;
+        } else {
+          // Otherwise, just pass the temp argument
+          opInfo->arg2_tmp = expr->Iex.Binop.arg2->Iex.RdTmp.tmp;
+        }
+
         opInfo->dest_tmp = offset;
 
         // Allocate the space for the values we won't know until
