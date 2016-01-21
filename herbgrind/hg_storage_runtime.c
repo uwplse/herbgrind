@@ -122,7 +122,7 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
 
 // Copy a shadow value from memory to a temporary
 VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp){
-  ShadowLocation* memoryLoc = VG_(HT_lookup)(globalMemory, src_mem);
+  ShadowLocation_ptr* memoryLoc = VG_(HT_lookup)(globalMemory, src_mem);
   // If we didn't think this location held a float before, then we
   // don't think that wherever we're assigning to does now.
   if (memoryLoc == NULL) {
@@ -137,17 +137,17 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
   switch(type){
   case Ity_I64:
   case Ity_F64:
-    switch(memoryLoc->type){
+    switch(memoryLoc->sl->type){
     case Lt_Doublex4:
     case Lt_Doublex2:
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
-        tmpLoc->values[0] = *copySV(&memoryLoc->values[0]);
+        tmpLoc->values[0] = *copySV(&memoryLoc->sl->values[0]);
         localTemps[dest_tmp] = tmpLoc;
       }
       break;
     case Lt_Double:
-      copySL(memoryLoc, &localTemps[dest_tmp]);
+      copySL(memoryLoc->sl, &localTemps[dest_tmp]);
       break;
     default:
       VG_(dmsg)("We don't support that mixed size memory get!\n");
@@ -156,18 +156,18 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
     break;
   case Ity_I32:
   case Ity_F32:
-    switch(memoryLoc->type){
+    switch(memoryLoc->sl->type){
     case Lt_Floatx8:
     case Lt_Floatx4:
     case Lt_Floatx2:
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
-        tmpLoc->values[0] = *copySV(&memoryLoc->values[0]);
+        tmpLoc->values[0] = *copySV(&memoryLoc->sl->values[0]);
         localTemps[dest_tmp] = tmpLoc;
       }
       break;
     case Lt_Float:
-      copySL(memoryLoc, &localTemps[dest_tmp]);
+      copySL(memoryLoc->sl, &localTemps[dest_tmp]);
       break;
     default:
       VG_(dmsg)("We don't support that mixed size memory get!\n");
@@ -176,10 +176,10 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
     break;
   case Ity_F128:
   case Ity_V128:
-    switch (memoryLoc->type){
+    switch (memoryLoc->sl->type){
     case Lt_Doublex2:
     case Lt_Floatx4:
-      copySL(memoryLoc, &localTemps[dest_tmp]);
+      copySL(memoryLoc->sl, &localTemps[dest_tmp]);
       break;
     default:
       VG_(dmsg)("We don't support that mixed size memory get!\n");
@@ -187,10 +187,10 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
     }
     break;
   case Ity_V256:
-    switch(memoryLoc->type){
+    switch(memoryLoc->sl->type){
     case Lt_Doublex4:
     case Lt_Floatx8:
-      copySL(memoryLoc, &localTemps[dest_tmp]);
+      copySL(memoryLoc->sl, &localTemps[dest_tmp]);
       break;
     default:
       VG_(dmsg)("We don't support that mixed size memory get!\n");
@@ -209,7 +209,10 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
 VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
   ShadowLocation* src;
   if (info->cond) {
-    src = VG_(HT_lookup)(globalMemory, info->src_mem);
+    ShadowLocation_ptr* entry = VG_(HT_lookup)(globalMemory, info->src_mem);
+    if (entry != NULL){
+      src = entry->sl;
+    }
   } else {
     src = localTemps[info->alt_tmp];
   }
@@ -229,8 +232,8 @@ VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem){
   if (lookup_result != NULL){
     disownSL(lookup_result->sl);
     lookup_result->sl = NULL;
-    VG_(free)(lookup_result);
     VG_(HT_remove)(globalMemory, dest_mem);
+    VG_(free)(lookup_result);
   }
   if (localTemps[src_tmp] != NULL){
     copySL(localTemps[src_tmp], &(val->sl));
