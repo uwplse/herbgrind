@@ -184,6 +184,9 @@ That doesn't seem flattened...\n");
       // We don't have to do anything for constants, since a
       // constant isn't considered a float yet.
     case Iex_Const:
+      // There's really nothing we can do about opaque pure C calls,
+      // so we'll skip them.
+    case Iex_CCall:
       break;
     default:
       // This shouldn't happen in flattened IR.
