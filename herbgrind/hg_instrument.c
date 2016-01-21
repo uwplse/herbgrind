@@ -243,7 +243,7 @@ That doesn't seem flattened...\n");
     // Guarded load. This will load a value from memory, and write
     // it to a temp, but only if a condition returns true.
     addStmtToIRSB(sbOut, st);
-    loadGInfo = VG_(malloc)("hg.loadGmalloc.1", sizeof(LoadG_Info));
+    loadGInfo = VG_(calloc)("hg.loadGmalloc.1", 1, sizeof(LoadG_Info));
     // These are the lines we'd like to write. Unfortunately, we
     // can't, because these values in theory are not known until the
     // block is run. So, we're going to do the same thing, but at
