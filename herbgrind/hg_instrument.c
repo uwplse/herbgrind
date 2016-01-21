@@ -1,4 +1,6 @@
+
 #include "hg_instrument.h"
+#include "hg_helper.h"
 
 void instrumentStatement(IRStmt* st, IRSB* sbOut){
   IRExpr* expr;
@@ -185,7 +187,7 @@ That doesn't seem flattened...\n");
       break;
     default:
       // This shouldn't happen in flattened IR.
-      VG_(dmsg)("We don't recognize this expression!\n");
+      VG_(dmsg)("We don't recognize this expression! It's type is %s.\n", IRExprTagString(expr->tag));
       break;
     }
     break;
