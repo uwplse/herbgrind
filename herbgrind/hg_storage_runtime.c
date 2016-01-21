@@ -16,6 +16,8 @@
 //   later at some arbitrary point. For these, we'll maintain a hash
 //   table that maps addresses to shadow values, so we don't have to
 //   maintain a vast array of shadow values for all of memory.
+//
+// This file is in major need of a refactor and rewrite.
 ShadowLocation* localTemps[MAX_TEMPS];
 VgHashTable* globalMemory = NULL;
 static ShadowLocation* threadRegisters[MAX_THREADS][MAX_REGISTERS];
@@ -92,6 +94,22 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp)
     case Lt_Doublex2:
     case Lt_Floatx4:
       copySL(tsLoc, &localTemps[dest_tmp]);
+      break;
+      // This is a crazy thing to support. I mean, I want this tool to
+      // be usable, so I'm going to try my best, but this is super
+      // weird, so I'm only going to support it as-needed until this
+      // file gets a much needed refactor. So, these cases will be
+      // inconsistent for now. If you see this message in any version
+      // of the code that is released in any sense, please yell at me
+      // or send me an angry email, as needed. asnchstr@cs.washington.edu
+    case Lt_Double:
+      {
+        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Doublex2);
+        copySV(&tsLoc->values[0], &tmpLoc->values[0]);
+        ShadowLocation* tsLoc2 = threadRegisters[VG_(get_running_tid)()][src_reg + sizeof(double)];
+        if (tsLoc2 != NULL)
+          copySV(&tsLoc2->values[0], &tmpLoc->values[1]);
+      }
       break;
     default:
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
