@@ -48,4 +48,6 @@ static void hg_pre_clo_init(void);
 // Print an IR superblock
 static void printSuperBlock(IRSB* superblock);
 
+//#define PRINTBLOCKS
+
 #endif
