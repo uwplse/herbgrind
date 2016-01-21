@@ -266,7 +266,7 @@ void cleanup_runtime(void){
       }
   // Clean up the memory shadowing table
   VG_(HT_ResetIter)(globalMemory);
-  for (ShadowLocation* next = VG_(HT_Next)(globalMemory); next != NULL; next = VG_(HT_Next)(globalMemory)){
-    disownSL(next);
+  for (ShadowLocation_ptr* next = VG_(HT_Next)(globalMemory); next != NULL; next = VG_(HT_Next)(globalMemory)){
+    disownSL(next->sl);
   }
 }
