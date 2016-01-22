@@ -17,7 +17,7 @@
 
 // This file has all the functions and data structures that will be
 // called by the instrumented program.
-#include "hg_runtime.h"
+#include "runtime/hg_runtime.h"
 #include "hg_types.h"
 
 // Some helpful macros to have around. Some of these are from FpDebug.

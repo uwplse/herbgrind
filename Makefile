@@ -18,13 +18,16 @@ DEPS = deps/gmp-64/README deps/mpfr-64/README
 endif
 
 HEADERS=herbgrind/hg_include.h herbgrind/hg_instrument.h		\
-herbgrind/hg_runtime.h herbgrind/hg_types.h herbgrind/hg_evaluate.h	\
-herbgrind/hg_hiprec_ops.h herbgrind/hg_helper.h herbgrind/macros.h
+herbgrind/hg_types.h herbgrind/hg_macros.h herbgrind/hg_helper.h	\
+herbgrind/runtime/hg_runtime.h herbgrind/runtime/hg_evaluate.h		\
+herbgrind/runtime/hg_hiprec_ops.h herbgrind/runtime/hg_shadowop.h	\
+herbgrind/runtime/hg_storage_runtime.h
 
 SOURCES=herbgrind/hg_main.c herbgrind/hg_instrument.c			\
-herbgrind/hg_runtime.c herbgrind/hg_storage_runtime.c			\
-herbgrind/hg_shadowop.c herbgrind/hg_types.c herbgrind/hg_evaluate.c	\
-herbgrind/hg_instrumentOp.c herbgrind/hg_hiprec_ops.c
+herbgrind/hg_instrumentOp.c herbgrind/hg_types.c			\
+herbgrind/runtime/hg_runtime.c herbgrind/runtime/hg_evaluate.c		\
+herbgrind/runtime/hg_hiprec_ops.c herbgrind/runtime/hg_shadowop.c	\
+herbgrind/runtime/hg_storage_runtime.c
 
 all: compile
 

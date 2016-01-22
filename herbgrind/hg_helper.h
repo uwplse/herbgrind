@@ -3,7 +3,8 @@
 
 #include "pub_tool_basics.h"
 
-char* IRExprTagString(IRExprTag tag){
+const char* IRExprTagString(IRExprTag tag);
+const char* IRExprTagString(IRExprTag tag){
   switch(tag){
   case Iex_Binder:
     return "Iex_Binder";
@@ -34,6 +35,7 @@ char* IRExprTagString(IRExprTag tag){
   case Iex_BBPTR:
     return "Iex_BBPTR";
   }
+  return "****";
 }
 
 #endif

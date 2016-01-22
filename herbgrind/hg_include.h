@@ -12,7 +12,7 @@
 
 // This file has all the functions and data structures that will be
 // called by the instrumented program.
-#include "hg_runtime.h"
+#include "runtime/hg_runtime.h"
 // This file has the code to instrument each statement in the client
 // program.
 #include "hg_instrument.h"

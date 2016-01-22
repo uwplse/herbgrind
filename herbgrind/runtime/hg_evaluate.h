@@ -1,7 +1,7 @@
 #ifndef _HG_EVALUATE
 #define _HG_EVALUATE
 
-#include "hg_types.h"
+#include "../hg_types.h"
 #include "pub_tool_libcprint.h"
 
 // Get the number of floating point values between x and y, including

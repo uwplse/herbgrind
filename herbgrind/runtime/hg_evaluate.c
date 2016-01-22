@@ -29,6 +29,8 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal){
 
   #ifdef PRINTERRORS
   VG_(printf)("The bits error of that operation was: %f.\n", bitsError);
+  #else
+  (void)bitsError;
   #endif
 }
 

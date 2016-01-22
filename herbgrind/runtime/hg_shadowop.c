@@ -1,5 +1,10 @@
-#include "hg_runtime.h"
+// The declarations for the function we implement.
+#include "hg_shadowop.h"
+
+// Some functions and definitions that our implementation depends on.
+#include "hg_types.h"
 #include "hg_hiprec_ops.h"
+#include "hg_storage_runtime.h"
 
 // Execute a shadow operation, storing the result of the high
 // precision operation applied to the shadow value at the arg_tmp
@@ -43,7 +48,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       // inherently tied to the register type because some
       // instructions here will act on a four channel float, but only
       // perform an operation on one channel, and copy the others across.
-      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_rnd_t);
+      int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_rnd_t);
       LocType argType;
       size_t num_vals;
 
@@ -87,7 +92,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
         mpfr_func = mpfr_abs;
         break;
       default:
-        break;
+        return;
       }
 
       // Now we're going to determine the size, and how many values
@@ -141,7 +146,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
         num_vals = 1;
         break;
       default:
-        break;
+        return;
       }
       
       // Pull the shadow values for the argument. If we don't already
@@ -202,9 +207,11 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       case Iop_V128to32:
         resultType = Lt_Float;
         break;
+      default:
+        return;
       }
-      // Get the input locations. If they don't exist, skip the whole thing.
-      argLocation = localTemps[opInfo->arg_tmp];
+      // Get the input location. If it don't exist, skip the whole thing.
+      argLocation = getTemp(opInfo->arg_tmp);
       // Initialize the output location.
       if (argLocation == NULL){
         destLocation = NULL;
@@ -232,7 +239,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
         copySV(&argLocation->values[0], &destLocation->values[0]);
         break;
       default:
-        break;
+        return;
       }
     }
     break;
@@ -243,7 +250,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
   case Iop_RoundF64toF64_PosINF:
   case Iop_RoundF64toF64_ZERO:
     // Set up space for the argument and result shadow values.
-    argLocation = localTemps[opInfo->arg_tmp];
+    argLocation = getTemp(opInfo->arg_tmp);
     if (argLocation == NULL){
       destLocation = NULL;
       break;
@@ -266,16 +273,15 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       mpfr_trunc(destLocation->values[0].value, argLocation->values[0].value);
       break;
     default:
-      break;
+      return;
     }
     break;
   default:
-    break;
+    return;
   }
 
   // Put the resulting location in the space for the dest temp.
-  if (localTemps[opInfo->dest_tmp] != NULL) disownSL(localTemps[opInfo->dest_tmp]);
-  localTemps[opInfo->dest_tmp] = destLocation;
+  setTemp(opInfo->dest_tmp, destLocation);
 
 }
 VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
@@ -292,7 +298,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     // already have a shadow location for one argument, but we do for
     // the other, we'll generate a fresh location from the runtime
     // float value.
-    if (localTemps[opInfo->arg1_tmp] == NULL && localTemps[opInfo->arg2_tmp] == NULL){
+    if (getTemp(opInfo->arg1_tmp) == NULL && getTemp(opInfo->arg2_tmp) == NULL){
       destLocation = NULL;
       break;
     }
@@ -313,7 +319,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   case Iop_RoundF32toInt:
     {
       LocType argType;
-      if (localTemps[opInfo->arg2_tmp] == NULL){
+      if (getTemp(opInfo->arg2_tmp) == NULL){
         destLocation = NULL;
         break;
       }
@@ -325,7 +331,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         argType = Lt_Float;
         break;
       default:
-        break;
+        return;
       }
     arg2Location = getShadowLocation(opInfo->arg2_tmp, argType, opInfo->arg2_value);
     destLocation = mkShadowLocation(argType);
@@ -336,7 +342,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
   case Iop_F64toF32:
     // For semantic conversions between floating point types we can
     // just copy across the values, if they're there.
-    if (localTemps[opInfo->arg2_tmp] == NULL){
+    if (getTemp(opInfo->arg2_tmp) == NULL){
       destLocation = NULL;
       break;
     }
@@ -366,7 +372,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       // inherently tied to the register type because some
       // instructions here will act on a four channel float, but only
       // perform an operation on one channel, and copy the others across.
-      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_rnd_t);
+      int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_rnd_t);
       LocType argType;
       size_t num_values;
 
@@ -402,7 +408,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         mpfr_func = mpfr_sqrt;
         break;
       default:
-        break;
+        return;
       }
 
       // Now we're going to determine the size, and how many values
@@ -439,7 +445,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         num_values = 2;
         break;
       default:
-        break;
+        return;
       }
       // Pull the shadow values for the arguments. If we don't already
       // have shadow values for these arguments, we'll generate fresh
@@ -488,7 +494,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
       // inherently tied to the register type because some
       // instructions here will act on a four channel float, but only
       // perform an operation on one channel, and copy the others across.
-      int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+      int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
       LocType argType;
       size_t num_values;
 
@@ -528,7 +534,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         mpfr_func = mpfr_div;
         break;
       default:
-        break;
+        return;
       }
 
       // Now we're going to determine the size, and how many values
@@ -567,7 +573,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         num_values = 1;
         break;
       default:
-        break;
+        return;
       }
       // Pull the shadow values for the arguments. If we don't already
       // have shadow values for these arguments, we'll generate fresh
@@ -603,7 +609,10 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     {
       LocType type;
       size_t num_vals;
-      if (localTemps[opInfo->arg1_tmp] == NULL && localTemps[opInfo->arg2_tmp] == NULL){
+      // For operations like this, since it's not a math-y operation,
+      // we're not going to track it unless it's already being
+      // tracked.
+      if (getTemp(opInfo->arg1_tmp) == NULL && getTemp(opInfo->arg2_tmp) == NULL){
         destLocation = NULL;
         break;
       }
@@ -617,7 +626,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
         num_vals = 2;
         break;
       default:
-        break;
+        return;
       }
       // Pull the shadow values for the arguments. If we don't already
       // have shadow values for these arguments, we'll generate fresh
@@ -646,11 +655,10 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
     }
     break;
   default:
-    break;
+    return;
   }
   // Put the resulting location in the space for the dest temp.
-  if (localTemps[opInfo->dest_tmp] != NULL) disownSL(localTemps[opInfo->dest_tmp]);
-  localTemps[opInfo->dest_tmp] = destLocation;
+  setTemp(opInfo->dest_tmp, destLocation);
 
 }
 VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
@@ -672,7 +680,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
   // inherently tied to the register type because some
   // instructions here will act on a four channel float, but only
   // perform an operation on one channel, and copy the others across.
-  int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+  int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
   LocType type;
   int num_vals;
 
@@ -719,7 +727,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
     mpfr_func = mpfr_div;
     break;
   case Iop_AtanF64:
-    mpfr_func = mpfr_atan;
+    mpfr_func = mpfr_atan2;
     break;
   case Iop_Yl2xF64:
     mpfr_func = hiprec_yl2x;
@@ -731,7 +739,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
     mpfr_func = hiprec_scale;
     break;
   default:
-    break;
+    return;
   }
 
   // Now we're going to determine the size, and how many values
@@ -787,7 +795,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
     type = Lt_Float;
     num_vals = 1;
   default:
-    break;
+    return;
   }
 
   // Pull the shadow values for the arguments. If we don't already
@@ -812,8 +820,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
   }
 
   // Put the resulting location in the space for the dest temp.
-  if (localTemps[opInfo->dest_tmp] != NULL) disownSL(localTemps[opInfo->dest_tmp]);
-  localTemps[opInfo->dest_tmp] = destLocation;
+  setTemp(opInfo->dest_tmp, destLocation);
 }
 VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo){
   // The shadowing locations for the arguments and the
@@ -824,7 +831,7 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo){
   // are a lot of similar cases, and we don't want to repeat too much
   // code. Hopefully, it will be moderately well organized.
 
-  int (*mpfr_func)(mpfr_t, mpfr_t, mpfr_t, mpfr_t, mpfr_rnd_t);
+  int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
   LocType argType;
 
   // Determine the mpfr shadow function. In these cases, we don't
@@ -843,7 +850,7 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo){
     mpfr_func = hiprec_fms;
     break;
   default:
-    break;
+    return;
   }
 
   // Determine the type/size of the arguments
@@ -859,7 +866,7 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo){
     argType = Lt_Double;
     break;
   default:
-    break;
+    return;
   }
 
   // Pull the shadow values for the arguments. If we don't already
@@ -886,8 +893,7 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo){
   evaluateOpError_helper(&(destLocation->values[0]), opInfo->dest_value, argType, 0);
 
   // Put the resulting location in the space for the dest temp.
-  if (localTemps[opInfo->dest_tmp] != NULL) disownSL(localTemps[opInfo->dest_tmp]);
-  localTemps[opInfo->dest_tmp] = destLocation;
+  setTemp(opInfo->dest_tmp, destLocation);
 }
 
 mpfr_rnd_t roundmodeIRtoMPFR(IRRoundingMode round){
@@ -912,13 +918,13 @@ mpfr_rnd_t roundmodeIRtoMPFR(IRRoundingMode round){
 
 ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_vals){
   // If we already have a shadow location here, just return it.
-  ShadowLocation* location = localTemps[tmp_num];
+  ShadowLocation* location = getTemp(tmp_num);
   if (location != NULL) return location;
 
   // Otherwise we need to create a new one. How we do this will depend
   // on the expected type of the location, passed as "type".
   location = mkShadowLocation(type);
-  localTemps[tmp_num] = location;
+  setTemp(tmp_num, location);
   switch(type){
     // Intialize the shadow values from the float_vals we were
     // given.
@@ -950,7 +956,6 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_vals
     mpfr_set_d(location->values[0].value, ((float*)float_vals)[0], MPFR_RNDN);
     return location;
   default:
-    VG_(dmsg)("We don't know how to initialize shadow locations of that type!");
     return NULL;
   }
 }

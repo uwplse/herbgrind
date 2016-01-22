@@ -1,5 +1,15 @@
-#include "hg_runtime.h"
-#include "macros.h"
+// The prototypes for the functions we'll implement here.
+#include "hg_storage_runtime.h"
+// Some helper macros
+#include "../hg_macros.h"
+
+// This gets us a hash table data structure that's safe to use with
+// valgrind, so we can set up a memory map for shadowing values that
+// leave our workbench area.
+#include "pub_tool_hashtable.h"
+
+// This header gets us the current running thread.
+#include "pub_tool_threadstate.h"
 
 // Here are the data structures we set up to hold shadow values. They
 // take three forms:
@@ -19,8 +29,8 @@
 //   maintain a vast array of shadow values for all of memory.
 //
 // This file is in major need of a refactor and rewrite.
-ShadowLocation* localTemps[MAX_TEMPS];
-VgHashTable* globalMemory = NULL;
+static ShadowLocation* localTemps[MAX_TEMPS];
+static VgHashTable* globalMemory = NULL;
 static ShadowLocation* threadRegisters[MAX_THREADS][MAX_REGISTERS];
 
 // Copy a shadow value from a temporary to a temporary.
@@ -231,7 +241,8 @@ VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
     ShadowLocation_ptr* entry = VG_(HT_lookup)(globalMemory, info->src_mem);
     if (entry != NULL){
       src = entry->sl;
-    }
+    } else
+      src = NULL;
   } else {
     src = localTemps[info->alt_tmp];
   }
@@ -277,9 +288,7 @@ VG_REGPARM(0) void cleanupBlock(void){
   }
 }
 
-void cleanup_runtime(void){
-  // Clean up the mpfr cache
-  mpfr_free_cache();
+void cleanupStorage(void){
   // Clean up the thread state.
   for (int i = 0; i < MAX_THREADS; ++i)
     for (int j = 0; j < MAX_REGISTERS; ++j)
@@ -292,4 +301,18 @@ void cleanup_runtime(void){
   for (ShadowLocation_ptr* next = VG_(HT_Next)(globalMemory); next != NULL; next = VG_(HT_Next)(globalMemory)){
     disownSL(next->sl);
   }
+}
+
+void setTemp(int index, ShadowLocation* newLocation){
+  if (localTemps[index] != NULL) disownSL(localTemps[index]);
+  localTemps[index] = newLocation;
+}
+
+ShadowLocation* getTemp(int index){
+  ShadowLocation* result = localTemps[index];
+  return result;
+}
+
+void initStorage(void){
+  globalMemory = VG_(HT_construct)("memory_shadows");
 }

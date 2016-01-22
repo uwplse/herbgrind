@@ -14,7 +14,12 @@ void* gmp_alloc(size_t t){ return VG_(malloc)("hg.gmp_alloc.1", t); }
 void* gmp_realloc(void* p, size_t t1, size_t t2){ return VG_(realloc)("hg.gmp_realloc.1", p, t2); }
 void gmp_free(void* p, size_t t){ VG_(free)(p); }
 
-void init_runtime(){
+void init_runtime(void){
   mpfr_set_default_prec(PRECISION);
-  globalMemory = VG_(HT_construct)("memory_shadows");
+  initStorage();
+}
+void cleanup_runtime(void){
+  // Clean up the mpfr cache
+  mpfr_free_cache();
+  cleanupStorage();
 }

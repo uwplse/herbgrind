@@ -87,7 +87,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         result_size = sizeof(double) * 2;
         break;
       default:
-        break;
+        return;
       }
 
       // Only bother instrumenting operations that we care about and
@@ -228,7 +228,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         result_size = sizeof(double) * 4;
         break;
       default:
-        break;
+        return;
       }
 
       // Only bother instrumenting operations that we care about and
@@ -385,7 +385,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         result_size = sizeof(double) * 4;
         break;
       default:
-        break;
+        return;
       }
 
       // Only bother instrumenting operations that we care about and
@@ -486,7 +486,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         result_size = sizeof(double);
         break;
       default:
-        break;
+        return;
       }
 
       // Only bother instrumenting operations that we care about and
