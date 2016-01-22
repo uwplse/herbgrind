@@ -30,7 +30,7 @@ herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CPPFLAGS     = \
 	$(AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CFLAGS       = \
 	$(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
-	-g \
+	-g -O0 -Werror \
 	-I$(top_srcdir)/../deps/gmp-64/install/include/ \
 	-I$(top_srcdir)/../deps/mpfr-64/install/include/
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_DEPENDENCIES = \
@@ -53,7 +53,7 @@ herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_CPPFLAGS     = \
 	$(AM_CPPFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
 herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_CFLAGS       = \
 	$(AM_CFLAGS_@VGCONF_PLATFORM_SEC_CAPS@) \
-	-g \
+	-g -O0 -Werror \
 	-I$(top_srcdir)/../deps/gmp-32/install/include/ \
 	-I$(top_srcdir)/../deps/mpfr-32/install/include/
 herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_DEPENDENCIES = \
