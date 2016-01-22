@@ -328,7 +328,7 @@ IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len, IRSB* sbOut)
   addStmtToIRSB(sbOut,
                 IRStmt_WrTmp(idxPLUSbias64,
                              IRExpr_Unop(Iop_32Uto64,
-                                         idxPLUSbias)));
+                                         IRExpr_RdTmp(idxPLUSbias))));
   // These two operations together are mod.
   // (idx + bias) % len
   addStmtToIRSB(sbOut,
