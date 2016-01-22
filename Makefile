@@ -19,7 +19,7 @@ endif
 
 HEADERS=herbgrind/hg_include.h herbgrind/hg_instrument.h		\
 herbgrind/hg_runtime.h herbgrind/hg_types.h herbgrind/hg_evaluate.h	\
-herbgrind/hg_hiprec_ops.h
+herbgrind/hg_hiprec_ops.h herbgrind/hg_helper.h herbgrind/macros.h
 
 SOURCES=herbgrind/hg_main.c herbgrind/hg_instrument.c			\
 herbgrind/hg_runtime.c herbgrind/hg_storage_runtime.c			\

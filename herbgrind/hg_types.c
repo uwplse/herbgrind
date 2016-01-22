@@ -1,10 +1,12 @@
 #include "hg_types.h"
+#include "macros.h"
 
 ShadowLocation* mkShadowLocation(LocType type){
-  ShadowLocation* location = VG_(calloc)("hg.shadow_location.1", 1, sizeof(ShadowLocation));
+  ShadowLocation* location;
+  ALLOC(location, "hg.shadow_location.1", 1, sizeof(ShadowLocation));
   size_t num_values = capacity(type);
   location->type = type;
-  location->values = VG_(calloc)("hg.shadow_values", num_values, sizeof(ShadowValue));
+  ALLOC(location->values, "hg.shadow_values", num_values, sizeof(ShadowValue));
   for(int i = 0; i < num_values; ++i){
     mpfr_init(location->values[i].value);
   }
@@ -52,7 +54,8 @@ void copySL(ShadowLocation* src, ShadowLocation** dest){
 }
 
 ShadowValue* copySV_ptr(ShadowValue* src){
-  ShadowValue* result = VG_(calloc)("hg.shadow_value.1", 1, sizeof(ShadowValue));
+  ShadowValue* result;
+  ALLOC(result, "hg.shadow_value.1", 1, sizeof(ShadowValue));
   mpfr_init_set(result->value, src->value, MPFR_RNDN);
   return result;
 }

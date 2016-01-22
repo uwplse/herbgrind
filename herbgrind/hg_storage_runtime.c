@@ -1,4 +1,5 @@
 #include "hg_runtime.h"
+#include "macros.h"
 
 // Here are the data structures we set up to hold shadow values. They
 // take three forms:
@@ -240,7 +241,8 @@ VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
 // Copy a shadow value from a temporary to memory.
 VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem){
   ShadowLocation_ptr* lookup_result = VG_(HT_lookup)(globalMemory, dest_mem);
-  ShadowLocation_ptr* val = VG_(calloc)("hg.shadowlocptr.1", 1, sizeof(ShadowLocation_ptr));
+  ShadowLocation_ptr* val;
+  ALLOC(val, "hg.shadowlocptr.1", 1, sizeof(ShadowLocation_ptr));
   // In all of the above cases, we don't bother checking for null,
   // since it there's no harm in passing a null through. In this case
   // though, and the ones below it, we don't want to bloat the hash

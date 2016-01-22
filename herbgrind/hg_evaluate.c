@@ -1,4 +1,5 @@
 #include "hg_evaluate.h"
+#include "macros.h"
 
 void evaluateOpError(ShadowValue* shadowVal, double actualVal){
   // We're going to do the log in mpfr since that way we don't have to

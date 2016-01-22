@@ -28,6 +28,7 @@
 */
 
 #include "hg_include.h"
+#include "macros.h"
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.

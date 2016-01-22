@@ -1,4 +1,5 @@
 #include "hg_instrument.h"
+#include "macros.h"
 
 // Add instrumenting expressions to sb for an operation, storing the
 // result in the temporary at offset.
@@ -127,7 +128,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_AbsF64:
       case Iop_Sqrt64F0x2:
         // Allocate the memory for the argument structure
-        opInfo = VG_(calloc)("hg.op_alloc.1", 1, sizeof(UnaryOp_Info));
+        ALLOC(opInfo, "hg.op_alloc.1", 1, sizeof(UnaryOp_Info));
 
         // Populate the values we know at instrument time now.
         opInfo->op = expr->Iex.Unop.op;
@@ -136,8 +137,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
-        opInfo->arg_value = VG_(calloc)("hg.arg_alloc", 1, arg_size);
-        opInfo->dest_value = VG_(calloc)("hg.arg_alloc", 1, result_size);
+        ALLOC(opInfo->arg_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->dest_value, "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
@@ -271,7 +272,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_SetV128lo32:
       case Iop_SetV128lo64:
         // Allocate the memory for the argument structure
-        opInfo = VG_(calloc)("hg.op_alloc.1", 1, sizeof(BinaryOp_Info));
+        ALLOC(opInfo, "hg.op_alloc.1", 1, sizeof(BinaryOp_Info));
 
         // Populate the values we know at instrument time now.
         opInfo->op = expr->Iex.Binop.op;
@@ -303,9 +304,9 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
-        opInfo->arg1_value = VG_(calloc)("hg.arg_alloc", 1, arg_size);
-        opInfo->arg2_value = VG_(calloc)("hg.arg_alloc", 1, arg_size);
-        opInfo->dest_value = VG_(calloc)("hg.arg_alloc", 1, result_size);
+        ALLOC(opInfo->arg1_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->arg2_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->dest_value, "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
@@ -428,7 +429,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_MulF64r32:
       case Iop_DivF64r32:
         // Allocate the memory for the argument structure
-        opInfo = VG_(calloc)("hg.op_alloc.1", 1, sizeof(TernaryOp_Info));
+        ALLOC(opInfo, "hg.op_alloc.1", 1, sizeof(TernaryOp_Info));
 
         // Populate the values we know at instrument time now.
         opInfo->op = expr->Iex.Triop.details->op;
@@ -439,10 +440,10 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
-        opInfo->arg1_value = VG_(calloc)("hg.arg_alloc", 1, arg_size);
-        opInfo->arg2_value = VG_(calloc)("hg.arg_alloc", 1, arg_size);
-        opInfo->arg3_value = VG_(calloc)("hg.arg_alloc", 1, arg_size);
-        opInfo->dest_value = VG_(calloc)("hg.arg_alloc", 1, result_size);
+        ALLOC(opInfo->arg1_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->arg2_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->arg3_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->dest_value, "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
@@ -499,7 +500,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
       case Iop_MAddF64r32:
       case Iop_MSubF64r32:
         // Allocate the memory for the argument structure
-        opInfo = VG_(calloc)("hg.op_alloc.1", 1, sizeof(QuadnaryOp_Info));
+        ALLOC(opInfo, "hg.op_alloc.1", 1, sizeof(QuadnaryOp_Info));
 
         // Populate the values we know at instrument time now.
         opInfo->op = expr->Iex.Qop.details->op;
@@ -511,11 +512,11 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
-        opInfo->arg1_value = VG_(calloc)("hg.arg_alloc", 1, arg_size);
-        opInfo->arg2_value = VG_(calloc)("hg.arg_alloc", 1, arg_size);
-        opInfo->arg3_value = VG_(calloc)("hg.arg_alloc", 1, arg_size);
-        opInfo->arg4_value = VG_(calloc)("hg.arg_alloc", 1, arg_size);
-        opInfo->dest_value = VG_(calloc)("hg.arg_alloc", 1, result_size);
+        ALLOC(opInfo->arg1_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->arg2_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->arg3_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->arg4_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->dest_value, "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
