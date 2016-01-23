@@ -45,6 +45,8 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
   if (running == 0) return bb;
   #ifdef PRINTBLOCKS
   printSuperBlock(bb);
+  #else
+  (void)printSuperBlock;
   #endif
 
   // Let's do some instrumentation!
