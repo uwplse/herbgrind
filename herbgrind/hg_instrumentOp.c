@@ -150,7 +150,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
           unsafeIRDirty_0_N(1,
                             "executeUnaryShadowOp",
                             VG_(fnptr_to_fnentry)(&executeUnaryShadowOp),
-                            mkIRExprVec_1(mkU64((ULong)opInfo)));
+                            mkIRExprVec_1(mkU64((uintptr_t)opInfo)));
         addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
         break;
       default:
@@ -319,7 +319,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
           unsafeIRDirty_0_N(1,
                             "executeBinaryShadowOp",
                             VG_(fnptr_to_fnentry)(&executeBinaryShadowOp),
-                            mkIRExprVec_1(mkU64((ULong)opInfo)));
+                            mkIRExprVec_1(mkU64((uintptr_t)opInfo)));
         addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
         break;
       default:
@@ -457,7 +457,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
           unsafeIRDirty_0_N(1,
                             "executeTernaryShadowOp",
                             VG_(fnptr_to_fnentry)(&executeTernaryShadowOp),
-                            mkIRExprVec_1(mkU64((ULong)opInfo)));
+                            mkIRExprVec_1(mkU64((uintptr_t)opInfo)));
         addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
         break;
       default:
@@ -531,7 +531,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
           unsafeIRDirty_0_N(1,
                             "executeQuadnaryShadowOp",
                             VG_(fnptr_to_fnentry)(&executeQuadnaryShadowOp),
-                            mkIRExprVec_1(mkU64((ULong)opInfo)));
+                            mkIRExprVec_1(mkU64((uintptr_t)opInfo)));
         addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
         break;
       default:

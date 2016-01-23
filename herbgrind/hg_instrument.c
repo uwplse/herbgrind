@@ -259,11 +259,11 @@ That doesn't seem flattened...\n");
     /* loadGInfo->src_mem = st->Ist.LoadG.details->addr; */
     /* loadGInfo->alt_tmp = st->Ist.LoadG.details->alt; */
 
-    addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((ULong)&(loadGInfo->cond)),
+    addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((uintptr_t)&(loadGInfo->cond)),
                                       st->Ist.LoadG.details->guard));
-    addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((ULong)&(loadGInfo->src_mem)),
+    addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((uintptr_t)&(loadGInfo->src_mem)),
                                       st->Ist.LoadG.details->addr));
-    addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((ULong)&(loadGInfo->alt_tmp)),
+    addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((uintptr_t)&(loadGInfo->alt_tmp)),
                                       st->Ist.LoadG.details->alt));
     loadGInfo->dest_tmp = st->Ist.LoadG.details->dst;
     loadGInfo->dest_type = typeOfIRTemp(sbOut->tyenv, st->Ist.LoadG.details->dst);
@@ -272,7 +272,7 @@ That doesn't seem flattened...\n");
       unsafeIRDirty_0_N(1,
                         "copyShadowMemtoTmpIf",
                         VG_(fnptr_to_fnentry)(&copyShadowMemtoTmpIf),
-                        mkIRExprVec_1(mkU64((ULong)loadGInfo)));
+                        mkIRExprVec_1(mkU64((uintptr_t)loadGInfo)));
     addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
     break;
   case Ist_CAS:
