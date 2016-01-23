@@ -1,5 +1,5 @@
 #include "hg_instrument.h"
-#include "macros.h"
+#include "hg_macros.h"
 
 // Add instrumenting expressions to sb for an operation, storing the
 // result in the temporary at offset.

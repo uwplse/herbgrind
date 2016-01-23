@@ -1,5 +1,5 @@
 #include "hg_types.h"
-#include "macros.h"
+#include "hg_macros.h"
 
 ShadowLocation* mkShadowLocation(LocType type){
   ShadowLocation* location;
