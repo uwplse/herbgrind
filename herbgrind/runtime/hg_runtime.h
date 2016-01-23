@@ -35,4 +35,11 @@ void startHerbGrind(void);
 void* gmp_alloc(size_t t);
 void* gmp_realloc(void* p, size_t t1, size_t t2);
 void gmp_free(void* p, size_t t);
+
+// We wrap these functions because they require slightly different
+// types, and we want the coercions to work out.
+size_t mpfr_strlen(const char* str);
+void* mpfr_memmove(void* dest, const void* src, size_t len);
+int mpfr_memcmp(const void* ptr1, const void* ptr2, size_t len);
+void* mpfr_memset(void* dest, int val, size_t size);
 #endif

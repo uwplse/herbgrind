@@ -109,11 +109,11 @@ static void hg_pre_clo_init(void)
    // Tell the gmp stuff to use valgrind c library instead of the
    // standard one for memory allocation and the like.
    mp_set_memory_functions(gmp_alloc, gmp_realloc, gmp_free);
-   mpfr_set_strlen_function(VG_(strlen));
+   mpfr_set_strlen_function(mpfr_strlen);
    mpfr_set_strcpy_function(VG_(strcpy));
-   mpfr_set_memmove_function(VG_(memmove));
-   mpfr_set_memcmp_function(VG_(memcmp));
-   mpfr_set_memset_function(VG_(memset));
+   mpfr_set_memmove_function(mpfr_memmove);
+   mpfr_set_memcmp_function(mpfr_memcmp);
+   mpfr_set_memset_function(mpfr_memset);
 
    // Set up the data structures we'll need to keep track of our MPFR
    // shadow values.
