@@ -45,191 +45,13 @@ VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg){
 }
 
 // Copy a shadow value from somewhere in the thread state to a temporary.
-VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp){
-  ShadowLocation* tsLoc = threadRegisters[VG_(get_running_tid)()][src_reg];
-  // If we didn't think this location held a float before, then we
-  // don't think that wherever we're assigning to does now.
-  if (tsLoc == NULL){
-    if (localTemps[dest_tmp] != NULL){
-      disownSL(localTemps[dest_tmp]);
-      localTemps[dest_tmp] = NULL;
-    }
-    return;
-  }
-  // Based on the type, we may have to pull only one of the shadow
-  // values out of a multiple-value location.
-  switch(type){
-  case Ity_I64:
-  case Ity_F64:
-    switch(tsLoc->type){
-    case Lt_Doublex4:
-    case Lt_Doublex2:
-      {
-        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
-        copySV(&tsLoc->values[0], &tmpLoc->values[0]);
-        localTemps[dest_tmp] = tmpLoc;
-      }
-      break;
-    case Lt_Double:
-      copySL(tsLoc, &localTemps[dest_tmp]);
-      break;
-    default:
-      VG_(dmsg)("We don't support that mixed size thread state get!\n");
-      VG_(printf)("(the shadow value had type %d, but we're trying to get a double.)\n", (int)tsLoc->type);
-    }
-    break;
-  case Ity_I32:
-  case Ity_F32:
-    switch(tsLoc->type){
-    case Lt_Floatx8:
-    case Lt_Floatx4:
-    case Lt_Floatx2:
-      {
-        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Float);
-        copySV(&tsLoc->values[0], &tmpLoc->values[0]);
-        localTemps[dest_tmp] = tmpLoc;
-      }
-      break;
-    case Lt_Float:
-      copySL(tsLoc, &localTemps[dest_tmp]);
-      break;
-    default:
-      VG_(dmsg)("We don't support that mixed size thread state get!\n");
-      VG_(printf)("(the shadow value had type %d)", (int)tsLoc->type);
-      break;
-    }
-    break;
-  case Ity_F128:
-  case Ity_V128:
-    switch (tsLoc->type){
-    case Lt_Doublex2:
-    case Lt_Floatx4:
-      copySL(tsLoc, &localTemps[dest_tmp]);
-      break;
-      // This is a crazy thing to support. I mean, I want this tool to
-      // be usable, so I'm going to try my best, but this is super
-      // weird, so I'm only going to support it as-needed until this
-      // file gets a much needed refactor. So, these cases will be
-      // inconsistent for now. If you see this message in any version
-      // of the code that is released in any sense, please yell at me
-      // or send me an angry email, as needed. asnchstr@cs.washington.edu
-    case Lt_Double:
-      {
-        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Doublex2);
-        copySV(&tsLoc->values[0], &tmpLoc->values[0]);
-        ShadowLocation* tsLoc2 = threadRegisters[VG_(get_running_tid)()][src_reg + sizeof(double)];
-        if (tsLoc2 != NULL)
-          copySV(&tsLoc2->values[0], &tmpLoc->values[1]);
-      }
-      break;
-    default:
-      VG_(dmsg)("We don't support that mixed size thread state get!\n");
-      VG_(printf)("(the shadow value had type %d, but we're trying to get at 128-bit location.)\n", (int)tsLoc->type);
-      break;
-    }
-    break;
-  case Ity_V256:
-    switch(tsLoc->type){
-    case Lt_Doublex4:
-    case Lt_Floatx8:
-      copySL(tsLoc, &localTemps[dest_tmp]);
-      break;
-    default:
-      VG_(dmsg)("We don't support that mixed size thread state get!\n");
-      VG_(printf)("(the shadow value had type %d, but we're trying to get a 256-bit location.)\n", (int)tsLoc->type);
-      break;
-    }
-    break;
-  default:
-    VG_(dmsg)("We don't support that mixed size thread state get!\n");
-    VG_(printf)("(we're trying to get a value of type: ");
-    ppIRType(type);
-    VG_(printf)(")\n");
-    break;
-  }
+VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType dest_type, UWord dest_tmp){
+  copyShadow___toTmp(src_reg, dest_type, dest_tmp, getTS);
 }
 
 // Copy a shadow value from memory to a temporary
-VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp){
-  ShadowLocation_ptr* memoryLoc = VG_(HT_lookup)(globalMemory, src_mem);
-  // If we didn't think this location held a float before, then we
-  // don't think that wherever we're assigning to does now.
-  if (memoryLoc == NULL) {
-    if (localTemps[dest_tmp] != NULL){
-      disownSL(localTemps[dest_tmp]);
-      localTemps[dest_tmp] = NULL;
-    }
-    return;
-  }
-  // Based on the type, we may have to pull only one of the shadow
-  // values out of a multiple-value location.
-  switch(type){
-  case Ity_I64:
-  case Ity_F64:
-    switch(memoryLoc->sl->type){
-    case Lt_Doublex4:
-    case Lt_Doublex2:
-      {
-        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
-        copySV(&memoryLoc->sl->values[0], &tmpLoc->values[0]);
-        localTemps[dest_tmp] = tmpLoc;
-      }
-      break;
-    case Lt_Double:
-      copySL(memoryLoc->sl, &localTemps[dest_tmp]);
-      break;
-    default:
-      VG_(dmsg)("We don't support that mixed size memory get!\n");
-      break;
-    }
-    break;
-  case Ity_I32:
-  case Ity_F32:
-    switch(memoryLoc->sl->type){
-    case Lt_Floatx8:
-    case Lt_Floatx4:
-    case Lt_Floatx2:
-      {
-        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
-        copySV(&memoryLoc->sl->values[0], &tmpLoc->values[0]);
-        localTemps[dest_tmp] = tmpLoc;
-      }
-      break;
-    case Lt_Float:
-      copySL(memoryLoc->sl, &localTemps[dest_tmp]);
-      break;
-    default:
-      VG_(dmsg)("We don't support that mixed size memory get!\n");
-      break;
-    }
-    break;
-  case Ity_F128:
-  case Ity_V128:
-    switch (memoryLoc->sl->type){
-    case Lt_Doublex2:
-    case Lt_Floatx4:
-      copySL(memoryLoc->sl, &localTemps[dest_tmp]);
-      break;
-    default:
-      VG_(dmsg)("We don't support that mixed size memory get!\n");
-      break;
-    }
-    break;
-  case Ity_V256:
-    switch(memoryLoc->sl->type){
-    case Lt_Doublex4:
-    case Lt_Floatx8:
-      copySL(memoryLoc->sl, &localTemps[dest_tmp]);
-      break;
-    default:
-      VG_(dmsg)("We don't support that mixed size memory get!\n");
-      break;
-    }
-    break;
-  default:
-    VG_(dmsg)("We don't support that mixed size memory get!\n");
-    break;
-  }
+VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType dest_type, UWord dest_tmp){
+  copyShadow___toTmp(src_mem, dest_type, dest_tmp, getMem);
 }
 
 // Copy a shadow value from memory to a temporary, only if cond
@@ -238,11 +60,7 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp)
 VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
   ShadowLocation* src;
   if (info->cond) {
-    ShadowLocation_ptr* entry = VG_(HT_lookup)(globalMemory, info->src_mem);
-    if (entry != NULL){
-      src = entry->sl;
-    } else
-      src = NULL;
+    copyShadow___toTmp(info->src_mem, info->dest_type, info->dest_tmp, getMem);
   } else {
     src = localTemps[info->alt_tmp];
   }
@@ -251,26 +69,7 @@ VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
 
 // Copy a shadow value from a temporary to memory.
 VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem){
-  ShadowLocation_ptr* lookup_result = VG_(HT_lookup)(globalMemory, dest_mem);
-  ShadowLocation_ptr* val;
-  ALLOC(val, "hg.shadowlocptr.1", 1, sizeof(ShadowLocation_ptr));
-  // In all of the above cases, we don't bother checking for null,
-  // since it there's no harm in passing a null through. In this case
-  // though, and the ones below it, we don't want to bloat the hash
-  // table with a bunch of null entries, so we check if the val is
-  // null before adding a node. Null indicates that the value shadowed
-  // is not believed to be a float.
-  if (lookup_result != NULL){
-    disownSL(lookup_result->sl);
-    lookup_result->sl = NULL;
-    VG_(HT_remove)(globalMemory, dest_mem);
-    VG_(free)(lookup_result);
-  }
-  if (localTemps[src_tmp] != NULL){
-    copySL(localTemps[src_tmp], &(val->sl));
-    val->addr = dest_mem;
-    VG_(HT_add_node)(globalMemory, val);
-  }
+  setMem(dest_mem, getTemp(src_tmp));
 }
 
 // Copy a shadow value from a temporary to memory, only if cond
@@ -303,16 +102,189 @@ void cleanupStorage(void){
   }
 }
 
-void setTemp(int index, ShadowLocation* newLocation){
-  if (localTemps[index] != NULL) disownSL(localTemps[index]);
-  localTemps[index] = newLocation;
+void setTemp(Addr index, ShadowLocation* newLocation){
+  copySL(newLocation, &localTemps[index]);
 }
 
-ShadowLocation* getTemp(int index){
+ShadowLocation* getTemp(Addr index){
   ShadowLocation* result = localTemps[index];
   return result;
 }
 
+void setMem(Addr index, ShadowLocation* newLocation){
+  ShadowLocation_ptr *newEntry, *existingEntry;
+  existingEntry = VG_(HT_lookup)(globalMemory, index);
+  ALLOC(newEntry, "hg.memoryentry.1", 1, sizeof(ShadowLocation_ptr));
+
+  // If an entry already exists at that location, then we're going to
+  // overwrite it, so clean it up properly.
+  if (existingEntry != NULL){
+    disownSL(existingEntry->sl);
+    VG_(HT_remove)(globalMemory, index);
+    VG_(free)(existingEntry);
+  }
+  // Now, add our new entry.
+  if (newLocation != NULL){
+    copySL(newLocation, &(newEntry->sl));
+    newEntry->addr = index;
+    VG_(HT_add_node)(globalMemory, newEntry);
+  }
+}
+
+ShadowLocation* getMem(Addr index){
+  ShadowLocation_ptr* entry = VG_(HT_lookup)(globalMemory, index);
+  if (entry == NULL) return NULL;
+  return entry->sl;
+}
+
+void setTS(Addr index, ShadowLocation* newLocation){
+  copySL(newLocation, &threadRegisters[VG_(get_running_tid)()][index]);
+}
+
+ShadowLocation* getTS(Addr index){
+  return threadRegisters[VG_(get_running_tid)()][index];
+}
+
 void initStorage(void){
   globalMemory = VG_(HT_construct)("memory_shadows");
+}
+
+// This needs a rewrite to actually support everything that could
+// happen without completely going crazy.
+void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
+                        ShadowLocation* (*get)(Addr idx)){
+  ShadowLocation* srcLoc = get(src_idx);
+  // If we didn't think this location held a float before, then we
+  // don't think that wherever we're assigning to does now.
+  if (srcLoc == NULL){
+    setTemp(dest_tmp, srcLoc);
+    return;
+  }
+  // Based on the type, we may have to pull only one of the shadow
+  // values out of a multiple-value location.
+  switch(dest_type){
+  case Ity_I32:
+  case Ity_F32:
+    switch(srcLoc->type){
+    case Lt_Floatx8:
+    case Lt_Floatx4:
+    case Lt_Floatx2:
+      {
+        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
+        copySV(&srcLoc->values[0], &tmpLoc->values[0]);
+        localTemps[dest_tmp] = tmpLoc;
+      }
+      break;
+    case Lt_Float:
+      copySL(srcLoc, &localTemps[dest_tmp]);
+      break;
+    default:
+      VG_(dmsg)("We don't support that mixed size thread state get!\n");
+      VG_(printf)("(we're trying to get a value of type: ");
+      ppIRType(dest_type);
+      VG_(printf)("\n)");
+      break;
+    }
+    break;
+  case Ity_I64:
+  case Ity_F64:
+    switch(srcLoc->type){
+    case Lt_Doublex4:
+    case Lt_Doublex2:
+      {
+        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
+        copySV(&srcLoc->values[0], &tmpLoc->values[0]);
+        setTemp(dest_tmp, tmpLoc);
+      }
+      break;
+    case Lt_Floatx2:
+    case Lt_Double:
+      setTemp(dest_tmp, srcLoc);
+      break;
+    case Lt_Float:
+      {
+        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Floatx2);
+        copySV(&srcLoc->values[0], &tmpLoc->values[0]);
+        ShadowLocation* nextSrcLoc = get(src_idx + sizeof(float));
+        if (nextSrcLoc != NULL)
+          copySV(&nextSrcLoc->values[0], &tmpLoc->values[1]);
+      }
+    default:
+      VG_(dmsg)("We don't support that mixed size thread state get!\n");
+      VG_(printf)("(we're trying to get a value of type: ");
+      ppIRType(dest_type);
+      VG_(printf)("\n)");
+      break;
+    }
+    break;
+  case Ity_F128:
+  case Ity_V128:
+    switch (srcLoc->type){
+    case Lt_Doublex2:
+    case Lt_Floatx4:
+      setTemp(dest_tmp, srcLoc);
+      break;
+      // This is a crazy thing to support. I mean, I want this tool to
+      // be usable, so I'm going to try my best, but this is super
+      // weird, so I'm only going to support it as-needed until this
+      // file gets a much needed refactor. So, these cases will be
+      // inconsistent for now. If you see this message in any version
+      // of the code that is released in any sense, please yell at me
+      // or send me an angry email, as needed. asnchstr@cs.washington.edu
+    case Lt_Double:
+      {
+        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Doublex2);
+        copySV(&srcLoc->values[0], &tmpLoc->values[0]);
+        ShadowLocation* nextSrcLoc = get(src_idx + sizeof(double));
+        if (nextSrcLoc != NULL)
+          copySV(&nextSrcLoc->values[0], &tmpLoc->values[1]);
+      }
+    case Lt_Floatx2:
+      {
+        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Floatx4);
+        copySV(&srcLoc->values[0], &tmpLoc->values[0]);
+        copySV(&srcLoc->values[1], &tmpLoc->values[1]);
+        ShadowLocation* nextSrcLoc = get(src_idx + sizeof(float)*2);
+        if (nextSrcLoc != NULL){
+          switch (nextSrcLoc->type){
+          case Lt_Floatx2:
+            copySV(&nextSrcLoc->values[0], &tmpLoc->values[2]);
+            copySV(&nextSrcLoc->values[1], &tmpLoc->values[3]);
+            break;
+          default:
+            VG_(dmsg)("Oh shit that's a weird read. I don't know how to handle that.\n");
+            break;
+          }
+        }
+      }
+      break;
+    default:
+      VG_(dmsg)("We don't support that mixed size thread state get!\n");
+      VG_(printf)("(we're trying to get a value of type: ");
+      ppIRType(dest_type);
+      VG_(printf)("\n)");
+      break;
+    }
+    break;
+  case Ity_V256:
+    switch(srcLoc->type){
+    case Lt_Doublex4:
+    case Lt_Floatx8:
+      setTemp(dest_tmp, srcLoc);
+      break;
+    default:
+      VG_(dmsg)("We don't support that mixed size thread state get!\n");
+      VG_(printf)("(we're trying to get a value of type: ");
+      ppIRType(dest_type);
+      VG_(printf)("\n)");
+      break;
+    }
+    break;
+  default:
+    VG_(dmsg)("We don't support that mixed size thread state get!\n");
+    VG_(printf)("(we're trying to get a value of type: ");
+    ppIRType(dest_type);
+    VG_(printf)("\n)");
+    break;
+  }
 }

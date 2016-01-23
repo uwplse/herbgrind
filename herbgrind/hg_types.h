@@ -96,6 +96,7 @@ typedef struct _LoadG_Info {
   Addr src_mem;
   UWord alt_tmp;
   UWord dest_tmp;
+  IRType dest_type;
 } LoadG_Info;
 
 typedef struct _UnaryOp_Info {

@@ -266,6 +266,7 @@ That doesn't seem flattened...\n");
     addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((ULong)&(loadGInfo->alt_tmp)),
                                       st->Ist.LoadG.details->alt));
     loadGInfo->dest_tmp = st->Ist.LoadG.details->dst;
+    loadGInfo->dest_type = typeOfIRTemp(sbOut->tyenv, st->Ist.LoadG.details->dst);
 
     copyShadowLocation =
       unsafeIRDirty_0_N(1,

@@ -24,11 +24,19 @@ VG_REGPARM(0) void cleanupBlock(void);
 void initStorage(void);
 void cleanupStorage(void);
 
-// Set a temp to a new location, disowning any existing shadow
-// location at that temp.
-void setTemp(int index, ShadowLocation* newLocation);
-// Get the shadow location at a particular temporary, or NULL if there
-// is none.
-ShadowLocation* getTemp(int index);
+// Getters and setters for temporaries, memory, and thread
+// state. Handles reference counting properly.
+void setTemp(Addr index, ShadowLocation* newLocation);
+ShadowLocation* getTemp(Addr index);
+
+void setMem(Addr index, ShadowLocation* newLocation);
+ShadowLocation* getMem(Addr index);
+
+void setTS(Addr index, ShadowLocation* newLocation);
+ShadowLocation* getTS(Addr index);
+
+// A helper function that does most of the work for copyShadowMemtoTmp
+// and copyShadowTStoTmp.
+void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp, ShadowLocation* (*get)(Addr idx));
 
 #endif
