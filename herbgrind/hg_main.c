@@ -29,6 +29,7 @@
 
 #include "hg_include.h"
 #include "hg_macros.h"
+#include "herbgrind.h"
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
@@ -87,6 +88,12 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
     break;
   case VG_USERREQ__END:
     stopHerbGrind();
+    break;
+  case VG_USERREQ__PRINT:
+    VG_(printf)("%s", (char*)arg[1]);
+    break;
+  case VG_USERREQ__PRINTNUM:
+    VG_(printf)("%f", (double)arg[1]);
     break;
   }
   return False;
