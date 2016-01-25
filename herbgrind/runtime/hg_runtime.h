@@ -13,6 +13,7 @@
 // the project can just include this one.
 #include "hg_shadowop.h"
 #include "hg_storage_runtime.h"
+#include "../hg_mathreplace.h"
 
 // For size_t
 #include <stdlib.h>
@@ -42,4 +43,6 @@ size_t mpfr_strlen(const char* str);
 void* mpfr_memmove(void* dest, const void* src, size_t len);
 int mpfr_memcmp(const void* ptr1, const void* ptr2, size_t len);
 void* mpfr_memset(void* dest, int val, size_t size);
+
+void performOp(OpType op, double* result, double* args);
 #endif
