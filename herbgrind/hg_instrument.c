@@ -355,6 +355,6 @@ void finalizeBlock(IRSB* sbOut){
 
   // Finalize the block
   IRDirty* cleanupTemps =
-    unsafeIRDirty_0_N(0, "freeTemps", VG_(fnptr_to_fnentry)(&cleanupBlock), mkIRExprVec_0());
+    unsafeIRDirty_0_N(0, "cleanupBlock", VG_(fnptr_to_fnentry)(&cleanupBlock), mkIRExprVec_0());
   addStmtToIRSB(sbOut, IRStmt_Dirty(cleanupTemps));  
 }
