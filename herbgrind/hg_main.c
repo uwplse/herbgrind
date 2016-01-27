@@ -43,11 +43,12 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
   // For right now, just print out the VEX representation as we
   // process it.
   if (running == 0) return bb;
-  #ifdef PRINTBLOCKS
+
+#ifdef PRINTINBLOCKS
   printSuperBlock(bb);
-  #else
+#else
   (void)printSuperBlock;
-  #endif
+#endif
 
   // Let's do some instrumentation!
 
@@ -65,6 +66,12 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
   }
 
   finalizeBlock(sbOut);
+
+#ifdef PRINTOOUTBLOCKS
+  printSuperBlock(sbOut);
+#else
+  (void)printSuperBlock;
+#endif
 
   return sbOut;
 }

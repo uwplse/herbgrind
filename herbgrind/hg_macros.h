@@ -1,7 +1,8 @@
 #ifndef _MACROS
 #define _MACROS
 
-#define PRINTBLOCKS
+/* #define PRINTINBLOCKS */
+/* #define PRINTOUTBLOCKS */
 /* #define PRINTERRORS */
 /* #define PRINTMALLOCS */
 /* #define CHECKMALLOC 0x0000000802d8c455 */
