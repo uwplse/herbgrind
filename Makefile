@@ -137,3 +137,6 @@ deps/mpfr-%/README: setup/mpfr-$(MPFR_VERSION).tar.xz
 
 wc:
 	wc $(SOURCES) $(HEADERS)
+
+clear-preload:
+	rm valgrind/inst/lib/vgpreload_herbgrind*
