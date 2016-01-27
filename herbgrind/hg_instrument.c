@@ -233,7 +233,7 @@ That doesn't seem flattened...\n");
                           VG_(fnptr_to_fnentry)(&copyShadowTmptoMemG),
                           mkIRExprVec_3(st->Ist.StoreG.details->guard,
                                         mkU64(expr->Iex.RdTmp.tmp),
-                                        st->Ist.Store.addr));
+                                        st->Ist.StoreG.details->addr));
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
     case Iex_Const:
       break;
@@ -318,6 +318,7 @@ IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len, IRSB* sbOut)
   IRTemp idxPLUSbiasDIVMODlen = newIRTemp(sbOut->tyenv, Ity_I64);
   IRTemp idxPLUSbiasMODlen = newIRTemp(sbOut->tyenv, Ity_I32);
   IRTemp idxPLUSbiasMODlenPLUSbase = newIRTemp(sbOut->tyenv, Ity_I32);
+  IRTemp resultWidened = newIRTemp(sbOut->tyenv, Ity_I64);
 
   // idx + bias
   addStmtToIRSB(sbOut,
@@ -347,8 +348,13 @@ IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len, IRSB* sbOut)
                              IRExpr_Binop(Iop_Add32,
                                           IRExpr_RdTmp(idxPLUSbiasMODlen),
                                           mkU32(base))));
+  // Finally, widen the result.
+  addStmtToIRSB(sbOut,
+                IRStmt_WrTmp(resultWidened,
+                             IRExpr_Unop(Iop_32Uto64,
+                                          IRExpr_RdTmp(idxPLUSbiasMODlenPLUSbase))));
 
-  return IRExpr_RdTmp(idxPLUSbiasMODlenPLUSbase);
+  return IRExpr_RdTmp(resultWidened);
 }
 
 void finalizeBlock(IRSB* sbOut){
