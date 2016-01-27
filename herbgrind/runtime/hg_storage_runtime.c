@@ -30,11 +30,13 @@
 //
 // This file is in major need of a refactor and rewrite.
 static ShadowLocation* localTemps[MAX_TEMPS];
+static size_t maxTempUsed = 0;
 static VgHashTable* globalMemory = NULL;
 static ShadowLocation* threadRegisters[MAX_THREADS][MAX_REGISTERS];
 
 // Copy a shadow value from a temporary to a temporary.
 VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
+  if (dest_tmp > maxTempUsed) maxTempUsed = dest_tmp;
   copySL(localTemps[src_tmp], &localTemps[dest_tmp]);
 }
 
@@ -46,11 +48,13 @@ VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg){
 
 // Copy a shadow value from somewhere in the thread state to a temporary.
 VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType dest_type, UWord dest_tmp){
+  if (dest_tmp > maxTempUsed) maxTempUsed = dest_tmp;
   copyShadow___toTmp(src_reg, dest_type, dest_tmp, getTS);
 }
 
 // Copy a shadow value from memory to a temporary
 VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType dest_type, UWord dest_tmp){
+  if (dest_tmp > maxTempUsed) maxTempUsed = dest_tmp;
   copyShadow___toTmp(src_mem, dest_type, dest_tmp, getMem);
 }
 
@@ -59,6 +63,7 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType dest_type, UWord dest
 // temporary, "alt_tmp".
 VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
   ShadowLocation* src;
+  if (info->dest_tmp > maxTempUsed) maxTempUsed = info->dest_tmp;
   if (info->cond) {
     copyShadow___toTmp(info->src_mem, info->dest_type, info->dest_tmp, getMem);
   } else {
@@ -79,7 +84,12 @@ VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem)
 }
 
 VG_REGPARM(0) void cleanupBlock(void){
-  for(int i = 0; i < MAX_TEMPS; ++i){
+  // This runs at the end of every block, no matter how small. For
+  // this reason, it's pretty important that it be fast. Even making
+  // this loop loop to a MAX_TEMPS of 1000 every time slows down the
+  // program by orders of magnitude, which is why I added this
+  // maxTempsUsed variable.
+  for(size_t i = 0; i <= maxTempUsed; ++i){
     if (localTemps[i] != NULL){
       disownSL(localTemps[i]);
       localTemps[i] = NULL;
@@ -103,6 +113,7 @@ void cleanupStorage(void){
 }
 
 void setTemp(Addr index, ShadowLocation* newLocation){
+  if (index > maxTempUsed) maxTempUsed = index;
   copySL(newLocation, &localTemps[index]);
 }
 
