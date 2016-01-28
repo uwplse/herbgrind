@@ -42,5 +42,6 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr);
 IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len, IRSB* sbOut);
 
 // Finalize the block
+void startBlock(IRSB* sbOut);
 void finalizeBlock(IRSB* sbOut);
 #endif

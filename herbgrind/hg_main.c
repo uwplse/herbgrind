@@ -57,6 +57,8 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
   // as well as some info about the exit jump, from the old superblock.
   IRSB* sbOut = deepCopyIRSBExceptStmts(bb);
 
+  startBlock(sbOut);
+
   // Now, let's loop through these statements, and instrument them to
   // add our shadow values.
   for (int i = 0; i < bb->stmts_used; i++){

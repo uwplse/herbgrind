@@ -20,6 +20,7 @@ VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem);
 VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem);
 // Disown all shadow values held in temporaries and set the
 // temporaries array to nulls.
+VG_REGPARM(0) void initBlock(void);
 VG_REGPARM(0) void cleanupBlock(void);
 void initStorage(void);
 void cleanupStorage(void);

@@ -83,6 +83,10 @@ VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem)
   if (cond) copyShadowTmptoMem(src_tmp, dest_mem);
 }
 
+VG_REGPARM(0) void initBlock(void){
+  maxTempUsed = 0;
+}
+
 VG_REGPARM(0) void cleanupBlock(void){
   // This runs at the end of every block, no matter how small. For
   // this reason, it's pretty important that it be fast. Even making

@@ -357,10 +357,28 @@ IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len, IRSB* sbOut)
   return IRExpr_RdTmp(resultWidened);
 }
 
+void startBlock(IRSB* sbOut){
+  IRDirty* initBlockCall =
+    unsafeIRDirty_0_N(0, "initBlock", VG_(fnptr_to_fnentry)(&initBlock), mkIRExprVec_0());
+  addStmtToIRSB(sbOut, IRStmt_Dirty(initBlockCall));
+}
+
 void finalizeBlock(IRSB* sbOut){
 
   // Finalize the block
   IRDirty* cleanupTemps =
     unsafeIRDirty_0_N(0, "cleanupBlock", VG_(fnptr_to_fnentry)(&cleanupBlock), mkIRExprVec_0());
   addStmtToIRSB(sbOut, IRStmt_Dirty(cleanupTemps));  
+}
+
+// A bit misleading of a name, but returns whether the temp COULD
+// contain a float that we care about. It might also contain a
+// vectorized integer thing.
+int isFloat(IRTypeEnv* env, IRTemp temp){
+  IRType type = typeOfIRTemp(env, temp);
+  return isFloatType(type);
+}
+int isFloatType(IRType type){
+  return type == Ity_F32 || type == Ity_F64
+    || type == Ity_F128 || type == Ity_V128;
 }
