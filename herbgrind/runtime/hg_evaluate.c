@@ -23,7 +23,8 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal){
   // error, 1 ulp (values that are as close as they can be but still
   // different) has log2(2) = 1 bit of error, and we scale
   // logarithmically from there.
-  mpfr_init_set_si(ulpsErrorM, ulpsError + 1, MPFR_RNDN);
+  mpfr_init_set_si(ulpsErrorM, (long int)(ulpsError + 1), MPFR_RNDN);
+  mpfr_init(bitsErrorM);
   mpfr_log2(bitsErrorM, ulpsErrorM, MPFR_RNDN);
   bitsError = mpfr_get_d(bitsErrorM, MPFR_RNDN);
 
