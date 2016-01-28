@@ -19,15 +19,17 @@ endif
 
 HEADERS=herbgrind/hg_include.h herbgrind/hg_instrument.h		\
 herbgrind/hg_types.h herbgrind/hg_macros.h herbgrind/hg_helper.h	\
-herbgrind/runtime/hg_runtime.h herbgrind/runtime/hg_evaluate.h		\
-herbgrind/runtime/hg_hiprec_ops.h herbgrind/runtime/hg_shadowop.h	\
+herbgrind/hg_mathreplace.h herbgrind/runtime/hg_runtime.h		\
+herbgrind/runtime/hg_evaluate.h herbgrind/runtime/hg_hiprec_ops.h	\
+herbgrind/runtime/hg_shadowop.h						\
 herbgrind/runtime/hg_storage_runtime.h
 
 SOURCES=herbgrind/hg_main.c herbgrind/hg_instrument.c			\
 herbgrind/hg_instrumentOp.c herbgrind/hg_types.c			\
-herbgrind/runtime/hg_runtime.c herbgrind/runtime/hg_evaluate.c		\
-herbgrind/runtime/hg_hiprec_ops.c herbgrind/runtime/hg_shadowop.c	\
-herbgrind/runtime/hg_storage_runtime.c herbgrind/hg_mathreplace.c
+herbgrind/hg_mathwrap.c herbgrind/runtime/hg_runtime.c			\
+herbgrind/runtime/hg_evaluate.c herbgrind/runtime/hg_hiprec_ops.c	\
+herbgrind/runtime/hg_shadowop.c						\
+herbgrind/runtime/hg_storage_runtime.c
 
 all: compile
 
