@@ -202,13 +202,15 @@ That doesn't seem flattened...\n");
     expr = st->Ist.Store.data;
     switch (expr->tag) {
     case Iex_RdTmp:
-      copyShadowLocation =
-        unsafeIRDirty_0_N(2,
-                          "copyShadowTmptoMem",
-                          VG_(fnptr_to_fnentry)(&copyShadowTmptoMem),
-                          mkIRExprVec_2(mkU64(expr->Iex.RdTmp.tmp),
-                                        st->Ist.Store.addr));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      if (isFloat(sbOut->tyenv, expr->Iex.RdTmp.tmp)){
+        copyShadowLocation =
+          unsafeIRDirty_0_N(2,
+                            "copyShadowTmptoMem",
+                            VG_(fnptr_to_fnentry)(&copyShadowTmptoMem),
+                            mkIRExprVec_2(mkU64(expr->Iex.RdTmp.tmp),
+                                          st->Ist.Store.addr));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      }
       break;
     case Iex_Const:
       break;
@@ -227,14 +229,17 @@ That doesn't seem flattened...\n");
     expr = st->Ist.Store.data;
     switch(expr->tag) {
     case Iex_RdTmp:
-      copyShadowLocation =
-        unsafeIRDirty_0_N(3,
-                          "copyShadowTmptoMemG",
-                          VG_(fnptr_to_fnentry)(&copyShadowTmptoMemG),
-                          mkIRExprVec_3(st->Ist.StoreG.details->guard,
-                                        mkU64(expr->Iex.RdTmp.tmp),
-                                        st->Ist.StoreG.details->addr));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      if (isFloat(sbOut->tyenv, expr->Iex.RdTmp.tmp)){
+        copyShadowLocation =
+          unsafeIRDirty_0_N(3,
+                            "copyShadowTmptoMemG",
+                            VG_(fnptr_to_fnentry)(&copyShadowTmptoMemG),
+                            mkIRExprVec_3(st->Ist.StoreG.details->guard,
+                                          mkU64(expr->Iex.RdTmp.tmp),
+                                          st->Ist.StoreG.details->addr));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      }
+      break;
     case Iex_Const:
       break;
     default:
@@ -249,31 +254,33 @@ That doesn't seem flattened...\n");
     // Guarded load. This will load a value from memory, and write
     // it to a temp, but only if a condition returns true.
     addStmtToIRSB(sbOut, st);
-    ALLOC(loadGInfo, "hg.loadGmalloc.1", 1, sizeof(LoadG_Info));
-    // These are the lines we'd like to write. Unfortunately, we
-    // can't, because these values in theory are not known until the
-    // block is run. So, we're going to do the same thing, but at
-    // runtime, by inserting store instructions.
+    if (isFloat(sbOut->tyenv, st->Ist.LoadG.details->dst)){
+      ALLOC(loadGInfo, "hg.loadGmalloc.1", 1, sizeof(LoadG_Info));
+      // These are the lines we'd like to write. Unfortunately, we
+      // can't, because these values in theory are not known until the
+      // block is run. So, we're going to do the same thing, but at
+      // runtime, by inserting store instructions.
 
-    /* loadGInfo->cond = st->Ist.LoadG.details->guard; */
-    /* loadGInfo->src_mem = st->Ist.LoadG.details->addr; */
-    /* loadGInfo->alt_tmp = st->Ist.LoadG.details->alt; */
+      /* loadGInfo->cond = st->Ist.LoadG.details->guard; */
+      /* loadGInfo->src_mem = st->Ist.LoadG.details->addr; */
+      /* loadGInfo->alt_tmp = st->Ist.LoadG.details->alt; */
 
-    addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((uintptr_t)&(loadGInfo->cond)),
-                                      st->Ist.LoadG.details->guard));
-    addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((uintptr_t)&(loadGInfo->src_mem)),
-                                      st->Ist.LoadG.details->addr));
-    addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((uintptr_t)&(loadGInfo->alt_tmp)),
-                                      st->Ist.LoadG.details->alt));
-    loadGInfo->dest_tmp = st->Ist.LoadG.details->dst;
-    loadGInfo->dest_type = typeOfIRTemp(sbOut->tyenv, st->Ist.LoadG.details->dst);
+      addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((uintptr_t)&(loadGInfo->cond)),
+                                        st->Ist.LoadG.details->guard));
+      addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((uintptr_t)&(loadGInfo->src_mem)),
+                                        st->Ist.LoadG.details->addr));
+      addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((uintptr_t)&(loadGInfo->alt_tmp)),
+                                        st->Ist.LoadG.details->alt));
+      loadGInfo->dest_tmp = st->Ist.LoadG.details->dst;
+      loadGInfo->dest_type = typeOfIRTemp(sbOut->tyenv, st->Ist.LoadG.details->dst);
 
-    copyShadowLocation =
-      unsafeIRDirty_0_N(1,
-                        "copyShadowMemtoTmpIf",
-                        VG_(fnptr_to_fnentry)(&copyShadowMemtoTmpIf),
-                        mkIRExprVec_1(mkU64((uintptr_t)loadGInfo)));
-    addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      copyShadowLocation =
+        unsafeIRDirty_0_N(1,
+                          "copyShadowMemtoTmpIf",
+                          VG_(fnptr_to_fnentry)(&copyShadowMemtoTmpIf),
+                          mkIRExprVec_1(mkU64((uintptr_t)loadGInfo)));
+      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+    }
     break;
   case Ist_CAS:
     // This is an atomic compare and swap operation. Basically, has

@@ -44,4 +44,9 @@ IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len, IRSB* sbOut)
 // Finalize the block
 void startBlock(IRSB* sbOut);
 void finalizeBlock(IRSB* sbOut);
+
+// Determine whether a temp could contain a shadow location using
+// VEX's type system.
+int isFloat(IRTypeEnv* env, IRTemp temp);
+int isFloatType(IRType type);
 #endif
