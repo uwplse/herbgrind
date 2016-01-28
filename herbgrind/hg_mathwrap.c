@@ -1,6 +1,6 @@
 #include "pub_tool_clreq.h"
 #include "herbgrind.h"
-#include "hg_mathreplace.h"
+#include "hg_mathreplace_funcs.h"
 #include "pub_tool_redir.h"
 
 double VG_WRAP_FUNCTION_ZU(libmZdsoZd6, sqrt)(double x);

@@ -30,7 +30,6 @@
 #include "hg_include.h"
 #include "hg_macros.h"
 #include "herbgrind.h"
-#include "hg_mathreplace.h"
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
