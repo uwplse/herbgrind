@@ -24,22 +24,25 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut){
     // Here we'll want to instrument moving Shadow values into
     // thread state. In flattened IR, these shadow values should
     // always come from temporaries.
-    expr = st->Ist.Put.data;
     addStmtToIRSB(sbOut, st);
+
+    expr = st->Ist.Put.data;
     switch (expr->tag) {
     case Iex_RdTmp:
-      // Okay, in this one we're reading from a temp instead of the
-      // thread state, but otherwise it's pretty much like above.
-      copyShadowLocation =
-        unsafeIRDirty_0_N(2,
-                          "copyShadowTmptoTS",
-                          VG_(fnptr_to_fnentry)(&copyShadowTmptoTS),
-                          mkIRExprVec_2(// The number of the temporary
-                                        mkU64(expr->Iex.RdTmp.tmp),
-                                        // The thread state offset,
-                                        // as above.
-                                        mkU64(st->Ist.Put.offset)));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      if (isFloat(sbOut->tyenv, expr->Iex.RdTmp.tmp)){
+        // Okay, in this one we're reading from a temp instead of the
+        // thread state, but otherwise it's pretty much like above.
+        copyShadowLocation =
+          unsafeIRDirty_0_N(2,
+                            "copyShadowTmptoTS",
+                            VG_(fnptr_to_fnentry)(&copyShadowTmptoTS),
+                            mkIRExprVec_2(// The number of the temporary
+                                          mkU64(expr->Iex.RdTmp.tmp),
+                                          // The thread state offset,
+                                          // as above.
+                                          mkU64(st->Ist.Put.offset)));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      }
       break;
     case Iex_Const:
       break;
@@ -57,28 +60,31 @@ That doesn't seem flattened...\n");
     // putting into. This will probably involve putting more burden
     // on the runtime c function which we'll insert after the put to
     // process it.
-    expr = st->Ist.PutI.details->data;
     addStmtToIRSB(sbOut, st);
+
+    expr = st->Ist.PutI.details->data;
     switch (expr->tag) {
     case Iex_RdTmp:
-      copyShadowLocation =
-        unsafeIRDirty_0_N(
-                          2,
-                          "copyShadowTmptoTS",
-                          VG_(fnptr_to_fnentry)(&copyShadowTmptoTS),
-                          mkIRExprVec_2(
-                                        mkU64(expr->Iex.RdTmp.tmp),
-                                        // Calculate array_base + (ix + bias) %
-                                        // array_len at run time. This will give us
-                                        // the offset into the thread state at which
-                                        // the actual get is happening, so we can
-                                        // use that same offset for the shadow get.
-                                        mkArrayLookupExpr(st->Ist.PutI.details->descr->base,
-                                                          st->Ist.PutI.details->ix,
-                                                          st->Ist.PutI.details->bias,
-                                                          st->Ist.PutI.details->descr->nElems,
-                                                          sbOut)));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      if (isFloat(sbOut->tyenv, expr->Iex.RdTmp.tmp)){
+        copyShadowLocation =
+          unsafeIRDirty_0_N(
+                            2,
+                            "copyShadowTmptoTS",
+                            VG_(fnptr_to_fnentry)(&copyShadowTmptoTS),
+                            mkIRExprVec_2(
+                                          mkU64(expr->Iex.RdTmp.tmp),
+                                          // Calculate array_base + (ix + bias) %
+                                          // array_len at run time. This will give us
+                                          // the offset into the thread state at which
+                                          // the actual get is happening, so we can
+                                          // use that same offset for the shadow get.
+                                          mkArrayLookupExpr(st->Ist.PutI.details->descr->base,
+                                                            st->Ist.PutI.details->ix,
+                                                            st->Ist.PutI.details->bias,
+                                                            st->Ist.PutI.details->descr->nElems,
+                                                            sbOut)));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      }
       break;
     case Iex_Const:
       break;
@@ -94,6 +100,7 @@ That doesn't seem flattened...\n");
     // Here we'll instrument moving Shadow values into temps. See
     // above.
     addStmtToIRSB(sbOut, st);
+    if (!isFloat(sbOut->tyenv, st->Ist.WrTmp.tmp)) break;
     expr = st->Ist.WrTmp.data;
     switch(expr->tag) {
     case Iex_Get:
@@ -167,14 +174,16 @@ That doesn't seem flattened...\n");
       }
       break;
     case Iex_Load:
-      copyShadowLocation =
-        unsafeIRDirty_0_N(3,
-                          "copyShadowMemtoTmp",
-                          VG_(fnptr_to_fnentry)(&copyShadowMemtoTmp),
-                          mkIRExprVec_3(expr->Iex.Load.addr,
-                                        mkU64(expr->Iex.Load.ty),
-                                        mkU64(st->Ist.WrTmp.tmp)));
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      if (isFloatType(expr->Iex.Load.ty)){
+        copyShadowLocation =
+          unsafeIRDirty_0_N(3,
+                            "copyShadowMemtoTmp",
+                            VG_(fnptr_to_fnentry)(&copyShadowMemtoTmp),
+                            mkIRExprVec_3(expr->Iex.Load.addr,
+                                          mkU64(expr->Iex.Load.ty),
+                                          mkU64(st->Ist.WrTmp.tmp)));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+      }
       break;
     case Iex_Qop:
     case Iex_Triop:
