@@ -5,7 +5,7 @@
 int main(int argc, char** argv){
   double x,y;
   HERBGRIND_BEGIN();
-  x = 10e10;
+  x = 10e15;
   y = sqrt(x + 1) - sqrt(x);
   HERBGRIND_END();
   printf("%e\n", y);
