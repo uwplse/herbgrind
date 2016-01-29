@@ -70,7 +70,7 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
 
   finalizeBlock(sbOut);
 
-#ifdef PRINTOOUTBLOCKS
+#ifdef PRINTOUTBLOCKS
   printSuperBlock(sbOut);
 #else
   (void)printSuperBlock;
