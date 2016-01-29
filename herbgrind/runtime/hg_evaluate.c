@@ -1,3 +1,5 @@
+#include <inttypes.h>
+
 #include "hg_evaluate.h"
 #include "hg_macros.h"
 
@@ -11,8 +13,18 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal){
   long long ulpsError;
   double bitsError, shadowValD;
   mpfr_t ulpsErrorM, bitsErrorM;
+  char shadowValD_s[10];
+  char actualVal_s[10];
+
   shadowValD = mpfr_get_d(shadowVal->value, MPFR_RNDN);
 
+  stringifyDouble(shadowValD, shadowValD_s, 10);
+  stringifyDouble(actualVal, actualVal_s, 10);
+
+  #ifdef PRINTERRORS
+  VG_(printf)("The shadowed val is %s, and the actual val is %s.\n", shadowValD_s, actualVal_s);
+  #endif
+  
   ulpsError = ulpd(shadowValD, actualVal);
   // To calculate bits error, we take the log2 of the ulps error +
   // 1. This means that 0 ulps (same value) has log2(1) = 0 bits of
@@ -68,3 +80,21 @@ unsigned long long ulpd(double x, double y) {
   return xx >= yy ? xx - yy : yy - xx;
 }
 
+typedef union {
+  double d;
+  struct {
+    uint64_t mantissa : 52;
+    unsigned int exponent : 11;
+    unsigned int sign : 1;
+  } parts;
+} double_cast;
+
+void stringifyDouble(double d, char* dest, size_t len){
+  double_cast dc, dc_norm;
+  dc.d = d;
+  dc_norm.parts.mantissa = dc.parts.mantissa;
+  if (dc.parts.sign)
+    VG_(snprintf)(dest, len, "-%fe%d", dc_norm.d, dc.parts.exponent);
+  else
+    VG_(snprintf)(dest, len, "%fe%d", dc_norm.d, dc.parts.exponent);
+}
