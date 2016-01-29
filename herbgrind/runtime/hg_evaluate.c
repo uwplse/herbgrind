@@ -79,22 +79,3 @@ unsigned long long ulpd(double x, double y) {
 
   return xx >= yy ? xx - yy : yy - xx;
 }
-
-typedef union {
-  double d;
-  struct {
-    uint64_t mantissa : 52;
-    unsigned int exponent : 11;
-    unsigned int sign : 1;
-  } parts;
-} double_cast;
-
-void stringifyDouble(double d, char* dest, size_t len){
-  double_cast dc, dc_norm;
-  dc.d = d;
-  dc_norm.parts.mantissa = dc.parts.mantissa;
-  if (dc.parts.sign)
-    VG_(snprintf)(dest, len, "-%fe%d", dc_norm.d, dc.parts.exponent);
-  else
-    VG_(snprintf)(dest, len, "%fe%d", dc_norm.d, dc.parts.exponent);
-}

@@ -17,6 +17,4 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal);
 // test against the shadow value.
 void evaluateOpError_helper(ShadowValue* shadowVal, UWord* valbytes, LocType bytestype, int el_index);
 
-void stringifyDouble(double d, char* dest, size_t len);
-
 #endif
