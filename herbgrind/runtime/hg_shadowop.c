@@ -916,6 +916,10 @@ mpfr_rnd_t roundmodeIRtoMPFR(IRRoundingMode round){
   }
 }
 
+// This one gets shadow locations from temporaries. hg_mathreplace.c
+// has a similar function to get shadow locations from memory, but
+// it's less flexible since that part doesn't need as much
+// flexibility.
 ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_vals){
   // If we already have a shadow location here, just return it.
   ShadowLocation* location = getTemp(tmp_num);
