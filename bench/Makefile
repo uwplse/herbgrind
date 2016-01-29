@@ -1,7 +1,7 @@
 
 FLAGS=-g -std=c11 -lm -lmpfr -I../valgrind/herbgrind
 
-all: testprog.out mini.out tiny.out mini-nocall.sout
+all: testprog.out mini.out tiny.out mini-nocall.sout diff-roots.out
 
 %.out: %.c
 	gcc $(FLAGS) -o $@ $<
