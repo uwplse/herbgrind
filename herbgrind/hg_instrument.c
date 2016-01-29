@@ -396,5 +396,6 @@ int isFloat(IRTypeEnv* env, IRTemp temp){
 }
 int isFloatType(IRType type){
   return type == Ity_F32 || type == Ity_F64
-    || type == Ity_F128 || type == Ity_V128;
+    || type == Ity_V128 || type == Ity_I32
+    || type == Ity_I64;
 }
