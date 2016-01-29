@@ -224,6 +224,7 @@ void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
         if (nextSrcLoc != NULL)
           copySV(&nextSrcLoc->values[0], &tmpLoc->values[1]);
       }
+      break;
     default:
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
       VG_(printf)("(we're trying to get a value of type: ");
@@ -254,6 +255,7 @@ void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
         if (nextSrcLoc != NULL)
           copySV(&nextSrcLoc->values[0], &tmpLoc->values[1]);
       }
+      break;
     case Lt_Floatx2:
       {
         ShadowLocation* tmpLoc = mkShadowLocation(Lt_Floatx4);
