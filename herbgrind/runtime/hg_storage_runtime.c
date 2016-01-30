@@ -223,6 +223,7 @@ void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
         ShadowLocation* nextSrcLoc = get(src_idx + sizeof(float));
         if (nextSrcLoc != NULL)
           copySV(&nextSrcLoc->values[0], &tmpLoc->values[1]);
+        setTemp(dest_tmp, tmpLoc);
       }
       break;
     default:
@@ -254,6 +255,7 @@ void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
         ShadowLocation* nextSrcLoc = get(src_idx + sizeof(double));
         if (nextSrcLoc != NULL)
           copySV(&nextSrcLoc->values[0], &tmpLoc->values[1]);
+        setTemp(dest_tmp, tmpLoc);
       }
       break;
     case Lt_Floatx2:
@@ -273,6 +275,7 @@ void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
             break;
           }
         }
+        setTemp(dest_tmp, tmpLoc);
       }
       break;
     default:
