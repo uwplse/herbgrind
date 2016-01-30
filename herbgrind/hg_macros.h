@@ -4,6 +4,7 @@
 /* #define PRINTINBLOCKS */
 /* #define PRINTOUTBLOCKS */
 /* #define PRINTERRORS */
+#define PRINTERRORSLONG
 #define PRINTMOVES
 #define LONGPRINT_LEN 30
 /* #define PRINTMALLOCS */
