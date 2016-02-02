@@ -289,7 +289,7 @@ void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
       VG_(printf)("(we're trying to get a value of type: ");
       ppIRType(dest_type);
-      VG_(printf)("\n)");
+      VG_(printf)(", but the location has type %d)\n", srcLoc->type);
       break;
     }
     break;
@@ -322,7 +322,7 @@ void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
       VG_(printf)("(we're trying to get a value of type: ");
       ppIRType(dest_type);
-      VG_(printf)("\n)");
+      VG_(printf)(")\n");
       break;
     }
     break;
@@ -374,7 +374,7 @@ void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
       VG_(printf)("(we're trying to get a value of type: ");
       ppIRType(dest_type);
-      VG_(printf)("\n)");
+      VG_(printf)(")\n");
       break;
     }
     break;
@@ -388,7 +388,7 @@ void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
       VG_(dmsg)("We don't support that mixed size thread state get!\n");
       VG_(printf)("(we're trying to get a value of type: ");
       ppIRType(dest_type);
-      VG_(printf)("\n)");
+      VG_(printf)(")\n");
       break;
     }
     break;
@@ -396,7 +396,7 @@ void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
     VG_(dmsg)("We don't support that mixed size thread state get!\n");
     VG_(printf)("(we're trying to get a value of type: ");
     ppIRType(dest_type);
-    VG_(printf)("\n)");
+    VG_(printf)(")\n");
     break;
   }
 }
