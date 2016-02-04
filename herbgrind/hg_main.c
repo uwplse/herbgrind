@@ -46,6 +46,7 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
   if (running == 0) return bb;
 
 #ifdef PRINTINBLOCKS
+  VG_(printf)("Instrumenting block:\n");
   printSuperBlock(bb);
 #else
   (void)printSuperBlock;
@@ -71,6 +72,7 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
   finalizeBlock(sbOut);
 
 #ifdef PRINTOUTBLOCKS
+  VG_(printf)("Instrumented into:\n");
   printSuperBlock(sbOut);
 #else
   (void)printSuperBlock;
@@ -142,7 +144,6 @@ static void hg_pre_clo_init(void)
 }
 
 static void printSuperBlock(IRSB* superblock){
-  VG_(printf)("Instrumenting block:\n");
   for(int i = 0; i < superblock->stmts_used; i++){
     IRStmt* st = superblock->stmts[i];
     ppIRStmt(st);
