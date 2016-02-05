@@ -138,9 +138,12 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Store the operations debugging information for printing the
         // errors later.
-        opInfo->op_addr = opAddr;
-        VG_(get_filename_linenum)(opAddr, &(opInfo->src_filename), NULL, &(opInfo->src_line));
-        VG_(get_fnname)(opAddr, &(opInfo->fnname));
+        opInfo->debuginfo.op_addr = opAddr;
+        VG_(get_filename_linenum)(opAddr,
+                                  &(opInfo->debuginfo.src_filename),
+                                  NULL,
+                                  &(opInfo->debuginfo.src_line));
+        VG_(get_fnname)(opAddr, &(opInfo->debuginfo.fnname));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
@@ -289,9 +292,12 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Store the operations debugging information for printing the
         // errors later.
-        opInfo->op_addr = opAddr;
-        VG_(get_filename_linenum)(opAddr, &(opInfo->src_filename), NULL, &(opInfo->src_line));
-        VG_(get_fnname)(opAddr, &(opInfo->fnname));
+        opInfo->debuginfo.op_addr = opAddr;
+        VG_(get_filename_linenum)(opAddr,
+                                  &(opInfo->debuginfo.src_filename),
+                                  NULL,
+                                  &(opInfo->debuginfo.src_line));
+        VG_(get_fnname)(opAddr, &(opInfo->debuginfo.fnname));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
@@ -431,9 +437,12 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Store the operations debugging information for printing the
         // errors later.
-        opInfo->op_addr = opAddr;
-        VG_(get_filename_linenum)(opAddr, &(opInfo->src_filename), NULL, &(opInfo->src_line));
-        VG_(get_fnname)(opAddr, &(opInfo->fnname));
+        opInfo->debuginfo.op_addr = opAddr;
+        VG_(get_filename_linenum)(opAddr,
+                                  &(opInfo->debuginfo.src_filename),
+                                  NULL,
+                                  &(opInfo->debuginfo.src_line));
+        VG_(get_fnname)(opAddr, &(opInfo->debuginfo.fnname));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
@@ -509,9 +518,12 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Store the operations debugging information for printing the
         // errors later.
-        opInfo->op_addr = opAddr;
-        VG_(get_filename_linenum)(opAddr, &(opInfo->src_filename), NULL, &(opInfo->src_line));
-        VG_(get_fnname)(opAddr, &(opInfo->fnname));
+        opInfo->debuginfo.op_addr = opAddr;
+        VG_(get_filename_linenum)(opAddr,
+                                  &(opInfo->debuginfo.src_filename),
+                                  NULL,
+                                  &(opInfo->debuginfo.src_line));
+        VG_(get_fnname)(opAddr, &(opInfo->debuginfo.fnname));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.

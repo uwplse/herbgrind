@@ -99,6 +99,17 @@ typedef struct _LoadG_Info {
   IRType dest_type;
 } LoadG_Info;
 
+typedef struct _OpDebug_Info {
+  // The address of the operation in the binary
+  Addr op_addr;
+  // The source line of the operation
+  UInt src_line;
+  // The source file of the operation
+  const HChar* src_filename;
+  // The function the operation resides in.
+  const HChar* fnname;
+} OpDebug_Info;
+
 typedef struct _UnaryOp_Info {
   UWord op;
   // This is the index of the temporary that holds these values. We'll
@@ -115,14 +126,9 @@ typedef struct _UnaryOp_Info {
   // This is the actual computed value of the result, for checking
   // accuracy.
   UWord* dest_value;
-  // The address of the operation in the binary
-  Addr op_addr;
-  // The source line of the operation
-  UInt src_line;
-  // The source file of the operation
-  const HChar* src_filename;
-  // The function the operation resides in.
-  const HChar* fnname;
+  // Information about where the operation resides, for reporting
+  // errors to the user.
+  OpDebug_Info debuginfo;
 } UnaryOp_Info;
 
 typedef struct _BinaryOp_Info {
@@ -144,14 +150,9 @@ typedef struct _BinaryOp_Info {
   // This is the actual computed value of the result, for checking
   // accuracy.
   UWord* dest_value;
-  // The address of the operation in the binary
-  Addr op_addr;
-  // The source line of the operation
-  UInt src_line;
-  // The source file of the operation
-  const HChar* src_filename;
-  // The function the operation resides in.
-  const HChar* fnname;
+  // Information about where the operation resides, for reporting
+  // errors to the user.
+  OpDebug_Info debuginfo;
 } BinaryOp_Info;
 
 typedef struct _TernaryOp_Info {
@@ -175,14 +176,9 @@ typedef struct _TernaryOp_Info {
   // This is the actual computed value of the result, for checking
   // accuracy.
   UWord* dest_value;
-  // The address of the operation in the binary
-  Addr op_addr;
-  // The source line of the operation
-  UInt src_line;
-  // The source file of the operation
-  const HChar* src_filename;
-  // The function the operation resides in.
-  const HChar* fnname;
+  // Information about where the operation resides, for reporting
+  // errors to the user.
+  OpDebug_Info debuginfo;
 } TernaryOp_Info;
 
 typedef struct _QuadnaryOp_Info {
@@ -208,24 +204,10 @@ typedef struct _QuadnaryOp_Info {
   // This is the actual computed value of the result, for checking
   // accuracy.
   UWord* dest_value;
-  // The address of the operation in the binary
-  Addr op_addr;
-  // The source line of the operation
-  UInt src_line;
-  // The source file of the operation
-  const HChar* src_filename;
-  // The function the operation resides in.
-  const HChar* fnname;
+  // Information about where the operation resides, for reporting
+  // errors to the user.
+  OpDebug_Info debuginfo;
 } QuadnaryOp_Info;
-
-typedef struct _OpDebug_Info {
-  Addr op_addr;
-  UInt src_line;
-  const HChar* src_filename;
-  const HChar* fnname;
-} OpDebug_Info;
-
-#define DEBUGINFO(info) (OpDebug_Info*)&(info->op_addr)
 
 #ifdef VG_LITTLEENDIAN
 #define ENDIAN Iend_LE
