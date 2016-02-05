@@ -21,8 +21,8 @@
 ----------------------------*/
 
 #define HG_WRAP_OP_1(fnname, opname)                    \
-  double VG_WRAP_FUNCTION_ZU(LIBM, fnname)(double x);   \
-  double VG_WRAP_FUNCTION_ZU(LIBM, fnname)(double x){   \
+  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x);   \
+  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x){   \
     double result;                                      \
     double args[1];                                     \
     args[0] = x;                                        \
@@ -50,8 +50,8 @@ HG_WRAP_OP_1(log1p, OP_LOG1P);
 ----------------------------*/
 
 #define HG_WRAP_OP_2(fnname, opname)                             \
-  double VG_WRAP_FUNCTION_ZU(LIBM, fnname)(double x, double y);  \
-  double VG_WRAP_FUNCTION_ZU(LIBM, fnname)(double x, double y){  \
+  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y);  \
+  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y){  \
     double result;                                               \
     double args[2];                                              \
     args[0] = x;                                                 \
