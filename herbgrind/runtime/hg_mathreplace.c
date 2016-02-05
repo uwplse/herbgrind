@@ -7,8 +7,8 @@
 #include "mpfr.h"
 
 #include "hg_mathreplace.h"
-#include "hg_storage_runtime.h"
 #include "hg_evaluate.h"
+#include "hg_runtime.h"
 
 void performOp(OpType op, double* result, double* args){
   size_t nargs;
@@ -166,8 +166,12 @@ void performOp(OpType op, double* result, double* args){
   *result = mpfr_get_d(res, MPFR_RNDN);
   setMem((uintptr_t)result, res_shadow);
 
+  // Now, let's get the debug information on the call to this wrapped
+  // library call, so we can report error to the user.
+  OpDebug_Info debuginfo;
+  getOpDebug_Info(last_abi_addr, &debuginfo);
   // And finally, evaluate the error of the operation.
-  evaluateOpError(&(res_shadow->values[0]), *result, NULL);
+  evaluateOpError(&(res_shadow->values[0]), *result, &debuginfo);
 }
 
 ShadowLocation* getShadowLocMem(Addr addr, double float_arg){

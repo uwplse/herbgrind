@@ -7,6 +7,8 @@
 
 // Whether or not the tool is currently "turned on".
 int running = 0;
+// The address we were at during the last AbiHint statement.
+Addr last_abi_addr = 0x0;
 
 // This disables the instrumentation of this tool.
 void stopHerbGrind(void){ running = 0; }
