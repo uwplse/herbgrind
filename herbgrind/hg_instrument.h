@@ -32,11 +32,11 @@
 
 // Instrument a single statement, adding the instrumented statements
 // to sbOut.
-void instrumentStatement(IRStmt* st, IRSB* sbOut);
+void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr);
 
 // Add instrumenting expressions to sb for an operation, storing the
 // result in the temporary at offset.
-void instrumentOp(IRSB* sb, Int offset, IRExpr* expr);
+void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr);
 
 // Create an expression which calculates (base + ((idx + bias) % len)).
 IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len, IRSB* sbOut);

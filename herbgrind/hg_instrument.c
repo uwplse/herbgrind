@@ -3,7 +3,7 @@
 #include "hg_helper.h"
 #include "hg_macros.h"
 
-void instrumentStatement(IRStmt* st, IRSB* sbOut){
+void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr){
   IRExpr* expr;
   IRDirty* copyShadowLocation;
   LoadG_Info* loadGInfo;
@@ -189,7 +189,7 @@ That doesn't seem flattened...\n");
     case Iex_Triop:
     case Iex_Binop:
     case Iex_Unop:
-      instrumentOp(sbOut, st->Ist.WrTmp.tmp, expr);
+      instrumentOp(sbOut, st->Ist.WrTmp.tmp, expr, stAddr);
       break;
       // We don't have to do anything for constants, since a
       // constant isn't considered a float yet.

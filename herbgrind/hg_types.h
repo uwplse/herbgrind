@@ -115,6 +115,14 @@ typedef struct _UnaryOp_Info {
   // This is the actual computed value of the result, for checking
   // accuracy.
   UWord* dest_value;
+  // The address of the operation in the binary
+  Addr op_addr;
+  // The source line of the operation
+  UInt src_line;
+  // The source file of the operation
+  const HChar* src_filename;
+  // The function the operation resides in.
+  const HChar* fnname;
 } UnaryOp_Info;
 
 typedef struct _BinaryOp_Info {
@@ -136,6 +144,14 @@ typedef struct _BinaryOp_Info {
   // This is the actual computed value of the result, for checking
   // accuracy.
   UWord* dest_value;
+  // The address of the operation in the binary
+  Addr op_addr;
+  // The source line of the operation
+  UInt src_line;
+  // The source file of the operation
+  const HChar* src_filename;
+  // The function the operation resides in.
+  const HChar* fnname;
 } BinaryOp_Info;
 
 typedef struct _TernaryOp_Info {
@@ -159,6 +175,14 @@ typedef struct _TernaryOp_Info {
   // This is the actual computed value of the result, for checking
   // accuracy.
   UWord* dest_value;
+  // The address of the operation in the binary
+  Addr op_addr;
+  // The source line of the operation
+  UInt src_line;
+  // The source file of the operation
+  const HChar* src_filename;
+  // The function the operation resides in.
+  const HChar* fnname;
 } TernaryOp_Info;
 
 typedef struct _QuadnaryOp_Info {
@@ -184,7 +208,24 @@ typedef struct _QuadnaryOp_Info {
   // This is the actual computed value of the result, for checking
   // accuracy.
   UWord* dest_value;
+  // The address of the operation in the binary
+  Addr op_addr;
+  // The source line of the operation
+  UInt src_line;
+  // The source file of the operation
+  const HChar* src_filename;
+  // The function the operation resides in.
+  const HChar* fnname;
 } QuadnaryOp_Info;
+
+typedef struct _OpDebug_Info {
+  Addr op_addr;
+  UInt src_line;
+  const HChar* src_filename;
+  const HChar* fnname;
+} OpDebug_Info;
+
+#define DEBUGINFO(info) (OpDebug_Info*)&(info->op_addr)
 
 #ifdef VG_LITTLEENDIAN
 #define ENDIAN Iend_LE

@@ -159,7 +159,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo){
       for (i = 0; i < num_vals; ++i){
         mpfr_func(destLocation->values[i].value, argLocation->values[i].value, MPFR_RNDN);
         // Evaluate the computed value against the high precision shadow result.
-        evaluateOpError_helper(&(destLocation->values[i]), opInfo->dest_value, argType, i);
+        evaluateOpError_helper(&(destLocation->values[i]), opInfo->dest_value, argType, i, DEBUGINFO(opInfo));
       }
       // Copy across the rest of the values from the argument
       for (;i < capacity(argType); ++i){
@@ -464,7 +464,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
 
         // Now, we'll evaluate the shadow values against each
         // channel of the computed result.
-        evaluateOpError_helper(&(destLocation->values[i]), opInfo->dest_value, argType, i);
+        evaluateOpError_helper(&(destLocation->values[i]), opInfo->dest_value, argType, i, DEBUGINFO(opInfo));
       }
     }
     // Ops that have two floating point arguments
@@ -596,7 +596,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo){
                   arg2Location->values[i].value, MPFR_RNDN);
         // Now, we'll evaluate the shadow value against the result
         // value, for each of it's channels.
-        evaluateOpError_helper(&(destLocation->values[i]), opInfo->dest_value, argType, i);
+        evaluateOpError_helper(&(destLocation->values[i]), opInfo->dest_value, argType, i, DEBUGINFO(opInfo));
       }
       // Copy across the rest of the values from the first argument
       for (;i < capacity(argType); ++i){
@@ -816,7 +816,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo){
     mpfr_func(destLocation->values[i].value, arg2Location->values[i].value,
               arg3Location->values[i].value, roundmodeIRtoMPFR(*((IRRoundingMode*)opInfo->arg1_value)));
     // Now let's compare the computed value to the high precision result.
-    evaluateOpError_helper(&(destLocation->values[i]), opInfo->dest_value, type, i);
+    evaluateOpError_helper(&(destLocation->values[i]), opInfo->dest_value, type, i, DEBUGINFO(opInfo));
   }
 
   // Put the resulting location in the space for the dest temp.
@@ -890,7 +890,7 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo){
             roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg1_value)[0]));
 
   // Now, we'll evaluate the shadow value against the result value.
-  evaluateOpError_helper(&(destLocation->values[0]), opInfo->dest_value, argType, 0);
+  evaluateOpError_helper(&(destLocation->values[0]), opInfo->dest_value, argType, 0, DEBUGINFO(opInfo));
 
   // Put the resulting location in the space for the dest temp.
   setTemp(opInfo->dest_tmp, destLocation);

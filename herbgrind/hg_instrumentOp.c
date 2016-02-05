@@ -1,9 +1,10 @@
 #include "hg_instrument.h"
 #include "hg_macros.h"
+#include "pub_tool_debuginfo.h"
 
 // Add instrumenting expressions to sb for an operation, storing the
 // result in the temporary at offset.
-void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
+void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
   IRDirty* executeShadowOp;
   size_t arg_size, result_size;
 
@@ -134,6 +135,12 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         opInfo->op = expr->Iex.Unop.op;
         opInfo->arg_tmp = expr->Iex.Unop.arg->Iex.RdTmp.tmp;
         opInfo->dest_tmp = offset;
+
+        // Store the operations debugging information for printing the
+        // errors later.
+        opInfo->op_addr = opAddr;
+        VG_(get_filename_linenum)(opAddr, &(opInfo->src_filename), NULL, &(opInfo->src_line));
+        VG_(get_fnname)(opAddr, &(opInfo->fnname));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
@@ -302,6 +309,12 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
 
         opInfo->dest_tmp = offset;
 
+        // Store the operations debugging information for printing the
+        // errors later.
+        opInfo->op_addr = opAddr;
+        VG_(get_filename_linenum)(opAddr, &(opInfo->src_filename), NULL, &(opInfo->src_line));
+        VG_(get_fnname)(opAddr, &(opInfo->fnname));
+
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
         ALLOC(opInfo->arg1_value, "hg.arg_alloc", 1, arg_size);
@@ -438,6 +451,12 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         opInfo->arg3_tmp = expr->Iex.Triop.details->arg3->Iex.RdTmp.tmp;
         opInfo->dest_tmp = offset;
 
+        // Store the operations debugging information for printing the
+        // errors later.
+        opInfo->op_addr = opAddr;
+        VG_(get_filename_linenum)(opAddr, &(opInfo->src_filename), NULL, &(opInfo->src_line));
+        VG_(get_fnname)(opAddr, &(opInfo->fnname));
+
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
         ALLOC(opInfo->arg1_value, "hg.arg_alloc", 1, arg_size);
@@ -509,6 +528,12 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr){
         opInfo->arg3_tmp = expr->Iex.Qop.details->arg3->Iex.RdTmp.tmp;
         opInfo->arg4_tmp = expr->Iex.Qop.details->arg4->Iex.RdTmp.tmp;
         opInfo->dest_tmp = offset;
+
+        // Store the operations debugging information for printing the
+        // errors later.
+        opInfo->op_addr = opAddr;
+        VG_(get_filename_linenum)(opAddr, &(opInfo->src_filename), NULL, &(opInfo->src_line));
+        VG_(get_fnname)(opAddr, &(opInfo->fnname));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.

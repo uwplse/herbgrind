@@ -61,12 +61,18 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
 
   startBlock(sbOut);
 
+  // The address cooresponding to the statement we're currently instrumenting.
+  Addr cur_addr = 0x0;
   // Now, let's loop through these statements, and instrument them to
   // add our shadow values.
   for (int i = 0; i < bb->stmts_used; i++){
     IRStmt* st = bb->stmts[i];
+    // Use the IMarks to get a cooresponding address for each
+    // statement.
+    if (st->tag == Ist_IMark)
+      cur_addr = st->Ist.IMark.addr;
     // Take a look at hg_instrument.c to see what's going on here.
-    instrumentStatement(st, sbOut);
+    instrumentStatement(st, sbOut, cur_addr);
   }
 
   finalizeBlock(sbOut);

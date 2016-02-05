@@ -3,7 +3,7 @@
 #include "hg_evaluate.h"
 #include "hg_macros.h"
 
-void evaluateOpError(ShadowValue* shadowVal, double actualVal){
+void evaluateOpError(ShadowValue* shadowVal, double actualVal, OpDebug_Info* debuginfo){
   // We're going to do the log in mpfr since that way we don't have to
   // worry about pulling in the normal math library, which is
   // non-trivial in a valgrind tool. But, we can't get ulps from an
@@ -52,18 +52,18 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal){
 #endif
 }
 
-void evaluateOpError_helper(ShadowValue* shadowVal, UWord* valbytes, LocType bytestype, int el_index){
+void evaluateOpError_helper(ShadowValue* shadowVal, UWord* valbytes, LocType bytestype, int el_index, OpDebug_Info* debuginfo){
   switch(bytestype){
   case Lt_Float:
   case Lt_Floatx2:
   case Lt_Floatx4:
   case Lt_Floatx8:
-    evaluateOpError(shadowVal, ((float*)valbytes)[el_index]);
+    evaluateOpError(shadowVal, ((float*)valbytes)[el_index], debuginfo);
     break;
   case Lt_Double:
   case Lt_Doublex2:
   case Lt_Doublex4:
-    evaluateOpError(shadowVal, ((double*)valbytes)[el_index]);
+    evaluateOpError(shadowVal, ((double*)valbytes)[el_index], debuginfo);
     break;
   default:
     VG_(dmsg)("Hey, those are some big floats! We can't handle those floats!");

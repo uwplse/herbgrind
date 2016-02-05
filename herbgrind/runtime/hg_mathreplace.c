@@ -167,7 +167,7 @@ void performOp(OpType op, double* result, double* args){
   setMem((uintptr_t)result, res_shadow);
 
   // And finally, evaluate the error of the operation.
-  evaluateOpError(&(res_shadow->values[0]), *result);
+  evaluateOpError(&(res_shadow->values[0]), *result, NULL);
 }
 
 ShadowLocation* getShadowLocMem(Addr addr, double float_arg){
