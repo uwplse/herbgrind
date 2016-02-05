@@ -1,5 +1,6 @@
 #include "hg_types.h"
 #include "hg_macros.h"
+#include "pub_tool_debuginfo.h"
 
 ShadowLocation* mkShadowLocation(LocType type){
   ShadowLocation* location;
@@ -66,4 +67,13 @@ void copySV(ShadowValue* src, ShadowValue* dest){
 
 void cleanupSV(ShadowValue* sv){
   mpfr_clear(sv->value);
+}
+
+void getOpDebug_Info(Addr op_addr, OpDebug_Info* result){
+  result->op_addr = op_addr;
+  VG_(get_filename_linenum)(op_addr,
+                            &(result->src_filename),
+                            NULL,
+                            &(result->src_line));
+  VG_(get_fnname)(op_addr, &(result->fnname));
 }

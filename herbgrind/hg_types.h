@@ -110,6 +110,8 @@ typedef struct _OpDebug_Info {
   const HChar* fnname;
 } OpDebug_Info;
 
+void getOpDebug_Info(Addr op_addr, OpDebug_Info* result);
+
 typedef struct _UnaryOp_Info {
   UWord op;
   // This is the index of the temporary that holds these values. We'll
