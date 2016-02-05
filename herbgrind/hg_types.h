@@ -108,9 +108,11 @@ typedef struct _OpDebug_Info {
   const HChar* src_filename;
   // The function the operation resides in.
   const HChar* fnname;
+  // The plaintext name of the operation, like "subtraction"
+  const HChar* plain_opname;
 } OpDebug_Info;
 
-void getOpDebug_Info(Addr op_addr, OpDebug_Info* result);
+void getOpDebug_Info(Addr op_addr, const HChar* plain_opname, OpDebug_Info* result);
 
 typedef struct _UnaryOp_Info {
   UWord op;

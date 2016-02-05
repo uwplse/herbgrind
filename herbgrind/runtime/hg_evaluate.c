@@ -3,7 +3,8 @@
 #include "hg_evaluate.h"
 #include "hg_macros.h"
 
-void evaluateOpError(ShadowValue* shadowVal, double actualVal, OpDebug_Info* debuginfo){
+void evaluateOpError(ShadowValue* shadowVal, double actualVal,
+                     OpDebug_Info* debuginfo){
   // We're going to do the log in mpfr since that way we don't have to
   // worry about pulling in the normal math library, which is
   // non-trivial in a valgrind tool. But, we can't get ulps from an
@@ -47,6 +48,13 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal, OpDebug_Info* deb
   
 #if defined PRINTERRORS || defined PRINTERRORSLONG
   VG_(printf)("The bits error of that operation was: %f.\n", bitsError);
+  VG_(printf)("(Operation at %lX)\n", debuginfo->op_addr);
+  if (debuginfo->src_filename != NULL)
+    VG_(printf)("%s at %s:%u in %s\n",
+                debuginfo->plain_opname,
+                debuginfo->src_filename,
+                debuginfo->src_line,
+                debuginfo->fnname);
 #else
   (void)bitsError;
 #endif

@@ -137,7 +137,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Store the operations debugging information for printing the
         // errors later.
-        getOpDebug_Info(opAddr, &(opInfo->debuginfo));
+        getOpDebug_Info(opAddr, getPlainOpname(opInfo->op), &(opInfo->debuginfo));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
@@ -254,8 +254,6 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_RSqrtStep64Fx2:
       case Iop_Neg32Fx2:
       case Iop_Abs32Fx2:
-      case Iop_QAdd32S:
-      case Iop_QSub32S:
       case Iop_RecpExpF64:
       case Iop_RecpExpF32:
       case Iop_RoundF64toInt:
@@ -286,7 +284,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Store the operations debugging information for printing the
         // errors later.
-        getOpDebug_Info(opAddr, &(opInfo->debuginfo));
+        getOpDebug_Info(opAddr, getPlainOpname(opInfo->op), &(opInfo->debuginfo));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
@@ -426,7 +424,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Store the operations debugging information for printing the
         // errors later.
-        getOpDebug_Info(opAddr, &(opInfo->debuginfo));
+        getOpDebug_Info(opAddr, getPlainOpname(opInfo->op), &(opInfo->debuginfo));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
@@ -502,7 +500,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Store the operations debugging information for printing the
         // errors later.
-        getOpDebug_Info(opAddr, &(opInfo->debuginfo));
+        getOpDebug_Info(opAddr, getPlainOpname(opInfo->op), &(opInfo->debuginfo));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
@@ -547,4 +545,138 @@ IRTemp getArgTmp(IRExpr* arg, IRSB* sbOut){
   IRTemp argTemp = newIRTemp(sbOut->tyenv, typeOfIRExpr(sbOut->tyenv, arg));
   addStmtToIRSB(sbOut, IRStmt_WrTmp(argTemp, arg));
   return argTemp;
+}
+
+const HChar* getPlainOpname(IROp op){
+  switch (op){
+  case Iop_RecipEst32Fx4:
+  case Iop_RecipEst64Fx2:
+  case Iop_RecipEst32F0x4:
+  case Iop_RecipEst32Fx2:
+    return "reciprical estimate";
+  case Iop_RecipStep32Fx4:
+  case Iop_RecipStep32Fx2:
+  case Iop_RecipStep64Fx2:
+    return "reciprical step";
+  case Iop_RSqrtEst32Fx4:
+  case Iop_RSqrtEst64Fx2:
+  case Iop_RSqrtEst32F0x4:
+  case Iop_RSqrtEst32Fx2:
+  case Iop_RSqrtEst5GoodF64:
+    return "reciprical square root estimate";
+  case Iop_RSqrtStep32Fx4:
+  case Iop_RSqrtStep32Fx2:
+  case Iop_RSqrtStep64Fx2:
+    return "reciprical square root step";
+  case Iop_Abs32Fx4:
+  case Iop_Abs64Fx2:
+  case Iop_AbsF32:
+  case Iop_AbsF64:
+  case Iop_Abs32Fx2:
+    return "absolute value";
+  case Iop_Neg32Fx4:
+  case Iop_Neg64Fx2:
+  case Iop_NegF32:
+  case Iop_NegF64:
+  case Iop_Neg32Fx2:
+    return "negation";
+  case Iop_Sqrt32F0x4:
+  case Iop_Sqrt64F0x2:
+  case Iop_Sqrt64Fx2:
+  case Iop_SqrtF64:
+  case Iop_SqrtF32:
+    return "square root";
+  case Iop_Add32Fx2:
+  case Iop_Add32F0x4:
+  case Iop_Add64F0x2:
+  case Iop_Add32Fx8:
+  case Iop_Add64Fx4:
+  case Iop_Add32Fx4:
+  case Iop_Add64Fx2:
+  case Iop_AddF128:
+  case Iop_AddF64:
+  case Iop_AddF32:
+  case Iop_AddF64r32:
+    return "addition";
+  case Iop_Sub32Fx2:
+  case Iop_Sub32F0x4:
+  case Iop_Sub64F0x2:
+  case Iop_Sub32Fx8:
+  case Iop_Sub64Fx4:
+  case Iop_Sub32Fx4:
+  case Iop_Sub64Fx2:
+  case Iop_SubF128:
+  case Iop_SubF64:
+  case Iop_SubF32:
+  case Iop_SubF64r32:
+    return "subtraction";
+  case Iop_Mul32F0x4:
+  case Iop_Mul64F0x2:
+  case Iop_Mul32Fx8:
+  case Iop_Mul64Fx4:
+  case Iop_Mul32Fx4:
+  case Iop_Mul64Fx2:
+  case Iop_MulF128:
+  case Iop_MulF64:
+  case Iop_MulF32:
+  case Iop_MulF64r32:
+    return "multiplication";
+  case Iop_Div32F0x4:
+  case Iop_Div64F0x2:
+  case Iop_Div32Fx8:
+  case Iop_Div64Fx4:
+  case Iop_Div32Fx4:
+  case Iop_Div64Fx2:
+  case Iop_DivF128:
+  case Iop_DivF64:
+  case Iop_DivF32:
+  case Iop_DivF64r32:
+    return "division";
+  case Iop_SinF64:
+    return "sine";
+  case Iop_CosF64:
+    return "cosine";
+  case Iop_TanF64:
+    return "tangent";
+  case Iop_AtanF64:
+    return "arctangent";
+  case Iop_MAddF32:
+  case Iop_MAddF64:
+  case Iop_MAddF64r32:
+    return "fused multiply-add";
+  case Iop_MSubF32:
+  case Iop_MSubF64:
+  case Iop_MSubF64r32:
+    return "fused multiply-subtract";
+  case Iop_ZeroHI96ofV128:
+  case Iop_ZeroHI64ofV128:
+  case Iop_V128to32:
+  case Iop_V128to64:
+  case Iop_V128HIto64:
+  case Iop_RoundF64toF32:
+  case Iop_TruncF64asF32:
+  case Iop_RoundF64toF64_NEAREST:
+  case Iop_RoundF64toF64_NegINF:
+  case Iop_RoundF64toF64_PosINF:
+  case Iop_RoundF64toF64_ZERO:
+  case Iop_F128HItoF64:
+  case Iop_F128LOtoF64:
+  case Iop_F32toF64:
+  case Iop_RecpExpF64:
+  case Iop_RecpExpF32:
+  case Iop_RoundF64toInt:
+  case Iop_RoundF32toInt:
+  case Iop_64HLtoV128:
+  case Iop_F64HLtoF128:
+  case Iop_F64toF32:
+  case Iop_SetV128lo32:
+  case Iop_SetV128lo64:
+  case Iop_2xm1F64:
+  case Iop_Yl2xF64:
+  case Iop_Yl2xp1F64:
+  case Iop_ScaleF64:
+  default:
+    return "";
+
+  }
 }

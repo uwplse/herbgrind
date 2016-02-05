@@ -69,8 +69,9 @@ void cleanupSV(ShadowValue* sv){
   mpfr_clear(sv->value);
 }
 
-void getOpDebug_Info(Addr op_addr, OpDebug_Info* result){
+void getOpDebug_Info(Addr op_addr, const HChar* plain_opname, OpDebug_Info* result){
   result->op_addr = op_addr;
+  result->plain_opname = plain_opname;
   VG_(get_filename_linenum)(op_addr,
                             &(result->src_filename),
                             NULL,

@@ -37,6 +37,10 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr);
 // Add instrumenting expressions to sb for an operation, storing the
 // result in the temporary at offset.
 void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr);
+
+// Get the plain name of the op, like "subtraction"
+const HChar* getPlainOpname(IROp op);
+
 // Get a temporary number where the given argument expression is
 // stored.
 IRTemp getArgTmp(IRExpr* arg, IRSB* sbOut);

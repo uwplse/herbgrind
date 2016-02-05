@@ -44,6 +44,7 @@ void performOp(OpType op, double* result, double* args){
   // would result in an infinite loop.
   mpfr_t *args_m, res;
   ShadowLocation **arg_shadows, *res_shadow;
+  const HChar* plain_opname;
 
   // Initialize our 64-bit mpfr arg and shadow, and get the result
   // shadow set up.
@@ -80,48 +81,63 @@ void performOp(OpType op, double* result, double* args){
       int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_rnd_t);
       switch(op){
       case OP_SQRT:
+        plain_opname = "square root";
         mpfr_func = mpfr_sqrt;
         break;
       case OP_EXP:
+        plain_opname = "exponentiate";
         mpfr_func = mpfr_exp;
         break;
       case OP_LOG:
+        plain_opname = "log";
         mpfr_func = mpfr_log;
         break;
       case OP_COS:
+        plain_opname = "cosine";
         mpfr_func = mpfr_cos;
         break;
       case OP_SIN:
+        plain_opname = "sine";
         mpfr_func = mpfr_sin;
         break;
       case OP_TAN:
+        plain_opname = "tangent";
         mpfr_func = mpfr_tan;
         break;
       case OP_ASIN:
+        plain_opname = "arcsine";
         mpfr_func = mpfr_asin;
         break;
       case OP_ACOS:
+        plain_opname = "arccosine";
         mpfr_func = mpfr_acos;
         break;
       case OP_ATAN:
+        plain_opname = "arctangent";
         mpfr_func = mpfr_atan;
         break;
       case OP_SINH:
+        plain_opname = "hyperbolic sine";
         mpfr_func = mpfr_sinh;
         break;
       case OP_COSH:
+        plain_opname = "hyperbolic cosine";
         mpfr_func = mpfr_cosh;
         break;
       case OP_TANH:
+        plain_opname = "hyperbolic tangent";
         mpfr_func = mpfr_tanh;
         break;
       case OP_ABS:
+        plain_opname = "absolute";
         mpfr_func = mpfr_abs;
         break;
       case OP_EXPM1:
+        plain_opname = "exponentiate minus one";
         mpfr_func = mpfr_expm1;
         break;
       case OP_LOG1P:
+        plain_opname = "plus 1 log";
         mpfr_func = mpfr_log1p;
         break;
       default:
@@ -140,15 +156,19 @@ void performOp(OpType op, double* result, double* args){
       int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
       switch(op){
       case OP_MOD:
+        plain_opname = "modulus";
         mpfr_func = mpfr_fmod;
         break;
       case OP_POW:
+        plain_opname = "power";
         mpfr_func = mpfr_pow;
         break;
       case OP_ATAN2:
+        plain_opname = "arctangent (two arguments)";
         mpfr_func = mpfr_atan2;
         break;
       case OP_HYPOT:
+        plain_opname = "hypotenuse";
         mpfr_func = mpfr_hypot;
         break;
       default:
@@ -169,7 +189,7 @@ void performOp(OpType op, double* result, double* args){
   // Now, let's get the debug information on the call to this wrapped
   // library call, so we can report error to the user.
   OpDebug_Info debuginfo;
-  getOpDebug_Info(last_abi_addr, &debuginfo);
+  getOpDebug_Info(last_abi_addr, plain_opname, &debuginfo);
   // And finally, evaluate the error of the operation.
   evaluateOpError(&(res_shadow->values[0]), *result, &debuginfo);
 }
