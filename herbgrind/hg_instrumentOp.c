@@ -133,7 +133,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Populate the values we know at instrument time now.
         opInfo->op = expr->Iex.Unop.op;
-        opInfo->arg_tmp = expr->Iex.Unop.arg->Iex.RdTmp.tmp;
+        opInfo->arg_tmp = getArgTmp(expr->Iex.Unop.arg, sb);
         opInfo->dest_tmp = offset;
 
         // Store the operations debugging information for printing the
@@ -283,30 +283,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Populate the values we know at instrument time now.
         opInfo->op = expr->Iex.Binop.op;
-        if (expr->Iex.Binop.arg1->tag == Iex_Const){
-          // If we have a const instead of a temporary going into this
-          // function, store it in a temp first.
-          IRTemp constTemp = newIRTemp(sb->tyenv, typeOfIRConst(expr->Iex.Binop.arg1->Iex.Const.con));
-          IRStmt* storeConst = IRStmt_WrTmp(constTemp, expr->Iex.Binop.arg1);
-          addStmtToIRSB(sb, storeConst);
-          opInfo->arg1_tmp = constTemp;
-        } else {
-          // Otherwise, just pass the temp argument
-          opInfo->arg1_tmp = expr->Iex.Binop.arg1->Iex.RdTmp.tmp;
-        }
-
-        if (expr->Iex.Binop.arg2->tag == Iex_Const){
-          // If we have a const instead of a temporary going into this
-          // function, store it in a temp first.
-          IRTemp constTemp = newIRTemp(sb->tyenv, typeOfIRConst(expr->Iex.Binop.arg2->Iex.Const.con));
-          IRStmt* storeConst = IRStmt_WrTmp(constTemp, expr->Iex.Binop.arg2);
-          addStmtToIRSB(sb, storeConst);
-          opInfo->arg2_tmp = constTemp;
-        } else {
-          // Otherwise, just pass the temp argument
-          opInfo->arg2_tmp = expr->Iex.Binop.arg2->Iex.RdTmp.tmp;
-        }
-
+        opInfo->arg1_tmp = getArgTmp(expr->Iex.Binop.arg1, sb);
+        opInfo->arg2_tmp = getArgTmp(expr->Iex.Binop.arg2, sb);
         opInfo->dest_tmp = offset;
 
         // Store the operations debugging information for printing the
@@ -446,9 +424,9 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Populate the values we know at instrument time now.
         opInfo->op = expr->Iex.Triop.details->op;
-        opInfo->arg1_tmp = expr->Iex.Triop.details->arg1->Iex.RdTmp.tmp;
-        opInfo->arg2_tmp = expr->Iex.Triop.details->arg2->Iex.RdTmp.tmp;
-        opInfo->arg3_tmp = expr->Iex.Triop.details->arg3->Iex.RdTmp.tmp;
+        opInfo->arg1_tmp = getArgTmp(expr->Iex.Triop.details->arg1, sb);
+        opInfo->arg2_tmp = getArgTmp(expr->Iex.Triop.details->arg2, sb);
+        opInfo->arg3_tmp = getArgTmp(expr->Iex.Triop.details->arg3, sb);
         opInfo->dest_tmp = offset;
 
         // Store the operations debugging information for printing the
@@ -523,10 +501,10 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Populate the values we know at instrument time now.
         opInfo->op = expr->Iex.Qop.details->op;
-        opInfo->arg1_tmp = expr->Iex.Qop.details->arg1->Iex.RdTmp.tmp;
-        opInfo->arg2_tmp = expr->Iex.Qop.details->arg2->Iex.RdTmp.tmp;
-        opInfo->arg3_tmp = expr->Iex.Qop.details->arg3->Iex.RdTmp.tmp;
-        opInfo->arg4_tmp = expr->Iex.Qop.details->arg4->Iex.RdTmp.tmp;
+        opInfo->arg1_tmp = getArgTmp(expr->Iex.Qop.details->arg1, sb);
+        opInfo->arg2_tmp = getArgTmp(expr->Iex.Qop.details->arg2, sb);
+        opInfo->arg3_tmp = getArgTmp(expr->Iex.Qop.details->arg3, sb);
+        opInfo->arg4_tmp = getArgTmp(expr->Iex.Qop.details->arg4, sb);
         opInfo->dest_tmp = offset;
 
         // Store the operations debugging information for printing the
@@ -567,4 +545,15 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
   default:
     VG_(dmsg)("BAD THINGS!!!!\n");
   }
+}
+
+// WARNING: This potentially mutates sbOut, don't reorder. Or do, it
+// might be fine.
+IRTemp getArgTmp(IRExpr* arg, IRSB* sbOut){
+  // If the arg is already a temp, just return the temp number
+  if (arg->tag == Iex_RdTmp) return arg->Iex.RdTmp.tmp;
+  // Otherwise, put it in a temp and then return the temp number of that.
+  IRTemp argTemp = newIRTemp(sbOut->tyenv, typeOfIRExpr(sbOut->tyenv, arg));
+  addStmtToIRSB(sbOut, IRStmt_WrTmp(argTemp, arg));
+  return argTemp;
 }

@@ -37,6 +37,9 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr);
 // Add instrumenting expressions to sb for an operation, storing the
 // result in the temporary at offset.
 void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr);
+// Get a temporary number where the given argument expression is
+// stored.
+IRTemp getArgTmp(IRExpr* arg, IRSB* sbOut);
 
 // Create an expression which calculates (base + ((idx + bias) % len)).
 IRExpr* mkArrayLookupExpr(Int base, IRExpr* idx, Int bias, Int len, IRSB* sbOut);
