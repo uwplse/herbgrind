@@ -78,3 +78,11 @@ void getOpDebug_Info(Addr op_addr, const HChar* plain_opname, OpDebug_Info* resu
                             &(result->src_line));
   VG_(get_fnname)(op_addr, &(result->fnname));
 }
+Op_Info* mkOp_Info(Arity arity, IROp op, Addr opAddr, const HChar* name){
+  Op_Info* result;
+  ALLOC(result, "hg.op_info.1", 1, sizeof(Op_Info));
+  result->tag = arity;
+  result->op = op;
+  getOpDebug_Info(opAddr, name, &(result->debuginfo));
+  return result;
+}

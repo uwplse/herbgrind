@@ -8,10 +8,10 @@
 
 // The functions that we'll insert into the program to execute shadow
 // operations alongside the normal operations.
-VG_REGPARM(1) void executeUnaryShadowOp(UnaryOp_Info* opInfo);
-VG_REGPARM(1) void executeBinaryShadowOp(BinaryOp_Info* opInfo);
-VG_REGPARM(1) void executeTernaryShadowOp(TernaryOp_Info* opInfo);
-VG_REGPARM(1) void executeQuadnaryShadowOp(QuadnaryOp_Info* opInfo);
+VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo);
+VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo);
+VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo);
+VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo);
 
 // Get a shadow value for the given temporary. If the temporary does
 // not have a shadow value, create one with the given type using the

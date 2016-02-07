@@ -20,7 +20,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
   switch (expr->tag){
   case Iex_Unop:
     {
-      UnaryOp_Info* opInfo;
+      Op_Info* opInfo;
       // Determine the argument sizes of each operation we might
       // encounter so we can allocate the right amount of space in the
       // argument structure to the runtime shadow execution code.
@@ -127,26 +127,22 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_NegF64:
       case Iop_AbsF64:
       case Iop_Sqrt64F0x2:
-        // Allocate the memory for the argument structure
-        ALLOC(opInfo, "hg.op_alloc.1", 1, sizeof(UnaryOp_Info));
+        // Allocate and partially setup the argument structure
+        opInfo = mkOp_Info(Unary, expr->Iex.Unop.op,
+                           opAddr, getPlainOpname(expr->Iex.Unop.op));
 
-        // Populate the values we know at instrument time now.
-        opInfo->op = expr->Iex.Unop.op;
-        opInfo->arg_tmp = getArgTmp(expr->Iex.Unop.arg, sb);
+        // Populate the argument/result values we know at instrument time now.
+        opInfo->args.uargs.arg_tmp = getArgTmp(expr->Iex.Unop.arg, sb);
         opInfo->dest_tmp = offset;
-
-        // Store the operations debugging information for printing the
-        // errors later.
-        getOpDebug_Info(opAddr, getPlainOpname(opInfo->op), &(opInfo->debuginfo));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
-        ALLOC(opInfo->arg_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.uargs.arg_value, "hg.arg_alloc", 1, arg_size);
         ALLOC(opInfo->dest_value, "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
-        addStore(sb, expr->Iex.Unop.arg, opInfo->arg_value);
+        addStore(sb, expr->Iex.Unop.arg, opInfo->args.uargs.arg_value);
         addStore(sb, IRExpr_RdTmp(offset), opInfo->dest_value);
 
         // Finally, add the statement to call the shadow op procedure.
@@ -164,7 +160,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
     break;
   case Iex_Binop:
     {
-      BinaryOp_Info* opInfo;
+      Op_Info* opInfo;
       // Determine the argument sizes of each operation we might
       // encounter so we can allocate the right amount of space in the
       // argument structure to the runtime shadow execution code.
@@ -273,29 +269,25 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_Div64F0x2:
       case Iop_SetV128lo32:
       case Iop_SetV128lo64:
-        // Allocate the memory for the argument structure
-        ALLOC(opInfo, "hg.op_alloc.1", 1, sizeof(BinaryOp_Info));
+        // Allocate and partially setup the argument structure
+        opInfo = mkOp_Info(Binary, expr->Iex.Binop.op,
+                           opAddr, getPlainOpname(expr->Iex.Binop.op));
 
-        // Populate the values we know at instrument time now.
-        opInfo->op = expr->Iex.Binop.op;
-        opInfo->arg1_tmp = getArgTmp(expr->Iex.Binop.arg1, sb);
-        opInfo->arg2_tmp = getArgTmp(expr->Iex.Binop.arg2, sb);
+        // Populate the argument/result values we know at instrument time now.
+        opInfo->args.bargs.arg1_tmp = getArgTmp(expr->Iex.Binop.arg1, sb);
+        opInfo->args.bargs.arg2_tmp = getArgTmp(expr->Iex.Binop.arg2, sb);
         opInfo->dest_tmp = offset;
-
-        // Store the operations debugging information for printing the
-        // errors later.
-        getOpDebug_Info(opAddr, getPlainOpname(opInfo->op), &(opInfo->debuginfo));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
-        ALLOC(opInfo->arg1_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->arg2_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.bargs.arg1_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.bargs.arg2_value, "hg.arg_alloc", 1, arg_size);
         ALLOC(opInfo->dest_value, "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
-        addStore(sb, expr->Iex.Binop.arg1, opInfo->arg1_value);
-        addStore(sb, expr->Iex.Binop.arg2, opInfo->arg2_value);
+        addStore(sb, expr->Iex.Binop.arg1, opInfo->args.bargs.arg1_value);
+        addStore(sb, expr->Iex.Binop.arg2, opInfo->args.bargs.arg2_value);
         addStore(sb, IRExpr_RdTmp(offset), opInfo->dest_value);
 
         // Finally, add the statement to call the shadow op procedure.
@@ -313,7 +305,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
     break;
   case Iex_Triop:
     {
-      TernaryOp_Info* opInfo;
+      Op_Info* opInfo;
 
       // Determine the argument sizes of each operation we might
       // encounter so we can allocate the right amount of space in the
@@ -412,32 +404,28 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_SubF64r32:
       case Iop_MulF64r32:
       case Iop_DivF64r32:
-        // Allocate the memory for the argument structure
-        ALLOC(opInfo, "hg.op_alloc.1", 1, sizeof(TernaryOp_Info));
+        // Allocate and partially setup the argument structure
+        opInfo = mkOp_Info(Ternary, expr->Iex.Triop.details->op, opAddr,
+                           getPlainOpname(expr->Iex.Triop.details->op));
 
         // Populate the values we know at instrument time now.
-        opInfo->op = expr->Iex.Triop.details->op;
-        opInfo->arg1_tmp = getArgTmp(expr->Iex.Triop.details->arg1, sb);
-        opInfo->arg2_tmp = getArgTmp(expr->Iex.Triop.details->arg2, sb);
-        opInfo->arg3_tmp = getArgTmp(expr->Iex.Triop.details->arg3, sb);
+        opInfo->args.targs.arg1_tmp = getArgTmp(expr->Iex.Triop.details->arg1, sb);
+        opInfo->args.targs.arg2_tmp = getArgTmp(expr->Iex.Triop.details->arg2, sb);
+        opInfo->args.targs.arg3_tmp = getArgTmp(expr->Iex.Triop.details->arg3, sb);
         opInfo->dest_tmp = offset;
-
-        // Store the operations debugging information for printing the
-        // errors later.
-        getOpDebug_Info(opAddr, getPlainOpname(opInfo->op), &(opInfo->debuginfo));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
-        ALLOC(opInfo->arg1_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->arg2_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->arg3_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.targs.arg1_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.targs.arg2_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.targs.arg3_value, "hg.arg_alloc", 1, arg_size);
         ALLOC(opInfo->dest_value, "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
-        addStore(sb, expr->Iex.Triop.details->arg1, opInfo->arg1_value);
-        addStore(sb, expr->Iex.Triop.details->arg2, opInfo->arg2_value);
-        addStore(sb, expr->Iex.Triop.details->arg3, opInfo->arg3_value);
+        addStore(sb, expr->Iex.Triop.details->arg1, opInfo->args.targs.arg1_value);
+        addStore(sb, expr->Iex.Triop.details->arg2, opInfo->args.targs.arg2_value);
+        addStore(sb, expr->Iex.Triop.details->arg3, opInfo->args.targs.arg3_value);
         addStore(sb, IRExpr_RdTmp(offset), opInfo->dest_value);
 
         // Finally, add the statement to call the shadow op procedure.
@@ -455,7 +443,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
     break;
   case Iex_Qop:
     {
-      QuadnaryOp_Info* opInfo;
+      Op_Info* opInfo;
 
       // Determine the argument sizes of each operation we might
       // encounter so we can allocate the right amount of space in the
@@ -487,35 +475,32 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_MSubF64:
       case Iop_MAddF64r32:
       case Iop_MSubF64r32:
-        // Allocate the memory for the argument structure
-        ALLOC(opInfo, "hg.op_alloc.1", 1, sizeof(QuadnaryOp_Info));
+        // Allocate and partially setup the argument structure
+        opInfo = mkOp_Info(Quadnary, expr->Iex.Qop.details->op, opAddr,
+                           getPlainOpname(expr->Iex.Qop.details->op));
 
         // Populate the values we know at instrument time now.
         opInfo->op = expr->Iex.Qop.details->op;
-        opInfo->arg1_tmp = getArgTmp(expr->Iex.Qop.details->arg1, sb);
-        opInfo->arg2_tmp = getArgTmp(expr->Iex.Qop.details->arg2, sb);
-        opInfo->arg3_tmp = getArgTmp(expr->Iex.Qop.details->arg3, sb);
-        opInfo->arg4_tmp = getArgTmp(expr->Iex.Qop.details->arg4, sb);
+        opInfo->args.qargs.arg1_tmp = getArgTmp(expr->Iex.Qop.details->arg1, sb);
+        opInfo->args.qargs.arg2_tmp = getArgTmp(expr->Iex.Qop.details->arg2, sb);
+        opInfo->args.qargs.arg3_tmp = getArgTmp(expr->Iex.Qop.details->arg3, sb);
+        opInfo->args.qargs.arg4_tmp = getArgTmp(expr->Iex.Qop.details->arg4, sb);
         opInfo->dest_tmp = offset;
-
-        // Store the operations debugging information for printing the
-        // errors later.
-        getOpDebug_Info(opAddr, getPlainOpname(opInfo->op), &(opInfo->debuginfo));
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
-        ALLOC(opInfo->arg1_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->arg2_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->arg3_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->arg4_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.qargs.arg1_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.qargs.arg2_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.qargs.arg3_value, "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.qargs.arg4_value, "hg.arg_alloc", 1, arg_size);
         ALLOC(opInfo->dest_value, "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
-        addStore(sb, expr->Iex.Qop.details->arg1, opInfo->arg1_value);
-        addStore(sb, expr->Iex.Qop.details->arg2, opInfo->arg2_value);
-        addStore(sb, expr->Iex.Qop.details->arg3, opInfo->arg3_value);
-        addStore(sb, expr->Iex.Qop.details->arg3, opInfo->arg4_value);
+        addStore(sb, expr->Iex.Qop.details->arg1, opInfo->args.qargs.arg1_value);
+        addStore(sb, expr->Iex.Qop.details->arg2, opInfo->args.qargs.arg2_value);
+        addStore(sb, expr->Iex.Qop.details->arg3, opInfo->args.qargs.arg3_value);
+        addStore(sb, expr->Iex.Qop.details->arg3, opInfo->args.qargs.arg4_value);
         addStore(sb, IRExpr_RdTmp(offset), opInfo->dest_value);
 
         // Finally, add the statement to call the shadow op procedure.
