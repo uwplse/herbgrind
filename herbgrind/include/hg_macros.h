@@ -10,6 +10,8 @@
 /* #define PRINTMALLOCS */
 /* #define CHECKMALLOC 0x0000000802d8c455 */
 
+#define LONGPRINT_LEN 15
+
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_libcprint.h"
 
