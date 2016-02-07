@@ -163,7 +163,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
         // Evaluate the computed value against the high precision shadow result.
         evaluateOpError_helper(&(destLocation->values[i]),
                                opInfo->dest_value, argType, i,
-                               &(opInfo->debuginfo));
+                               opInfo);
       }
       // Copy across the rest of the values from the argument
       for (;i < capacity(argType); ++i){
@@ -483,7 +483,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         // channel of the computed result.
         evaluateOpError_helper(&(destLocation->values[i]),
                                opInfo->dest_value, argType, i,
-                               &(opInfo->debuginfo));
+                               opInfo);
       }
     }
     // Ops that have two floating point arguments
@@ -621,7 +621,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         // value, for each of it's channels.
         evaluateOpError_helper(&(destLocation->values[i]),
                                opInfo->dest_value, argType, i,
-                               &(opInfo->debuginfo));
+                               opInfo);
       }
       // Copy across the rest of the values from the first argument
       for (;i < capacity(argType); ++i){
@@ -853,7 +853,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
     // Now let's compare the computed value to the high precision result.
     evaluateOpError_helper(&(destLocation->values[i]),
                            opInfo->dest_value, type, i,
-                           &(opInfo->debuginfo));
+                           opInfo);
   }
 
   // Put the resulting location in the space for the dest temp.
@@ -935,7 +935,7 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
   // Now, we'll evaluate the shadow value against the result value.
   evaluateOpError_helper(&(destLocation->values[0]),
                          opInfo->dest_value, argType, 0,
-                         &(opInfo->debuginfo));
+                         opInfo);
 
   // Put the resulting location in the space for the dest temp.
   setTemp(opInfo->dest_tmp, destLocation);

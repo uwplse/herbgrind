@@ -3,12 +3,30 @@
 #include "pub_tool_basics.h"
 #include "pub_tool_libcprint.h"
 #include "pub_tool_tooliface.h"
+#include "pub_tool_mallocfree.h"
 
 #include "mpfr.h"
 
 #include "hg_mathreplace.h"
 #include "hg_evaluate.h"
 #include "hg_runtime.h"
+#include "../types/hg_opinfo.h"
+#include "../include/hg_macros.h"
+
+VgHashTable* callToOpInfoMap = NULL;
+
+typedef struct _OpInfo_Entry {
+  // This member is here to make this structure compatible with the
+  // hash table implementation in pub_tool_hashtable. None of our code
+  // will actually use it.
+  struct _OpInfo_Entry* next;
+  // This part is also here for the hash table structure, but we'll
+  // actually be messing with it as we'll set it to the address of the
+  // wrapped call. This acts as the key in the hash table.
+  UWord call_addr;
+  // Finally, a pointer to the actual op info we're storing.
+  Op_Info* info;
+} OpInfo_Entry;
 
 void performOp(OpType op, double* result, double* args){
   size_t nargs;
@@ -48,7 +66,8 @@ void performOp(OpType op, double* result, double* args){
 
   // Initialize our 64-bit mpfr arg and shadow, and get the result
   // shadow set up.
-  args_m = VG_(malloc)("wrapped-args", nargs * sizeof(double));
+  args_m = VG_(malloc)("wrapped-args", nargs * sizeof(mpfr_t));
+  /* mpfr_t* args_m1 = VG_(malloc)("wrapped-args", nargs * sizeof(double)); */
   arg_shadows = VG_(malloc)("wrapped-shadow", nargs * sizeof(ShadowLocation*));
   for (size_t i = 0; i < nargs; ++i){
     mpfr_init2(args_m[i], 64);
@@ -186,12 +205,22 @@ void performOp(OpType op, double* result, double* args){
   *result = mpfr_get_d(res, MPFR_RNDN);
   setMem((uintptr_t)result, res_shadow);
 
-  // Now, let's get the debug information on the call to this wrapped
-  // library call, so we can report error to the user.
-  OpDebug_Info debuginfo;
-  getOpDebug_Info(last_abi_addr, plain_opname, &debuginfo);
+  // Either look up an existing op info entry for this call site, or
+  // create one if one doesn't already exist.
+  OpInfo_Entry* entry = VG_(HT_lookup)(callToOpInfoMap, last_abi_addr);
+  if (entry == NULL){
+    Op_Info* callInfo = mkOp_Info(nargs, 0x0, last_abi_addr, plain_opname);
+    ALLOC(entry, "hg.opinfo_entry.1", 1, sizeof(OpInfo_Entry));
+    entry->call_addr = last_abi_addr;
+    entry->info = callInfo;
+    VG_(HT_add_node)(callToOpInfoMap, entry);
+  }
   // And finally, evaluate the error of the operation.
-  evaluateOpError(&(res_shadow->values[0]), *result, &debuginfo);
+  evaluateOpError(&(res_shadow->values[0]), *result, entry->info);
+
+  // And free up the arrays we malloc for variable number of args.
+  VG_(free)(args_m);
+  VG_(free)(arg_shadows);
 }
 
 ShadowLocation* getShadowLocMem(Addr addr, double float_arg){

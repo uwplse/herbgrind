@@ -4,7 +4,7 @@
 #include "../include/hg_macros.h"
 
 void evaluateOpError(ShadowValue* shadowVal, double actualVal,
-                     OpDebug_Info* debuginfo){
+                     Op_Info* opinfo){
   // We're going to do the log in mpfr since that way we don't have to
   // worry about pulling in the normal math library, which is
   // non-trivial in a valgrind tool. But, we can't get ulps from an
@@ -48,30 +48,30 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   
 #if defined PRINTERRORS || defined PRINTERRORSLONG
   VG_(printf)("The bits error of that operation was: %f.\n", bitsError);
-  VG_(printf)("(Operation at %lX)\n", debuginfo->op_addr);
-  if (debuginfo->src_filename != NULL)
+  VG_(printf)("(Operation at %lX)\n", opinfo->debuginfo.op_addr);
+  if (opinfo->debuginfo.src_filename != NULL)
     VG_(printf)("%s at %s:%u in %s\n",
-                debuginfo->plain_opname,
-                debuginfo->src_filename,
-                debuginfo->src_line,
-                debuginfo->fnname);
+                opinfo->debuginfo.plain_opname,
+                opinfo->debuginfo.src_filename,
+                opinfo->debuginfo.src_line,
+                opinfo->debuginfo.fnname);
 #else
   (void)bitsError;
 #endif
 }
 
-void evaluateOpError_helper(ShadowValue* shadowVal, UWord* valbytes, LocType bytestype, int el_index, OpDebug_Info* debuginfo){
+void evaluateOpError_helper(ShadowValue* shadowVal, UWord* valbytes, LocType bytestype, int el_index, Op_Info* opinfo){
   switch(bytestype){
   case Lt_Float:
   case Lt_Floatx2:
   case Lt_Floatx4:
   case Lt_Floatx8:
-    evaluateOpError(shadowVal, ((float*)valbytes)[el_index], debuginfo);
+    evaluateOpError(shadowVal, ((float*)valbytes)[el_index], opinfo);
     break;
   case Lt_Double:
   case Lt_Doublex2:
   case Lt_Doublex4:
-    evaluateOpError(shadowVal, ((double*)valbytes)[el_index], debuginfo);
+    evaluateOpError(shadowVal, ((double*)valbytes)[el_index], opinfo);
     break;
   default:
     VG_(dmsg)("Hey, those are some big floats! We can't handle those floats!");

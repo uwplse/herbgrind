@@ -1,5 +1,7 @@
 #include "hg_runtime.h"
 
+#include "hg_mathreplace.h"
+
 // Pull in this header file so that we can set the strlen, strcpy,
 // memmove, memcmp, and memset functions of mpfr to their valgrind
 // library equivalents.
@@ -30,7 +32,10 @@ void* mpfr_memset(void* dest, int val, size_t size){ return VG_(memset)(dest, va
 
 void init_runtime(void){
   mpfr_set_default_prec(PRECISION);
+  // Set up the shadow memory, thread state, and temporaries.
   initStorage();
+  // Set up the wrapping function table
+  callToOpInfoMap = VG_(HT_construct)("callToOpInfoMap");
 }
 void cleanup_runtime(void){
   // Clean up the mpfr cache
