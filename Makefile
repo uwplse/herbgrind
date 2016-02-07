@@ -25,7 +25,7 @@ herbgrind/types/hg_opinfo.h herbgrind/runtime/hg_runtime.h		\
 herbgrind/runtime/hg_evaluate.h herbgrind/runtime/hg_hiprec_ops.h	\
 herbgrind/runtime/hg_shadowop.h						\
 herbgrind/runtime/hg_storage_runtime.h					\
-herbgrind/runtime/hg_mathreplace.h
+herbgrind/runtime/hg_mathreplace.h herbgrind/runtime/hg_op_tracker.h
 
 SOURCES=herbgrind/hg_main.c herbgrind/hg_instrument.c			\
 herbgrind/hg_instrumentOp.c herbgrind/hg_mathwrap.c			\
@@ -33,7 +33,7 @@ herbgrind/types/hg_shadowvals.c herbgrind/types/hg_opinfo.h		\
 herbgrind/runtime/hg_runtime.c herbgrind/runtime/hg_evaluate.c		\
 herbgrind/runtime/hg_hiprec_ops.c herbgrind/runtime/hg_shadowop.c	\
 herbgrind/runtime/hg_storage_runtime.c					\
-herbgrind/runtime/hg_mathreplace.c
+herbgrind/runtime/hg_mathreplace.c herbgrind/runtime/hg_op_tracker.c
 
 all: compile
 

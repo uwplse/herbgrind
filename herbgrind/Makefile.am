@@ -23,7 +23,8 @@ HERBGRIND_SOURCES_COMMON = hg_main.c hg_instrument.c		\
 hg_instrumentOp.c types/hg_shadowvals.c types/hg_opinfo.c	\
 runtime/hg_runtime.c runtime/hg_evaluate.c			\
 runtime/hg_storage_runtime.c runtime/hg_shadowop.c		\
-runtime/hg_hiprec_ops.c runtime/hg_mathreplace.c
+runtime/hg_hiprec_ops.c runtime/hg_mathreplace.c		\
+runtime/hg_op_tracker.c
 
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_SOURCES      = \
 	$(HERBGRIND_SOURCES_COMMON)
