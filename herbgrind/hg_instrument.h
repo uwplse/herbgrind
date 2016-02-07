@@ -18,7 +18,6 @@
 // This file has all the functions and data structures that will be
 // called by the instrumented program.
 #include "runtime/hg_runtime.h"
-#include "hg_types.h"
 
 // For pointer ints
 #include <stdint.h>

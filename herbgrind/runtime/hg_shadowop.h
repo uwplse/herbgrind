@@ -4,7 +4,8 @@
 #include "mpfr.h"
 #include "hg_evaluate.h"
 #include "hg_hiprec_ops.h"
-#include "../hg_types.h"
+#include "../types/hg_shadowvals.h"
+#include "../types/hg_opinfo.h"
 
 // The functions that we'll insert into the program to execute shadow
 // operations alongside the normal operations.

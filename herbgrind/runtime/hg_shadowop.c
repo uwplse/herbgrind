@@ -2,7 +2,6 @@
 #include "hg_shadowop.h"
 
 // Some functions and definitions that our implementation depends on.
-#include "hg_types.h"
 #include "hg_hiprec_ops.h"
 #include "hg_storage_runtime.h"
 

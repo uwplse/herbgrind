@@ -1,7 +1,11 @@
 #ifndef _HG_STORAGE_RUNTIME
 #define _HG_STORAGE_RUNTIME
 
-#include "../hg_types.h"
+#include "pub_tool_mallocfree.h"
+#include "pub_tool_libcprint.h"
+#include "../types/hg_shadowvals.h"
+#include "../types/hg_opinfo.h"
+
 // The maximum number of pre-instrumentation temporary values per
 // block we're willing to deal with.
 #define	MAX_TEMPS 1000

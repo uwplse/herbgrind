@@ -17,19 +17,21 @@ else
 DEPS = deps/gmp-64/README deps/mpfr-64/README
 endif
 
-HEADERS=herbgrind/hg_include.h herbgrind/hg_instrument.h		\
-herbgrind/hg_types.h herbgrind/hg_macros.h herbgrind/hg_helper.h	\
-herbgrind/hg_mathreplace_funcs.h herbgrind/runtime/hg_runtime.h		\
+HEADERS=herbgrind/hg_instrument.h herbgrind/include/herbgrind.h		\
+herbgrind/include/hg_include.h herbgrind/include/hg_helper.h		\
+herbgrind/include/hg_mathreplace_funcs.h				\
+herbgrind/include/hg_macros.h herbgrind/types/hg_shadowvals.h		\
+herbgrind/types/hg_opinfo.h herbgrind/runtime/hg_runtime.h		\
 herbgrind/runtime/hg_evaluate.h herbgrind/runtime/hg_hiprec_ops.h	\
 herbgrind/runtime/hg_shadowop.h						\
 herbgrind/runtime/hg_storage_runtime.h					\
 herbgrind/runtime/hg_mathreplace.h
 
 SOURCES=herbgrind/hg_main.c herbgrind/hg_instrument.c			\
-herbgrind/hg_instrumentOp.c herbgrind/hg_types.c			\
-herbgrind/hg_mathwrap.c herbgrind/runtime/hg_runtime.c			\
-herbgrind/runtime/hg_evaluate.c herbgrind/runtime/hg_hiprec_ops.c	\
-herbgrind/runtime/hg_shadowop.c						\
+herbgrind/hg_instrumentOp.c herbgrind/hg_mathwrap.c			\
+herbgrind/types/hg_shadowvals.c herbgrind/types/hg_opinfo.h		\
+herbgrind/runtime/hg_runtime.c herbgrind/runtime/hg_evaluate.c		\
+herbgrind/runtime/hg_hiprec_ops.c herbgrind/runtime/hg_shadowop.c	\
 herbgrind/runtime/hg_storage_runtime.c					\
 herbgrind/runtime/hg_mathreplace.c
 

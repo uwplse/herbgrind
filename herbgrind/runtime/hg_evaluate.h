@@ -1,8 +1,10 @@
 #ifndef _HG_EVALUATE
 #define _HG_EVALUATE
 
-#include "../hg_types.h"
+#include "pub_tool_basics.h"
 #include "pub_tool_libcprint.h"
+#include "../types/hg_opinfo.h"
+#include "../types/hg_shadowvals.h"
 
 // Get the number of floating point values between x and y, including
 // y.

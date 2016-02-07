@@ -1,7 +1,7 @@
 #include <inttypes.h>
 
 #include "hg_evaluate.h"
-#include "hg_macros.h"
+#include "../include/hg_macros.h"
 
 void evaluateOpError(ShadowValue* shadowVal, double actualVal,
                      OpDebug_Info* debuginfo){
