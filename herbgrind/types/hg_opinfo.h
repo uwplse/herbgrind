@@ -4,6 +4,8 @@
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
 
+#include <stdlib.h>
+
 // When I was looking through the FpDebug source as inspiration for
 // this project, I kept seeing these structures all over the place
 // that looked like they only were really meant to be used and passed
@@ -114,8 +116,9 @@ typedef struct _Quadnary_Args {
 } Quadnary_Args;
 
 typedef struct _Op_Info {
-  // The arity of the operation. This determines
-  Arity tag;
+  // The arity of the operation. This determines which of the args
+  // structures we are allowed to put in and pull out.
+  size_t nargs;
   // The VEX op code of the operation.
   IROp op;
   // Information about where the operation resides, for reporting
@@ -128,6 +131,7 @@ typedef struct _Op_Info {
   // This is the actual computed value of the result, for checking
   // accuracy.
   UWord* dest_value;
+  // The argument information for the op
   union {
     Unary_Args uargs;
     Binary_Args bargs;
@@ -136,7 +140,7 @@ typedef struct _Op_Info {
   } args;
 } Op_Info;
 
-Op_Info* mkOp_Info(Arity arity, IROp op, Addr opAddr, const HChar* name);
+Op_Info* mkOp_Info(size_t arity, IROp op, Addr opAddr, const HChar* name);
 
 #ifdef VG_LITTLEENDIAN
 #define ENDIAN Iend_LE

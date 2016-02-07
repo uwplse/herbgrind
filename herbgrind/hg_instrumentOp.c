@@ -128,7 +128,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_AbsF64:
       case Iop_Sqrt64F0x2:
         // Allocate and partially setup the argument structure
-        opInfo = mkOp_Info(Unary, expr->Iex.Unop.op,
+        opInfo = mkOp_Info(1, expr->Iex.Unop.op,
                            opAddr, getPlainOpname(expr->Iex.Unop.op));
 
         // Populate the argument/result values we know at instrument time now.
@@ -270,7 +270,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_SetV128lo32:
       case Iop_SetV128lo64:
         // Allocate and partially setup the argument structure
-        opInfo = mkOp_Info(Binary, expr->Iex.Binop.op,
+        opInfo = mkOp_Info(2, expr->Iex.Binop.op,
                            opAddr, getPlainOpname(expr->Iex.Binop.op));
 
         // Populate the argument/result values we know at instrument time now.
@@ -405,7 +405,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_MulF64r32:
       case Iop_DivF64r32:
         // Allocate and partially setup the argument structure
-        opInfo = mkOp_Info(Ternary, expr->Iex.Triop.details->op, opAddr,
+        opInfo = mkOp_Info(3, expr->Iex.Triop.details->op, opAddr,
                            getPlainOpname(expr->Iex.Triop.details->op));
 
         // Populate the values we know at instrument time now.
@@ -476,7 +476,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_MAddF64r32:
       case Iop_MSubF64r32:
         // Allocate and partially setup the argument structure
-        opInfo = mkOp_Info(Quadnary, expr->Iex.Qop.details->op, opAddr,
+        opInfo = mkOp_Info(4, expr->Iex.Qop.details->op, opAddr,
                            getPlainOpname(expr->Iex.Qop.details->op));
 
         // Populate the values we know at instrument time now.
