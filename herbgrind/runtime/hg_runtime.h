@@ -15,8 +15,6 @@
 #include "hg_storage_runtime.h"
 #include "hg_mathreplace.h"
 
-// For size_t
-#include <stdlib.h>
 // For mpfr_t
 #include "mpfr.h"
 

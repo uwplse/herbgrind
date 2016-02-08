@@ -5,7 +5,7 @@
 // result in the temporary at offset.
 void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
   IRDirty* executeShadowOp;
-  size_t arg_size, result_size;
+  SizeT arg_size, result_size;
 
   // So, I recently learned that valgrind doesn't like passing more
   // than three arguments to a c function called by client code. I

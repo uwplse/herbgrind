@@ -1,8 +1,8 @@
 #include "hg_op_tracker.h"
 
 Op_Info** tracked_ops;
-size_t num_tracked_ops;
-size_t array_size;
+SizeT num_tracked_ops;
+SizeT array_size;
 
 void startTrackingOp(Op_Info* opinfo){
   if (num_tracked_ops + 1 >= array_size){

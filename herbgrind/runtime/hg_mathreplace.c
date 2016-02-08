@@ -29,7 +29,7 @@ typedef struct _OpInfo_Entry {
 } OpInfo_Entry;
 
 void performOp(OpType op, double* result, double* args){
-  size_t nargs;
+  SizeT nargs;
   switch(op){
   case OP_SQRT:
   case OP_EXP:
@@ -69,7 +69,7 @@ void performOp(OpType op, double* result, double* args){
   args_m = VG_(malloc)("wrapped-args", nargs * sizeof(mpfr_t));
   /* mpfr_t* args_m1 = VG_(malloc)("wrapped-args", nargs * sizeof(double)); */
   arg_shadows = VG_(malloc)("wrapped-shadow", nargs * sizeof(ShadowLocation*));
-  for (size_t i = 0; i < nargs; ++i){
+  for (SizeT i = 0; i < nargs; ++i){
     mpfr_init2(args_m[i], 64);
     // Get the actual value from the pointer they gave us.
     mpfr_set_d(args_m[i], args[i], MPFR_RNDN);
