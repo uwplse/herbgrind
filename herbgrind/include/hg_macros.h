@@ -4,7 +4,7 @@
 /* #define PRINTINBLOCKS */
 /* #define PRINTOUTBLOCKS */
 /* #define PRINTERRORS */
-#define PRINTERRORSLONG
+/* #define PRINTERRORSLONG */
 /* #define PRINTMOVES */
 /* #define PRINTMALLOCS */
 /* #define CHECKMALLOC 0x0000000802d8c455 */
