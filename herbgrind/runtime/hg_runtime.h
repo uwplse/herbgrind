@@ -14,6 +14,7 @@
 #include "hg_shadowop.h"
 #include "hg_storage_runtime.h"
 #include "hg_mathreplace.h"
+#include "hg_op_tracker.h"
 
 // For mpfr_t
 #include "mpfr.h"

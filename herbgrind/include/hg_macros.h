@@ -8,8 +8,10 @@
 /* #define PRINTMOVES */
 /* #define PRINTMALLOCS */
 /* #define CHECKMALLOC 0x0000000802d8c455 */
+/* #define HUMAN_OUTPUT */
 
 #define LONGPRINT_LEN 15
+#define ERROR_THRESHOLD 1
 
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_libcprint.h"

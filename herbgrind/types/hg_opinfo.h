@@ -39,8 +39,12 @@ typedef struct _OpDebug_Info {
 void getOpDebug_Info(Addr op_addr, const HChar* plain_opname, OpDebug_Info* result);
 
 typedef struct _Eval_Info {
+  // The most error the output of this operation has ever had.
   double max_error;
+  // All the bits of error this operation has had, added together
   double total_error;
+  // The number of times we've evaluated the error of this operation.
+  SizeT num_calls;
 } Eval_Info;
 
 typedef enum {

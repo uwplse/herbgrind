@@ -31,6 +31,8 @@
 #include "hg_macros.h"
 #include "herbgrind.h"
 
+#include "pub_tool_clientstate.h"
+
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
 static
@@ -113,6 +115,12 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
 // This is called after the program exits, for cleanup and such.
 static void hg_fini(Int exitcode){
   cleanup_runtime();
+
+  // Write out the report
+  HChar filename[50];
+  VG_(snprintf)(filename, 50, "%s-errors.gh", VG_(args_the_exename));
+  VG_(printf)("Writing report out to %s\n", filename);
+  writeReport(filename);
 }
 // This does any initialization that needs to be done after command
 // line processing.

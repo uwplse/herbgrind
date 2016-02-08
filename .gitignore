@@ -6,3 +6,4 @@ valgrind/
 *.out
 *.sout
 deps/*
+bench/*.gh

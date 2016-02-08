@@ -2,6 +2,7 @@
 
 #include "hg_evaluate.h"
 #include "../include/hg_macros.h"
+#include "hg_op_tracker.h"
 
 void evaluateOpError(ShadowValue* shadowVal, double actualVal,
                      Op_Info* opinfo){
@@ -28,6 +29,20 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   mpfr_log2(bitsErrorM, ulpsErrorM, MPFR_RNDN);
   bitsError = mpfr_get_d(bitsErrorM, MPFR_RNDN);
 
+  // Update the persistent op record
+  if (bitsError > opinfo->evalinfo.max_error){
+    // This tests whether we didnt want to track it before, but do
+    // now. If that's the case, we'll start tracking it.
+    if (opinfo->evalinfo.max_error < ERROR_THRESHOLD &&
+        bitsError > ERROR_THRESHOLD){
+      startTrackingOp(opinfo);
+    }
+    // Update the max error, since the error of this operation
+    // instance was greater than any error this operation has seen before.
+    opinfo->evalinfo.max_error = bitsError;
+  }
+  opinfo->evalinfo.total_error += bitsError;
+  opinfo->evalinfo.num_calls++;
 
   // For printing
 #ifdef PRINTERRORSLONG
