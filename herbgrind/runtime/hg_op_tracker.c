@@ -53,7 +53,7 @@ void writeReport(const HChar* filename){
                               opinfo->evalinfo.max_error);
 #else
     entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-      "((plain-name %s) (function %s) (filename %s) (line-num %u) (instr-addr %lX) (avg-error %f) (max-error %f))\n",
+      "((plain-name \"%s\") (function \"%s\") (filename \"%s\") (line-num %u) (instr-addr %lX) (avg-error %f) (max-error %f))\n",
       opinfo->debuginfo.plain_opname,
       opinfo->debuginfo.fnname,
       opinfo->debuginfo.src_filename,
