@@ -1,29 +1,11 @@
 #ifndef _HG_INCLUDE
 #define _HG_INCLUDE
 
-#include "pub_tool_basics.h"
-#include "pub_tool_tooliface.h"
-
 // For handling client requests. Those are those macros that you can
 // put in your code to be instrumented, which will allow you to talk
 // to the tool. For instance, HERBGRIND_BEGIN() and HERBGRIND_END()
 // will turn the tool on an off for certain sections.
 #include "herbgrind.h"
-
-// This file has all the functions and data structures that will be
-// called by the instrumented program.
-#include "runtime/hg_runtime.h"
-// This file has the code to instrument each statement in the client
-// program.
-#include "hg_instrument.h"
-
-// Pull in this header file so that we can call the valgrind version
-// of printf.
-#include "pub_tool_libcprint.h"
-// Pull in this header file so that we can set the strlen, strcpy,
-// memmove, memcmp, and memset functions of mpfr to their valgrind
-// library equivalents.
-#include "pub_tool_libcbase.h"
 
 // This does any initialization that needs to be done after command
 // line processing.
@@ -47,8 +29,5 @@ static void hg_pre_clo_init(void);
 
 // Print an IR superblock
 static void printSuperBlock(IRSB* superblock);
-
-//#define PRINTBLOCKS
-#define PRINTERRORS
 
 #endif

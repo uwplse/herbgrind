@@ -1,5 +1,6 @@
 #include "hg_shadowvals.h"
-#include "hg_macros.h"
+#include "../include/hg_macros.h"
+#include "../include/hg_options.h"
 
 // Some basic valgrind stuff
 #include "pub_tool_tooliface.h"
@@ -16,7 +17,7 @@ ShadowLocation* mkShadowLocation(LocType type){
   location->type = type;
   ALLOC(location->values, "hg.shadow_values", num_values, sizeof(ShadowValue));
   for(int i = 0; i < num_values; ++i){
-    mpfr_init(location->values[i].value);
+    mpfr_init2(location->values[i].value, precision);
   }
   location->ref_count = 1;
   return location;
@@ -64,12 +65,14 @@ void copySL(ShadowLocation* src, ShadowLocation** dest){
 ShadowValue* copySV_ptr(ShadowValue* src){
   ShadowValue* result;
   ALLOC(result, "hg.shadow_value.1", 1, sizeof(ShadowValue));
-  mpfr_init_set(result->value, src->value, MPFR_RNDN);
+  mpfr_init2(result->value, precision);
+  mpfr_set(result->value, src->value, MPFR_RNDN);
   return result;
 }
 
 void copySV(ShadowValue* src, ShadowValue* dest){
-  mpfr_init_set(dest->value, src->value, MPFR_RNDN);
+  mpfr_init2(dest->value, precision);
+  mpfr_set(dest->value, src->value, MPFR_RNDN);
 }
 
 void cleanupSV(ShadowValue* sv){

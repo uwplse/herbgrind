@@ -19,8 +19,6 @@
 // For mpfr_t
 #include "mpfr.h"
 
-#define PRECISION 1000
-
 extern int running;
 // This address should be updated at every AbiHint statement, because
 // the last one that happens before we realize we're in a wrapped

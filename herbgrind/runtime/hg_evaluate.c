@@ -1,7 +1,5 @@
-#include <inttypes.h>
-
 #include "hg_evaluate.h"
-#include "../include/hg_macros.h"
+#include "../include/hg_options.h"
 #include "hg_op_tracker.h"
 
 void evaluateOpError(ShadowValue* shadowVal, double actualVal,
@@ -24,8 +22,9 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   // error, 1 ulp (values that are as close as they can be but still
   // different) has log2(2) = 1 bit of error, and we scale
   // logarithmically from there.
-  mpfr_init_set_ui(ulpsErrorM, (unsigned long int)(ulpsError + 1), MPFR_RNDN);
-  mpfr_init(bitsErrorM);
+  mpfr_init2(ulpsErrorM, precision);
+  mpfr_set_ui(ulpsErrorM, (unsigned long int)(ulpsError + 1), MPFR_RNDN);
+  mpfr_init2(bitsErrorM, 64);
   mpfr_log2(bitsErrorM, ulpsErrorM, MPFR_RNDN);
   bitsError = mpfr_get_d(bitsErrorM, MPFR_RNDN);
 
@@ -33,8 +32,8 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   if (bitsError > opinfo->evalinfo.max_error){
     // This tests whether we didnt want to track it before, but do
     // now. If that's the case, we'll start tracking it.
-    if (opinfo->evalinfo.max_error < ERROR_THRESHOLD &&
-        bitsError > ERROR_THRESHOLD){
+    if (opinfo->evalinfo.max_error < error_threshold &&
+        bitsError > error_threshold){
       startTrackingOp(opinfo);
     }
     // Update the max error, since the error of this operation
@@ -45,34 +44,31 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   opinfo->evalinfo.num_calls++;
 
   // For printing
-#ifdef PRINTERRORSLONG
-  char* shadowValstr;
-  mpfr_exp_t shadowValexpt;
+  if (print_errors_long || print_errors){
+    if (print_errors_long){
+      char* shadowValstr;
+      mpfr_exp_t shadowValexpt;
 
-  shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, 0, shadowVal->value, MPFR_RNDN);
+      shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, 0, shadowVal->value, MPFR_RNDN);
 
-  VG_(printf)("The shadowed val is %se%ld, and the actual (computed) val is %f.\n",
-              shadowValstr, shadowValexpt, actualVal);
-  mpfr_free_str(shadowValstr);
-#endif
-
-#ifdef PRINTERRORS
-  VG_(printf)("The shadowed val is %f, and the actual (computed) val is %f.\n",
-              shadowValD, actualVal);
-#endif
+      VG_(printf)("The shadowed val is %se%ld, and the actual (computed) val is %f.\n",
+                  shadowValstr, shadowValexpt, actualVal);
+      mpfr_free_str(shadowValstr);
+    }
+    else if (print_errors){
+      VG_(printf)("The shadowed val is %f, and the actual (computed) val is %f.\n",
+                  shadowValD, actualVal);
+    }
   
-#if defined PRINTERRORS || defined PRINTERRORSLONG
-  VG_(printf)("The bits error of that operation was: %f.\n", bitsError);
-  VG_(printf)("(Operation at %lX)\n", opinfo->debuginfo.op_addr);
-  if (opinfo->debuginfo.src_filename != NULL)
-    VG_(printf)("%s at %s:%u in %s\n",
-                opinfo->debuginfo.plain_opname,
-                opinfo->debuginfo.src_filename,
-                opinfo->debuginfo.src_line,
-                opinfo->debuginfo.fnname);
-#else
-  (void)bitsError;
-#endif
+    VG_(printf)("The bits error of that operation was: %f.\n", bitsError);
+    VG_(printf)("(Operation at %lX)\n", opinfo->debuginfo.op_addr);
+    if (opinfo->debuginfo.src_filename != NULL)
+      VG_(printf)("%s at %s:%u in %s\n",
+                  opinfo->debuginfo.plain_opname,
+                  opinfo->debuginfo.src_filename,
+                  opinfo->debuginfo.src_line,
+                  opinfo->debuginfo.fnname);
+  }
 }
 
 void evaluateOpError_helper(ShadowValue* shadowVal, UWord* valbytes, LocType bytestype, int el_index, Op_Info* opinfo){

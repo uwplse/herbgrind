@@ -67,7 +67,6 @@ void performOp(OpType op, double* result, double* args){
   // Initialize our 64-bit mpfr arg and shadow, and get the result
   // shadow set up.
   args_m = VG_(malloc)("wrapped-args", nargs * sizeof(mpfr_t));
-  /* mpfr_t* args_m1 = VG_(malloc)("wrapped-args", nargs * sizeof(double)); */
   arg_shadows = VG_(malloc)("wrapped-shadow", nargs * sizeof(ShadowLocation*));
   for (SizeT i = 0; i < nargs; ++i){
     mpfr_init2(args_m[i], 64);

@@ -1,6 +1,7 @@
 #include "hg_runtime.h"
 
 #include "hg_mathreplace.h"
+#include "../include/hg_options.h"
 
 // Pull in this header file so that we can set the strlen, strcpy,
 // memmove, memcmp, and memset functions of mpfr to their valgrind
@@ -31,7 +32,7 @@ int mpfr_memcmp(const void* ptr1, const void* ptr2, size_t len){ return VG_(memc
 void* mpfr_memset(void* dest, int val, size_t size){ return VG_(memset)(dest, val, size); }
 
 void init_runtime(void){
-  mpfr_set_default_prec(PRECISION);
+  mpfr_set_default_prec(precision);
   // Set up the shadow memory, thread state, and temporaries.
   initStorage();
   // Set up the wrapping function table

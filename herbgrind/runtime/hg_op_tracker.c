@@ -3,7 +3,7 @@
 #include "pub_tool_vki.h"
 #include "pub_tool_libcfile.h"
 #include "pub_tool_libcprint.h"
-#include "../include/hg_macros.h"
+#include "../include/hg_options.h"
 
 Op_Info** tracked_ops;
 SizeT num_tracked_ops;
@@ -41,28 +41,27 @@ void writeReport(const HChar* filename){
   for(int i = 0; i < num_tracked_ops; ++i){
     Op_Info* opinfo = tracked_ops[i];
     UInt entry_len;
-#ifdef HUMAN_OUTPUT
-    entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                              "%s in %s at %s:%u (address %lX)\n%f bits average error\n%f bits max error\n\n",
-                              opinfo->debuginfo.plain_opname,
-                              opinfo->debuginfo.fnname,
-                              opinfo->debuginfo.src_filename,
-                              opinfo->debuginfo.src_line,
-                              opinfo->debuginfo.op_addr,
-                              opinfo->evalinfo.total_error / opinfo->evalinfo.num_calls,
-                              opinfo->evalinfo.max_error);
-#else
-    entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-      "((plain-name \"%s\") (function \"%s\") (filename \"%s\") (line-num %u) (instr-addr %lX) (avg-error %f) (max-error %f))\n",
-      opinfo->debuginfo.plain_opname,
-      opinfo->debuginfo.fnname,
-      opinfo->debuginfo.src_filename,
-      opinfo->debuginfo.src_line,
-      opinfo->debuginfo.op_addr,
-      opinfo->evalinfo.total_error / opinfo->evalinfo.num_calls,
-      opinfo->evalinfo.max_error);
-#endif
-
+    if (human_readable){
+      entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
+                                "%s in %s at %s:%u (address %lX)\n%f bits average error\n%f bits max error\n\n",
+                                opinfo->debuginfo.plain_opname,
+                                opinfo->debuginfo.fnname,
+                                opinfo->debuginfo.src_filename,
+                                opinfo->debuginfo.src_line,
+                                opinfo->debuginfo.op_addr,
+                                opinfo->evalinfo.total_error / opinfo->evalinfo.num_calls,
+                                opinfo->evalinfo.max_error);
+    } else {
+      entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
+                                "((plain-name \"%s\") (function \"%s\") (filename \"%s\") (line-num %u) (instr-addr %lX) (avg-error %f) (max-error %f))\n",
+                                opinfo->debuginfo.plain_opname,
+                                opinfo->debuginfo.fnname,
+                                opinfo->debuginfo.src_filename,
+                                opinfo->debuginfo.src_line,
+                                opinfo->debuginfo.op_addr,
+                                opinfo->evalinfo.total_error / opinfo->evalinfo.num_calls,
+                                opinfo->evalinfo.max_error);
+    }
     VG_(write)(file_d, buf, entry_len);
   }
 

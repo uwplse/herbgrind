@@ -28,10 +28,28 @@
 */
 
 #include "hg_include.h"
-#include "hg_macros.h"
 #include "herbgrind.h"
 
+// This file has all the functions and data structures that will be
+// called by the instrumented program.
+#include "runtime/hg_runtime.h"
+// This file has the code to instrument each statement in the client
+// program.
+#include "hg_instrument.h"
+
+#include "include/hg_options.h"
+#include "pub_tool_options.h"
+
+#include "pub_tool_basics.h"
+#include "pub_tool_tooliface.h"
 #include "pub_tool_clientstate.h"
+// Pull in this header file so that we can call the valgrind version
+// of printf.
+#include "pub_tool_libcprint.h"
+// Pull in this header file so that we can set the strlen, strcpy,
+// memmove, memcmp, and memset functions of mpfr to their valgrind
+// library equivalents.
+#include "pub_tool_libcbase.h"
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
@@ -45,14 +63,13 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
 {
   // For right now, just print out the VEX representation as we
   // process it.
+
   if (running == 0) return bb;
 
-#ifdef PRINTINBLOCKS
-  VG_(printf)("Instrumenting block:\n");
-  printSuperBlock(bb);
-#else
-  (void)printSuperBlock;
-#endif
+  if (print_in_blocks){
+    VG_(printf)("Instrumenting block:\n");
+    printSuperBlock(bb);
+  }
 
   // Let's do some instrumentation!
 
@@ -79,12 +96,10 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
 
   finalizeBlock(sbOut);
 
-#ifdef PRINTOUTBLOCKS
-  VG_(printf)("Instrumented into:\n");
-  printSuperBlock(sbOut);
-#else
-  (void)printSuperBlock;
-#endif
+  if (print_out_blocks){
+    VG_(printf)("Instrumented into:\n");
+    printSuperBlock(sbOut);
+  }
 
   return sbOut;
 }
@@ -112,6 +127,53 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
   return False;
 }
 
+mpfr_prec_t precision = 1000;
+double error_threshold = 1.0;
+Bool human_readable = True;
+
+SizeT longprint_len = 15;
+Bool print_in_blocks = False;
+Bool print_out_blocks = False;
+Bool print_errors = False;
+Bool print_errors_long = False;
+Bool print_moves = False;
+Bool print_mallocs = False;
+
+// Called to process each command line option.
+static Bool hg_process_cmd_line_option(const HChar* arg){
+  if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX) {}
+  else if VG_DBL_CLO(arg, "--error-threshold", error_threshold) {}
+  else if VG_XACT_CLO(arg, "--human", human_readable, True) {}
+  else if VG_XACT_CLO(arg, "--machine", human_readable, False) {}
+  else if VG_INT_CLO(arg, "--long-print-len", longprint_len) {}
+  else if VG_XACT_CLO(arg, "--print-in-blocks", print_in_blocks, True) {}
+  else if VG_XACT_CLO(arg, "--print-out-blocks", print_out_blocks, True) {}
+  else if VG_XACT_CLO(arg, "--print-errors", print_errors, True) {}
+  else if VG_XACT_CLO(arg, "--print-errors-long", print_errors_long, True) {}
+  else if VG_XACT_CLO(arg, "--print-moves", print_moves, True) {}
+  else if VG_XACT_CLO(arg, "--print-mallocs", print_mallocs, True) {}
+  else return False;
+  return True;
+}
+
+static void hg_print_usage(void){
+  VG_(printf)(" --precision=<number> the precision of the shadow vales [1000]\n"
+              " --error-threshold=<number> the threshold over which to report an erroneous operation (bits) [1]\n"
+              " --human output in human-readable form (default)\n"
+              " --machine output in machine-readable form\n"
+              );
+}
+static void hg_print_debug_usage(void){
+  VG_(printf)(" --longprint-len=<number> the length of long-printed shadow values [15]\n"
+              " --print-in-blocks print the incoming VEX blocks\n"
+              " --print-out-blocks print the instrumented VEX blocks\n"
+              " --print-errors print the errors of operations as they're executed\n"
+              " --print-errors-long print the errors of the operations as they're executed, in long form. This means that we'll print the shadow values to <longprint-len> decimal digits, instead of rounding them\n"
+              " --print-moves print every move of a shadow value/location\n"
+              " --print-mallocs print every memory allocation\n"
+              );
+}
+
 // This is called after the program exits, for cleanup and such.
 static void hg_fini(Int exitcode){
   cleanup_runtime();
@@ -124,7 +186,11 @@ static void hg_fini(Int exitcode){
 }
 // This does any initialization that needs to be done after command
 // line processing.
-static void hg_post_clo_init(void){}
+static void hg_post_clo_init(void){
+   // Set up the data structures we'll need to keep track of our MPFR
+   // shadow values.
+   init_runtime();
+}
 
 // This is where we initialize everything
 static void hg_pre_clo_init(void)
@@ -142,6 +208,9 @@ static void hg_pre_clo_init(void)
                                  hg_fini);
 
    VG_(needs_client_requests) (hg_handle_client_request);
+   VG_(needs_command_line_options)(hg_process_cmd_line_option,
+                                   hg_print_usage,
+                                   hg_print_debug_usage);
 
    // Tell the gmp stuff to use valgrind c library instead of the
    // standard one for memory allocation and the like.
@@ -151,10 +220,6 @@ static void hg_pre_clo_init(void)
    mpfr_set_memmove_function(mpfr_memmove);
    mpfr_set_memcmp_function(mpfr_memcmp);
    mpfr_set_memset_function(mpfr_memset);
-
-   // Set up the data structures we'll need to keep track of our MPFR
-   // shadow values.
-   init_runtime();
 }
 
 static void printSuperBlock(IRSB* superblock){

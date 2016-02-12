@@ -20,10 +20,10 @@ endif
 HEADERS=herbgrind/hg_instrument.h herbgrind/include/herbgrind.h		\
 herbgrind/include/hg_include.h herbgrind/include/hg_helper.h		\
 herbgrind/include/hg_mathreplace_funcs.h				\
-herbgrind/include/hg_macros.h herbgrind/types/hg_shadowvals.h		\
-herbgrind/types/hg_opinfo.h herbgrind/runtime/hg_runtime.h		\
-herbgrind/runtime/hg_evaluate.h herbgrind/runtime/hg_hiprec_ops.h	\
-herbgrind/runtime/hg_shadowop.h						\
+herbgrind/include/hg_macros.h herbgrind/include/hg_options.h		\
+herbgrind/types/hg_shadowvals.h herbgrind/types/hg_opinfo.h		\
+herbgrind/runtime/hg_runtime.h herbgrind/runtime/hg_evaluate.h		\
+herbgrind/runtime/hg_hiprec_ops.h herbgrind/runtime/hg_shadowop.h	\
 herbgrind/runtime/hg_storage_runtime.h					\
 herbgrind/runtime/hg_mathreplace.h herbgrind/runtime/hg_op_tracker.h
 

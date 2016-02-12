@@ -1,7 +1,8 @@
 // The prototypes for the functions we'll implement here.
 #include "hg_storage_runtime.h"
 // Some helper macros
-#include "../hg_macros.h"
+#include "../include/hg_macros.h"
+#include "../include/hg_options.h"
 
 // This gets us a hash table data structure that's safe to use with
 // valgrind, so we can set up a memory map for shadowing values that
@@ -39,16 +40,14 @@ VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
   if (dest_tmp > maxTempUsed) maxTempUsed = dest_tmp;
   copySL(localTemps[src_tmp], &localTemps[dest_tmp]);
 
-#ifdef PRINTMOVES
-  if (localTemps[src_tmp] != NULL){
+  if (localTemps[src_tmp] != NULL && print_moves){
     mpfr_exp_t shadowValexpt;
-    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, LONGPRINT_LEN,
+    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
                                       localTemps[src_tmp]->values[0].value, MPFR_RNDN);
     VG_(printf)("Copying value %se%ld from temp %lu to temp %lu\n",
                 shadowValstr, shadowValexpt, src_tmp, dest_tmp);
     mpfr_free_str(shadowValstr);
   }
-#endif
 }
 
 // Copy a shadow value from a temporary to somewhere in the current
@@ -56,16 +55,14 @@ VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
 VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg){
   copySL(localTemps[src_tmp], &threadRegisters[VG_(get_running_tid)()][dest_reg]);
 
-#ifdef PRINTMOVES
-  if (localTemps[src_tmp] != NULL){
+  if (localTemps[src_tmp] != NULL && print_moves){
     mpfr_exp_t shadowValexpt;
-    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, LONGPRINT_LEN,
+    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
                                       localTemps[src_tmp]->values[0].value, MPFR_RNDN);
     VG_(printf)("Copying value %se%ld from temp %lu to thread state %lu\n",
                 shadowValstr, shadowValexpt, src_tmp, dest_reg);
     mpfr_free_str(shadowValstr);
   }
-#endif
 }
 
 // Copy a shadow value from somewhere in the thread state to a temporary.
@@ -73,16 +70,14 @@ VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType dest_type, UWord dest
   if (dest_tmp > maxTempUsed) maxTempUsed = dest_tmp;
   copyShadow___toTmp(src_reg, dest_type, dest_tmp, getTS);
 
-#ifdef PRINTMOVES
-  if (getTS(src_reg) != NULL){
+  if (getTS(src_reg) != NULL && print_moves){
     mpfr_exp_t shadowValexpt;
-    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, LONGPRINT_LEN,
+    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
                                       getTS(src_reg)->values[0].value, MPFR_RNDN);
     VG_(printf)("Copying value %se%ld from thread state %lu to temp %lu\n",
                 shadowValstr, shadowValexpt, src_reg, dest_tmp);
     mpfr_free_str(shadowValstr);
   }
-#endif
 }
 
 // Copy a shadow value from memory to a temporary
@@ -90,16 +85,14 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType dest_type, UWord dest
   if (dest_tmp > maxTempUsed) maxTempUsed = dest_tmp;
   copyShadow___toTmp(src_mem, dest_type, dest_tmp, getMem);
 
-#ifdef PRINTMOVES
-  if (getMem(src_mem) != NULL){
+  if (getMem(src_mem) != NULL && print_moves){
     mpfr_exp_t shadowValexpt;
-    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, LONGPRINT_LEN,
+    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
                                       getMem(src_mem)->values[0].value, MPFR_RNDN);
     VG_(printf)("Copying value %se%ld from address %lx to temp %lu\n",
                 shadowValstr, shadowValexpt, src_mem, dest_tmp);
     mpfr_free_str(shadowValstr);
   }
-#endif
 }
 
 // Copy a shadow value from memory to a temporary, only if cond
@@ -111,31 +104,27 @@ VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
   if (info->cond) {
     copyShadow___toTmp(info->src_mem, info->dest_type, info->dest_tmp, getMem);
 
-#ifdef PRINTMOVES
-    if (getMem(info->src_mem) != NULL){
+    if (getMem(info->src_mem) != NULL && print_moves){
       mpfr_exp_t shadowValexpt;
-      char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, LONGPRINT_LEN,
+      char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
                                         getMem(info->src_mem)->values[0].value,
                                         MPFR_RNDN);
       VG_(printf)("Copying value %se%ld from address %lx to temp %lu\n",
                   shadowValstr, shadowValexpt, info->src_mem, info->dest_tmp);
       mpfr_free_str(shadowValstr);
     }
-#endif
   } else {
     src = localTemps[info->alt_tmp];
 
-#ifdef PRINTMOVES
-    if (src != NULL){
+    if (src != NULL && print_moves){
       mpfr_exp_t shadowValexpt;
-      char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, LONGPRINT_LEN,
+      char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
                                         localTemps[info->alt_tmp]->values[0].value,
                                         MPFR_RNDN);
       VG_(printf)("Copying value %se%ld from temp %lu to temp %lu\n",
                   shadowValstr, shadowValexpt, info->alt_tmp, info->dest_tmp);
       mpfr_free_str(shadowValstr);
     }
-#endif
   }
   copySL(src, &localTemps[info->dest_tmp]);
 }
@@ -144,17 +133,15 @@ VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
 VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem){
   setMem(dest_mem, getTemp(src_tmp));
 
-#ifdef PRINTMOVES
-  if (getTemp(src_tmp) != NULL){
+  if (getTemp(src_tmp) != NULL && print_moves){
     mpfr_exp_t shadowValexpt;
-    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, LONGPRINT_LEN,
+    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
                                       localTemps[src_tmp]->values[0].value,
                                       MPFR_RNDN);
     VG_(printf)("Copying value %se%ld from temp %lu to address %lx\n",
                 shadowValstr, shadowValexpt, src_tmp, dest_mem);
     mpfr_free_str(shadowValstr);
   }
-#endif
 }
 
 // Copy a shadow value from a temporary to memory, only if cond
@@ -162,17 +149,15 @@ VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem){
 VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem){
   if (cond) copyShadowTmptoMem(src_tmp, dest_mem);
 
-#ifdef PRINTMOVES
-  if (getTemp(src_tmp) != NULL && cond){
+  if (getTemp(src_tmp) != NULL && cond && print_moves){
     mpfr_exp_t shadowValexpt;
-    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, LONGPRINT_LEN,
+    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
                                       localTemps[src_tmp]->values[0].value,
                                       MPFR_RNDN);
     VG_(printf)("Copying value %se%ld from temp %lu to address %lx\n",
                 shadowValstr, shadowValexpt, src_tmp, dest_mem);
     mpfr_free_str(shadowValstr);
   }
-#endif
 }
 
 VG_REGPARM(0) void initBlock(void){
