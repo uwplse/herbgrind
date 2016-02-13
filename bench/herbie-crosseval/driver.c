@@ -111,33 +111,23 @@ int main(int argc, char** argv){
     // Get some random arguments. If they end up including nans or
     // infs, just keep getting them until they dont. If the result
     // computed with floats would be nan or inf, do the same.
-    /* bool valid_args = false; */
-    /* do { */
-    /*   RANDARGS(args); */
-    /*   valid_args = true; */
-    /*   for (int j = 0; j < NARGS; ++j){ */
-    /*     if (!ordinaryd(args[j])) valid_args = false; */
-    /*     if (!ordinaryd(INVOKE(f_id, args))) valid_args = false; */
-    /*   } */
-    /*   if (valid_args){ */
-    /*     for (int j = 0; j < NARGS; ++j){ */
-    /*       if (args[j] > max_input) max_input = args[j]; */
-    /*       if (args[j] < min_input) min_input = args[j]; */
-    /*     } */
-    /*   } */
-    /* } while (!valid_args); */
-    RANDARGS(args);
-    for (int j = 0; j < NARGS; ++j){
-      if (args[j] < 0) args[j] = -args[j];
-      if (args[j] > max_input) max_input = args[j];
-      if (args[j] < min_input) min_input = args[j];
-    }
-
-    /* PRINTARGS(args) */
+    bool valid_args = false;
+    do {
+      RANDARGS(args);
+      valid_args = true;
+      for (int j = 0; j < NARGS; ++j){
+        if (!ordinaryd(args[j])) valid_args = false;
+        if (!ordinaryd(INVOKE(f_id, args))) valid_args = false;
+      }
+      if (valid_args){
+        for (int j = 0; j < NARGS; ++j){
+          if (args[j] > max_input) max_input = args[j];
+          if (args[j] < min_input) min_input = args[j];
+        }
+      }
+    } while (!valid_args);
 
     // Run the program on the args
-    /* HERBGRIND_END(); */
-    /* INVOKE(f_id, args); */
     HERBGRIND_BEGIN();
     result = INVOKE(f_id, args);
     HERBGRIND_END();
