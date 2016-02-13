@@ -1,5 +1,5 @@
 
-FLAGS=-g -std=c11 -lm -lmpfr -I../valgrind/herbgrind
+FLAGS=-g -std=c11 -lm -lmpfr -I../valgrind/herbgrind/include/
 
 all: testprog.out mini.out tiny.out mini-nocall.sout diff-roots.out some-trig.out
 

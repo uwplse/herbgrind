@@ -6,6 +6,8 @@
 // to the tool. For instance, HERBGRIND_BEGIN() and HERBGRIND_END()
 // will turn the tool on an off for certain sections.
 #include "herbgrind.h"
+#include "pub_tool_basics.h"
+#include "pub_tool_tooliface.h"
 
 // This does any initialization that needs to be done after command
 // line processing.

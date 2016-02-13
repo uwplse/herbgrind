@@ -1,7 +1,7 @@
 
 #include "hg_instrument.h"
-#include "hg_helper.h"
-#include "hg_macros.h"
+#include "include/hg_helper.h"
+#include "include/hg_macros.h"
 
 void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr){
   IRExpr* expr;

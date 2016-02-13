@@ -1,7 +1,7 @@
 #ifndef __HERBGRIND_H
 #define __HERBGRIND_H
 
-#include "../include/valgrind.h"
+#include "../../include/valgrind.h"
 
 // Let's define some user requests!
 typedef enum {

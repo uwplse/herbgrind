@@ -27,8 +27,8 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#include "hg_include.h"
-#include "herbgrind.h"
+#include "include/hg_include.h"
+#include "include/herbgrind.h"
 
 // This file has all the functions and data structures that will be
 // called by the instrumented program.
@@ -40,8 +40,6 @@
 #include "include/hg_options.h"
 #include "pub_tool_options.h"
 
-#include "pub_tool_basics.h"
-#include "pub_tool_tooliface.h"
 #include "pub_tool_clientstate.h"
 // Pull in this header file so that we can call the valgrind version
 // of printf.

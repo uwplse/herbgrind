@@ -1,4 +1,5 @@
 #include "hg_evaluate.h"
+#include "hg_runtime.h"
 #include "../include/hg_options.h"
 #include "hg_op_tracker.h"
 

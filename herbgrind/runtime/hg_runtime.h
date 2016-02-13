@@ -1,6 +1,7 @@
 #ifndef _HG_RUNTIME
 #define _HG_RUNTIME
 
+#include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
 // Pull in this header file so that we can pass memory allocation
 // functions to gmp and mpfr.

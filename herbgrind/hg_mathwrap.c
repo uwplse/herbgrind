@@ -1,7 +1,8 @@
 #include "pub_tool_clreq.h"
-#include "herbgrind.h"
-#include "hg_mathreplace_funcs.h"
 #include "pub_tool_redir.h"
+
+#include "include/herbgrind.h"
+#include "include/hg_mathreplace_funcs.h"
 
 #define LIBM libmZdsoZa
 
