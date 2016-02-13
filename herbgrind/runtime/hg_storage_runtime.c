@@ -3,6 +3,7 @@
 // Some helper macros
 #include "../include/hg_macros.h"
 #include "../include/hg_options.h"
+#include "hg_runtime.h"
 
 // This gets us a hash table data structure that's safe to use with
 // valgrind, so we can set up a memory map for shadowing values that
@@ -37,6 +38,7 @@ static ShadowLocation* threadRegisters[MAX_THREADS][MAX_REGISTERS];
 
 // Copy a shadow value from a temporary to a temporary.
 VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
+  if (!running && localTemps[src_tmp] != NULL) return;
   if (dest_tmp > maxTempUsed) maxTempUsed = dest_tmp;
   copySL(localTemps[src_tmp], &localTemps[dest_tmp]);
 
@@ -53,6 +55,7 @@ VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
 // Copy a shadow value from a temporary to somewhere in the current
 // threads state.
 VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg){
+  if (!running && localTemps[src_tmp] != NULL) return;
   copySL(localTemps[src_tmp], &threadRegisters[VG_(get_running_tid)()][dest_reg]);
 
   if (localTemps[src_tmp] != NULL && print_moves){
@@ -67,6 +70,7 @@ VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg){
 
 // Copy a shadow value from somewhere in the thread state to a temporary.
 VG_REGPARM(3) void copyShadowTStoTmp(UWord src_reg, IRType dest_type, UWord dest_tmp){
+  if (!running && getTS(src_reg) != NULL) return;
   if (dest_tmp > maxTempUsed) maxTempUsed = dest_tmp;
   copyShadow___toTmp(src_reg, dest_type, dest_tmp, getTS);
 
@@ -82,6 +86,7 @@ VG_REGPARM(3) void copyShadowTStoTmp(UWord src_reg, IRType dest_type, UWord dest
 
 // Copy a shadow value from memory to a temporary
 VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType dest_type, UWord dest_tmp){
+  if (!running && getMem(src_mem) != NULL) return;
   if (dest_tmp > maxTempUsed) maxTempUsed = dest_tmp;
   copyShadow___toTmp(src_mem, dest_type, dest_tmp, getMem);
 
@@ -102,6 +107,7 @@ VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
   ShadowLocation* src;
   if (info->dest_tmp > maxTempUsed) maxTempUsed = info->dest_tmp;
   if (info->cond) {
+    if (!running && getMem(info->src_mem) != NULL) return;
     copyShadow___toTmp(info->src_mem, info->dest_type, info->dest_tmp, getMem);
 
     if (getMem(info->src_mem) != NULL && print_moves){
@@ -114,6 +120,7 @@ VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
       mpfr_free_str(shadowValstr);
     }
   } else {
+    if (!running && localTemps[info->alt_tmp] != NULL) return;
     src = localTemps[info->alt_tmp];
 
     if (src != NULL && print_moves){
@@ -131,6 +138,7 @@ VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
 
 // Copy a shadow value from a temporary to memory.
 VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem){
+  if (!running && getTemp(src_tmp) != NULL) return;
   setMem(dest_mem, getTemp(src_tmp));
 
   if (getTemp(src_tmp) != NULL && print_moves){
@@ -147,6 +155,7 @@ VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem){
 // Copy a shadow value from a temporary to memory, only if cond
 // evaluates to true. Otherwise, do nothing.
 VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem){
+  if (!running && getTemp(src_tmp) != NULL) return;
   if (cond) copyShadowTmptoMem(src_tmp, dest_mem);
 
   if (getTemp(src_tmp) != NULL && cond && print_moves){
