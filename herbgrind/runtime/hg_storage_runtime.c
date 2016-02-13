@@ -271,7 +271,7 @@ void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
       copySL(srcLoc, &localTemps[dest_tmp]);
       break;
     default:
-      VG_(dmsg)("We don't support that mixed size thread state get!\n");
+      VG_(dmsg)("We don't support that mixed size get!\n");
       VG_(printf)("(we're trying to get a value of type: ");
       ppIRType(dest_type);
       VG_(printf)(", but the location has type %d)\n", srcLoc->type);
@@ -304,7 +304,7 @@ void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
       }
       break;
     default:
-      VG_(dmsg)("We don't support that mixed size thread state get!\n");
+      VG_(dmsg)("We don't support that mixed size get!\n");
       VG_(printf)("(we're trying to get a value of type: ");
       ppIRType(dest_type);
       VG_(printf)(")\n");
