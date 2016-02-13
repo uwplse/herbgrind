@@ -150,6 +150,7 @@ static Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-errors-long", print_errors_long, True) {}
   else if VG_XACT_CLO(arg, "--print-moves", print_moves, True) {}
   else if VG_XACT_CLO(arg, "--print-mallocs", print_mallocs, True) {}
+  else if VG_XACT_CLO(arg, "--start-off", running, False) {}
   else return False;
   return True;
 }
@@ -159,6 +160,7 @@ static void hg_print_usage(void){
               " --error-threshold=<number> the threshold over which to report an erroneous operation (bits) [1]\n"
               " --human output in human-readable form (default)\n"
               " --machine output in machine-readable form\n"
+              " --start-off Turn off instrumentation until HERBGRIND_BEGIN() is called\n"
               );
 }
 static void hg_print_debug_usage(void){
