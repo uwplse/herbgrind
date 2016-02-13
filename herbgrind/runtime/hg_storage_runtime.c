@@ -66,7 +66,7 @@ VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg){
 }
 
 // Copy a shadow value from somewhere in the thread state to a temporary.
-VG_REGPARM(2) void copyShadowTStoTmp(UWord src_reg, IRType dest_type, UWord dest_tmp){
+VG_REGPARM(3) void copyShadowTStoTmp(UWord src_reg, IRType dest_type, UWord dest_tmp){
   if (dest_tmp > maxTempUsed) maxTempUsed = dest_tmp;
   copyShadow___toTmp(src_reg, dest_type, dest_tmp, getTS);
 
