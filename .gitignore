@@ -7,3 +7,5 @@ valgrind/
 *.sout
 deps/*
 bench/*.gh
+bench/herbie-crosseval/*.gh
+bench/herbie-crosseval/*.c
