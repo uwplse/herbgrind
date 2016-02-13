@@ -43,24 +43,26 @@ void writeReport(const HChar* filename){
     UInt entry_len;
     if (human_readable){
       entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                                "%s in %s at %s:%u (address %lX)\n%f bits average error\n%f bits max error\n\n",
+                                "%s in %s at %s:%u (address %lX)\n%f bits average error\n%f bits max error\nAggregated over %lu instances\n\n",
                                 opinfo->debuginfo.plain_opname,
                                 opinfo->debuginfo.fnname,
                                 opinfo->debuginfo.src_filename,
                                 opinfo->debuginfo.src_line,
                                 opinfo->debuginfo.op_addr,
                                 opinfo->evalinfo.total_error / opinfo->evalinfo.num_calls,
-                                opinfo->evalinfo.max_error);
+                                opinfo->evalinfo.max_error,
+                                opinfo->evalinfo.num_calls);
     } else {
       entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                                "((plain-name \"%s\") (function \"%s\") (filename \"%s\") (line-num %u) (instr-addr %lX) (avg-error %f) (max-error %f))\n",
+                                "((plain-name \"%s\") (function \"%s\") (filename \"%s\") (line-num %u) (instr-addr %lX) (avg-error %f) (max-error %f) (num-calls %lu))\n",
                                 opinfo->debuginfo.plain_opname,
                                 opinfo->debuginfo.fnname,
                                 opinfo->debuginfo.src_filename,
                                 opinfo->debuginfo.src_line,
                                 opinfo->debuginfo.op_addr,
                                 opinfo->evalinfo.total_error / opinfo->evalinfo.num_calls,
-                                opinfo->evalinfo.max_error);
+                                opinfo->evalinfo.max_error,
+                                opinfo->evalinfo.num_calls);
     }
     VG_(write)(file_d, buf, entry_len);
   }
