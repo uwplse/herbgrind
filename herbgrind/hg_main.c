@@ -105,6 +105,9 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
 // This handles client requests, the macros that client programs stick
 // in to send messages to the tool.
 static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
+  if (!VG_IS_TOOL_USERREQ('H', 'B', arg[0])){
+    return False;
+  }
   switch(arg[0]) {
   case VG_USERREQ__BEGIN:
     startHerbGrind();
@@ -121,8 +124,11 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
   case VG_USERREQ__PERFORM_OP:
     performOp((OpType)arg[1], (double*)arg[2], (double*)arg[3]);
     break;
+  default:
+    return False;
   }
-  return False;
+  *ret = 0;
+  return True;
 }
 
 mpfr_prec_t precision = 1000;

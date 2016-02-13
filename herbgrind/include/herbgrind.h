@@ -6,7 +6,7 @@
 // Let's define some user requests!
 typedef enum {
   // This will start our tools instrumentation
-  VG_USERREQ__BEGIN,
+  VG_USERREQ__BEGIN = VG_USERREQ_TOOL_BASE('H', 'B'),
   // And this will end it.
   VG_USERREQ__END,
 
