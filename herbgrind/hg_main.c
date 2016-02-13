@@ -177,8 +177,8 @@ static void hg_fini(Int exitcode){
   cleanup_runtime();
 
   // Write out the report
-  HChar filename[50];
-  VG_(snprintf)(filename, 50, "%s-errors.gh", VG_(args_the_exename));
+  HChar filename[100];
+  VG_(snprintf)(filename, 100, "%s-errors.gh", VG_(args_the_exename));
   VG_(printf)("Writing report out to %s\n", filename);
   writeReport(filename);
 }
