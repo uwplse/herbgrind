@@ -9,15 +9,15 @@
 #include "pub_tool_libcbase.h"
 
 // Whether or not the tool is currently "turned on".
-int running = 0;
+Bool running = True;
 // The address we were at during the last AbiHint statement.
 Addr last_abi_addr = 0x0;
 
 // This disables the instrumentation of this tool.
-void stopHerbGrind(void){ running = 0; }
+void stopHerbGrind(void){ running = False; }
 
 // This enables the instrumentation of this tool.
-void startHerbGrind(void){ running = 1; }
+void startHerbGrind(void){ running = True; }
 
 // Some memory allocation functions for gmp support
 void* gmp_alloc(size_t t){ return VG_(malloc)("hg.gmp_alloc.1", t); }

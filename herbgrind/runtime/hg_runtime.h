@@ -20,7 +20,7 @@
 // For mpfr_t
 #include "mpfr.h"
 
-extern int running;
+extern Bool running;
 // This address should be updated at every AbiHint statement, because
 // the last one that happens before we realize we're in a wrapped
 // function is (probably) the location of the call to that
