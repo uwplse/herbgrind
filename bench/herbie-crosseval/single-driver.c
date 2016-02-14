@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include "herbgrind.h"
-#include "driver_macros.h"
+#include "driver-macros.h"
 
 double f_id(ARGS(double));
 
@@ -23,4 +23,6 @@ int main(int argc, char** argv){
   HERBGRIND_BEGIN();
   result = INVOKE(f_id, args);
   HERBGRIND_END();
+
+  printf("result: %e\n", result);
 }
