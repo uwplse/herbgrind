@@ -10,12 +10,18 @@ NMSE-problem-3.4.6.out NMSE-section-3.11.out NMSE-section-3.5.out
 
 FLAGS=-g -std=c11 -lm -lmpfr -I../../valgrind/herbgrind/include
 
+%-s.out: %.c single-driver.c
+	gcc $(FLAGS) \
+		-DNARGS=$(shell grep f_if $*.c | tr '()_ ,' '\n' \
+                          | tail -n+2 | grep float -c) \
+	-o $@ single-driver.c $<
+	chmod u+x $@
+
 %.out: %.c driver.c
 	gcc $(FLAGS) \
 		-DNARGS=$(shell grep f_if $*.c | tr '()_ ,' '\n' \
                           | tail -n+2 | grep float -c) \
         -o $@ driver.c $<
 	chmod u+x $@
-
 
 all: $(HAMMING)
