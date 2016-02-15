@@ -184,6 +184,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
   case Iop_V128to64:
   case Iop_V128HIto64:
   case Iop_V128to32:
+  case Iop_64UtoV128:
+  case Iop_SetV128lo64:
     {
       LocType resultType;
       // Get the input and output location types for allocating
@@ -210,6 +212,10 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
         break;
       case Iop_V128to32:
         resultType = Lt_Float;
+        break;
+      case Iop_64UtoV128:
+      case Iop_SetV128lo64:
+        resultType = Lt_Doublex2;
         break;
       default:
         return;
@@ -240,6 +246,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       case Iop_V128to64:
       case Iop_V128to32:
       case Iop_F128LOtoF64:
+      case Iop_64UtoV128:
+      case Iop_SetV128lo64:
         copySV(&argLocation->values[0], &destLocation->values[0]);
         break;
       default:
@@ -473,7 +481,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       destLocation = mkShadowLocation(argType);
 
       for (int i = 0; i < num_values; ++i){
-        // Set the low order bits to the result of the addition, but in
+        // Set the low order bits to the result of the operation, but in
         // higher precision.
         mpfr_func(destLocation->values[i].value,
                   arg2Location->values[i].value,

@@ -32,6 +32,10 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
         arg_size = sizeof(double) * 2;
         result_size = sizeof(double);
         break;
+      case Iop_64UtoV128:
+      case Iop_SetV128lo64:
+        arg_size = sizeof(double);
+        result_size = sizeof(double)*2;
       case Iop_V128to32:
         arg_size = sizeof(float) * 4;
         result_size = sizeof(float);
@@ -103,6 +107,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_V128to32:
       case Iop_V128to64:
       case Iop_V128HIto64:
+      case Iop_64UtoV128:
+      case Iop_SetV128lo64:
       case Iop_RecipEst64Fx2:
       case Iop_RSqrtEst64Fx2:
       case Iop_Abs64Fx2:
