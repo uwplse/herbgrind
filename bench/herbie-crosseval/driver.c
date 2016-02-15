@@ -3,9 +3,11 @@
 #include <stdbool.h>
 #include <math.h>
 #include "herbgrind.h"
-#include "driver_macros.h"
+#include "driver-macros.h"
 
 double f_id(ARGS(double));
+double f_im(ARGS(double));
+void setup_mpfr_f_im();
 
 double rand_double() {
         long long c0 = rand()&0xffff;
@@ -30,6 +32,8 @@ int main(int argc, char** argv){
     num_samples = atoi(argv[1]);
   }
 
+  setup_mpfr_f_im();
+
   // For each sample
   for (int i = 0; i < num_samples; ++i){
     // Get some random arguments. If they end up including nans or
@@ -41,7 +45,7 @@ int main(int argc, char** argv){
       valid_args = true;
       for (int j = 0; j < NARGS; ++j){
         if (!ordinaryd(args[j])) valid_args = false;
-        if (!ordinaryd(INVOKE(f_id, args))) valid_args = false;
+        else if (!ordinaryd(INVOKE(f_im, args))) valid_args = false;
       }
       if (valid_args){
         for (int j = 0; j < NARGS; ++j){
