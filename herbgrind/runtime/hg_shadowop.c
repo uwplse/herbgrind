@@ -4,6 +4,7 @@
 // Some functions and definitions that our implementation depends on.
 #include "hg_hiprec_ops.h"
 #include "hg_storage_runtime.h"
+#include "../include/hg_options.h"
 
 // Execute a shadow operation, storing the result of the high
 // precision operation applied to the shadow value at the arg_tmp
@@ -157,6 +158,15 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       destLocation = mkShadowLocation(argType);
       int i;
       for (i = 0; i < num_vals; ++i){
+        if (print_inputs){
+          char* shadowArgStr;
+          mpfr_exp_t shadowArgExpt;
+
+          shadowArgStr = mpfr_get_str(NULL, &shadowArgExpt, 10, longprint_len, argLocation->values[i].value, MPFR_RNDN);
+          VG_(printf)("Shadow arg, part %d: %se%ld\n",
+                      i, shadowArgStr, shadowArgExpt);
+          mpfr_free_str(shadowArgStr);
+        }
         mpfr_func(destLocation->values[i].value,
                   argLocation->values[i].value,
                   MPFR_RNDN);
@@ -481,6 +491,15 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       destLocation = mkShadowLocation(argType);
 
       for (int i = 0; i < num_values; ++i){
+        if (print_inputs){
+          char* shadowArgStr;
+          mpfr_exp_t shadowArgExpt;
+
+          shadowArgStr = mpfr_get_str(NULL, &shadowArgExpt, 10, longprint_len, arg2Location->values[i].value, MPFR_RNDN);
+          VG_(printf)("Shadow arg, part %d: %se%ld\n",
+                      i, shadowArgStr, shadowArgExpt);
+          mpfr_free_str(shadowArgStr);
+        }
         // Set the low order bits to the result of the operation, but in
         // higher precision.
         mpfr_func(destLocation->values[i].value,
@@ -620,6 +639,17 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
 
       int i;
       for (i = 0; i < num_values; ++i){
+        if (print_inputs){
+          char *shadowArg1Str, *shadowArg2Str;
+          mpfr_exp_t shadowArg1Expt, shadowArg2Expt;
+
+          shadowArg1Str = mpfr_get_str(NULL, &shadowArg1Expt, 10, longprint_len, arg1Location->values[i].value, MPFR_RNDN);
+          shadowArg2Str = mpfr_get_str(NULL, &shadowArg2Expt, 10, longprint_len, arg2Location->values[i].value, MPFR_RNDN);
+          VG_(printf)("Shadow first arg, part %d: %se%ld\nShadow second arg, part %d: %se%ld\n",
+                      i, shadowArg1Str, shadowArg1Expt, i, shadowArg2Str, shadowArg2Expt);
+          mpfr_free_str(shadowArg1Str);
+          mpfr_free_str(shadowArg2Str);
+        }
         // Set the destination shadow values to the result of a
         // high-precision shadowing operation, for each channel in which
         // it occurs.
@@ -853,6 +883,19 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
   destLocation = mkShadowLocation(type);
 
   for (int i = 0; i < num_vals; ++i){
+    if (print_inputs){
+      char *shadowArg2Str, *shadowArg3Str;
+      mpfr_exp_t shadowArg2Expt, shadowArg3Expt;
+
+      shadowArg2Str = mpfr_get_str(NULL, &shadowArg2Expt, 10, longprint_len, arg2Location->values[i].value, MPFR_RNDN);
+      shadowArg3Str = mpfr_get_str(NULL, &shadowArg3Expt, 10, longprint_len, arg3Location->values[i].value, MPFR_RNDN);
+      VG_(printf)("Shadow first arg, part %d: %se%ld\n"
+                  "Shadow second arg, part %d: %se%ld\n",
+                  i, shadowArg2Str, shadowArg2Expt,
+                  i, shadowArg3Str, shadowArg3Expt);
+      mpfr_free_str(shadowArg2Str);
+      mpfr_free_str(shadowArg3Str);
+    }
     // Set the destination shadow value to the result of a
     // high-precision shadowing operation.
     mpfr_func(destLocation->values[i].value, arg2Location->values[i].value,
@@ -940,6 +983,23 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
             arg3Location->values[0].value, arg4Location->values[0].value,
             roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->args.qargs.arg1_value)[0]));
 
+  if (print_inputs){
+    char *shadowArg2Str, *shadowArg3Str, *shadowArg4Str;
+    mpfr_exp_t shadowArg2Expt, shadowArg3Expt, shadowArg4Expt;
+
+    shadowArg2Str = mpfr_get_str(NULL, &shadowArg2Expt, 10, longprint_len, arg2Location->values[0].value, MPFR_RNDN);
+    shadowArg3Str = mpfr_get_str(NULL, &shadowArg3Expt, 10, longprint_len, arg3Location->values[0].value, MPFR_RNDN);
+    shadowArg4Str = mpfr_get_str(NULL, &shadowArg4Expt, 10, longprint_len, arg4Location->values[0].value, MPFR_RNDN);
+    VG_(printf)("Shadow first arg, part 0: %se%ld\n"
+                "Shadow second arg, part 0: %se%ld\n"
+                "Shadow third arg, part 0: %se%ld\n",
+                shadowArg2Str, shadowArg2Expt,
+                shadowArg3Str, shadowArg3Expt,
+                shadowArg4Str, shadowArg4Expt);
+    mpfr_free_str(shadowArg2Str);
+    mpfr_free_str(shadowArg3Str);
+    mpfr_free_str(shadowArg4Str);
+  }
   // Now, we'll evaluate the shadow value against the result value.
   evaluateOpError_helper(&(destLocation->values[0]),
                          opInfo->dest_value, argType, 0,
@@ -977,6 +1037,9 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_vals
   // If we already have a shadow location here, just return it.
   ShadowLocation* location = getTemp(tmp_num);
   if (location != NULL) return location;
+
+  if (print_moves)
+    VG_(printf)("Creating new shadow location in temp %lu\n", tmp_num);
 
   // Otherwise we need to create a new one. How we do this will depend
   // on the expected type of the location, passed as "type".
