@@ -10,12 +10,16 @@ SizeT num_tracked_ops;
 SizeT array_size;
 
 // How many characters are going to be allowed in each entry.
-#define ENTRY_BUFFER_SIZE 300
+#define ENTRY_BUFFER_SIZE 512
+#define START_ARRAY_SIZE 10
 
 void startTrackingOp(Op_Info* opinfo){
   // If our array is already full...
   if (num_tracked_ops >= array_size){
-    // Double its size.
+    if (array_size == 0){
+      tracked_ops = VG_(malloc)("hg.init_tracked_op_array.1", START_ARRAY_SIZE);
+      array_size = START_ARRAY_SIZE;
+    }
     tracked_ops = VG_(realloc)("hg.expand_tracked_op_array.1", tracked_ops, array_size * 2);
     array_size = array_size * 2;
   }
