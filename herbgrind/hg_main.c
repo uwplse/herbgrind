@@ -132,10 +132,12 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
 mpfr_prec_t precision = 1000;
 double error_threshold = 1.0;
 Bool human_readable = True;
+const HChar* outfile_path = NULL;
 
 SizeT longprint_len = 15;
 Bool print_in_blocks = False;
 Bool print_out_blocks = False;
+Bool print_inputs = False;
 Bool print_errors = False;
 Bool print_errors_long = False;
 Bool print_moves = False;
@@ -150,11 +152,13 @@ static Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_INT_CLO(arg, "--long-print-len", longprint_len) {}
   else if VG_XACT_CLO(arg, "--print-in-blocks", print_in_blocks, True) {}
   else if VG_XACT_CLO(arg, "--print-out-blocks", print_out_blocks, True) {}
+  else if VG_XACT_CLO(arg, "--print-inputs", print_inputs, True) {}
   else if VG_XACT_CLO(arg, "--print-errors", print_errors, True) {}
   else if VG_XACT_CLO(arg, "--print-errors-long", print_errors_long, True) {}
   else if VG_XACT_CLO(arg, "--print-moves", print_moves, True) {}
   else if VG_XACT_CLO(arg, "--print-mallocs", print_mallocs, True) {}
   else if VG_XACT_CLO(arg, "--start-off", running, False) {}
+  else if VG_STR_CLO(arg, "--outfile", outfile_path) {}
   else return False;
   return True;
 }
@@ -164,13 +168,15 @@ static void hg_print_usage(void){
               " --error-threshold=<number> the threshold over which to report an erroneous operation (bits) [1]\n"
               " --human output in human-readable form (default)\n"
               " --machine output in machine-readable form\n"
-              " --start-off Turn off instrumentation until HERBGRIND_BEGIN() is called\n"
+              " --start-off turn off instrumentation until HERBGRIND_BEGIN() is called\n"
+              " --outfile=<filepath> the output file path.\n"
               );
 }
 static void hg_print_debug_usage(void){
   VG_(printf)(" --longprint-len=<number> the length of long-printed shadow values [15]\n"
               " --print-in-blocks print the incoming VEX blocks\n"
               " --print-out-blocks print the instrumented VEX blocks\n"
+              " --print-inputs print the inputs to operations alongside the errors\n"
               " --print-errors print the errors of operations as they're executed\n"
               " --print-errors-long print the errors of the operations as they're executed, in long form. This means that we'll print the shadow values to <longprint-len> decimal digits, instead of rounding them\n"
               " --print-moves print every move of a shadow value/location\n"
@@ -184,9 +190,12 @@ static void hg_fini(Int exitcode){
 
   // Write out the report
   HChar filename[100];
-  VG_(snprintf)(filename, 100, "%s-errors.gh", VG_(args_the_exename));
-  VG_(printf)("Writing report out to %s\n", filename);
-  writeReport(filename);
+  if (outfile_path == NULL){
+    VG_(snprintf)(filename, 100, "%s-errors.gh", VG_(args_the_exename));
+    outfile_path = filename;
+  }
+  VG_(printf)("Writing report out to %s\n", outfile_path);
+  writeReport(outfile_path);
 }
 // This does any initialization that needs to be done after command
 // line processing.
