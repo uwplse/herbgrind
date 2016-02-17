@@ -16,6 +16,7 @@ FLAGS=-g -std=c11 -lm -lmpfr -I../../valgrind/herbgrind/include
                           | tail -n+2 | grep float -c) \
 	-o $@ single-driver.c $<
 	chmod u+x $@
+HERBIE-PATH=../../../herbie
 
 %.out: %.c driver.c
 	gcc $(FLAGS) \
@@ -23,5 +24,10 @@ FLAGS=-g -std=c11 -lm -lmpfr -I../../valgrind/herbgrind/include
                           | tail -n+2 | grep float -c) \
         -o $@ driver.c $<
 	chmod u+x $@
+
+%_pts.c: %.c
+
+%.c:
+	cd $(HERBIE-PATH) && racket herbie/compile/c-single.rkt -p bench/hamming/ ../herbgrind/bench/herbie-crosseval/
 
 all: $(HAMMING)
