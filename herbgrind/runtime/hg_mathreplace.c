@@ -218,6 +218,10 @@ void performOp(OpType op, double* result, double* args){
   evaluateOpError(&(res_shadow->values[0]), *result, entry->info);
 
   // And free up the arrays we malloc for variable number of args.
+  for (int i = 0; i < nargs; ++i){
+    mpfr_clear(args_m[i]);
+  }
+  mpfr_clear(res);
   VG_(free)(args_m);
   VG_(free)(arg_shadows);
 }

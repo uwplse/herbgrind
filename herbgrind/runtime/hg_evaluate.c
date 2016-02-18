@@ -31,6 +31,9 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   mpfr_log2(bitsErrorM, ulpsErrorM, MPFR_RNDN);
   bitsError = mpfr_get_d(bitsErrorM, MPFR_RNDN);
 
+  mpfr_clear(ulpsErrorM);
+  mpfr_clear(bitsErrorM);
+
   // Update the persistent op record
   if (bitsError > opinfo->evalinfo.max_error){
     // This tests whether we didnt want to track it before, but do
