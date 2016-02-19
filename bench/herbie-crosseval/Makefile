@@ -47,4 +47,9 @@ HERBGRIND-PATH=~/herbie-all/herbgrind
                                      --pts bench/hamming/ $(HERBGRIND-PATH)/bench/herbie-crosseval/
 
 %.out-errors.gh:
-	../../valgrind/inst/bin/valgrind --tool=herbgrind --precision=3000 --start-off ./$*.out
+	$(eval PRECISION=$(shell grep mpfr_set_default_prec $*.c | head -n 1 | cut -d '(' -f 2 | cut -d ')' -f 1))
+	echo $(PRECISION)
+	../../valgrind/inst/bin/valgrind --tool=herbgrind \
+                                         --precision=$(PRECISION) \
+                                         --start-off \
+                                         ./$*.out
