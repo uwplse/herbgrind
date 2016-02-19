@@ -15,6 +15,8 @@ NMSE-section-3.5.out-errors.gh
 
 FLAGS=-g -std=c11 -lm -lmpfr -I../../valgrind/herbgrind/include
 
+.PHONY: all Makefile
+
 all: $(HAMMING)
 
 .SECONDARY: %-pts.c %.c
