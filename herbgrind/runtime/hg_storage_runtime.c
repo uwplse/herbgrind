@@ -104,7 +104,7 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType dest_type, UWord dest
 // evaluates to true. Otherwise, copy the shadow value from another
 // temporary, "alt_tmp".
 VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
-  ShadowLocation* src;
+  ShadowLocation* src = NULL;
   if (info->dest_tmp > maxTempUsed) maxTempUsed = info->dest_tmp;
   if (info->cond) {
     if (!running && getMem(info->src_mem) != NULL) return;
