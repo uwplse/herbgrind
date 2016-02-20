@@ -48,6 +48,7 @@
 // memmove, memcmp, and memset functions of mpfr to their valgrind
 // library equivalents.
 #include "pub_tool_libcbase.h"
+#include "mpfr.h"
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
