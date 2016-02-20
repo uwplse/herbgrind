@@ -135,7 +135,9 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_Sqrt64F0x2:
         // Allocate and partially setup the argument structure
         opInfo = mkOp_Info(1, expr->Iex.Unop.op,
-                           opAddr, getPlainOpname(expr->Iex.Unop.op));
+                           opAddr,
+                           getPlainOpname(expr->Iex.Unop.op),
+                           getOpSymbol(expr->Iex.Unop.op));
 
         // Populate the argument/result values we know at instrument time now.
         opInfo->args.uargs.arg_tmp = getArgTmp(expr->Iex.Unop.arg, sb);
@@ -277,7 +279,9 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_SetV128lo64:
         // Allocate and partially setup the argument structure
         opInfo = mkOp_Info(2, expr->Iex.Binop.op,
-                           opAddr, getPlainOpname(expr->Iex.Binop.op));
+                           opAddr,
+                           getPlainOpname(expr->Iex.Binop.op),
+                           getOpSymbol(expr->Iex.Binop.op));
 
         // Populate the argument/result values we know at instrument time now.
         opInfo->args.bargs.arg1_tmp = getArgTmp(expr->Iex.Binop.arg1, sb);
@@ -412,7 +416,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_DivF64r32:
         // Allocate and partially setup the argument structure
         opInfo = mkOp_Info(3, expr->Iex.Triop.details->op, opAddr,
-                           getPlainOpname(expr->Iex.Triop.details->op));
+                           getPlainOpname(expr->Iex.Triop.details->op),
+                           getOpSymbol(expr->Iex.Triop.details->op));
 
         // Populate the values we know at instrument time now.
         opInfo->args.targs.arg1_tmp = getArgTmp(expr->Iex.Triop.details->arg1, sb);
@@ -483,7 +488,8 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_MSubF64r32:
         // Allocate and partially setup the argument structure
         opInfo = mkOp_Info(4, expr->Iex.Qop.details->op, opAddr,
-                           getPlainOpname(expr->Iex.Qop.details->op));
+                           getPlainOpname(expr->Iex.Qop.details->op),
+                           getOpSymbol(expr->Iex.Qop.details->op));
 
         // Populate the values we know at instrument time now.
         opInfo->op = expr->Iex.Qop.details->op;
@@ -669,5 +675,133 @@ const HChar* getPlainOpname(IROp op){
   default:
     return "";
 
+  }
+}
+const HChar* getOpSymbol(IROp op){
+  switch (op){
+  case Iop_Abs32Fx4:
+  case Iop_Abs64Fx2:
+  case Iop_AbsF32:
+  case Iop_AbsF64:
+  case Iop_Abs32Fx2:
+    return "abs";
+  case Iop_Neg32Fx4:
+  case Iop_Neg64Fx2:
+  case Iop_NegF32:
+  case Iop_NegF64:
+  case Iop_Neg32Fx2:
+    return "-";
+  case Iop_Sqrt32F0x4:
+  case Iop_Sqrt64F0x2:
+  case Iop_Sqrt64Fx2:
+  case Iop_SqrtF64:
+  case Iop_SqrtF32:
+    return "sqrt";
+  case Iop_Add32Fx2:
+  case Iop_Add32F0x4:
+  case Iop_Add64F0x2:
+  case Iop_Add32Fx8:
+  case Iop_Add64Fx4:
+  case Iop_Add32Fx4:
+  case Iop_Add64Fx2:
+  case Iop_AddF128:
+  case Iop_AddF64:
+  case Iop_AddF32:
+  case Iop_AddF64r32:
+    return "+";
+  case Iop_Sub32Fx2:
+  case Iop_Sub32F0x4:
+  case Iop_Sub64F0x2:
+  case Iop_Sub32Fx8:
+  case Iop_Sub64Fx4:
+  case Iop_Sub32Fx4:
+  case Iop_Sub64Fx2:
+  case Iop_SubF128:
+  case Iop_SubF64:
+  case Iop_SubF32:
+  case Iop_SubF64r32:
+    return "-";
+  case Iop_Mul32F0x4:
+  case Iop_Mul64F0x2:
+  case Iop_Mul32Fx8:
+  case Iop_Mul64Fx4:
+  case Iop_Mul32Fx4:
+  case Iop_Mul64Fx2:
+  case Iop_MulF128:
+  case Iop_MulF64:
+  case Iop_MulF32:
+  case Iop_MulF64r32:
+    return "*";
+  case Iop_Div32F0x4:
+  case Iop_Div64F0x2:
+  case Iop_Div32Fx8:
+  case Iop_Div64Fx4:
+  case Iop_Div32Fx4:
+  case Iop_Div64Fx2:
+  case Iop_DivF128:
+  case Iop_DivF64:
+  case Iop_DivF32:
+  case Iop_DivF64r32:
+    return "/";
+  case Iop_SinF64:
+    return "sin";
+  case Iop_CosF64:
+    return "cos";
+  case Iop_TanF64:
+    return "tan";
+  case Iop_AtanF64:
+    return "atan";
+  case Iop_MAddF32:
+  case Iop_MAddF64:
+  case Iop_MAddF64r32:
+    return "flfma";
+  case Iop_MSubF32:
+  case Iop_MSubF64:
+  case Iop_MSubF64r32:
+    return "flfms";
+  case Iop_ZeroHI96ofV128:
+  case Iop_ZeroHI64ofV128:
+  case Iop_V128to32:
+  case Iop_V128to64:
+  case Iop_V128HIto64:
+  case Iop_RoundF64toF32:
+  case Iop_TruncF64asF32:
+  case Iop_RoundF64toF64_NEAREST:
+  case Iop_RoundF64toF64_NegINF:
+  case Iop_RoundF64toF64_PosINF:
+  case Iop_RoundF64toF64_ZERO:
+  case Iop_F128HItoF64:
+  case Iop_F128LOtoF64:
+  case Iop_F32toF64:
+  case Iop_RecpExpF64:
+  case Iop_RecpExpF32:
+  case Iop_RoundF64toInt:
+  case Iop_RoundF32toInt:
+  case Iop_64HLtoV128:
+  case Iop_F64HLtoF128:
+  case Iop_F64toF32:
+  case Iop_SetV128lo32:
+  case Iop_SetV128lo64:
+  case Iop_2xm1F64:
+  case Iop_Yl2xF64:
+  case Iop_Yl2xp1F64:
+  case Iop_ScaleF64:
+  case Iop_RecipEst32Fx4:
+  case Iop_RecipEst64Fx2:
+  case Iop_RecipEst32F0x4:
+  case Iop_RecipEst32Fx2:
+  case Iop_RecipStep32Fx4:
+  case Iop_RecipStep32Fx2:
+  case Iop_RecipStep64Fx2:
+  case Iop_RSqrtEst32Fx4:
+  case Iop_RSqrtEst64Fx2:
+  case Iop_RSqrtEst32F0x4:
+  case Iop_RSqrtEst32Fx2:
+  case Iop_RSqrtEst5GoodF64:
+  case Iop_RSqrtStep32Fx4:
+  case Iop_RSqrtStep32Fx2:
+  case Iop_RSqrtStep64Fx2:
+  default:
+    return "";
   }
 }

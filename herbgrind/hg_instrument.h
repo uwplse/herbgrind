@@ -39,6 +39,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr);
 
 // Get the plain name of the op, like "subtraction"
 const HChar* getPlainOpname(IROp op);
+const HChar* getOpSymbol(IROp op);
 
 // Get a temporary number where the given argument expression is
 // stored.

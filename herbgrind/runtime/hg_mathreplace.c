@@ -63,6 +63,7 @@ void performOp(OpType op, double* result, double* args){
   mpfr_t *args_m, res;
   ShadowLocation **arg_shadows, *res_shadow;
   const HChar* plain_opname;
+  const HChar* op_symbol;
 
   // Initialize our 64-bit mpfr arg and shadow, and get the result
   // shadow set up.
@@ -100,62 +101,77 @@ void performOp(OpType op, double* result, double* args){
       switch(op){
       case OP_SQRT:
         plain_opname = "square root";
+        op_symbol = "sqrt";
         mpfr_func = mpfr_sqrt;
         break;
       case OP_EXP:
         plain_opname = "exponentiate";
+        op_symbol = "exp";
         mpfr_func = mpfr_exp;
         break;
       case OP_LOG:
         plain_opname = "log";
+        op_symbol = "log";
         mpfr_func = mpfr_log;
         break;
       case OP_COS:
         plain_opname = "cosine";
+        op_symbol = "cos";
         mpfr_func = mpfr_cos;
         break;
       case OP_SIN:
         plain_opname = "sine";
+        op_symbol = "sin";
         mpfr_func = mpfr_sin;
         break;
       case OP_TAN:
         plain_opname = "tangent";
+        op_symbol = "tan";
         mpfr_func = mpfr_tan;
         break;
       case OP_ASIN:
         plain_opname = "arcsine";
+        op_symbol = "asin";
         mpfr_func = mpfr_asin;
         break;
       case OP_ACOS:
         plain_opname = "arccosine";
+        op_symbol = "acos";
         mpfr_func = mpfr_acos;
         break;
       case OP_ATAN:
         plain_opname = "arctangent";
+        op_symbol = "atan";
         mpfr_func = mpfr_atan;
         break;
       case OP_SINH:
         plain_opname = "hyperbolic sine";
+        op_symbol = "sinh";
         mpfr_func = mpfr_sinh;
         break;
       case OP_COSH:
         plain_opname = "hyperbolic cosine";
+        op_symbol = "cosh";
         mpfr_func = mpfr_cosh;
         break;
       case OP_TANH:
         plain_opname = "hyperbolic tangent";
+        op_symbol = "tanh";
         mpfr_func = mpfr_tanh;
         break;
       case OP_ABS:
         plain_opname = "absolute";
+        op_symbol = "abs";
         mpfr_func = mpfr_abs;
         break;
       case OP_EXPM1:
         plain_opname = "exponentiate minus one";
+        op_symbol = "expm1";
         mpfr_func = mpfr_expm1;
         break;
       case OP_LOG1P:
         plain_opname = "plus 1 log";
+        op_symbol = "log1p";
         mpfr_func = mpfr_log1p;
         break;
       default:
@@ -175,18 +191,22 @@ void performOp(OpType op, double* result, double* args){
       switch(op){
       case OP_MOD:
         plain_opname = "modulus";
+        op_symbol = "mod";
         mpfr_func = mpfr_fmod;
         break;
       case OP_POW:
         plain_opname = "power";
+        op_symbol = "pow";
         mpfr_func = mpfr_pow;
         break;
       case OP_ATAN2:
         plain_opname = "arctangent (two arguments)";
+        op_symbol = "atan2";
         mpfr_func = mpfr_atan2;
         break;
       case OP_HYPOT:
         plain_opname = "hypotenuse";
+        op_symbol = "hypot";
         mpfr_func = mpfr_hypot;
         break;
       default:
@@ -208,7 +228,7 @@ void performOp(OpType op, double* result, double* args){
   // create one if one doesn't already exist.
   OpInfo_Entry* entry = VG_(HT_lookup)(callToOpInfoMap, last_abi_addr);
   if (entry == NULL){
-    Op_Info* callInfo = mkOp_Info(nargs, 0x0, last_abi_addr, plain_opname);
+    Op_Info* callInfo = mkOp_Info(nargs, 0x0, last_abi_addr, plain_opname, op_symbol);
     ALLOC(entry, "hg.opinfo_entry.1", 1, sizeof(OpInfo_Entry));
     entry->call_addr = last_abi_addr;
     entry->info = callInfo;

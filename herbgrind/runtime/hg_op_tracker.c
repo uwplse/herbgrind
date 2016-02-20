@@ -71,6 +71,6 @@ void writeReport(const HChar* filename){
     VG_(write)(file_d, buf, entry_len);
   }
 
-  // Finally, cose up the file.
+  // Finally, close up the file.
   VG_(close)(file_d);
 }

@@ -34,9 +34,14 @@ typedef struct _OpDebug_Info {
   const HChar* fnname;
   // The plaintext name of the operation, like "subtraction"
   const HChar* plain_opname;
+  // The function symbol of the operation (e.g. '+' or 'sin')
+  const HChar* symbol;
 } OpDebug_Info;
 
-void getOpDebug_Info(Addr op_addr, const HChar* plain_opname, OpDebug_Info* result);
+void getOpDebug_Info(Addr op_addr,
+                     const HChar* plain_opname,
+                     const HChar* symbol,
+                     OpDebug_Info* result);
 
 typedef struct _Eval_Info {
   // The most error the output of this operation has ever had.
@@ -142,7 +147,8 @@ typedef struct _Op_Info {
   } args;
 } Op_Info;
 
-Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr, const HChar* name);
+Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
+                   const HChar* name, const HChar* symbol);
 
 #ifdef VG_LITTLEENDIAN
 #define ENDIAN Iend_LE
