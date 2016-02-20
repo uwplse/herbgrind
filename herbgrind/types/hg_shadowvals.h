@@ -11,9 +11,9 @@
 #include "pub_tool_basics.h"
 
 // The shadow value for each logical floating point value
-typedef struct _ShadowValue {
+struct _ShadowValue {
   mpfr_t value;
-} ShadowValue;
+};
 
 // Approximately what you expect. copySV will do a deep copy for you,
 // freeSV will free up the structure.
@@ -41,7 +41,7 @@ size_t capacity(LocType bytestype);
 
 // The value we're tracking for each floating point storage location
 // in the program.
-typedef struct _ShadowLocation {
+struct _ShadowLocation {
   // The actual high precision values shadowing a float. In most cases
   // this should be a pointer to a single value, but in cases where we
   // move, for instance, two 64-bit floats into a 128 bit location, we
@@ -55,9 +55,9 @@ typedef struct _ShadowLocation {
   // Reference counter. This lets us free up shadow locations that
   // are no longer accessible.
   size_t ref_count;
-} ShadowLocation;
+};
 
-typedef struct _ShadowLocation_ptr {
+struct _ShadowLocation_ptr {
   // This member is here to make this structure compatible with the
   // hash table implementation in pub_tool_hashtable. None of our code
   // will actually use it.
@@ -68,7 +68,7 @@ typedef struct _ShadowLocation_ptr {
   UWord addr;
   // The actual shadow value we're pointing to.
   ShadowLocation* sl;
-} ShadowLocation_ptr;
+};
 
 // Create a new initialized shadow location of the given type.
 ShadowLocation* mkShadowLocation(LocType type);
