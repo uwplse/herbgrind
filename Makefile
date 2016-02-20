@@ -61,7 +61,7 @@ valgrind/herbgrind/Makefile: valgrind/README herbgrind/Makefile.am
 # Run the autogen and configure scripts to turn the .am file into a
 # real makefile.
 	cd valgrind && ./autogen.sh
-	cd valgrind && ./configure --prefix=$(shell pwd)/valgrind/inst
+	cd valgrind && ./configure --prefix=$(shell pwd)/valgrind/herbgrind-install
 
 # This is the target we call to bring in the dependencies, like gmp,
 # mpfr, and valgrind, and to make sure the herbgrind files have been
@@ -70,7 +70,7 @@ setup: valgrind/herbgrind/Makefile $(DEPS)
 
 # This is the target we call to actually get the executable built so
 # we can run herbgrind. 
-valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) setup
+valgrind/herbgrind-install/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) setup
 # First, we've got to make sure all the dependencies are extracted and set up.
 	$(MAKE) setup
 # Copy over the herbgrind sources again, because why the hell not.
@@ -80,7 +80,7 @@ valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) setup
 	$(MAKE) -C valgrind/ install
 
 # Alias the compile target to just "compile" for ease of use
-compile: valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT)
+compile: valgrind/herbgrind-install/lib/valgrind/herbgrind-$(TARGET_PLAT)
 
 # Use the gmp README to tell if gmp has been extracted yet.
 deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz
@@ -98,7 +98,8 @@ deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz
 # Configure and make it, putting its output in the install folder
 # locally instead of in a global location, so it doesn't conflict with
 # other versions of gmp.
-	cd deps/gmp-$*/ && ABI=$* ./configure --prefix=$(shell pwd)/deps/gmp-$*/install
+	cd deps/gmp-$*/ && \
+		ABI=$* ./configure --prefix=$(shell pwd)/deps/gmp-$*/herbgrind-install
 	$(MAKE) -C deps/gmp-$*
 	$(MAKE) -C deps/gmp-$* install
 
@@ -112,16 +113,18 @@ deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz
 MPFR_CONFIGURE_FLAGS = --disable-thread-safe
 
 configure-mpfr-32:
-	cd deps/mpfr-32/ && ./configure --prefix=$(shell pwd)/deps/mpfr-32/install \
-				        --with-gmp-build=$(shell pwd)/deps/gmp-32 \
-				        --build=i386 \
-                                        $(MPFR_CONFIGURE_FLAGS)
+	cd deps/mpfr-32/ && \
+		./configure --prefix=$(shell pwd)/deps/mpfr-32/herbgrind-install \
+		            --with-gmp-build=$(shell pwd)/deps/gmp-32 \
+		            --build=i386 \
+		            $(MPFR_CONFIGURE_FLAGS)
 
 configure-mpfr-64:
-	cd deps/mpfr-64/ && ./configure --prefix=$(shell pwd)/deps/mpfr-64/install \
-				        --with-gmp-build=$(shell pwd)/deps/gmp-64 \
-				        --build=amd64 \
-					$(MPFR_CONFIGURE_FLAGS)
+	cd deps/mpfr-64/ && \
+		./configure --prefix=$(shell pwd)/deps/mpfr-64/herbgrind-install \
+		            --with-gmp-build=$(shell pwd)/deps/gmp-64 \
+		            --build=amd64 \
+		            $(MPFR_CONFIGURE_FLAGS)
 
 # Use the mpfr readme to tell if mpfr has been extracted yet.
 deps/mpfr-%/README: setup/mpfr-$(MPFR_VERSION).tar.xz
@@ -146,5 +149,8 @@ deps/mpfr-%/README: setup/mpfr-$(MPFR_VERSION).tar.xz
 wc:
 	wc $(SOURCES) $(HEADERS)
 
+clean-deps:
+	rm -rf valgrind/ deps/
+
 clear-preload:
-	rm valgrind/inst/lib/vgpreload_herbgrind*
+	rm valgrind/herbgrind-install/lib/vgpreload_herbgrind*

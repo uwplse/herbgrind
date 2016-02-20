@@ -55,4 +55,4 @@ every build.
 Running
 -------
 
-To run, just run "*path-to-herbgrind*/valgrind/inst/bin/valgrind --tool=herbgrind *executable-to-run-on*"
+To run, just run "*path-to-herbgrind*/valgrind/herbgrind-install/bin/valgrind --tool=herbgrind *executable-to-run-on*"

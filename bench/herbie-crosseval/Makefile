@@ -49,7 +49,7 @@ HERBGRIND-PATH=~/herbie-all/herbgrind
 %.out-errors.gh:
 	$(eval PRECISION=$(shell grep mpfr_set_default_prec $*.c | head -n 1 | cut -d '(' -f 2 | cut -d ')' -f 1))
 	echo $(PRECISION)
-	../../valgrind/inst/bin/valgrind --tool=herbgrind \
+	../../valgrind/herbgrind-install/bin/valgrind --tool=herbgrind \
                                          --precision=$(PRECISION) \
                                          --start-off \
                                          ./$*.out
