@@ -48,13 +48,7 @@
 // memmove, memcmp, and memset functions of mpfr to their valgrind
 // library equivalents.
 #include "pub_tool_libcbase.h"
-
-// TODO : put these in the right header somewhere (based on setup/valgrind_additions.c)
-void mpfr_set_strlen_function (size_t (*strlen_func) (const char*));
-void mpfr_set_strcpy_function (char* (*strcpy_func) (char*, const char*));
-void mpfr_set_memmove_function (void* (*memmove_func) (void*, const void*, size_t));
-void mpfr_set_memcmp_function (int (*memcmp_func) (const void*, const void*, size_t));
-void mpfr_set_memset_function (void* (*memset_func) (void*, int, size_t));
+#include "mpfr.h"
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
