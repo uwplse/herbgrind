@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 MPFR_DIR=../deps/mpfr-$1/src
 

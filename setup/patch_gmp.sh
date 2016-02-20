@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 # Comment out uses of malloc, realloc, free, and fprinf, in the
 # default memory functions for gmp. We'll be calling

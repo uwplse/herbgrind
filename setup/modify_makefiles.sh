@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 # Modify the valgrind makefiles to include the herbgrind directory
 awk -i inplace '/^TOOLS =/{print;print "\t\therbgrind \\";next}1' ../valgrind/Makefile.am
