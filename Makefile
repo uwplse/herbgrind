@@ -21,7 +21,8 @@ HEADERS=herbgrind/hg_instrument.h herbgrind/include/herbgrind.h		\
 herbgrind/include/hg_include.h herbgrind/include/hg_helper.h		\
 herbgrind/include/hg_mathreplace_funcs.h				\
 herbgrind/include/hg_macros.h herbgrind/include/hg_options.h		\
-herbgrind/types/hg_shadowvals.h herbgrind/types/hg_opinfo.h		\
+herbgrind/types/hg_shadowvals.hh herbgrind/types/hg_shadowvals.h	\
+herbgrind/types/hg_opinfo.hh herbgrind/types/hg_opinfo.h		\
 herbgrind/runtime/hg_runtime.h herbgrind/runtime/hg_evaluate.h		\
 herbgrind/runtime/hg_hiprec_ops.h herbgrind/runtime/hg_shadowop.h	\
 herbgrind/runtime/hg_storage_runtime.h					\
@@ -29,9 +30,9 @@ herbgrind/runtime/hg_mathreplace.h herbgrind/runtime/hg_op_tracker.h
 
 SOURCES=herbgrind/hg_main.c herbgrind/hg_instrument.c			\
 herbgrind/hg_instrumentOp.c herbgrind/hg_mathwrap.c			\
-herbgrind/types/hg_shadowvals.c herbgrind/types/hg_opinfo.h		\
 herbgrind/runtime/hg_runtime.c herbgrind/runtime/hg_evaluate.c		\
 herbgrind/runtime/hg_hiprec_ops.c herbgrind/runtime/hg_shadowop.c	\
+herbgrind/types/hg_shadowvals.c herbgrind/types/hg_opinfo.c		\
 herbgrind/runtime/hg_storage_runtime.c					\
 herbgrind/runtime/hg_mathreplace.c herbgrind/runtime/hg_op_tracker.c
 
@@ -55,7 +56,7 @@ valgrind/README:
 valgrind/herbgrind/Makefile: valgrind/README herbgrind/Makefile.am
 # Copy over the latest version of all the herbgrind stuff, including
 # the .am file that we need for this step.
-	rm -r valgrind/herbgrind
+	rm -r valgrind/herbgrind/*
 	cp -r herbgrind/* valgrind/herbgrind/
 # Run the autogen and configure scripts to turn the .am file into a
 # real makefile.

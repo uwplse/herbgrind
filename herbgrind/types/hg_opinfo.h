@@ -1,6 +1,8 @@
 #ifndef _HG_OPINFO
 #define _HG_OPINFO
 
+#include "hg_opinfo.hh"
+
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
 

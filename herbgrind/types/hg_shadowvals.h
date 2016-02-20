@@ -1,6 +1,9 @@
 #ifndef _HG_SHADOWVALS
 #define _HG_SHADOWVALS
 
+#include "hg_shadowvals.hh"
+#include "hg_opinfo.hh"
+
 // For mpfr_t
 #include "mpfr.h"
 
