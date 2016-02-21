@@ -15,9 +15,16 @@ NMSE-section-3.5.out-errors.gh
 
 FLAGS=-g -std=c11 -lm -lmpfr -I../../valgrind/herbgrind/include
 
+RHOST=uwplse.org
+RHOSTDIR=/var/www/herbie/herbgrind/hamming
+
 .PHONY: all Makefile
 
 all: $(HAMMING)
+	$(eval B=$(git rev-parse --abbrev-ref HEAD))
+	$(eval C=$(git rev-parse HEAD | sed 's/\(..........\).*/\1/'))
+	$(eval RDIR=$(shell date +%s):$(shell hostname))
+	rsync --recursive $(HAMMING) $(RHOST):$(RHOSTDIR)/$(RDIR)
 
 .SECONDARY: %-pts.c %.c
 .PRECIOUS: %-pts.c %.c
@@ -28,6 +35,7 @@ all: $(HAMMING)
                           | tail -n+2 | grep float -c) \
 	-o $@ single-driver.c $<
 	chmod u+x $@
+
 HERBIE-PATH=../../../herbie
 HERBGRIND-PATH=~/herbie-all/herbgrind
 
