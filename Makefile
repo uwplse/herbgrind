@@ -7,7 +7,7 @@ MPFR_VERSION=3.1.3
 VALGRIND_REPO_LOCATION=svn://svn.valgrind.org/valgrind/trunk
 # The architecture thhat we're buiding herbgrind for, in the syntax of
 # valgrind filename conventions for this sort of thing.
-TARGET_PLAT=amd64-darwin
+TARGET_PLAT:=$(shell test `uname` = "Darwin" && echo "amd64-darwin" || echo "amd64-linux")
 ARCH_PRI=amd64
 ARCH_SEC=
 
@@ -62,9 +62,10 @@ valgrind/herbgrind/Makefile: valgrind/README herbgrind/Makefile.am
 # real makefile.
 	cd valgrind && ./autogen.sh
 	cd valgrind && \
+		CFLAGS="-fno-stack-protector" \
 		./configure --prefix=$(shell pwd)/valgrind/herbgrind-install \
 		            --enable-only64bit \
-		            --build=amd64-darwin
+		            --build=$(TARGET_PLAT)
 
 # This is the target we call to bring in the dependencies, like gmp,
 # mpfr, and valgrind, and to make sure the herbgrind files have been
@@ -102,7 +103,9 @@ deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz
 # locally instead of in a global location, so it doesn't conflict with
 # other versions of gmp.
 	cd deps/gmp-$*/ && \
-		ABI=$* ./configure --prefix=$(shell pwd)/deps/gmp-$*/herbgrind-install
+		CFLAGS="-fno-stack-protector" \
+		ABI=$* \
+		./configure --prefix=$(shell pwd)/deps/gmp-$*/herbgrind-install
 	$(MAKE) -C deps/gmp-$*
 	$(MAKE) -C deps/gmp-$* install
 
@@ -117,6 +120,7 @@ MPFR_CONFIGURE_FLAGS = --disable-thread-safe
 
 configure-mpfr-32:
 	cd deps/mpfr-32/ && \
+		CFLAGS="-fno-stack-protector" \
 		./configure --prefix=$(shell pwd)/deps/mpfr-32/herbgrind-install \
 		            --with-gmp-build=$(shell pwd)/deps/gmp-32 \
 		            --build=i386 \
@@ -124,6 +128,7 @@ configure-mpfr-32:
 
 configure-mpfr-64:
 	cd deps/mpfr-64/ && \
+		CFLAGS="-fno-stack-protector" \
 		./configure --prefix=$(shell pwd)/deps/mpfr-64/herbgrind-install \
 		            --with-gmp-build=$(shell pwd)/deps/gmp-64 \
 		            --build=amd64 \
