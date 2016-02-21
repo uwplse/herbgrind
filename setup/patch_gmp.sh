@@ -13,6 +13,8 @@ sed -i \
     -e 's/realloc.*(.*);/0;\/\/&/' \
     -e 's/free.*(.*);/\/\/&/' \
     -e 's/fprintf.*(.*);/;\/\/&/'\
+    -e 's/abort.*(.*);/;\/\/&/'\
     ../deps/gmp-$1/memory.c \
     ../deps/gmp-$1/assert.c \
+    ../deps/gmp-$1/errno.c \
     ../deps/gmp-$1/mpz/realloc.c

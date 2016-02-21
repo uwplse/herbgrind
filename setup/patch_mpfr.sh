@@ -27,8 +27,11 @@ sed -i \
 # First, let's do a normal replace for fprintfs that don't span a
 # line, so we can replace them with semicolons and not break if
 # statements that branch to them.
-sed -i -e 's/fprintf.*(.*);/;/' \
-    $MPFR_DIR/mpfr-gmp.c
+sed -i \
+    -e 's/fprintf.*(.*);/;/' \
+    -e 's/abort.*(.*);/;\/\/&/'\
+    $MPFR_DIR/mpfr-gmp.c \
+    $MPFR_DIR/abort_prec_max.c
 # Then let's do the complex replace. This could still potentially
 # break things, but on the version of mpfr I have, it doesn't.
 sed -i \
