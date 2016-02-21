@@ -17,15 +17,15 @@
 // inserting client calls. It's possible that by the time I'm done
 // here, I'll have recreated everything I didn't like about the
 // FpDebug code base.
-typedef struct _LoadG_Info {
+struct _LoadG_Info {
   UWord cond;
   Addr src_mem;
   UWord alt_tmp;
   UWord dest_tmp;
   IRType dest_type;
-} LoadG_Info;
+};
 
-typedef struct _OpDebug_Info {
+struct _OpDebug_Info {
   // The address of the operation in the binary
   Addr op_addr;
   // The source line of the operation
@@ -38,21 +38,21 @@ typedef struct _OpDebug_Info {
   const HChar* plain_opname;
   // The function symbol of the operation (e.g. '+' or 'sin')
   const HChar* symbol;
-} OpDebug_Info;
+};
 
 void getOpDebug_Info(Addr op_addr,
                      const HChar* plain_opname,
                      const HChar* symbol,
                      OpDebug_Info* result);
 
-typedef struct _Eval_Info {
+struct _Eval_Info {
   // The most error the output of this operation has ever had.
   double max_error;
   // All the bits of error this operation has had, added together
   double total_error;
   // The number of times we've evaluated the error of this operation.
   SizeT num_calls;
-} Eval_Info;
+};
 
 typedef enum {
   Unary,
@@ -61,7 +61,7 @@ typedef enum {
   Quadnary
 } Arity;
 
-typedef struct _Unary_Args {
+struct _Unary_Args {
   // This is the index of the temporary that holds these values. We'll
   // use this index to index into the shadow value array too.
   UWord arg_tmp;
@@ -71,9 +71,9 @@ typedef struct _Unary_Args {
   // locations, so we're going to store it as an array that's
   // malloc'd when we know how big it's going to be.
   UWord* arg_value;
-} Unary_Args;
+};
 
-typedef struct _Binary_Args {
+struct _Binary_Args {
   // These are the indicies of the temporaries that hold these
   // values. We'll use these indices to index into the shadow value
   // array too.
@@ -86,9 +86,9 @@ typedef struct _Binary_Args {
   // malloc'd when we know how big they're going to be.
   UWord* arg1_value;
   UWord* arg2_value;
-} Binary_Args;
+};
 
-typedef struct _Ternary_Args {
+struct _Ternary_Args {
   // These are the indicies of the temporaries that hold these
   // values. We'll use these indices to index into the shadow value
   // array too.
@@ -103,9 +103,9 @@ typedef struct _Ternary_Args {
   UWord* arg1_value;
   UWord* arg2_value;
   UWord* arg3_value;
-} Ternary_Args;
+};
 
-typedef struct _Quadnary_Args {
+struct _Quadnary_Args {
   // These are the indicies of the temporaries that hold these
   // values. We'll use these indices to index into the shadow value
   // array too.
@@ -122,9 +122,9 @@ typedef struct _Quadnary_Args {
   UWord* arg2_value;
   UWord* arg3_value;
   UWord* arg4_value;
-} Quadnary_Args;
+};
 
-typedef struct _Op_Info {
+struct _Op_Info {
   // The arity of the operation. This determines which of the args
   // structures we are allowed to put in and pull out.
   SizeT nargs;
@@ -147,7 +147,7 @@ typedef struct _Op_Info {
     Ternary_Args targs;
     Quadnary_Args qargs;
   } args;
-} Op_Info;
+};
 
 Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
                    const HChar* name, const HChar* symbol);
