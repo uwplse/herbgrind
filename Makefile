@@ -1,3 +1,5 @@
+include Makefile.common
+
 SHELL=/bin/bash
 
 # The versions of gmp and mpfr, for matching on the archive names.
@@ -63,7 +65,7 @@ valgrind/herbgrind/Makefile: valgrind/README herbgrind/Makefile.am
 	cd valgrind && ./autogen.sh
 	cd valgrind && \
 		CFLAGS="-fno-stack-protector" \
-		./configure --prefix=$(shell pwd)/valgrind/herbgrind-install \
+		./configure --prefix=$(shell pwd)/valgrind/$(HG_LOCAL_INSTALL_NAME) \
 		            --enable-only64bit \
 		            --build=$(TARGET_PLAT)
 
@@ -74,7 +76,7 @@ setup: valgrind/herbgrind/Makefile $(DEPS)
 
 # This is the target we call to actually get the executable built so
 # we can run herbgrind. 
-valgrind/herbgrind-install/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) setup
+valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) setup
 # First, we've got to make sure all the dependencies are extracted and set up.
 	$(MAKE) setup
 # Copy over the herbgrind sources again, because why the hell not.
@@ -84,7 +86,7 @@ valgrind/herbgrind-install/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(H
 	$(MAKE) -C valgrind/ install
 
 # Alias the compile target to just "compile" for ease of use
-compile: valgrind/herbgrind-install/lib/valgrind/herbgrind-$(TARGET_PLAT)
+compile: valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT)
 
 # Use the gmp README to tell if gmp has been extracted yet.
 deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz
@@ -105,7 +107,7 @@ deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz
 	cd deps/gmp-$*/ && \
 		CFLAGS="-fno-stack-protector" \
 		ABI=$* \
-		./configure --prefix=$(shell pwd)/deps/gmp-$*/herbgrind-install
+		./configure --prefix=$(shell pwd)/deps/gmp-$*/$(HG_LOCAL_INSTALL_NAME)
 	$(MAKE) -C deps/gmp-$*
 	$(MAKE) -C deps/gmp-$* install
 
@@ -121,7 +123,7 @@ MPFR_CONFIGURE_FLAGS = --disable-thread-safe
 configure-mpfr-32:
 	cd deps/mpfr-32/ && \
 		CFLAGS="-fno-stack-protector" \
-		./configure --prefix=$(shell pwd)/deps/mpfr-32/herbgrind-install \
+		./configure --prefix=$(shell pwd)/deps/mpfr-32/$(HG_LOCAL_INSTALL_NAME) \
 		            --with-gmp-build=$(shell pwd)/deps/gmp-32 \
 		            --build=i386 \
 		            $(MPFR_CONFIGURE_FLAGS)
@@ -129,7 +131,7 @@ configure-mpfr-32:
 configure-mpfr-64:
 	cd deps/mpfr-64/ && \
 		CFLAGS="-fno-stack-protector" \
-		./configure --prefix=$(shell pwd)/deps/mpfr-64/herbgrind-install \
+		./configure --prefix=$(shell pwd)/deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME) \
 		            --with-gmp-build=$(shell pwd)/deps/gmp-64 \
 		            --build=amd64 \
 		            $(MPFR_CONFIGURE_FLAGS)
@@ -161,4 +163,4 @@ clean-deps:
 	rm -rf valgrind/ deps/
 
 clear-preload:
-	rm valgrind/herbgrind-install/lib/vgpreload_herbgrind*
+	rm valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/vgpreload_herbgrind*

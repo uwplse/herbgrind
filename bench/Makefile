@@ -1,3 +1,4 @@
+include ../Makefile.common
 
 FLAGS=-g -std=c11 -lm -lmpfr -I../valgrind/herbgrind/include/
 
