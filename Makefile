@@ -1,3 +1,5 @@
+include Makefile.common
+
 SHELL=/bin/bash
 
 # The versions of gmp and mpfr, for matching on the archive names.
@@ -7,7 +9,7 @@ MPFR_VERSION=3.1.3
 VALGRIND_REPO_LOCATION=svn://svn.valgrind.org/valgrind/trunk
 # The architecture thhat we're buiding herbgrind for, in the syntax of
 # valgrind filename conventions for this sort of thing.
-TARGET_PLAT=amd64-linux
+TARGET_PLAT:=$(shell test `uname` = "Darwin" && echo "amd64-darwin" || echo "amd64-linux")
 ARCH_PRI=amd64
 ARCH_SEC=
 
@@ -61,7 +63,11 @@ valgrind/herbgrind/Makefile: valgrind/README herbgrind/Makefile.am
 # Run the autogen and configure scripts to turn the .am file into a
 # real makefile.
 	cd valgrind && ./autogen.sh
-	cd valgrind && ./configure --prefix=$(shell pwd)/valgrind/inst
+	cd valgrind && \
+		CFLAGS="-fno-stack-protector" \
+		./configure --prefix=$(shell pwd)/valgrind/$(HG_LOCAL_INSTALL_NAME) \
+		            --enable-only64bit \
+		            --build=$(TARGET_PLAT)
 
 # This is the target we call to bring in the dependencies, like gmp,
 # mpfr, and valgrind, and to make sure the herbgrind files have been
@@ -70,7 +76,7 @@ setup: valgrind/herbgrind/Makefile $(DEPS)
 
 # This is the target we call to actually get the executable built so
 # we can run herbgrind. 
-valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) setup
+valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) setup
 # First, we've got to make sure all the dependencies are extracted and set up.
 	$(MAKE) setup
 # Copy over the herbgrind sources again, because why the hell not.
@@ -80,10 +86,10 @@ valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) setup
 	$(MAKE) -C valgrind/ install
 
 # Alias the compile target to just "compile" for ease of use
-compile: valgrind/inst/lib/valgrind/herbgrind-$(TARGET_PLAT)
+compile: valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT)
 
 # Use the gmp README to tell if gmp has been extracted yet.
-deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz
+deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz setup/patch_gmp.sh
 # Extract gmp, and rename its folder so we don't have to use the
 # version number all over the place.
 	tar xf setup/gmp-$(GMP_VERSION).tar.xz
@@ -98,7 +104,10 @@ deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz
 # Configure and make it, putting its output in the install folder
 # locally instead of in a global location, so it doesn't conflict with
 # other versions of gmp.
-	cd deps/gmp-$*/ && ABI=$* ./configure --prefix=$(shell pwd)/deps/gmp-$*/install
+	cd deps/gmp-$*/ && \
+		CFLAGS="-fno-stack-protector" \
+		ABI=$* \
+		./configure --prefix=$(shell pwd)/deps/gmp-$*/$(HG_LOCAL_INSTALL_NAME)
 	$(MAKE) -C deps/gmp-$*
 	$(MAKE) -C deps/gmp-$* install
 
@@ -112,19 +121,23 @@ deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz
 MPFR_CONFIGURE_FLAGS = --disable-thread-safe
 
 configure-mpfr-32:
-	cd deps/mpfr-32/ && ./configure --prefix=$(shell pwd)/deps/mpfr-32/install \
-				        --with-gmp-build=$(shell pwd)/deps/gmp-32 \
-				        --build=i386 \
-                                        $(MPFR_CONFIGURE_FLAGS)
+	cd deps/mpfr-32/ && \
+		CFLAGS="-fno-stack-protector" \
+		./configure --prefix=$(shell pwd)/deps/mpfr-32/$(HG_LOCAL_INSTALL_NAME) \
+		            --with-gmp-build=$(shell pwd)/deps/gmp-32 \
+		            --build=i386 \
+		            $(MPFR_CONFIGURE_FLAGS)
 
 configure-mpfr-64:
-	cd deps/mpfr-64/ && ./configure --prefix=$(shell pwd)/deps/mpfr-64/install \
-				        --with-gmp-build=$(shell pwd)/deps/gmp-64 \
-				        --build=amd64 \
-					$(MPFR_CONFIGURE_FLAGS)
+	cd deps/mpfr-64/ && \
+		CFLAGS="-fno-stack-protector" \
+		./configure --prefix=$(shell pwd)/deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME) \
+		            --with-gmp-build=$(shell pwd)/deps/gmp-64 \
+		            --build=amd64 \
+		            $(MPFR_CONFIGURE_FLAGS)
 
 # Use the mpfr readme to tell if mpfr has been extracted yet.
-deps/mpfr-%/README: setup/mpfr-$(MPFR_VERSION).tar.xz
+deps/mpfr-%/README: setup/mpfr-$(MPFR_VERSION).tar.xz setup/patch_mpfr.sh
 # Extract mpfr, and rename its folder so we don't have to use the
 # version number all over the place.
 	tar xf setup/mpfr-$(MPFR_VERSION).tar.xz
@@ -146,5 +159,8 @@ deps/mpfr-%/README: setup/mpfr-$(MPFR_VERSION).tar.xz
 wc:
 	wc $(SOURCES) $(HEADERS)
 
+clean-deps:
+	rm -rf valgrind/ deps/
+
 clear-preload:
-	rm valgrind/inst/lib/vgpreload_herbgrind*
+	rm valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/vgpreload_herbgrind*

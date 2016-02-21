@@ -1,7 +1,12 @@
+include ../Makefile.common
 
 FLAGS=-g -std=c11 -lm -lmpfr -I../valgrind/herbgrind/include/
 
-all: testprog.out mini.out tiny.out mini-nocall.sout diff-roots.out some-trig.out
+CSRC = $(wildcard *.c)
+COUT = $(patsubst %.c,%.out,$(CSRC))
+
+# NOTE : does not build mini-nocall.sout (trouble on osx)
+all: $(COUT)
 
 %.out: %.c
 	gcc $(FLAGS) -o $@ $<
@@ -15,4 +20,4 @@ all: testprog.out mini.out tiny.out mini-nocall.sout diff-roots.out some-trig.ou
 	gcc $(FLAGS) -S -o $@ $<
 
 clean:
-	rm *.out *.sout
+	rm -rf *.out *.sout *.dSYM

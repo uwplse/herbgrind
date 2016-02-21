@@ -18,7 +18,7 @@ HerbGrind -- A Valgrind Tool For Herbie
 <!-- FpDebug, and to have some functionality running on a normal platform -->
 <!-- (as opposed to a virtual container of an old debian install). -->
 
-Herbgrind is a valgrind tool for tracking floating point inprecision
+Herbgrind is a valgrind tool for tracking floating point imprecision
 in binary programs, inspired by FpDebug. Herbgrind is still pretty
 early in development, but it's goals are:
 
@@ -52,7 +52,19 @@ setup".
 $toplevel/herbgrind. $toplevel/valgrind/herbgrind gets overwritten on
 every build.
 
+To build on OS X, you need XCode Command Line Tools, which you can install
+with:
+
+    $ xcode-select --install
+
+You will also need the GNU versions of `awk` and `sed`.  The best way to
+install these is through [Homebrew](http://brew.sh/):
+
+    $ brew install gawk
+    $ brew install gnu-sed --with-default-names
+
+
 Running
 -------
 
-To run, just run "*path-to-herbgrind*/valgrind/inst/bin/valgrind --tool=herbgrind *executable-to-run-on*"
+To run, just run "*path-to-herbgrind*/valgrind/herbgrind-install/bin/valgrind --tool=herbgrind *executable-to-run-on*"
