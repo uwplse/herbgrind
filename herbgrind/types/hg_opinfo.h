@@ -2,6 +2,7 @@
 #define _HG_OPINFO
 
 #include "hg_opinfo.hh"
+#include "hg_ast.hh"
 
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
@@ -135,7 +136,10 @@ struct _Op_Info {
   OpDebug_Info debuginfo;
   // Information about the evaluated behaviour of the operation
   Eval_Info evalinfo;
-  // This is the index into where we're putting the result.
+  // An AST head representing the most specific expression general
+  // enough to capture all seen inputs to this op.
+  OpASTNode* ast;
+  //This is the index into where we're putting the result.
   UWord dest_tmp;
   // This is the actual computed value of the result, for checking
   // accuracy.

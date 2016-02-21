@@ -3,6 +3,7 @@
 
 #include "hg_shadowvals.hh"
 #include "hg_opinfo.hh"
+#include "hg_ast.hh"
 
 // For mpfr_t
 #include "mpfr.h"
@@ -13,6 +14,7 @@
 // The shadow value for each logical floating point value
 struct _ShadowValue {
   mpfr_t value;
+  ValueASTNode* ast;
 };
 
 // Approximately what you expect. copySV will do a deep copy for you,

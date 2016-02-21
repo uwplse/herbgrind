@@ -1,5 +1,6 @@
 #include "hg_evaluate.h"
 #include "hg_runtime.h"
+#include "../types/hg_ast.h"
 #include "../include/hg_options.h"
 #include "hg_op_tracker.h"
 
@@ -48,6 +49,12 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   }
   opinfo->evalinfo.total_error += bitsError;
   opinfo->evalinfo.num_calls++;
+
+  // If the opfinfo doesn't have an AST assigned yet, give it a strict
+  // translation of the AST assigned to this shadow value. If it does,
+  // generalize the AST sufficiently to match the AST of the shadow
+  // val.
+  updateAST(opinfo, shadowVal->ast);
 
   // For printing
   if (print_errors_long || print_errors){

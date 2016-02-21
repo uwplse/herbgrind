@@ -11,6 +11,7 @@
 #include "hg_evaluate.h"
 #include "hg_runtime.h"
 #include "../types/hg_opinfo.h"
+#include "../types/hg_ast.h"
 #include "../include/hg_macros.h"
 #include "../include/hg_mathreplace_funcs.h"
 
@@ -155,6 +156,12 @@ void performOp(OpType op, double* result, double* args){
     entry->info = callInfo;
     VG_(HT_add_node)(callToOpInfoMap, entry);
   }
+  // Set up the ast record of this operation.
+  initValueAST(res_shadow->values[0].ast, entry->info, nargs);
+  for (int i = 0; i < nargs; ++i){
+    res_shadow->values[0].ast->args[i] = &(arg_shadows[i]->values[0]);
+  }
+
   // And finally, evaluate the error of the operation.
   evaluateOpError(&(res_shadow->values[0]), *result, entry->info);
 

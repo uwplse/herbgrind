@@ -143,6 +143,7 @@ Bool print_errors = False;
 Bool print_errors_long = False;
 Bool print_moves = False;
 Bool print_mallocs = False;
+Bool print_expr_updates = False;
 
 // Called to process each command line option.
 static Bool hg_process_cmd_line_option(const HChar* arg){
@@ -160,6 +161,7 @@ static Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-mallocs", print_mallocs, True) {}
   else if VG_XACT_CLO(arg, "--start-off", running, False) {}
   else if VG_STR_CLO(arg, "--outfile", outfile_path) {}
+  else if VG_XACT_CLO(arg, "--print-expr-updates", print_expr_updates, True) {}
   else return False;
   return True;
 }

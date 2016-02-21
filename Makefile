@@ -24,7 +24,8 @@ herbgrind/include/hg_include.h herbgrind/include/hg_helper.h		\
 herbgrind/include/hg_macros.h herbgrind/include/hg_options.h		\
 herbgrind/include/mk_mathreplace.py herbgrind/types/hg_shadowvals.hh	\
 herbgrind/types/hg_shadowvals.h herbgrind/types/hg_opinfo.hh		\
-herbgrind/types/hg_opinfo.h herbgrind/runtime/hg_runtime.h		\
+herbgrind/types/hg_opinfo.h herbgrind/types/hg_ast.hh			\
+herbgrind/types/hg_ast.h herbgrind/runtime/hg_runtime.h			\
 herbgrind/runtime/hg_evaluate.h herbgrind/runtime/hg_hiprec_ops.h	\
 herbgrind/runtime/hg_shadowop.h						\
 herbgrind/runtime/hg_storage_runtime.h					\
@@ -32,9 +33,10 @@ herbgrind/runtime/hg_mathreplace.h herbgrind/runtime/hg_op_tracker.h
 
 SOURCES=herbgrind/hg_main.c herbgrind/hg_instrument.c			\
 herbgrind/hg_instrumentOp.c herbgrind/hg_mathwrap.c			\
-herbgrind/runtime/hg_runtime.c herbgrind/runtime/hg_evaluate.c		\
-herbgrind/runtime/hg_hiprec_ops.c herbgrind/runtime/hg_shadowop.c	\
 herbgrind/types/hg_shadowvals.c herbgrind/types/hg_opinfo.c		\
+herbgrind/types/hg_ast.c herbgrind/runtime/hg_runtime.c			\
+herbgrind/runtime/hg_evaluate.c herbgrind/runtime/hg_hiprec_ops.c	\
+herbgrind/runtime/hg_shadowop.c						\
 herbgrind/runtime/hg_storage_runtime.c					\
 herbgrind/runtime/hg_mathreplace.c herbgrind/runtime/hg_op_tracker.c
 
