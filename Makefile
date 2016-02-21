@@ -7,7 +7,7 @@ MPFR_VERSION=3.1.3
 VALGRIND_REPO_LOCATION=svn://svn.valgrind.org/valgrind/trunk
 # The architecture thhat we're buiding herbgrind for, in the syntax of
 # valgrind filename conventions for this sort of thing.
-TARGET_PLAT=amd64-linux
+TARGET_PLAT=amd64-darwin
 ARCH_PRI=amd64
 ARCH_SEC=
 
@@ -61,7 +61,10 @@ valgrind/herbgrind/Makefile: valgrind/README herbgrind/Makefile.am
 # Run the autogen and configure scripts to turn the .am file into a
 # real makefile.
 	cd valgrind && ./autogen.sh
-	cd valgrind && ./configure --prefix=$(shell pwd)/valgrind/herbgrind-install
+	cd valgrind && \
+		./configure --prefix=$(shell pwd)/valgrind/herbgrind-install \
+		            --enable-only64bit \
+		            --build=amd64-darwin
 
 # This is the target we call to bring in the dependencies, like gmp,
 # mpfr, and valgrind, and to make sure the herbgrind files have been
