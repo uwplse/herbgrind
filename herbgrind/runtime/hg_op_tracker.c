@@ -7,6 +7,7 @@
 #include "pub_tool_vki.h"
 #include "pub_tool_libcfile.h"
 #include "pub_tool_libcprint.h"
+#include "pub_tool_libcbase.h"
 
 Op_Info** tracked_ops;
 SizeT num_tracked_ops;
@@ -31,6 +32,12 @@ void startTrackingOp(Op_Info* opinfo){
   tracked_ops[num_tracked_ops] = opinfo;
   // Update the counter for the next available slot.
   num_tracked_ops++;
+}
+
+Int cmp_debuginfo(const void* a, const void* b);
+Int cmp_debuginfo(const void* a, const void* b){
+  return ((const Op_Info*)b)->evalinfo.max_error -
+    ((const Op_Info*)a)->evalinfo.max_error;
 }
 
 void writeReport(const HChar* filename){
@@ -63,6 +70,9 @@ void writeReport(const HChar* filename){
         }
       }
     }
+
+  // Sort the entries by maximum error.
+  VG_(ssort)(tracked_ops, num_tracked_ops, sizeof(Op_Info*), cmp_debuginfo);
 
   // Write out an entry for each tracked op.
   for(int i = 0; i < num_tracked_ops; ++i){
