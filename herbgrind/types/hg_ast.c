@@ -58,7 +58,11 @@ void generalizeAST(OpASTNode* opast, ValueASTNode* valast){
     // If we hit a value leaf, and it matches the one we've already
     // seen, then our best guess right now is that that is a constant
     // which doesn't change in this expression, so leave it in our AST.
-    if (valast->val == opast->nd.Leaf.val) return;
+    if (valast->val == NULL ||
+        opast->nd.Leaf.val == NULL ||
+        mpfr_get_d(valast->val->value, MPFR_RNDN)
+        == mpfr_get_d(opast->nd.Leaf.val->value, MPFR_RNDN))
+      return;
     // Otherwise, it's some sort of input that changes, so abstract it
     // into a variable by setting it's val field to null. TODO: we're
     // going to want to track somehow which inputs are the "same"
