@@ -4,6 +4,7 @@
 #include "pub_tool_libcprint.h"
 #include "pub_tool_tooliface.h"
 #include "pub_tool_mallocfree.h"
+#include "pub_tool_debuginfo.h"
 
 #include "mpfr.h"
 
@@ -29,6 +30,13 @@ typedef struct _OpInfo_Entry {
   // Finally, a pointer to the actual op info we're storing.
   Op_Info* info;
 } OpInfo_Entry;
+
+VG_REGPARM(1) void updateLastAbiAddr(Addr addr){
+  UInt linenum;
+  VG_(get_linenum)(addr, &linenum);
+  if (linenum != 0) // Fix for dl_fixup 
+    last_abi_addr = addr;
+}
 
 void performOp(OpType op, double* result, double* args){
   SizeT nargs;

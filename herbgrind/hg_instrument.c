@@ -2,6 +2,7 @@
 #include "hg_instrument.h"
 #include "include/hg_helper.h"
 #include "include/hg_macros.h"
+#include "runtime/hg_mathreplace.h"
 
 void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr){
   IRExpr* expr;
@@ -34,10 +35,10 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr){
     // ABIHint. We'll pull this out whenever we're in a wrapped
     // library function, and it should give us the address of the
     // call.
-    addStmtToIRSB(sbOut,
-                  IRStmt_Store(ENDIAN,
-                               mkU64((uintptr_t)&last_abi_addr),
-                               mkU64((uintptr_t)stAddr)));
+    addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "updateLastAbiAddr",
+                                                        VG_(fnptr_to_fnentry)
+                                                        (&updateLastAbiAddr),
+                                                        mkIRExprVec_1(mkU64(stAddr)))));
     break;
   case Ist_Put:
     // Here we'll want to instrument moving Shadow values into

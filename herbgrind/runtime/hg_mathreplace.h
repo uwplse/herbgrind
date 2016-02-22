@@ -14,4 +14,6 @@ extern VgHashTable* callToOpInfoMap;
 void performOp(OpType op, double* result, double* args);
 ShadowLocation* getShadowLocMem(Addr addr, double float_arg);
 
+VG_REGPARM(1) void updateLastAbiAddr(Addr addr);
+
 #endif
