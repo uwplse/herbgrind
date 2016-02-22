@@ -14,7 +14,7 @@ SizeT array_size;
 
 // How many characters are going to be allowed in each entry.
 #define ENTRY_BUFFER_SIZE 512
-#define START_ARRAY_SIZE 10
+#define START_ARRAY_SIZE 20
 
 void startTrackingOp(Op_Info* opinfo){
   // If our array is already full...
