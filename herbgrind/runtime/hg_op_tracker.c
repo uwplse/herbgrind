@@ -22,9 +22,10 @@ void startTrackingOp(Op_Info* opinfo){
     if (array_size == 0){
       tracked_ops = VG_(malloc)("hg.init_tracked_op_array.1", START_ARRAY_SIZE);
       array_size = START_ARRAY_SIZE;
+    } else {
+      tracked_ops = VG_(realloc)("hg.expand_tracked_op_array.1", tracked_ops, array_size * 2);
+      array_size = array_size * 2;
     }
-    tracked_ops = VG_(realloc)("hg.expand_tracked_op_array.1", tracked_ops, array_size * 2);
-    array_size = array_size * 2;
   }
   // Put the op into the next slot in the array
   tracked_ops[num_tracked_ops] = opinfo;
