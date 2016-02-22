@@ -172,8 +172,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
                   argLocation->values[i].value,
                   MPFR_RNDN);
         // Set up the ast record of this operation.
-        initValueAST(destLocation->values[i].ast, opInfo, 1);
-        destLocation->values[i].ast->args[0] = &(argLocation->values[i]);
+        initValueBranchAST(&(destLocation->values[i]), opInfo, 1);
+        destLocation->values[i].ast->args[0] = argLocation->values[i].ast;
         // Evaluate the computed value against the high precision shadow result.
         evaluateOpError_helper(&(destLocation->values[i]),
                                opInfo->dest_value, argType, i,
@@ -510,8 +510,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
                   arg2Location->values[i].value,
                   MPFR_RNDN);
         // Set the ast record of this operation.
-        initValueAST(destLocation->values[i].ast, opInfo, 1);
-        destLocation->values[i].ast->args[0] = &(arg2Location->values[i]);
+        initValueBranchAST(&(destLocation->values[i]), opInfo, 1);
+        destLocation->values[i].ast->args[0] = arg2Location->values[i].ast;
 
         // Now, we'll evaluate the shadow values against each
         // channel of the computed result.
@@ -663,9 +663,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         mpfr_func(destLocation->values[i].value, arg1Location->values[i].value,
                   arg2Location->values[i].value, MPFR_RNDN);
         // Set up the ast record of this operation.
-        initValueAST(destLocation->values[i].ast, opInfo, 2);
-        destLocation->values[i].ast->args[0] = &(arg1Location->values[i]);
-        destLocation->values[i].ast->args[1] = &(arg2Location->values[i]);
+        initValueBranchAST(&(destLocation->values[i]), opInfo, 2);
+        destLocation->values[i].ast->args[0] = arg1Location->values[i].ast;
+        destLocation->values[i].ast->args[1] = arg2Location->values[i].ast;
         // Now, we'll evaluate the shadow value against the result
         // value, for each of it's channels.
         evaluateOpError_helper(&(destLocation->values[i]),
@@ -913,9 +913,9 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
               arg3Location->values[i].value,
               roundmodeIRtoMPFR(*((IRRoundingMode*)opInfo->args.targs.arg1_value)));
     // Set up the ast record of this operation.
-    initValueAST(destLocation->values[i].ast, opInfo, 2);
-    destLocation->values[i].ast->args[0] = &(arg2Location->values[i]);
-    destLocation->values[i].ast->args[1] = &(arg3Location->values[i]);
+    initValueBranchAST(&(destLocation->values[i]), opInfo, 2);
+    destLocation->values[i].ast->args[0] = arg2Location->values[i].ast;
+    destLocation->values[i].ast->args[1] = arg3Location->values[i].ast;
     // Now let's compare the computed value to the high precision result.
     evaluateOpError_helper(&(destLocation->values[i]),
                            opInfo->dest_value, type, i,
@@ -998,10 +998,10 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
             arg3Location->values[0].value, arg4Location->values[0].value,
             roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->args.qargs.arg1_value)[0]));
   // Set up the ast record of this operation.
-  initValueAST(destLocation->values[0].ast, opInfo, 3);
-  destLocation->values[0].ast->args[0] = &(arg2Location->values[0]);
-  destLocation->values[0].ast->args[1] = &(arg3Location->values[0]);
-  destLocation->values[0].ast->args[2] = &(arg4Location->values[0]);
+  initValueBranchAST(&(destLocation->values[0]), opInfo, 3);
+  destLocation->values[0].ast->args[0] = arg2Location->values[0].ast;
+  destLocation->values[0].ast->args[1] = arg3Location->values[0].ast;
+  destLocation->values[0].ast->args[2] = arg4Location->values[0].ast;
 
   if (print_inputs){
     char *shadowArg2Str, *shadowArg3Str, *shadowArg4Str;

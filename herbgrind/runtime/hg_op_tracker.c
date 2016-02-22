@@ -1,9 +1,12 @@
 #include "hg_op_tracker.h"
 
+#include "../include/hg_options.h"
+#include "../types/hg_opinfo.h"
+#include "../types/hg_ast.h"
+
 #include "pub_tool_vki.h"
 #include "pub_tool_libcfile.h"
 #include "pub_tool_libcprint.h"
-#include "../include/hg_options.h"
 
 Op_Info** tracked_ops;
 SizeT num_tracked_ops;
@@ -45,9 +48,11 @@ void writeReport(const HChar* filename){
   for(int i = 0; i < num_tracked_ops; ++i){
     Op_Info* opinfo = tracked_ops[i];
     UInt entry_len;
+    char* astString = opASTtoString(opinfo->ast);
     if (human_readable){
       entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                                "%s in %s at %s:%u (address %lX)\n%f bits average error\n%f bits max error\nAggregated over %lu instances\n\n",
+                                "%s\n%s in %s at %s:%u (address %lX)\n%f bits average error\n%f bits max error\nAggregated over %lu instances\n\n",
+                                astString,
                                 opinfo->debuginfo.plain_opname,
                                 opinfo->debuginfo.fnname,
                                 opinfo->debuginfo.src_filename,
@@ -58,7 +63,8 @@ void writeReport(const HChar* filename){
                                 opinfo->evalinfo.num_calls);
     } else {
       entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                                "((plain-name \"%s\") (function \"%s\") (filename \"%s\") (line-num %u) (instr-addr %lX) (avg-error %f) (max-error %f) (num-calls %lu))\n",
+                                "(%s (plain-name \"%s\") (function \"%s\") (filename \"%s\") (line-num %u) (instr-addr %lX) (avg-error %f) (max-error %f) (num-calls %lu))\n",
+                                astString,
                                 opinfo->debuginfo.plain_opname,
                                 opinfo->debuginfo.fnname,
                                 opinfo->debuginfo.src_filename,
@@ -68,6 +74,7 @@ void writeReport(const HChar* filename){
                                 opinfo->evalinfo.max_error,
                                 opinfo->evalinfo.num_calls);
     }
+    VG_(free)(astString);
     VG_(write)(file_d, buf, entry_len);
   }
 

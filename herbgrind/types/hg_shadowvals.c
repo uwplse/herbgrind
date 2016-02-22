@@ -20,6 +20,7 @@ ShadowLocation* mkShadowLocation(LocType type){
   for(int i = 0; i < num_values; ++i){
     mpfr_init2(location->values[i].value, precision);
     ALLOC(location->values[i].ast, "hg.shadow_ast", 1, sizeof(ValueASTNode));
+    initValueLeafAST(&(location->values[i]));
   }
   location->ref_count = 1;
   return location;

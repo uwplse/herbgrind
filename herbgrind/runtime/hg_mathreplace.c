@@ -157,9 +157,9 @@ void performOp(OpType op, double* result, double* args){
     VG_(HT_add_node)(callToOpInfoMap, entry);
   }
   // Set up the ast record of this operation.
-  initValueAST(res_shadow->values[0].ast, entry->info, nargs);
+  initValueBranchAST(&(res_shadow->values[0]), entry->info, nargs);
   for (int i = 0; i < nargs; ++i){
-    res_shadow->values[0].ast->args[i] = &(arg_shadows[i]->values[0]);
+    res_shadow->values[0].ast->args[i] = arg_shadows[i]->values[0].ast;
   }
 
   // And finally, evaluate the error of the operation.
