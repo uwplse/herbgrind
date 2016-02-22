@@ -83,7 +83,7 @@ void performOp(OpType op, double* result, double* args){
     mpfr_set_d(args_m[i], args[i], MPFR_RNDN);
     // Lookup the address in our shadow hash table to get the
     // shadow argument.
-    arg_shadows[0] = getShadowLocMem((uintptr_t)&(args[i]), args[i]);
+    arg_shadows[i] = getShadowLocMem((uintptr_t)&(args[i]), args[i]);
   }
   mpfr_init2(res,64);
   res_shadow = mkShadowLocation(Lt_Double);
