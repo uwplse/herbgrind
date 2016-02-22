@@ -44,9 +44,32 @@ void writeReport(const HChar* filename){
   }
   Int file_d = sr_Res(file_result);
 
+  if (report_exprs)
+    // For each expression, counting from the back where the bigger
+    // expressions should be, eliminate subexpressions from the list
+    // for reporting.
+    for(int i = num_tracked_ops - 1; i >= 0; --i){
+      Op_Info* opinfo = tracked_ops[i];
+      if (opinfo == NULL) continue;
+      if (opinfo->ast->tag == Node_Branch){
+        for(int j = 0; j < opinfo->ast->nd.Branch.nargs; ++j){
+          OpASTNode* subexpr = opinfo->ast->nd.Branch.args[j];
+          for (int k = i - 1; k >= 0; --k){
+            if (tracked_ops[k] == NULL) continue;
+            if (tracked_ops[k]->ast == subexpr)
+              tracked_ops[k] = NULL;
+          }
+        }
+      }
+    }
+
   // Write out an entry for each tracked op.
   for(int i = 0; i < num_tracked_ops; ++i){
     Op_Info* opinfo = tracked_ops[i];
+
+    // This will happen if we had an item in the list we decided to
+    // eliminate.
+    if (opinfo == NULL) continue;
     UInt entry_len;
     char* astString = opASTtoString(opinfo->ast);
     if (human_readable){

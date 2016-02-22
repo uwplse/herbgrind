@@ -16,5 +16,6 @@ extern Bool print_errors_long;
 extern Bool print_moves;
 extern Bool print_mallocs;
 extern Bool print_expr_updates;
+extern Bool report_exprs;
 
 #endif
