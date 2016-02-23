@@ -20,6 +20,8 @@ FLAGS=-g -std=c11 -lm -lmpfr -I../../valgrind/herbgrind/include
 RHOST=uwplse.org
 RHOSTDIR=/var/www/herbie/herbgrind/hamming
 
+NPTS=8000
+
 .PHONY: all Makefile ../../Makefile.common driver.c driver
 
 all: $(HAMMING)
@@ -45,16 +47,25 @@ HERBGRIND-PATH=~/herbie-all/herbgrind
 	gcc $(FLAGS) \
 		-DNARGS=$(shell grep f_if $*.c | tr '()_ ,' '\n' \
                           | tail -n+2 | grep float -c) \
+		-DNPTS=$(shell grep "double pts" $*-pts.c | \
+			cut -d '[' -f 2 | cut -d ']' -f 1) \
         -o $@ $^
 	chmod u+x $@
 
 %.c:
-	cd $(HERBIE-PATH) && racket herbie/compile/c-single.rkt --test '$(shell echo $* | sed -e "s/-/ /g" )' \
-                                     --prog bench/hamming/ $(HERBGRIND-PATH)/bench/herbie-crosseval/
+	cd $(HERBIE-PATH) && \
+	racket herbie/compile/c-single.rkt \
+		--test '$(shell echo $* | sed -e "s/-/ /g" )' \
+                --prog \
+		bench/hamming/ $(HERBGRIND-PATH)/bench/herbie-crosseval/
 
 %-pts.c:
-	cd $(HERBIE-PATH) && racket herbie/compile/c-single.rkt --test '$(shell echo $* | sed -e "s/-/ /g" )' \
-                                     --pts bench/hamming/ $(HERBGRIND-PATH)/bench/herbie-crosseval/
+	cd $(HERBIE-PATH) && \
+	racket herbie/compile/c-single.rkt \
+		--test '$(shell echo $* | sed -e "s/-/ /g" )' \
+	        --pts \
+		-n $(NPTS) \
+		bench/hamming/ $(HERBGRIND-PATH)/bench/herbie-crosseval/
 
 %.out-errors.gh:
 	$(eval PRECISION=$(shell grep mpfr_set_default_prec $*.c | head -n 1 | cut -d '(' -f 2 | cut -d ')' -f 1))
