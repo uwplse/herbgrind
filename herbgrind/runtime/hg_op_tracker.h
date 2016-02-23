@@ -13,6 +13,7 @@ extern SizeT num_tracked_ops;
 
 // Add an operation to be tracked.
 void startTrackingOp(Op_Info* opinfo);
+void clearTrackedOp(Op_Info* opinfo);
 // Write out info about each tracked operation to the specified file.
 void writeReport(const char* filename);
 
