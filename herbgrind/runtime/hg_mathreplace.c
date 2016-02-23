@@ -2,6 +2,7 @@
 
 #include "pub_tool_basics.h"
 #include "pub_tool_libcprint.h"
+#include "pub_tool_libcbase.h"
 #include "pub_tool_tooliface.h"
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_debuginfo.h"
@@ -32,10 +33,23 @@ typedef struct _OpInfo_Entry {
 } OpInfo_Entry;
 
 VG_REGPARM(1) void updateLastAbiAddr(Addr addr){
+  // I have to blacklist some locations here, because the wrapped
+  // function calls tend to go through some weird code the first time
+  // they're called, which breaks my location mechanism. The whole
+  // mechanism should be rethought once we get running on other
+  // platforms anyway.
+
+  // Fix for dl_fixup
   UInt linenum;
-  VG_(get_linenum)(addr, &linenum);
-  if (linenum != 0) // Fix for dl_fixup 
-    last_abi_addr = addr;
+  if (!VG_(get_linenum)(addr, &linenum)) return;
+  if (linenum == 0) return;
+
+  // Fix for _vgnU_ifunc_wrapper & friends.
+  const HChar* filename;
+  if (!VG_(get_filename)(addr, &filename)) return;
+  if (VG_(strcmp)(filename, "vg_preloaded.c") == 0) return;
+
+  last_abi_addr = addr;
 }
 
 void performOp(OpType op, double* result, double* args){

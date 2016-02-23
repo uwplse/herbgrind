@@ -9,11 +9,15 @@ void getOpDebug_Info(Addr op_addr,
   result->op_addr = op_addr;
   result->plain_opname = plain_opname;
   result->symbol = symbol;
-  VG_(get_filename_linenum)(op_addr,
-                            &(result->src_filename),
-                            NULL,
-                            &(result->src_line));
-  VG_(get_fnname)(op_addr, &(result->fnname));
+  if (VG_(get_filename_linenum)(op_addr,
+                                &(result->src_filename),
+                                NULL,
+                                &(result->src_line)) &&
+      VG_(get_fnname)(op_addr, &(result->fnname)))
+    return;
+  result->src_filename = NULL;
+  result->src_line = 0;
+  result->fnname = NULL;
 }
 Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
                    const HChar* name, const HChar* symbol){
