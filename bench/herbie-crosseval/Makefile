@@ -20,7 +20,7 @@ FLAGS=-g -std=c11 -lm -lmpfr -I../../valgrind/herbgrind/include
 RHOST=uwplse.org
 RHOSTDIR=/var/www/herbie/herbgrind/hamming
 
-.PHONY: all Makefile ../../Makefile.common
+.PHONY: all Makefile ../../Makefile.common driver.c driver
 
 all: $(HAMMING)
 	$(eval B=$(git rev-parse --abbrev-ref HEAD))
