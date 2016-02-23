@@ -34,6 +34,27 @@ void startTrackingOp(Op_Info* opinfo){
   num_tracked_ops++;
 }
 
+// Assumes no duplicates. Will result in NULL entries in array where
+// removed items were.
+void clearTrackedOp(Op_Info* opinfo){
+  for(int i = 0; i < num_tracked_ops; ++i){
+    if (tracked_ops[i] == opinfo){
+      tracked_ops[i] = NULL;
+      return;
+    }
+  }
+}
+void recursivelyClearChildren(OpASTNode* node);
+void recursivelyClearChildren(OpASTNode* node){
+  if (node->tag != Node_Branch) return;
+  for(int i = 0; i < node->nd.Branch.nargs; ++i){
+    OpASTNode* child = node->nd.Branch.args[i];
+    recursivelyClearChildren(child);
+    if (child->tag == Node_Branch)
+      clearTrackedOp(child->nd.Branch.op);
+  }
+}
+
 Int cmp_debuginfo(const void* a, const void* b);
 Int cmp_debuginfo(const void* a, const void* b){
   return ((const Op_Info*)b)->evalinfo.max_error -
@@ -59,16 +80,7 @@ void writeReport(const HChar* filename){
     for(int i = num_tracked_ops - 1; i >= 0; --i){
       Op_Info* opinfo = tracked_ops[i];
       if (opinfo == NULL) continue;
-      if (opinfo->ast->tag == Node_Branch){
-        for(int j = 0; j < opinfo->ast->nd.Branch.nargs; ++j){
-          OpASTNode* subexpr = opinfo->ast->nd.Branch.args[j];
-          for (int k = i - 1; k >= 0; --k){
-            if (tracked_ops[k] == NULL) continue;
-            if (tracked_ops[k]->ast == subexpr)
-              tracked_ops[k] = NULL;
-          }
-        }
-      }
+      recursivelyClearChildren(opinfo->ast);
     }
 
   // Sort the entries by maximum error.
