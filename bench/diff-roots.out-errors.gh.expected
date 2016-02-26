@@ -1,0 +1,1 @@
+((expr (- (sqrt (+ x 1)) (sqrt x))) (plain-name "subtraction") (function "main") (filename "diff-roots.c") (line-num 20) (instr-addr 400AA2) (avg-error 14.612701) (max-error 61.955702) (num-calls 1000))
