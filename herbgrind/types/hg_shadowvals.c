@@ -58,7 +58,7 @@ void copySL(ShadowLocation* src, ShadowLocation** dest){
   if (src != NULL){
     (src->ref_count) ++;
   }
-  if ((*dest) != NULL){
+  else if ((*dest) != NULL){
     disownSL(*dest);
   }
   (*dest) = src;
