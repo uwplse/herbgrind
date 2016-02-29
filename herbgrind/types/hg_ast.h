@@ -13,7 +13,7 @@ typedef struct _ValueASTNode {
   // The op which turned the args into the represented shadow value,
   // or NULL if this came from an input/constant.
   Op_Info* op;
-  // Number of arguments
+  // Number of arguments (zero if this came from a constant).
   SizeT nargs;
   // The arguments that created this AST, or NULL if this came from an
   // input/constant.
