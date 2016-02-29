@@ -13,7 +13,7 @@ void initValueBranchAST(ShadowValue* val, Op_Info* opinfo, SizeT nargs){
   val->ast->val = val;
   val->ast->op = opinfo;
   val->ast->nargs = nargs;
-  ALLOC(val->ast->args, "hg.val_ast_args", nargs, sizeof(ShadowValue));
+  ALLOC(val->ast->args, "hg.val_ast_args", nargs, sizeof(ShadowValue*));
 }
 
 void initValueLeafAST(ShadowValue* val){
@@ -42,7 +42,7 @@ void initOpBranchAST(OpASTNode* out, Op_Info* op, SizeT nargs){
   out->tag = Node_Branch;
   out->nd.Branch.op = op;
   out->nd.Branch.nargs = nargs;
-  ALLOC(out->nd.Branch.args, "hg.val_ast_args", nargs, sizeof(OpASTNode));
+  ALLOC(out->nd.Branch.args, "hg.val_ast_args", nargs, sizeof(OpASTNode*));
 }
 
 void initOpLeafAST(OpASTNode* out, ShadowValue* val){
