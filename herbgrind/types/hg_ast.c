@@ -20,6 +20,24 @@ void initValueLeafAST(ShadowValue* val){
   val->ast->val = val;
 }
 
+void cleanupValueAST(ShadowValue* val){
+  VG_(free)(val->ast->args);
+  VG_(free)(val->ast);
+}
+
+void copyValueAST(ShadowValue* src, ShadowValue* dest){
+  ALLOC(dest->ast, "hg.val_ast", 1, sizeof(ValueASTNode));
+  dest->ast->val = dest;
+  dest->ast->op = src->ast->op;
+  dest->ast->nargs = src->ast->nargs;
+  if (src->ast->nargs != 0){
+    ALLOC(dest->ast->args, "hg.val_ast_args", src->ast->nargs, sizeof(ShadowValue*));
+    for (int i = 0; i < src->ast->nargs; ++i){
+      dest->ast->args[i] = src->ast->args[i];
+    }
+  }
+}
+
 void initOpBranchAST(OpASTNode* out, Op_Info* op, SizeT nargs){
   out->tag = Node_Branch;
   out->nd.Branch.op = op;

@@ -69,17 +69,18 @@ ShadowValue* copySV_ptr(ShadowValue* src){
   ALLOC(result, "hg.shadow_value.1", 1, sizeof(ShadowValue));
   mpfr_init2(result->value, precision);
   mpfr_set(result->value, src->value, MPFR_RNDN);
-  result->ast = src->ast;
+  copyValueAST(src, result);
   return result;
 }
 
 void copySV(ShadowValue* src, ShadowValue* dest){
   mpfr_init2(dest->value, precision);
   mpfr_set(dest->value, src->value, MPFR_RNDN);
-  dest->ast = src->ast;
+  copyValueAST(src, dest);
 }
 
 void cleanupSV(ShadowValue* sv){
   mpfr_clear(sv->value);
+  cleanupValueAST(sv);
 }
 

@@ -57,6 +57,10 @@ void initValueBranchAST(ShadowValue* val, Op_Info* opinfo, SizeT nargs);
 // Initialize a leaf node ast for a shadow value that is being
 // created.
 void initValueLeafAST(ShadowValue* val);
+// Cleanup a values AST for destroying the value
+void cleanupValueAST(ShadowValue* val);
+// Deep copy a value AST.
+void copyValueAST(ShadowValue* src, ShadowValue* dest);
 // Initialize a branch node ast for an operation. You must set the
 // operation nodes from which the arguments came explicitly after
 // calling this function.
