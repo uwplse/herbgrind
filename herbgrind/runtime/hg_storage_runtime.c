@@ -56,7 +56,7 @@ VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
 // threads state.
 VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg){
   if (!running && localTemps[src_tmp] != NULL) return;
-  copySL(localTemps[src_tmp], &threadRegisters[VG_(get_running_tid)()][dest_reg]);
+  setTS(dest_reg, localTemps[src_tmp]);
 
   if (localTemps[src_tmp] != NULL && print_moves){
     mpfr_exp_t shadowValexpt;
