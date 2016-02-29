@@ -204,5 +204,6 @@ ShadowLocation* getShadowLocMem(Addr addr, double float_arg){
   setMem(addr, loc);
 
   mpfr_set_d(loc->values[0].value, float_arg, MPFR_RNDN);
+  initValueLeafAST(&(loc->values[0]));
   return loc;
 }

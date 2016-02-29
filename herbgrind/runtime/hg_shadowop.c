@@ -1064,6 +1064,9 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type, UWord* float_vals
   // Otherwise we need to create a new one. How we do this will depend
   // on the expected type of the location, passed as "type".
   location = mkShadowLocation(type);
+  for(int i = 0; i < capacity(type); ++i){
+    initValueLeafAST(&(location->values[i]));
+  }
   setTemp(tmp_num, location);
   switch(type){
     // Intialize the shadow values from the float_vals we were
