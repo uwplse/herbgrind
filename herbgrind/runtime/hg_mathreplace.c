@@ -6,6 +6,8 @@
 #include "pub_tool_tooliface.h"
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_debuginfo.h"
+#include "pub_tool_stacktrace.h"
+#include "pub_tool_threadstate.h"
 
 #include "mpfr.h"
 
@@ -32,24 +34,29 @@ typedef struct _OpInfo_Entry {
   Op_Info* info;
 } OpInfo_Entry;
 
-VG_REGPARM(1) void updateLastAbiAddr(Addr addr){
-  // I have to blacklist some locations here, because the wrapped
-  // function calls tend to go through some weird code the first time
-  // they're called, which breaks my location mechanism. The whole
-  // mechanism should be rethought once we get running on other
-  // platforms anyway.
+#define NCALLFRAMES 5
 
-  // Fix for dl_fixup
-  UInt linenum;
-  if (!VG_(get_linenum)(addr, &linenum)) return;
-  if (linenum == 0) return;
-
-  // Fix for _vgnU_ifunc_wrapper & friends.
-  const HChar* filename;
-  if (!VG_(get_filename)(addr, &filename)) return;
-  if (VG_(strcmp)(filename, "vg_preloaded.c") == 0) return;
-
-  last_abi_addr = addr;
+Addr getCallAddr(void){
+  Addr trace[NCALLFRAMES];
+  UInt nframes = VG_(get_StackTrace)(VG_(get_running_tid)(),
+                                     trace, NCALLFRAMES, // Is this right?
+                                     NULL, NULL,
+                                     0);
+  for(int i = 0; i < nframes; ++i){
+    Addr addr = trace[i];
+    // Basically, this whole block discards addresses which are part
+    // of the redirection process or internal to the replacement
+    // function, and are "below" the location of the call in the calls
+    // stack. Currently it looks like we really only have to look at
+    // the second frame up, but screw it, this probably isn't the
+    // performance bottleneck, and it might be nice to have the
+    // robustness somewhere down the line.
+    const HChar* filename;
+    if (!VG_(get_filename)(addr, &filename)) continue;
+    if (VG_(strcmp)(filename, "hg_mathwrap.c") == 0) continue;
+    return addr;
+  }
+  return 0;
 }
 
 void performOp(OpType op, double* result, double* args){
@@ -170,11 +177,12 @@ void performOp(OpType op, double* result, double* args){
 
   // Either look up an existing op info entry for this call site, or
   // create one if one doesn't already exist.
-  OpInfo_Entry* entry = VG_(HT_lookup)(callToOpInfoMap, last_abi_addr);
+  Addr callAddr = getCallAddr();
+  OpInfo_Entry* entry = VG_(HT_lookup)(callToOpInfoMap, callAddr);
   if (entry == NULL){
-    Op_Info* callInfo = mkOp_Info(nargs, 0x0, last_abi_addr, plain_opname, op_symbol);
+    Op_Info* callInfo = mkOp_Info(nargs, 0x0, callAddr, plain_opname, op_symbol);
     ALLOC(entry, "hg.opinfo_entry.1", 1, sizeof(OpInfo_Entry));
-    entry->call_addr = last_abi_addr;
+    entry->call_addr = callAddr;
     entry->info = callInfo;
     VG_(HT_add_node)(callToOpInfoMap, entry);
   }

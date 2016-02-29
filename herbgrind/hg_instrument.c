@@ -30,15 +30,6 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr){
   case Ist_AbiHint:
     // Add the hint into the output.
     addStmtToIRSB(sbOut, st);
-    // Now, store the current address in the field (in our memory, in
-    // hg_runtime.c) for the address of the last executed
-    // ABIHint. We'll pull this out whenever we're in a wrapped
-    // library function, and it should give us the address of the
-    // call.
-    addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "updateLastAbiAddr",
-                                                        VG_(fnptr_to_fnentry)
-                                                        (&updateLastAbiAddr),
-                                                        mkIRExprVec_1(mkU64(stAddr)))));
     break;
   case Ist_Put:
     // Here we'll want to instrument moving Shadow values into
