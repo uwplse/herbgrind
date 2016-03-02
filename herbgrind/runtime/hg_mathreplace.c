@@ -38,11 +38,20 @@ void performOp(OpType op, double* result, double* args){
   case OP_SIN:
   case OP_TAN:
   case OP_ASIN:
+  case OP_ASINF:
   case OP_ACOS:
+  case OP_ACOSF:
   case OP_ATAN:
+  case OP_ATANF:
   case OP_SINH:
   case OP_COSH:
   case OP_TANH:
+  case OP_ASINH:
+  case OP_ASINHF:
+  case OP_ACOSH:
+  case OP_ACOSHF:
+  case OP_ATANH:
+  case OP_ATANHF:
   case OP_ABS:
   case OP_EXPM1:
   case OP_LOG1P:
@@ -51,6 +60,7 @@ void performOp(OpType op, double* result, double* args){
   case OP_MOD:
   case OP_POW:
   case OP_ATAN2:
+  case OP_ATAN2F:
   case OP_HYPOT:
     nargs = 2;
     break;
@@ -88,11 +98,20 @@ void performOp(OpType op, double* result, double* args){
   case OP_SIN:
   case OP_TAN:
   case OP_ASIN:
+  case OP_ASINF:
   case OP_ACOS:
+  case OP_ACOSF:
   case OP_ATAN:
+  case OP_ATANF:
   case OP_SINH:
   case OP_COSH:
   case OP_TANH:
+  case OP_ASINH:
+  case OP_ASINHF:
+  case OP_ACOSH:
+  case OP_ACOSHF:
+  case OP_ATANH:
+  case OP_ATANHF:
   case OP_ABS:
   case OP_EXPM1:
   case OP_LOG1P:
@@ -134,14 +153,29 @@ void performOp(OpType op, double* result, double* args){
         op_symbol = "asin";
         mpfr_func = mpfr_asin;
         break;
+      case OP_ASINF:
+        plain_opname = "arcsine (float)";
+        op_symbol = "asinf";
+        mpfr_func = mpfr_asin;
+        break;
       case OP_ACOS:
         plain_opname = "arccosine";
         op_symbol = "acos";
         mpfr_func = mpfr_acos;
         break;
+      case OP_ACOSF:
+        plain_opname = "arccosine (float)";
+        op_symbol = "acosf";
+        mpfr_func = mpfr_acos;
+        break;
       case OP_ATAN:
         plain_opname = "arctangent";
         op_symbol = "atan";
+        mpfr_func = mpfr_atan;
+        break;
+      case OP_ATANF:
+        plain_opname = "arctangent (float)";
+        op_symbol = "atanf";
         mpfr_func = mpfr_atan;
         break;
       case OP_SINH:
@@ -158,6 +192,36 @@ void performOp(OpType op, double* result, double* args){
         plain_opname = "hyperbolic tangent";
         op_symbol = "tanh";
         mpfr_func = mpfr_tanh;
+        break;
+      case OP_ASINH:
+        plain_opname = "hyperbolic arc-sine (float)";
+        op_symbol = "asinhf";
+        mpfr_func = mpfr_asinh;
+        break;
+      case OP_ASINHF:
+        plain_opname = "hyperbolic arc-sine";
+        op_symbol = "asinh";
+        mpfr_func = mpfr_asinh;
+        break;
+      case OP_ACOSH:
+        plain_opname = "hyperbolic arc-cosine";
+        op_symbol = "acosh";
+        mpfr_func = mpfr_acosh;
+        break;
+      case OP_ACOSHF:
+        plain_opname = "hyperbolic arc-cosine (float)";
+        op_symbol = "acoshf";
+        mpfr_func = mpfr_acosh;
+        break;
+      case OP_ATANH:
+        plain_opname = "hyperbolic arc-tangent";
+        op_symbol = "atanh";
+        mpfr_func = mpfr_atanh;
+        break;
+      case OP_ATANHF:
+        plain_opname = "hyperbolic arc-tangent (float)";
+        op_symbol = "atanhf";
+        mpfr_func = mpfr_atanh;
         break;
       case OP_ABS:
         plain_opname = "absolute";
@@ -185,6 +249,7 @@ void performOp(OpType op, double* result, double* args){
   case OP_MOD:
   case OP_POW:
   case OP_ATAN2:
+  case OP_ATAN2F:
   case OP_HYPOT:
     {
       int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
@@ -202,6 +267,11 @@ void performOp(OpType op, double* result, double* args){
       case OP_ATAN2:
         plain_opname = "arctangent (two arguments)";
         op_symbol = "atan2";
+        mpfr_func = mpfr_atan2;
+        break;
+      case OP_ATAN2F:
+        plain_opname = "arctangent (two arguments, float)";
+        op_symbol = "atan2f";
         mpfr_func = mpfr_atan2;
         break;
       case OP_HYPOT:
