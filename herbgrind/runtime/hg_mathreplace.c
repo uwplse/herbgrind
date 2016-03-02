@@ -34,6 +34,16 @@ void performOp(OpType op, double* result, double* args){
   case OP_SQRT:
   case OP_EXP:
   case OP_LOG:
+  case OP_ABS:
+  case OP_EXPM1:
+  case OP_LOG1P:
+  case OP_CBRT:
+  case OP_CBRTF:
+  case OP_CEIL:
+  case OP_CEILF:
+  case OP_COPYSIGN:
+  case OP_COPYSIGNF:
+
   case OP_COS:
   case OP_SIN:
   case OP_TAN:
@@ -43,6 +53,7 @@ void performOp(OpType op, double* result, double* args){
   case OP_ACOSF:
   case OP_ATAN:
   case OP_ATANF:
+
   case OP_SINH:
   case OP_COSH:
   case OP_TANH:
@@ -52,9 +63,6 @@ void performOp(OpType op, double* result, double* args){
   case OP_ACOSHF:
   case OP_ATANH:
   case OP_ATANHF:
-  case OP_ABS:
-  case OP_EXPM1:
-  case OP_LOG1P:
     nargs = 1;
     break;
   case OP_MOD:
@@ -94,6 +102,12 @@ void performOp(OpType op, double* result, double* args){
   case OP_SQRT:
   case OP_EXP:
   case OP_LOG:
+  case OP_ABS:
+  case OP_EXPM1:
+  case OP_LOG1P:
+  case OP_CBRT:
+  case OP_CBRTF:
+
   case OP_COS:
   case OP_SIN:
   case OP_TAN:
@@ -103,6 +117,7 @@ void performOp(OpType op, double* result, double* args){
   case OP_ACOSF:
   case OP_ATAN:
   case OP_ATANF:
+
   case OP_SINH:
   case OP_COSH:
   case OP_TANH:
@@ -112,9 +127,6 @@ void performOp(OpType op, double* result, double* args){
   case OP_ACOSHF:
   case OP_ATANH:
   case OP_ATANHF:
-  case OP_ABS:
-  case OP_EXPM1:
-  case OP_LOG1P:
     {
       int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_rnd_t);
       switch(op){
@@ -133,6 +145,32 @@ void performOp(OpType op, double* result, double* args){
         op_symbol = "log";
         mpfr_func = mpfr_log;
         break;
+      case OP_ABS:
+        plain_opname = "absolute";
+        op_symbol = "abs";
+        mpfr_func = mpfr_abs;
+        break;
+      case OP_EXPM1:
+        plain_opname = "exponentiate minus one";
+        op_symbol = "expm1";
+        mpfr_func = mpfr_expm1;
+        break;
+      case OP_LOG1P:
+        plain_opname = "plus 1 log";
+        op_symbol = "log1p";
+        mpfr_func = mpfr_log1p;
+        break;
+      case OP_CBRT:
+        plain_opname = "cube root";
+        op_symbol = "cbrt";
+        mpfr_func = mpfr_cbrt;
+        break;
+      case OP_CBRTF:
+        plain_opname = "cube root (float)";
+        op_symbol = "cbrtf";
+        mpfr_func = mpfr_cbrt;
+        break;
+
       case OP_COS:
         plain_opname = "cosine";
         op_symbol = "cos";
@@ -223,21 +261,6 @@ void performOp(OpType op, double* result, double* args){
         op_symbol = "atanhf";
         mpfr_func = mpfr_atanh;
         break;
-      case OP_ABS:
-        plain_opname = "absolute";
-        op_symbol = "abs";
-        mpfr_func = mpfr_abs;
-        break;
-      case OP_EXPM1:
-        plain_opname = "exponentiate minus one";
-        op_symbol = "expm1";
-        mpfr_func = mpfr_expm1;
-        break;
-      case OP_LOG1P:
-        plain_opname = "plus 1 log";
-        op_symbol = "log1p";
-        mpfr_func = mpfr_log1p;
-        break;
       default:
         return;
       }
@@ -246,11 +269,36 @@ void performOp(OpType op, double* result, double* args){
       mpfr_func(res_shadow->values[0].value, arg_shadows[0]->values[0].value, MPFR_RNDN);
     }
     break;
+  case OP_CEIL:
+  case OP_CEILF:
+    {
+      int (*mpfr_func)(mpfr_t, mpfr_srcptr);
+      switch(op){
+      case OP_CEIL:
+        plain_opname = "ceiling";
+        op_symbol = "ceilf";
+        mpfr_func = mpfr_ceil;
+        break;
+      case OP_CEILF:
+        plain_opname = "ceiling (float)";
+        op_symbol = "ceilf";
+        mpfr_func = mpfr_ceil;
+        break;
+      default:
+        return;
+      }
+      // Perform the operation on both regular and shadow values.
+      mpfr_func(res, args_m[0]);
+      mpfr_func(res_shadow->values[0].value, arg_shadows[0]->values[0].value);
+    }
+    break;
   case OP_MOD:
   case OP_POW:
   case OP_ATAN2:
   case OP_ATAN2F:
   case OP_HYPOT:
+  case OP_COPYSIGN:
+  case OP_COPYSIGNF:
     {
       int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
       switch(op){
@@ -278,6 +326,16 @@ void performOp(OpType op, double* result, double* args){
         plain_opname = "hypotenuse";
         op_symbol = "hypot";
         mpfr_func = mpfr_hypot;
+        break;
+      case OP_COPYSIGN:
+        plain_opname = "copy sign";
+        op_symbol = "copysign";
+        mpfr_func = mpfr_copysign;
+        break;
+      case OP_COPYSIGNF:
+        plain_opname = "copy sign (float)";
+        op_symbol = "copysignf";
+        mpfr_func = mpfr_copysign;
         break;
       default:
         return;

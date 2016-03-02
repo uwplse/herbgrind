@@ -8,6 +8,14 @@ typedef enum {
   OP_SQRT,
   OP_EXP,
   OP_LOG,
+  OP_ABS,
+  OP_EXPM1,
+  OP_LOG1P,
+  OP_CBRT,
+  OP_CBRTF,
+  OP_CEIL,
+  OP_CEILF,
+
   OP_COS,
   OP_SIN,
   OP_TAN,
@@ -18,6 +26,7 @@ typedef enum {
   OP_ACOSF,
   OP_ATAN,
   OP_ATANF,
+
   OP_SINH,
   OP_COSH,
   OP_TANH,
@@ -27,9 +36,6 @@ typedef enum {
   OP_ACOSHF,
   OP_ATANH,
   OP_ATANHF,
-  OP_ABS,
-  OP_EXPM1,
-  OP_LOG1P,
 
   // Binary
   OP_MOD,
@@ -37,6 +43,9 @@ typedef enum {
   OP_ATAN2,
   OP_ATAN2F,
   OP_HYPOT,
+
+  OP_COPYSIGN,
+  OP_COPYSIGNF,
 } OpType;
 
 #endif

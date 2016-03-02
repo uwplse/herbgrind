@@ -34,6 +34,14 @@
 HG_WRAP_OP_1(sqrt, OP_SQRT);
 HG_WRAP_OP_1(exp, OP_EXP);
 HG_WRAP_OP_1(log, OP_LOG);
+HG_WRAP_OP_1(fabs, OP_ABS);
+HG_WRAP_OP_1(expm1, OP_EXPM1);
+HG_WRAP_OP_1(log1p, OP_LOG1P);
+HG_WRAP_OP_1(cbrt, OP_CBRT);
+HG_WRAP_OP_1(cbrtf, OP_CBRTF);
+HG_WRAP_OP_1(ceil, OP_CEIL);
+HG_WRAP_OP_1(ceilf, OP_CEILF);
+
 HG_WRAP_OP_1(cos, OP_COS);
 HG_WRAP_OP_1(sin, OP_SIN);
 HG_WRAP_OP_1(tan, OP_TAN);
@@ -43,6 +51,7 @@ HG_WRAP_OP_1(acos, OP_ACOS);
 HG_WRAP_OP_1(acosf, OP_ACOSF);
 HG_WRAP_OP_1(atan, OP_ATAN);
 HG_WRAP_OP_1(atanf, OP_ATANF);
+
 HG_WRAP_OP_1(sinh, OP_SINH);
 HG_WRAP_OP_1(cosh, OP_COSH);
 HG_WRAP_OP_1(tanh, OP_TANH);
@@ -52,9 +61,6 @@ HG_WRAP_OP_1(acosh, OP_ACOSH);
 HG_WRAP_OP_1(acoshf, OP_ACOSHF);
 HG_WRAP_OP_1(atanh, OP_ATANH);
 HG_WRAP_OP_1(atanhf, OP_ATANHF);
-HG_WRAP_OP_1(fabs, OP_ABS);
-HG_WRAP_OP_1(expm1, OP_EXPM1);
-HG_WRAP_OP_1(log1p, OP_LOG1P);
 
 /*----------------------------
 ====== Binary Ops ============
@@ -75,3 +81,5 @@ HG_WRAP_OP_2(fmod, OP_MOD);
 HG_WRAP_OP_2(pow, OP_POW);
 HG_WRAP_OP_2(atan2, OP_ATAN2);
 HG_WRAP_OP_2(hypot, OP_HYPOT);
+HG_WRAP_OP_2(copysign, OP_COPYSIGN);
+HG_WRAP_OP_2(copysignf, OP_COPYSIGNF);
