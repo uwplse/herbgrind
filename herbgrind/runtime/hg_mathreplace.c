@@ -45,8 +45,11 @@ void performOp(OpType op, double* result, double* args){
   case OP_COPYSIGNF:
 
   case OP_COS:
+  case OP_COSF:
   case OP_SIN:
+  case OP_SINF:
   case OP_TAN:
+  case OP_TANF:
   case OP_ASIN:
   case OP_ASINF:
   case OP_ACOS:
@@ -55,8 +58,11 @@ void performOp(OpType op, double* result, double* args){
   case OP_ATANF:
 
   case OP_SINH:
+  case OP_SINHF:
   case OP_COSH:
+  case OP_COSHF:
   case OP_TANH:
+  case OP_TANHF:
   case OP_ASINH:
   case OP_ASINHF:
   case OP_ACOSH:
@@ -109,8 +115,11 @@ void performOp(OpType op, double* result, double* args){
   case OP_CBRTF:
 
   case OP_COS:
+  case OP_COSF:
   case OP_SIN:
+  case OP_SINF:
   case OP_TAN:
+  case OP_TANF:
   case OP_ASIN:
   case OP_ASINF:
   case OP_ACOS:
@@ -119,8 +128,11 @@ void performOp(OpType op, double* result, double* args){
   case OP_ATANF:
 
   case OP_SINH:
+  case OP_SINHF:
   case OP_COSH:
+  case OP_COSHF:
   case OP_TANH:
+  case OP_TANHF:
   case OP_ASINH:
   case OP_ASINHF:
   case OP_ACOSH:
@@ -176,14 +188,29 @@ void performOp(OpType op, double* result, double* args){
         op_symbol = "cos";
         mpfr_func = mpfr_cos;
         break;
+      case OP_COSF:
+        plain_opname = "cosine (float)";
+        op_symbol = "cosf";
+        mpfr_func = mpfr_cos;
+        break;
       case OP_SIN:
         plain_opname = "sine";
         op_symbol = "sin";
         mpfr_func = mpfr_sin;
         break;
+      case OP_SINF:
+        plain_opname = "sine (float)";
+        op_symbol = "sinf";
+        mpfr_func = mpfr_sin;
+        break;
       case OP_TAN:
         plain_opname = "tangent";
         op_symbol = "tan";
+        mpfr_func = mpfr_tan;
+        break;
+      case OP_TANF:
+        plain_opname = "tangent (float)";
+        op_symbol = "tanf";
         mpfr_func = mpfr_tan;
         break;
       case OP_ASIN:
@@ -221,14 +248,29 @@ void performOp(OpType op, double* result, double* args){
         op_symbol = "sinh";
         mpfr_func = mpfr_sinh;
         break;
+      case OP_SINHF:
+        plain_opname = "hyperbolic sine (float)";
+        op_symbol = "sinhf";
+        mpfr_func = mpfr_sinh;
+        break;
       case OP_COSH:
         plain_opname = "hyperbolic cosine";
         op_symbol = "cosh";
         mpfr_func = mpfr_cosh;
         break;
+      case OP_COSHF:
+        plain_opname = "hyperbolic cosine (float)";
+        op_symbol = "coshf";
+        mpfr_func = mpfr_cosh;
+        break;
       case OP_TANH:
         plain_opname = "hyperbolic tangent";
         op_symbol = "tanh";
+        mpfr_func = mpfr_tanh;
+        break;
+      case OP_TANHF:
+        plain_opname = "hyperbolic tangent (float)";
+        op_symbol = "tanhf";
         mpfr_func = mpfr_tanh;
         break;
       case OP_ASINH:

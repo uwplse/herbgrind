@@ -17,8 +17,11 @@ typedef enum {
   OP_CEILF,
 
   OP_COS,
+  OP_COSF,
   OP_SIN,
+  OP_SINF,
   OP_TAN,
+  OP_TANF,
   /* OP_COTAN, */ // Looks like libm doesn't have this one.
   OP_ASIN,
   OP_ASINF,
@@ -28,8 +31,11 @@ typedef enum {
   OP_ATANF,
 
   OP_SINH,
+  OP_SINHF,
   OP_COSH,
+  OP_COSHF,
   OP_TANH,
+  OP_TANHF,
   OP_ASINH,
   OP_ASINHF,
   OP_ACOSH,
