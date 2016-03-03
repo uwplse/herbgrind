@@ -41,8 +41,6 @@ void performOp(OpType op, double* result, double* args){
   case OP_CBRTF:
   case OP_CEIL:
   case OP_CEILF:
-  case OP_COPYSIGN:
-  case OP_COPYSIGNF:
 
   case OP_COS:
   case OP_COSF:
@@ -76,6 +74,8 @@ void performOp(OpType op, double* result, double* args){
   case OP_ATAN2:
   case OP_ATAN2F:
   case OP_HYPOT:
+  case OP_COPYSIGN:
+  case OP_COPYSIGNF:
     nargs = 2;
     break;
   }
