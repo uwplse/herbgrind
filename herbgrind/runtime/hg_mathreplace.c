@@ -32,15 +32,20 @@ void performOp(OpType op, double* result, double* args){
   SizeT nargs;
   switch(op){
   case OP_SQRT:
+  case OP_CBRT:
+  case OP_CBRTF:
   case OP_EXP:
   case OP_LOG:
   case OP_ABS:
   case OP_EXPM1:
   case OP_LOG1P:
-  case OP_CBRT:
-  case OP_CBRTF:
   case OP_CEIL:
   case OP_CEILF:
+
+  case OP_ERF:
+  case OP_ERFF:
+  case OP_ERFC:
+  case OP_ERFCF:
 
   case OP_COS:
   case OP_COSF:
@@ -106,13 +111,18 @@ void performOp(OpType op, double* result, double* args){
 
   switch(op){
   case OP_SQRT:
+  case OP_CBRT:
+  case OP_CBRTF:
   case OP_EXP:
   case OP_LOG:
   case OP_ABS:
   case OP_EXPM1:
   case OP_LOG1P:
-  case OP_CBRT:
-  case OP_CBRTF:
+
+  case OP_ERF:
+  case OP_ERFF:
+  case OP_ERFC:
+  case OP_ERFCF:
 
   case OP_COS:
   case OP_COSF:
@@ -147,6 +157,16 @@ void performOp(OpType op, double* result, double* args){
         op_symbol = "sqrt";
         mpfr_func = mpfr_sqrt;
         break;
+      case OP_CBRT:
+        plain_opname = "cube root";
+        op_symbol = "cbrt";
+        mpfr_func = mpfr_cbrt;
+        break;
+      case OP_CBRTF:
+        plain_opname = "cube root (float)";
+        op_symbol = "cbrtf";
+        mpfr_func = mpfr_cbrt;
+        break;
       case OP_EXP:
         plain_opname = "exponentiate";
         op_symbol = "exp";
@@ -172,17 +192,28 @@ void performOp(OpType op, double* result, double* args){
         op_symbol = "log1p";
         mpfr_func = mpfr_log1p;
         break;
-      case OP_CBRT:
-        plain_opname = "cube root";
-        op_symbol = "cbrt";
-        mpfr_func = mpfr_cbrt;
-        break;
-      case OP_CBRTF:
-        plain_opname = "cube root (float)";
-        op_symbol = "cbrtf";
-        mpfr_func = mpfr_cbrt;
-        break;
 
+      case OP_ERF:
+        plain_opname = "error function";
+        op_symbol = "erf";
+        mpfr_func = mpfr_erf;
+        break;
+      case OP_ERFF:
+        plain_opname = "error function (float)";
+        op_symbol = "erff";
+        mpfr_func = mpfr_erf;
+        break;        
+      case OP_ERFC:
+        plain_opname = "complementary error function";
+        op_symbol = "erfc";
+        mpfr_func = mpfr_erfc;
+        break;
+      case OP_ERFCF:
+        plain_opname = "complementary error function (float)";
+        op_symbol = "erfcf";
+        mpfr_func = mpfr_erfc;
+        break;        
+        
       case OP_COS:
         plain_opname = "cosine";
         op_symbol = "cos";

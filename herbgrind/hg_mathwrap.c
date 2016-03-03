@@ -42,6 +42,11 @@ HG_WRAP_OP_1(cbrtf, OP_CBRTF);
 HG_WRAP_OP_1(ceil, OP_CEIL);
 HG_WRAP_OP_1(ceilf, OP_CEILF);
 
+HG_WRAP_OP_1(erf, OP_ERF);
+HG_WRAP_OP_1(erff, OP_ERFF);
+HG_WRAP_OP_1(erfc, OP_ERFC);
+HG_WRAP_OP_1(erfcf, OP_ERFCF);
+
 HG_WRAP_OP_1(cos, OP_COS);
 HG_WRAP_OP_1(cosf, OP_COSF);
 HG_WRAP_OP_1(sin, OP_SIN);

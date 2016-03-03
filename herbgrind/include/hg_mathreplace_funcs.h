@@ -6,16 +6,21 @@
 typedef enum {
   // Unary functions
   OP_SQRT,
+  OP_CBRT,
+  OP_CBRTF,
   OP_EXP,
   OP_LOG,
   OP_ABS,
   OP_EXPM1,
   OP_LOG1P,
-  OP_CBRT,
-  OP_CBRTF,
   OP_CEIL,
   OP_CEILF,
 
+  OP_ERF,
+  OP_ERFF,
+  OP_ERFC,
+  OP_ERFCF,
+  
   OP_COS,
   OP_COSF,
   OP_SIN,
