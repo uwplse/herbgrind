@@ -50,3 +50,19 @@ mpfr_set_memset_function (void* (*memset_func) (void*, int, size_t))
 	__mpfr_memset_func = memset_func;
 }
 
+#undef mpfr_set_strtol_function
+
+void
+mpfr_set_strtol_function (long int (*strtol_func) (const char*, char**, int))
+{
+	__mpfr_strtol_func = strtol_func;
+}
+
+#undef mpfr_set_isspace_function
+
+void
+mpfr_set_isspace_function (int (*isspace_func) (int))
+{
+	__mpfr_isspace_func = isspace_func;
+}
+

@@ -27,6 +27,11 @@ void gmp_free(void* p, size_t t){ VG_(free)(p); }
 // We wrap these functions because they require slightly different
 // types, and we want the coercions to work out.
 size_t mpfr_strlen(const char* str){ return VG_(strlen)(str); }
+long int mpfr_strtol(const char* str, char** endptr, int _base) {
+  // Ignoring the base. This works everywhere we care about for now.
+  return VG_(strtoll10)(str, endptr);
+}
+int mpfr_isspace(int c){ return VG_(isspace)(c); }
 void* mpfr_memmove(void* dest, const void* src, size_t len){ return VG_(memmove)(dest, src, len); }
 int mpfr_memcmp(const void* ptr1, const void* ptr2, size_t len){ return VG_(memcmp)(ptr1, ptr2, len); }
 void* mpfr_memset(void* dest, int val, size_t size){ return VG_(memset)(dest, val, size); }
