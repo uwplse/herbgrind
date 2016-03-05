@@ -12,6 +12,7 @@
 #include "hg_runtime.h"
 #include "../types/hg_opinfo.h"
 #include "../include/hg_macros.h"
+#include "../include/hg_mathreplace_funcs.h"
 
 VgHashTable* callToOpInfoMap = NULL;
 
@@ -31,56 +32,18 @@ typedef struct _OpInfo_Entry {
 void performOp(OpType op, double* result, double* args){
   SizeT nargs;
   switch(op){
-  case OP_SQRT:
-  case OP_CBRT:
-  case OP_CBRTF:
-  case OP_EXP:
-  case OP_LOG:
-  case OP_ABS:
-  case OP_EXPM1:
-  case OP_LOG1P:
-  case OP_CEIL:
-  case OP_CEILF:
-
-  case OP_ERF:
-  case OP_ERFF:
-  case OP_ERFC:
-  case OP_ERFCF:
-
-  case OP_COS:
-  case OP_COSF:
-  case OP_SIN:
-  case OP_SINF:
-  case OP_TAN:
-  case OP_TANF:
-  case OP_ASIN:
-  case OP_ASINF:
-  case OP_ACOS:
-  case OP_ACOSF:
-  case OP_ATAN:
-  case OP_ATANF:
-
-  case OP_SINH:
-  case OP_SINHF:
-  case OP_COSH:
-  case OP_COSHF:
-  case OP_TANH:
-  case OP_TANHF:
-  case OP_ASINH:
-  case OP_ASINHF:
-  case OP_ACOSH:
-  case OP_ACOSHF:
-  case OP_ATANH:
-  case OP_ATANHF:
+    // This is a macro defined in include/hg_mathreplace_funcs.h which
+    // expands to a bunch of cases like "case OP_SQRT:" which
+    // coorespond to the elements of the Op enum which take a single
+    // argument.
+    UNARY_OPS_CASES
     nargs = 1;
     break;
-  case OP_MOD:
-  case OP_POW:
-  case OP_ATAN2:
-  case OP_ATAN2F:
-  case OP_HYPOT:
-  case OP_COPYSIGN:
-  case OP_COPYSIGNF:
+    // This is a macro defined in include/hg_mathreplace_funcs.h which
+    // expands to a bunch of cases like "case OP_MOD:" which
+    // coorespond to the elements of the Op enum which take a single
+    // argument.
+    BINARY_OPS_CASES
     nargs = 2;
     break;
   }
@@ -110,309 +73,41 @@ void performOp(OpType op, double* result, double* args){
   res_shadow = mkShadowLocation(Lt_Double);
 
   switch(op){
-  case OP_SQRT:
-  case OP_CBRT:
-  case OP_CBRTF:
-  case OP_EXP:
-  case OP_LOG:
-  case OP_ABS:
-  case OP_EXPM1:
-  case OP_LOG1P:
-
-  case OP_ERF:
-  case OP_ERFF:
-  case OP_ERFC:
-  case OP_ERFCF:
-
-  case OP_COS:
-  case OP_COSF:
-  case OP_SIN:
-  case OP_SINF:
-  case OP_TAN:
-  case OP_TANF:
-  case OP_ASIN:
-  case OP_ASINF:
-  case OP_ACOS:
-  case OP_ACOSF:
-  case OP_ATAN:
-  case OP_ATANF:
-
-  case OP_SINH:
-  case OP_SINHF:
-  case OP_COSH:
-  case OP_COSHF:
-  case OP_TANH:
-  case OP_TANHF:
-  case OP_ASINH:
-  case OP_ASINHF:
-  case OP_ACOSH:
-  case OP_ACOSHF:
-  case OP_ATANH:
-  case OP_ATANHF:
+    // This expands to the cases for ops which take one argument and
+    // whose mpfr functions want a rounding mode.
+    UNARY_OPS_ROUND_CASES
     {
       int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_rnd_t);
-      switch(op){
-      case OP_SQRT:
-        plain_opname = "square root";
-        op_symbol = "sqrt";
-        mpfr_func = mpfr_sqrt;
-        break;
-      case OP_CBRT:
-        plain_opname = "cube root";
-        op_symbol = "cbrt";
-        mpfr_func = mpfr_cbrt;
-        break;
-      case OP_CBRTF:
-        plain_opname = "cube root (float)";
-        op_symbol = "cbrtf";
-        mpfr_func = mpfr_cbrt;
-        break;
-      case OP_EXP:
-        plain_opname = "exponentiate";
-        op_symbol = "exp";
-        mpfr_func = mpfr_exp;
-        break;
-      case OP_LOG:
-        plain_opname = "log";
-        op_symbol = "log";
-        mpfr_func = mpfr_log;
-        break;
-      case OP_ABS:
-        plain_opname = "absolute";
-        op_symbol = "abs";
-        mpfr_func = mpfr_abs;
-        break;
-      case OP_EXPM1:
-        plain_opname = "exponentiate minus one";
-        op_symbol = "expm1";
-        mpfr_func = mpfr_expm1;
-        break;
-      case OP_LOG1P:
-        plain_opname = "plus 1 log";
-        op_symbol = "log1p";
-        mpfr_func = mpfr_log1p;
-        break;
-
-      case OP_ERF:
-        plain_opname = "error function";
-        op_symbol = "erf";
-        mpfr_func = mpfr_erf;
-        break;
-      case OP_ERFF:
-        plain_opname = "error function (float)";
-        op_symbol = "erff";
-        mpfr_func = mpfr_erf;
-        break;        
-      case OP_ERFC:
-        plain_opname = "complementary error function";
-        op_symbol = "erfc";
-        mpfr_func = mpfr_erfc;
-        break;
-      case OP_ERFCF:
-        plain_opname = "complementary error function (float)";
-        op_symbol = "erfcf";
-        mpfr_func = mpfr_erfc;
-        break;        
-        
-      case OP_COS:
-        plain_opname = "cosine";
-        op_symbol = "cos";
-        mpfr_func = mpfr_cos;
-        break;
-      case OP_COSF:
-        plain_opname = "cosine (float)";
-        op_symbol = "cosf";
-        mpfr_func = mpfr_cos;
-        break;
-      case OP_SIN:
-        plain_opname = "sine";
-        op_symbol = "sin";
-        mpfr_func = mpfr_sin;
-        break;
-      case OP_SINF:
-        plain_opname = "sine (float)";
-        op_symbol = "sinf";
-        mpfr_func = mpfr_sin;
-        break;
-      case OP_TAN:
-        plain_opname = "tangent";
-        op_symbol = "tan";
-        mpfr_func = mpfr_tan;
-        break;
-      case OP_TANF:
-        plain_opname = "tangent (float)";
-        op_symbol = "tanf";
-        mpfr_func = mpfr_tan;
-        break;
-      case OP_ASIN:
-        plain_opname = "arcsine";
-        op_symbol = "asin";
-        mpfr_func = mpfr_asin;
-        break;
-      case OP_ASINF:
-        plain_opname = "arcsine (float)";
-        op_symbol = "asinf";
-        mpfr_func = mpfr_asin;
-        break;
-      case OP_ACOS:
-        plain_opname = "arccosine";
-        op_symbol = "acos";
-        mpfr_func = mpfr_acos;
-        break;
-      case OP_ACOSF:
-        plain_opname = "arccosine (float)";
-        op_symbol = "acosf";
-        mpfr_func = mpfr_acos;
-        break;
-      case OP_ATAN:
-        plain_opname = "arctangent";
-        op_symbol = "atan";
-        mpfr_func = mpfr_atan;
-        break;
-      case OP_ATANF:
-        plain_opname = "arctangent (float)";
-        op_symbol = "atanf";
-        mpfr_func = mpfr_atan;
-        break;
-      case OP_SINH:
-        plain_opname = "hyperbolic sine";
-        op_symbol = "sinh";
-        mpfr_func = mpfr_sinh;
-        break;
-      case OP_SINHF:
-        plain_opname = "hyperbolic sine (float)";
-        op_symbol = "sinhf";
-        mpfr_func = mpfr_sinh;
-        break;
-      case OP_COSH:
-        plain_opname = "hyperbolic cosine";
-        op_symbol = "cosh";
-        mpfr_func = mpfr_cosh;
-        break;
-      case OP_COSHF:
-        plain_opname = "hyperbolic cosine (float)";
-        op_symbol = "coshf";
-        mpfr_func = mpfr_cosh;
-        break;
-      case OP_TANH:
-        plain_opname = "hyperbolic tangent";
-        op_symbol = "tanh";
-        mpfr_func = mpfr_tanh;
-        break;
-      case OP_TANHF:
-        plain_opname = "hyperbolic tangent (float)";
-        op_symbol = "tanhf";
-        mpfr_func = mpfr_tanh;
-        break;
-      case OP_ASINH:
-        plain_opname = "hyperbolic arc-sine (float)";
-        op_symbol = "asinhf";
-        mpfr_func = mpfr_asinh;
-        break;
-      case OP_ASINHF:
-        plain_opname = "hyperbolic arc-sine";
-        op_symbol = "asinh";
-        mpfr_func = mpfr_asinh;
-        break;
-      case OP_ACOSH:
-        plain_opname = "hyperbolic arc-cosine";
-        op_symbol = "acosh";
-        mpfr_func = mpfr_acosh;
-        break;
-      case OP_ACOSHF:
-        plain_opname = "hyperbolic arc-cosine (float)";
-        op_symbol = "acoshf";
-        mpfr_func = mpfr_acosh;
-        break;
-      case OP_ATANH:
-        plain_opname = "hyperbolic arc-tangent";
-        op_symbol = "atanh";
-        mpfr_func = mpfr_atanh;
-        break;
-      case OP_ATANHF:
-        plain_opname = "hyperbolic arc-tangent (float)";
-        op_symbol = "atanhf";
-        mpfr_func = mpfr_atanh;
-        break;
-      default:
-        return;
-      }
+      // This is a macro, defined in include/hg_mathreplace_funcs.h,
+      // which expands to a big switch statement which fills in the
+      // plain_opname, op_symbol, and mpfr_func values for each
+      // unary operation which needs a rounding mode argument to
+      // it's mpfr_func.
+      GET_UNARY_OPS_ROUND_INFO(op)
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0], MPFR_RNDN);
       mpfr_func(res_shadow->values[0].value, arg_shadows[0]->values[0].value, MPFR_RNDN);
     }
     break;
-  case OP_CEIL:
-  case OP_CEILF:
+    // This expands to a bunch of cases for the ops which take one
+    // argument and whose mpfr functions don't need a rounding mode.
+  UNARY_OPS_NOROUND_CASES
     {
       int (*mpfr_func)(mpfr_t, mpfr_srcptr);
-      switch(op){
-      case OP_CEIL:
-        plain_opname = "ceiling";
-        op_symbol = "ceilf";
-        mpfr_func = mpfr_ceil;
-        break;
-      case OP_CEILF:
-        plain_opname = "ceiling (float)";
-        op_symbol = "ceilf";
-        mpfr_func = mpfr_ceil;
-        break;
-      default:
-        return;
-      }
+      // See above comment on UNARY_OPS_ROUND_INFO_CASES
+      GET_UNARY_OPS_NOROUND_INFO(op)
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0]);
       mpfr_func(res_shadow->values[0].value, arg_shadows[0]->values[0].value);
     }
     break;
-  case OP_MOD:
-  case OP_POW:
-  case OP_ATAN2:
-  case OP_ATAN2F:
-  case OP_HYPOT:
-  case OP_COPYSIGN:
-  case OP_COPYSIGNF:
+    // This expands to a bunch of cases for operations which take two
+    // arguments.
+    BINARY_OPS_CASES
     {
       int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
-      switch(op){
-      case OP_MOD:
-        plain_opname = "modulus";
-        op_symbol = "mod";
-        mpfr_func = mpfr_fmod;
-        break;
-      case OP_POW:
-        plain_opname = "power";
-        op_symbol = "pow";
-        mpfr_func = mpfr_pow;
-        break;
-      case OP_ATAN2:
-        plain_opname = "arctangent (two arguments)";
-        op_symbol = "atan2";
-        mpfr_func = mpfr_atan2;
-        break;
-      case OP_ATAN2F:
-        plain_opname = "arctangent (two arguments, float)";
-        op_symbol = "atan2f";
-        mpfr_func = mpfr_atan2;
-        break;
-      case OP_HYPOT:
-        plain_opname = "hypotenuse";
-        op_symbol = "hypot";
-        mpfr_func = mpfr_hypot;
-        break;
-      case OP_COPYSIGN:
-        plain_opname = "copy sign";
-        op_symbol = "copysign";
-        mpfr_func = mpfr_copysign;
-        break;
-      case OP_COPYSIGNF:
-        plain_opname = "copy sign (float)";
-        op_symbol = "copysignf";
-        mpfr_func = mpfr_copysign;
-        break;
-      default:
-        return;
-      }
+      // See above comment on UNARY_OPS_ROUND_INFO_CASES
+      GET_BINARY_OPS_INFO(op)
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0], args_m[1], MPFR_RNDN);
       mpfr_func(res_shadow->values[0].value, arg_shadows[0]->values[0].value, arg_shadows[0]->values[0].value, MPFR_RNDN);

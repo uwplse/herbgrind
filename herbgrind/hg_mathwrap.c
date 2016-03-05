@@ -21,7 +21,7 @@
 ====== Unary Ops =============
 ----------------------------*/
 
-#define HG_WRAP_OP_1(fnname, opname)                    \
+#define WRAP_UNARY(fnname, opname)                    \
   double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x);   \
   double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x){   \
     double result;                                      \
@@ -31,47 +31,10 @@
     return result;                                      \
   }
 
-HG_WRAP_OP_1(sqrt, OP_SQRT);
-HG_WRAP_OP_1(exp, OP_EXP);
-HG_WRAP_OP_1(log, OP_LOG);
-HG_WRAP_OP_1(fabs, OP_ABS);
-HG_WRAP_OP_1(expm1, OP_EXPM1);
-HG_WRAP_OP_1(log1p, OP_LOG1P);
-HG_WRAP_OP_1(cbrt, OP_CBRT);
-HG_WRAP_OP_1(cbrtf, OP_CBRTF);
-HG_WRAP_OP_1(ceil, OP_CEIL);
-HG_WRAP_OP_1(ceilf, OP_CEILF);
-
-HG_WRAP_OP_1(erf, OP_ERF);
-HG_WRAP_OP_1(erff, OP_ERFF);
-HG_WRAP_OP_1(erfc, OP_ERFC);
-HG_WRAP_OP_1(erfcf, OP_ERFCF);
-
-HG_WRAP_OP_1(cos, OP_COS);
-HG_WRAP_OP_1(cosf, OP_COSF);
-HG_WRAP_OP_1(sin, OP_SIN);
-HG_WRAP_OP_1(sinf, OP_SINF);
-HG_WRAP_OP_1(tan, OP_TAN);
-HG_WRAP_OP_1(tanf, OP_TANF);
-HG_WRAP_OP_1(asin, OP_ASIN);
-HG_WRAP_OP_1(asinf, OP_ASINF);
-HG_WRAP_OP_1(acos, OP_ACOS);
-HG_WRAP_OP_1(acosf, OP_ACOSF);
-HG_WRAP_OP_1(atan, OP_ATAN);
-HG_WRAP_OP_1(atanf, OP_ATANF);
-
-HG_WRAP_OP_1(sinh, OP_SINH);
-HG_WRAP_OP_1(sinhf, OP_SINHF);
-HG_WRAP_OP_1(cosh, OP_COSH);
-HG_WRAP_OP_1(coshf, OP_COSHF);
-HG_WRAP_OP_1(tanh, OP_TANH);
-HG_WRAP_OP_1(tanhf, OP_TANHF);
-HG_WRAP_OP_1(asinh, OP_ASINH);
-HG_WRAP_OP_1(asinhf, OP_ASINHF);
-HG_WRAP_OP_1(acosh, OP_ACOSH);
-HG_WRAP_OP_1(acoshf, OP_ACOSHF);
-HG_WRAP_OP_1(atanh, OP_ATANH);
-HG_WRAP_OP_1(atanhf, OP_ATANHF);
+// This macro is defined in include/hg_mathreplace_funcs.h, and
+// invokes the above macro for each unary operation that needs to be
+// wrapped.
+WRAP_UNARY_OPS
 
 /*----------------------------
 ====== Binary Ops ============
@@ -88,9 +51,7 @@ HG_WRAP_OP_1(atanhf, OP_ATANHF);
     return result;                                               \
   }
 
-HG_WRAP_OP_2(fmod, OP_MOD);
-HG_WRAP_OP_2(pow, OP_POW);
-HG_WRAP_OP_2(atan2, OP_ATAN2);
-HG_WRAP_OP_2(hypot, OP_HYPOT);
-HG_WRAP_OP_2(copysign, OP_COPYSIGN);
-HG_WRAP_OP_2(copysignf, OP_COPYSIGNF);
+// This macro is defined in include/hg_mathreplace_funcs.h, and
+// invokes the above macro for each binary operation that needs to be
+// wrapped.
+WRAP_BINARY_OPS
