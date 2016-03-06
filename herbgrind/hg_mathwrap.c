@@ -67,7 +67,7 @@ WRAP_BINARY_OPS
     double args[3];                                                     \
     args[0] = x;                                                        \
     args[1] = y;                                                        \
-    args[2] = z;
+    args[2] = z;                                                        \
     HERBGRIND_PERFORM_OP(opname, &result, args);                        \
     return result;                                                      \
   }
