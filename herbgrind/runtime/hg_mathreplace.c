@@ -36,14 +36,14 @@ void performOp(OpType op, double* result, double* args){
     // expands to a bunch of cases like "case OP_SQRT:" which
     // coorespond to the elements of the Op enum which take a single
     // argument.
-    UNARY_OPS_CASES
+  UNARY_OPS_CASES
     nargs = 1;
     break;
     // This is a macro defined in include/hg_mathreplace_funcs.h which
     // expands to a bunch of cases like "case OP_MOD:" which
-    // coorespond to the elements of the Op enum which take a single
-    // argument.
-    BINARY_OPS_CASES
+    // coorespond to the elements of the Op enum which take two
+    // arguments.
+  BINARY_OPS_CASES
     nargs = 2;
     break;
   }
@@ -110,7 +110,9 @@ void performOp(OpType op, double* result, double* args){
       GET_BINARY_OPS_INFO(op)
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0], args_m[1], MPFR_RNDN);
-      mpfr_func(res_shadow->values[0].value, arg_shadows[0]->values[0].value, arg_shadows[0]->values[0].value, MPFR_RNDN);
+      mpfr_func(res_shadow->values[0].value,
+                arg_shadows[0]->values[0].value,
+                arg_shadows[1]->values[0].value, MPFR_RNDN);
     }
     break;
   }
