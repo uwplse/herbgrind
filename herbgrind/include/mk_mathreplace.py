@@ -187,54 +187,69 @@ def write_mathreplace_funcs(ops, fname):
 
         f.write("#endif\n")
 
-ops = [Op("sqrt", "square root", 1),
-       Op("cbrt", "cube root", 1),
-       Op("cbrtf", "cube root", 1, mpfr_func="mpfr_cbrt"),
-       Op("exp", "exponentiate", 1),
-       Op("log", "log", 1),
-       Op("abs", "absolute value", 1),
-       Op("expm1", "exponentiate minus one", 1),
-       Op("log1p", "plus one log", 1),
+ops = []
 
-       Op("erf", "error function", 1),
-       Op("erff", "error function (float)", 1, mpfr_func="mpfr_erf"),
-       Op("erfc", "complementary error function", 1),
-       Op("erfcf", "complementary error function (float)", 1, mpfr_func="mpfr_erfc"),
+def addOp(name, plain_name, nargs,
+          hasfloat=True, mpfr_func=None, needsRound=True):
+    mpfr_fn = "mpfr_" + name
+    if (mpfr_func != None):
+        mpfr_fn = mpfr_func
 
-       Op("cos", "cosine", 1),
-       Op("cosf", "cosine (float)", 1, mpfr_func="mpfr_cos"),
-       Op("sin", "sine", 1),
-       Op("sinf", "sine (float)", 1, mpfr_func="mpfr_sin"),
-       Op("tan", "tangent", 1),
-       Op("tanf", "tangent (float)", 1, mpfr_func="mpfr_tan"),
-       Op("asin", "arc sine", 1),
-       Op("asinf", "arc sine (float)", 1, mpfr_func="mpfr_asin"),
-       Op("acos", "arc cosine", 1),
-       Op("acosf", "arc cosine (float)", 1, mpfr_func="mpfr_acos"),
-       Op("atan", "arc tangent", 1),
-       Op("atanf", "arc tangent (float)", 1, mpfr_func="mpfr_atan"),
-       Op("sinh", "hyperbolic sine", 1),
-       Op("sinhf", "hyperbolic sine (float)", 1, mpfr_func="mpfr_sinh"),
-       Op("cosh", "hyperbolic cosine", 1),
-       Op("coshf", "hyperbolic cosine (float)", 1, mpfr_func="mpfr_cosh"),
-       Op("tanh", "hyperbolic tangent", 1),
-       Op("tanhf", "hyperbolic tangent (float)", 1, mpfr_func="mpfr_tanh"),
-       Op("asinh", "hyperbolic arc sine", 1),
-       Op("asinhf", "hyperbolic arc sine (float)", 1, mpfr_func="mpfr_asinh"),
-       Op("acosh", "hyperbolic arc cosine", 1),
-       Op("acoshf", "hyperbolic arc cosine (float)", 1, mpfr_func="mpfr_acosh"),
-       Op("atanh", "hyperbolic arc tangent", 1),
-       Op("atanhf", "hyperbolic arc tangent (float)", 1, mpfr_func="mpfr_atanh"),
+    ops.append(Op(name, plain_name, nargs,
+                  mpfr_func=mpfr_fn,
+                  needsround=needsRound))
 
-       Op("ceil", "ceiling", 1, needsround=False),
-       Op("ceilf", "ceiling (float)", 1, needsround=False, mpfr_func="mpfr_ceil"),
+    if hasfloat:
+        ops.append(Op(name + "f",
+                      plain_name + " (float)",
+                      nargs,
+                      mpfr_func=mpfr_fn,
+                      needsround=needsRound))
 
-       Op("mod", "modulus", 2, mpfr_func="mpfr_fmod"),
-       Op("pow", "power", 2),
-       Op("atan2", "arc tangent (two arguments)", 2),
-       Op("atan2f", "arc tangent (two arguments, float)", 2, mpfr_func="mpfr_atan2"),
-       Op("hypot", "hypotenuse", 2),
-       Op("copysign", "copy sign", 2),
-       Op("copysignf", "copy sign (float)", 2, mpfr_func="mpfr_copysign")]
+addOp("sqrt", "square root", 1)
+addOp("cbrt", "cube root", 1)
+
+addOp("fabs", "absolute value", 1, mpfr_func="mpfr_abs")
+addOp("ceil", "ceiling", 1, needsRound=False)
+addOp("floor", "floor", 1, needsRound=False)
+addOp("round", "round", 1, needsRound=False)
+addOp("trunc", "truncate", 1, needsRound=False)
+
+addOp("exp", "exponentiate", 1)
+addOp("exp2", "base-two exponentiate", 1)
+addOp("expm1", "exponentiate minus one", 1)
+addOp("log", "log", 1)
+addOp("log10", "log base ten", 1)
+addOp("log1p", "plus one log", 1)
+addOp("log2", "log base two", 1)
+addOp("erf", "error function", 1)
+addOp("erfc", "complementary error function", 1)
+
+addOp("cos", "cosine", 1)
+addOp("sin", "sine", 1)
+addOp("tan", "tangent", 1)
+addOp("asin", "arc sine", 1)
+addOp("acos", "arc cosine", 1)
+addOp("atan", "arc tangent", 1)
+
+addOp("sinh", "hyperbolic sine", 1)
+addOp("cosh", "hyperbolic cosine", 1)
+addOp("tanh", "hyperbolic tangent", 1)
+addOp("asinh", "hyperbolic arc sine", 1)
+addOp("acosh", "hyperbolic arc cosine", 1)
+addOp("atanh", "hyperbolic arc tangent", 1)
+
+addOp("atan2", "arc tangent (two arguments)", 2)
+addOp("hypot", "hypotenuse", 2)
+
+addOp("pow", "power", 2)
+addOp("fmod", "modulus", 2)
+addOp("copysign", "copy sign", 2)
+addOp("fdim", "positive difference", 2, mpfr_func="mpfr_dim")
+addOp("fmax", "maximum", 2, mpfr_func="mpfr_max")
+addOp("fmin", "minimum", 2, mpfr_func="mpfr_min")
+addOp("remainder", "remainder", 2)
+
+addOp("fma", "fused multiply-add", 3)
 
 write_mathreplace_funcs(ops, "hg_mathreplace_funcs.h")
