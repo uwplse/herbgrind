@@ -46,6 +46,13 @@ void performOp(OpType op, double* result, double* args){
   BINARY_OPS_CASES
     nargs = 2;
     break;
+    // This is a macro defined in include/hg_mathreplace_funcs.h which
+    // expands to a bunch of cases like "case OP_FMA:" which
+    // coorespond to the elements of the Op enum which take three
+    // arguments.
+  TERNARY_OPS_CASES
+    nargs = 3;
+    break;
   }
   // We'll need the argument and the result in 64-bit mpfr, and
   // also shadow locations for both. We do the normal calculation
@@ -113,6 +120,22 @@ void performOp(OpType op, double* result, double* args){
       mpfr_func(res_shadow->values[0].value,
                 arg_shadows[0]->values[0].value,
                 arg_shadows[1]->values[0].value, MPFR_RNDN);
+    }
+    break;
+    // This expands to a bunch of cases for operations which take two
+    // arguments.
+    TERNARY_OPS_CASES
+    {
+      int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
+      // See above comment on UNARY_OPS_ROUND_INFO_CASES
+      GET_TERNARY_OPS_INFO(op)
+      // Perform the operation on both regular and shadow values.
+      mpfr_func(res, args_m[0], args_m[1], args_m[2], MPFR_RNDN);
+      mpfr_func(res_shadow->values[0].value,
+                arg_shadows[0]->values[0].value,
+                arg_shadows[1]->values[0].value,
+                arg_shadows[2]->values[0].value,
+                MPFR_RNDN);
     }
     break;
   }

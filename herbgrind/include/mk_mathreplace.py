@@ -48,6 +48,14 @@ def write_mathreplace_funcs(ops, fname):
                 f.write("  OP_{}, \\\n".format(op.func.upper()))
         f.write("\n")
 
+        f.write("// A list of all the binary ops comma seperated, for the enum\n")
+        f.write("// definition farther down in the file.\n")
+        f.write("#define TERNARY_OPS_LIST \\\n")
+        for op in ops:
+            if (op.nargs == 3):
+                f.write("   OP_{}, \\\n".format(op.func.upper()))
+        f.write("\n")
+
         f.write("// A bunch of case statements for each unary op whose mpfr function\n")
         f.write("// doesn't need a rounding mode, used in runtime/hg_mathreplace.c\n")
         f.write("#define UNARY_OPS_ROUND_CASES \\\n")
@@ -73,6 +81,13 @@ def write_mathreplace_funcs(ops, fname):
         f.write("#define BINARY_OPS_CASES \\\n")
         for op in ops:
             if (op.nargs == 2):
+                f.write("  case OP_{}: \\\n".format(op.func.upper()))
+        f.write("\n")
+
+        f.write("// The ternary operation cases, used in runtime/hg_mathreplace.c\n")
+        f.write("#define TERNARY_OPS_CASES \\\n")
+        for op in ops:
+            if (op.nargs == 3):
                 f.write("  case OP_{}: \\\n".format(op.func.upper()))
         f.write("\n")
 
@@ -122,6 +137,21 @@ def write_mathreplace_funcs(ops, fname):
         f.write("  }\n")
         f.write("\n")
 
+        f.write("// Same as above, but ternary ops\n")
+        f.write("#define GET_TERNARY_OPS_INFO(op) \\\n")
+        f.write("  switch(op){ \\\n")
+        for op in ops:
+            if (op.nargs == 3):
+                f.write("    case OP_{}: \\\n".format(op.func.upper()))
+                f.write("      plain_opname = \"{}\"; \\\n".format(op.plain_name))
+                f.write("      op_symbol = \"{}\"; \\\n".format(op.func))
+                f.write("      mpfr_func = {}; \\\n".format(op.mpfr_func))
+                f.write("      break; \\\n")
+        f.write("    default: \\\n")
+        f.write("      return; \\\n")
+        f.write("  }\n")
+        f.write("\n")
+
         f.write("// Call the wrapping macro, defined at the call site in hg_mathwrap.c,\n")
         f.write("// to wrap each function we support.\n")
         f.write("#define WRAP_UNARY_OPS \\\n")
@@ -137,12 +167,21 @@ def write_mathreplace_funcs(ops, fname):
                 f.write("  WRAP_BINARY({}, OP_{}); \\\n".format(op.func, op.func.upper()))
         f.write("\n")
 
+        f.write("// Same for binary ops.\n")
+        f.write("#define WRAP_TERNARY_OPS \\\n")
+        for op in ops:
+            if (op.nargs == 3):
+                f.write("  WRAP_TERNARY({}, OP_{}); \\\n".format(op.func, op.func.upper()))
+        f.write("\n")
+
         f.write("// Finally, define an enum for the operations we support.\n")
         f.write("typedef enum {\n")
         f.write("  // Unary functions\n")
         f.write("  UNARY_OPS_LIST\n")
         f.write("  // Binary\n")
         f.write("  BINARY_OPS_LIST\n")
+        f.write("  // Ternary\n")
+        f.write("  TERNARY_OPS_LIST\n")
         f.write("} OpType;\n")
         f.write("\n")
 

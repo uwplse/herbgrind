@@ -55,3 +55,24 @@ WRAP_UNARY_OPS
 // invokes the above macro for each binary operation that needs to be
 // wrapped.
 WRAP_BINARY_OPS
+
+/*----------------------------
+====== Ternary Ops ===========
+----------------------------*/
+
+#define WRAP_TERNARY(fnname, opname)                                    \
+  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y, double z); \
+  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y, double z){ \
+    double result;                                                      \
+    double args[3];                                                     \
+    args[0] = x;                                                        \
+    args[1] = y;                                                        \
+    args[2] = z;
+    HERBGRIND_PERFORM_OP(opname, &result, args);                        \
+    return result;                                                      \
+  }
+
+// This macro is defined in include/hg_mathreplace_funcs.h, and
+// invokes the above macro for each ternary operation that needs to be
+// wrapped.
+WRAP_TERNARY_OPS
