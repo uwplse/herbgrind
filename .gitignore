@@ -1,5 +1,6 @@
 herbgrind/docs/Makefile
 herbgrind/tests/Makefile
+herbgrind/include/hg_mathreplace_funcs.h
 *Makefile.in
 herbgrind/.deps/
 valgrind/

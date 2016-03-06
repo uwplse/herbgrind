@@ -21,12 +21,12 @@ endif
 
 HEADERS=herbgrind/hg_instrument.h herbgrind/include/herbgrind.h		\
 herbgrind/include/hg_include.h herbgrind/include/hg_helper.h		\
-herbgrind/include/hg_mathreplace_funcs.h				\
 herbgrind/include/hg_macros.h herbgrind/include/hg_options.h		\
-herbgrind/types/hg_shadowvals.hh herbgrind/types/hg_shadowvals.h	\
-herbgrind/types/hg_opinfo.hh herbgrind/types/hg_opinfo.h		\
-herbgrind/runtime/hg_runtime.h herbgrind/runtime/hg_evaluate.h		\
-herbgrind/runtime/hg_hiprec_ops.h herbgrind/runtime/hg_shadowop.h	\
+herbgrind/include/mk_mathreplace.py herbgrind/types/hg_shadowvals.hh	\
+herbgrind/types/hg_shadowvals.h herbgrind/types/hg_opinfo.hh		\
+herbgrind/types/hg_opinfo.h herbgrind/runtime/hg_runtime.h		\
+herbgrind/runtime/hg_evaluate.h herbgrind/runtime/hg_hiprec_ops.h	\
+herbgrind/runtime/hg_shadowop.h						\
 herbgrind/runtime/hg_storage_runtime.h					\
 herbgrind/runtime/hg_mathreplace.h herbgrind/runtime/hg_op_tracker.h
 
@@ -79,6 +79,10 @@ setup: valgrind/herbgrind/Makefile $(DEPS)
 valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) setup
 # First, we've got to make sure all the dependencies are extracted and set up.
 	$(MAKE) setup
+# Then, let's run the python script to generate the mathreplace header
+# in herbgrind/
+	rm -rf herbgrind/include/hg_mathreplace_funcs.h
+	cd herbgrind/include/ && python mk_mathreplace.py
 # Copy over the herbgrind sources again, because why the hell not.
 	cp -r herbgrind/* valgrind/herbgrind
 # Run make install to build the binaries and put them in the right
