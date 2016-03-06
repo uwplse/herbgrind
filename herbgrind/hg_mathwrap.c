@@ -40,7 +40,7 @@ WRAP_UNARY_OPS
 ====== Binary Ops ============
 ----------------------------*/
 
-#define HG_WRAP_OP_2(fnname, opname)                             \
+#define WRAP_BINARY(fnname, opname)                             \
   double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y);  \
   double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y){  \
     double result;                                               \
