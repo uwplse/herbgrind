@@ -11,6 +11,14 @@ int hiprec_recpexp(mpfr_t result, mpfr_srcptr arg, mpfr_rnd_t round){
 int hiprec_recip(mpfr_t result, mpfr_srcptr arg, mpfr_rnd_t round){
   return mpfr_d_div(result, 1.0, arg, round);
 }
+int hiprec_logb(mpfr_t result, mpfr_srcptr arg, mpfr_rnd_t round){
+  mpfr_set_ui(result, mpfr_get_exp(arg), round);
+  return 0;
+}
+int hiprec_lgamma(mpfr_t result, mpfr_srcptr arg, mpfr_rnd_t round){
+  int _x;
+  return mpfr_lgamma(result, &_x, arg, round);
+}
 
 int hiprec_yl2x(mpfr_t result, mpfr_srcptr arg1, mpfr_srcptr arg2, mpfr_rnd_t round){
   mpfr_log2(result, arg2, round);

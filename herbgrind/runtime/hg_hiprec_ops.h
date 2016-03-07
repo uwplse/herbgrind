@@ -16,6 +16,8 @@
 int hiprec_2xm1(mpfr_t result, mpfr_srcptr arg, mpfr_rnd_t round);
 int hiprec_recpexp(mpfr_t result, mpfr_srcptr arg, mpfr_rnd_t round);
 int hiprec_recip(mpfr_t result, mpfr_srcptr arg, mpfr_rnd_t round);
+int hiprec_logb(mpfr_t result, mpfr_srcptr arg, mpfr_rnd_t round);
+int hiprec_lgamma(mpfr_t result, mpfr_srcptr arg, mpfr_rnd_t round);
 
 // Two argument
 int hiprec_yl2x(mpfr_t result, mpfr_srcptr arg1, mpfr_srcptr arg2, mpfr_rnd_t round);
