@@ -231,6 +231,8 @@ static void hg_pre_clo_init(void)
    mp_set_memory_functions(gmp_alloc, gmp_realloc, gmp_free);
    mpfr_set_strlen_function(mpfr_strlen);
    mpfr_set_strcpy_function(VG_(strcpy));
+   mpfr_set_strtol_function(mpfr_strtol);
+   mpfr_set_isspace_function(mpfr_isspace);
    mpfr_set_memmove_function(mpfr_memmove);
    mpfr_set_memcmp_function(mpfr_memcmp);
    mpfr_set_memset_function(mpfr_memset);

@@ -21,7 +21,7 @@
 ====== Unary Ops =============
 ----------------------------*/
 
-#define HG_WRAP_OP_1(fnname, opname)                    \
+#define WRAP_UNARY(fnname, opname)                    \
   double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x);   \
   double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x){   \
     double result;                                      \
@@ -31,26 +31,16 @@
     return result;                                      \
   }
 
-HG_WRAP_OP_1(sqrt, OP_SQRT);
-HG_WRAP_OP_1(exp, OP_EXP);
-HG_WRAP_OP_1(log, OP_LOG);
-HG_WRAP_OP_1(cos, OP_COS);
-HG_WRAP_OP_1(sin, OP_SIN);
-HG_WRAP_OP_1(tan, OP_TAN);
-HG_WRAP_OP_1(asin, OP_ASIN);
-HG_WRAP_OP_1(atan, OP_ATAN);
-HG_WRAP_OP_1(sinh, OP_SINH);
-HG_WRAP_OP_1(cosh, OP_COSH);
-HG_WRAP_OP_1(tanh, OP_TANH);
-HG_WRAP_OP_1(fabs, OP_ABS);
-HG_WRAP_OP_1(expm1, OP_EXPM1);
-HG_WRAP_OP_1(log1p, OP_LOG1P);
+// This macro is defined in include/hg_mathreplace_funcs.h, and
+// invokes the above macro for each unary operation that needs to be
+// wrapped.
+WRAP_UNARY_OPS
 
 /*----------------------------
 ====== Binary Ops ============
 ----------------------------*/
 
-#define HG_WRAP_OP_2(fnname, opname)                             \
+#define WRAP_BINARY(fnname, opname)                             \
   double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y);  \
   double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y){  \
     double result;                                               \
@@ -61,7 +51,28 @@ HG_WRAP_OP_1(log1p, OP_LOG1P);
     return result;                                               \
   }
 
-HG_WRAP_OP_2(fmod, OP_MOD);
-HG_WRAP_OP_2(pow, OP_POW);
-HG_WRAP_OP_2(atan2, OP_ATAN2);
-HG_WRAP_OP_2(hypot, OP_HYPOT);
+// This macro is defined in include/hg_mathreplace_funcs.h, and
+// invokes the above macro for each binary operation that needs to be
+// wrapped.
+WRAP_BINARY_OPS
+
+/*----------------------------
+====== Ternary Ops ===========
+----------------------------*/
+
+#define WRAP_TERNARY(fnname, opname)                                    \
+  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y, double z); \
+  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y, double z){ \
+    double result;                                                      \
+    double args[3];                                                     \
+    args[0] = x;                                                        \
+    args[1] = y;                                                        \
+    args[2] = z;                                                        \
+    HERBGRIND_PERFORM_OP(opname, &result, args);                        \
+    return result;                                                      \
+  }
+
+// This macro is defined in include/hg_mathreplace_funcs.h, and
+// invokes the above macro for each ternary operation that needs to be
+// wrapped.
+WRAP_TERNARY_OPS
