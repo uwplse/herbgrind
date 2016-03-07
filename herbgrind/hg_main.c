@@ -4,14 +4,15 @@
 /*--------------------------------------------------------------------*/
 
 /*
-   This file is part of HerbGrind, a valgrind tool for Herbie, which
-   is mostly for experimenting with the valgrind interface with
-   respect to measuring the accuracy of binary floating point
-   programs.
+   This file is part of HerbGrind, a valgrind tool for diagnosing
+   floating point accuracy problems in binary programs and extracting
+   problematic expressions.
+
+   Copyright (C) 2016 Alex Sanchez-Stern
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
-   published by the Free Software Foundation; either version 2 of the
+   published by the Free Software Foundation; either version 3 of the
    License, or (at your option) any later version.
 
    This program is distributed in the hope that it will be useful, but
