@@ -73,7 +73,7 @@ def checkMatch(expected, actual):
             success = False
     
 
-def checkFile(name):
+def checkFile(name, ignoreProps):
     with open(name) as actual:
         with open(name + ".expected") as expected:
             for (actualLine, expectedLine) in zip(actual, expected):
@@ -81,33 +81,36 @@ def checkFile(name):
                 expectedResults = parseSexp(expectedLine)
                 for entry in expectedResults:
                     fieldName = entry[0]
-                    expectedResult = entry[1]
-                    actualResult = lookupField(actualResults, fieldName)
-                    # If the string starts with a digit...
-                    if isFloat(expectedResult):
-                        # Treat it as a float, and check to make sure
-                        # the actual and expected values "almost" match.
-                        if abs(float(expectedResult) - float(actualResult)) > EPSILON:
-                            print("{} mismatch (number): expected {}, got {}".format(fieldName, expectedResult, actualResult))
-                            success = False
-                    else:
-                        if actualResult != expectedResult:
-                            print("{} mismatch: expected {}, got {}".format(fieldName, expectedResult, actualResult))
-                            success = False
+                    if not (fieldName in ignoreProps):
+                        expectedResult = entry[1]
+                        actualResult = lookupField(actualResults, fieldName)
+                        # If the string starts with a digit...
+                        if isFloat(expectedResult):
+                            # Treat it as a float, and check to make sure
+                            # the actual and expected values "almost" match.
+                            if abs(float(expectedResult) - float(actualResult)) > EPSILON:
+                                print("{} mismatch (number): expected {}, got {}".format(fieldName, expectedResult, actualResult))
+                                success = False
+                        else:
+                            if actualResult != expectedResult:
+                                print("{} mismatch: expected {}, got {}".format(fieldName, expectedResult, actualResult))
+                                success = False
 
-def test(prog):
     command = "../valgrind/herbgrind-install/bin/valgrind --machine --tool=herbgrind {} ../bench/{}".format(EXTRA_ARGS, prog)
+def test(prog, ignoreProps):
     print("Calling {}.".format(command))
     status = os.system(command + "> /dev/null >& /dev/null")
     if (status != 0):
         print("Command failed (status {}).".format(status))
         success = False
-    checkFile(prog + "-errors.gh")
+    checkFile("bench/{}-errors.gh".format(prog), ignoreProps)
 
-test("diff-roots.out")
-test("diff-roots-simple.out")
-test("mini.out")
-test("small.out")
-test("tiny.out")
+ignoreProps = ["instr-addr"]
 
 sys.exit(success)
+test("diff-roots.out", ignoreProps)
+test("diff-roots-simple.out", ignoreProps)
+test("mini.out", ignoreProps)
+test("small.out", ignoreProps)
+test("tiny.out", ignoreProps)
+
