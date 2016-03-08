@@ -107,10 +107,11 @@ def test(prog, ignoreProps):
 
 ignoreProps = ["instr-addr"]
 
-sys.exit(success)
 test("diff-roots.out", ignoreProps)
 test("diff-roots-simple.out", ignoreProps)
 test("mini.out", ignoreProps)
 test("small.out", ignoreProps)
 test("tiny.out", ignoreProps)
 
+if not success:
+    sys.exit(success)
