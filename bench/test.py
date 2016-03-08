@@ -96,8 +96,8 @@ def checkFile(name, ignoreProps):
                                 print("{} mismatch: expected {}, got {}".format(fieldName, expectedResult, actualResult))
                                 success = False
 
-    command = "../valgrind/herbgrind-install/bin/valgrind --machine --tool=herbgrind {} ../bench/{}".format(EXTRA_ARGS, prog)
 def test(prog, ignoreProps):
+    command = "./valgrind/herbgrind-install/bin/valgrind --machine --tool=herbgrind {} ./bench/{}".format(EXTRA_ARGS, prog)
     print("Calling {}.".format(command))
     status = os.system(command + "> /dev/null >& /dev/null")
     if (status != 0):
