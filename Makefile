@@ -148,6 +148,7 @@ deps/mpfr-%/README: setup/mpfr-$(MPFR_VERSION).tar.xz setup/patch_mpfr.sh
 # version number all over the place.
 	tar xf setup/mpfr-$(MPFR_VERSION).tar.xz
 	mkdir -p deps
+	rm -rf deps/mpfr-$*
 	mv mpfr-$(MPFR_VERSION) deps/mpfr-$*
 # Touch the README to update its timestamp so that we don't build it
 # again next time unless the archive changes.
