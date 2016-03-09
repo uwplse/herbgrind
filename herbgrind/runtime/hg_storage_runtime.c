@@ -10,6 +10,10 @@
 // leave our workbench area.
 #include "pub_tool_hashtable.h"
 
+// This get's us the line number information so that we can figure out
+// if we're in client code.
+#include "pub_tool_debuginfo.h"
+
 // This header gets us the current running thread.
 #include "pub_tool_threadstate.h"
 
@@ -35,6 +39,7 @@ static ShadowLocation* localTemps[MAX_TEMPS];
 static size_t maxTempUsed = 0;
 static VgHashTable* globalMemory = NULL;
 static ShadowLocation* threadRegisters[MAX_THREADS][MAX_REGISTERS];
+static ShadowLocation* savedArgs[4];
 
 // Copy a shadow value from a temporary to a temporary.
 VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
@@ -54,9 +59,9 @@ VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
 
 // Copy a shadow value from a temporary to somewhere in the current
 // threads state.
-VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg){
+VG_REGPARM(3) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg, Addr instr_addr){
   if (!running && localTemps[src_tmp] != NULL) return;
-  setTS(dest_reg, localTemps[src_tmp]);
+  setTS(dest_reg, localTemps[src_tmp], instr_addr);
 
   if (localTemps[src_tmp] != NULL && print_moves){
     mpfr_exp_t shadowValexpt;
@@ -238,12 +243,37 @@ ShadowLocation* getMem(Addr index){
   return entry->sl;
 }
 
-void setTS(Addr index, ShadowLocation* newLocation){
-  copySL(newLocation, &threadRegisters[VG_(get_running_tid)()][index]);
+void setTS(Addr index, ShadowLocation* newLocation, Addr instr_addr){
+  if (!running) return;
+
+  if (index == 224){
+    if (newLocation == NULL){
+      UInt linenum;
+      if(VG_(get_linenum)(instr_addr, &linenum)){
+        setSavedArg(0, NULL);
+      } else if (threadRegisters[VG_(get_running_tid)()][224] != NULL){
+        setSavedArg(0, threadRegisters[VG_(get_running_tid)()][224]);
+      }
+      threadRegisters[VG_(get_running_tid)()][224] = NULL;
+    }
+    else{
+      copySL(newLocation, &threadRegisters[VG_(get_running_tid)()][index]);
+    }
+  } else
+    copySL(newLocation, &threadRegisters[VG_(get_running_tid)()][index]);
 }
 
 ShadowLocation* getTS(Addr index){
+  if (!running) return NULL;
   return threadRegisters[VG_(get_running_tid)()][index];
+}
+
+void setSavedArg(Int index, ShadowLocation* newLocation){
+  savedArgs[index] = newLocation;
+}
+
+ShadowLocation* getSavedArg(Int index){
+  return savedArgs[index];
 }
 
 void initStorage(void){

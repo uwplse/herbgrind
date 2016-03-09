@@ -14,6 +14,7 @@
 #include "hg_mathreplace.h"
 #include "hg_evaluate.h"
 #include "hg_runtime.h"
+#include "hg_storage_runtime.h"
 #include "../types/hg_opinfo.h"
 #include "../types/hg_ast.h"
 #include "../include/hg_macros.h"
@@ -104,7 +105,7 @@ void performOp(OpType op, double* result, double* args){
     mpfr_set_d(args_m[i], args[i], MPFR_RNDN);
     // Lookup the address in our shadow hash table to get the
     // shadow argument.
-    arg_shadows[i] = getShadowLocMem((uintptr_t)&(args[i]), args[i]);
+    arg_shadows[i] = getShadowLocMem((uintptr_t)&(args[i]), args[i], i);
   }
   mpfr_init2(res,64);
   res_shadow = mkShadowLocation(Lt_Double);
@@ -204,9 +205,12 @@ void performOp(OpType op, double* result, double* args){
   VG_(free)(arg_shadows);
 }
 
-ShadowLocation* getShadowLocMem(Addr addr, double float_arg){
+ShadowLocation* getShadowLocMem(Addr addr, double float_arg, Int argIndex){
   ShadowLocation* loc = getMem(addr);
   if (loc != NULL) return loc;
+  if (getSavedArg(argIndex) != NULL){
+    return getSavedArg(argIndex);
+  }
 
   loc = mkShadowLocation(Lt_Double);
   setMem(addr, loc);

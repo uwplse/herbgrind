@@ -44,14 +44,15 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr){
         // Okay, in this one we're reading from a temp instead of the
         // thread state, but otherwise it's pretty much like above.
         copyShadowLocation =
-          unsafeIRDirty_0_N(2,
+          unsafeIRDirty_0_N(3,
                             "copyShadowTmptoTS",
                             VG_(fnptr_to_fnentry)(&copyShadowTmptoTS),
-                            mkIRExprVec_2(// The number of the temporary
+                            mkIRExprVec_3(// The number of the temporary
                                           mkU64(expr->Iex.RdTmp.tmp),
                                           // The thread state offset,
                                           // as above.
-                                          mkU64(st->Ist.Put.offset)));
+                                          mkU64(st->Ist.Put.offset),
+                                          mkU64(stAddr)));
         addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       }
       break;
