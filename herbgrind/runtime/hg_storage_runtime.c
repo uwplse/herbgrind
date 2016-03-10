@@ -14,6 +14,9 @@
 // if we're in client code.
 #include "pub_tool_debuginfo.h"
 
+// For matching object file names
+#include "pub_tool_seqmatch.h"
+
 // This header gets us the current running thread.
 #include "pub_tool_threadstate.h"
 
@@ -246,15 +249,43 @@ ShadowLocation* getMem(Addr index){
 void setTS(Addr index, ShadowLocation* newLocation, Addr instr_addr){
   if (!running) return;
 
+  // Okay, so this is a weird bit of code, that fixes a very specific
+  // problem. The problem is, the first time we hit a replaced
+  // function call, we go through the linker to patch up the
+  // connection, and somewhere in there we lose track of the shadow
+  // value being passed into a replaced libm function. So, what we're
+  // going to do here is store libm arguments in a special savedArg
+  // storage location. Then, when libm functions are looking for their
+  // arguments and don't find anything, they'll look in savedArg for
+  // the arguments. This involves several parts. We need to save every
+  // storage into an arg register that could be a libm call. And we
+  // need to overwrite it at the right times with NULL, so that libm
+  // function calls that get constant arguments don't pull the wrong
+  // shadow values. This all happens in this block. First, we match on
+  // the thread state locations which arguments are passed in.
+
+  // TODO: Make this work for more than one argument.
   if (index == 224){
+    // Next, only save stuff that we're going to overwrite.
     if (newLocation == NULL){
-      UInt linenum;
-      if(VG_(get_linenum)(instr_addr, &linenum)){
+      // Check whether the overwrite is happening in the linker object
+      // file.
+      const HChar* objname;
+      VG_(get_objname)(instr_addr, &objname);
+      if (!VG_(string_match)("?*ld-?*.so", objname)){
+        // If not, then it's in user code and is trying to actually
+        // overwrite the location because it's passing an argument
+        // that has not yet determined it's a floating point value, so
+        // doesn't have a shadow value.
         setSavedArg(0, NULL);
       } else if (threadRegisters[VG_(get_running_tid)()][224] != NULL){
+        // If we are in the linker code, and the value that we're
+        // about to overwrite isn't null, then we want to save it in
+        // our saved arg register.
         setSavedArg(0, threadRegisters[VG_(get_running_tid)()][224]);
       }
-      threadRegisters[VG_(get_running_tid)()][224] = NULL;
+      // Finally, actually do the overwrite.
+      copySL(NULL, &threadRegisters[VG_(get_running_tid)()][224]);
     }
     else{
       copySL(newLocation, &threadRegisters[VG_(get_running_tid)()][index]);
