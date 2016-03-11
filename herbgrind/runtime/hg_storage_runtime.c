@@ -42,7 +42,12 @@ static ShadowLocation* localTemps[MAX_TEMPS];
 static size_t maxTempUsed = 0;
 static VgHashTable* globalMemory = NULL;
 static ShadowLocation* threadRegisters[MAX_THREADS][MAX_REGISTERS];
-static ShadowLocation* savedArgs[4];
+
+// fma and variants are the only libm function I can think of that
+// goes over two (float) args. If you change this, you'll also want to
+// change the code in setTS.
+#define MAX_LIBM_ARGS 3
+static ShadowLocation* savedArgs[MAX_LIBM_ARGS];
 
 // Copy a shadow value from a temporary to a temporary.
 VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
@@ -264,32 +269,46 @@ void setTS(Addr index, ShadowLocation* newLocation, Addr instr_addr){
   // shadow values. This all happens in this block. First, we match on
   // the thread state locations which arguments are passed in.
 
-  // TODO: Make this work for more than one argument.
-  if (index == 224){
-    // Next, only save stuff that we're going to overwrite.
-    if (newLocation == NULL){
-      // Check whether the overwrite is happening in the linker object
-      // file.
-      const HChar* objname;
-      VG_(get_objname)(instr_addr, &objname);
-      if (!VG_(string_match)("?*ld-?*.so", objname)){
-        // If not, then it's in user code and is trying to actually
-        // overwrite the location because it's passing an argument
-        // that has not yet determined it's a floating point value, so
-        // doesn't have a shadow value.
-        setSavedArg(0, NULL);
-      } else if (threadRegisters[VG_(get_running_tid)()][224] != NULL){
-        // If we are in the linker code, and the value that we're
-        // about to overwrite isn't null, then we want to save it in
-        // our saved arg register.
-        setSavedArg(0, threadRegisters[VG_(get_running_tid)()][224]);
-      }
-      // Finally, actually do the overwrite.
-      copySL(NULL, &threadRegisters[VG_(get_running_tid)()][224]);
+  // Next, only save stuff that we're going to overwrite.
+  if (newLocation == NULL &&
+      // The indexes of the thread state that the first, second, and
+      // third arguments to a replaced libm function are passed
+      // in. This is a pretty horrible hack, but I'm working around a
+      // terrible limitation in valgrind. So, maybe that justfies
+      // it. This might not be cross platform either, but as my
+      // advisor says, we'll burn that bridge when we cross it.
+      (index == 224 || index == 256 || index == 288)){
+    int argIndex;
+    switch(index){
+    case 224:
+      argIndex = 0;
+      break;
+    case 256:
+      argIndex = 1;
+      break;
+    case 288:
+      argIndex = 2;
+      break;
+    default:
+      return;
     }
-    else{
-      copySL(newLocation, &threadRegisters[VG_(get_running_tid)()][index]);
+
+    const HChar* objname;
+    VG_(get_objname)(instr_addr, &objname);
+    if (!VG_(string_match)("?*ld-?*.so", objname)){
+      // If not, then it's in user code and is trying to actually
+      // overwrite the location because it's passing an argument
+      // that has not yet determined it's a floating point value, so
+      // doesn't have a shadow value.
+      setSavedArg(argIndex, NULL);
+    } else if (threadRegisters[VG_(get_running_tid)()][index] != NULL){
+      // If we are in the linker code, and the value that we're
+      // about to overwrite isn't null, then we want to save it in
+      // our saved arg register.
+      setSavedArg(argIndex, threadRegisters[VG_(get_running_tid)()][index]);
     }
+    // Finally, actually do the overwrite.
+    copySL(NULL, &threadRegisters[VG_(get_running_tid)()][index]);
   } else
     copySL(newLocation, &threadRegisters[VG_(get_running_tid)()][index]);
 }
