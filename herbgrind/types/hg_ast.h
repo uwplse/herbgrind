@@ -53,7 +53,8 @@ struct _OpASTNode {
 // constant or variable, and not as the result of a tracked operation)
 // should not be initialized this way. Instead, the default null
 // values will indicate that that node is a leaf node.
-void initValueBranchAST(ShadowValue* val, Op_Info* opinfo, SizeT nargs);
+void initValueBranchAST(ShadowValue* val, Op_Info* opinfo,
+                        SizeT nargs, ShadowValue* firstarg, ...);
 // Initialize a leaf node ast for a shadow value that is being
 // created.
 void initValueLeafAST(ShadowValue* val);
