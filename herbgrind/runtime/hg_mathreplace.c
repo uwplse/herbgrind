@@ -188,11 +188,23 @@ void performOp(OpType op, double* result, double* args){
     VG_(HT_add_node)(callToOpInfoMap, entry);
   }
   // Set up the ast record of this operation.
-  initValueBranchAST(&(res_shadow->values[0]), entry->info, nargs);
-  for (int i = 0; i < nargs; ++i){
-    res_shadow->values[0].ast->args[i] = arg_shadows[i]->values[0].ast;
+  switch(nargs){
+  case 1:
+    initValueBranchAST(&(res_shadow->values[0]), entry->info, nargs,
+                       &(arg_shadows[0]->values[0]));
+    break;
+  case 2:
+    initValueBranchAST(&(res_shadow->values[0]), entry->info, nargs,
+                       &(arg_shadows[1]->values[0]),
+                       &(arg_shadows[2]->values[0]));
+    break;
+  case 3:
+    initValueBranchAST(&(res_shadow->values[0]), entry->info, nargs,
+                       &(arg_shadows[1]->values[0]),
+                       &(arg_shadows[2]->values[0]),
+                       &(arg_shadows[3]->values[0]));
+    break;
   }
-
   // And finally, evaluate the error of the operation.
   evaluateOpError(&(res_shadow->values[0]), *result, entry->info);
 

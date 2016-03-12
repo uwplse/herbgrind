@@ -7,13 +7,27 @@
 #include "pub_tool_libcprint.h"
 #include "pub_tool_mallocfree.h"
 
+#include <stdarg.h>
+
 #define MAX_AST_STR_LEN 256
 
-void initValueBranchAST(ShadowValue* val, Op_Info* opinfo, SizeT nargs){
+void initValueBranchAST(ShadowValue* val, Op_Info* opinfo,
+                        SizeT nargs, ShadowValue* firstarg, ...){
   val->ast->val = val;
   val->ast->op = opinfo;
+
   val->ast->nargs = nargs;
   ALLOC(val->ast->args, "hg.val_ast_args", nargs, sizeof(ShadowValue*));
+
+  // I guess this is how you handle variable arity in c. 
+  va_list args;
+
+  va_start(args, firstarg);
+  for(int i = 0; i < nargs; ++i){
+    val->ast->args[i] = va_arg(args, ShadowValue*)->ast;
+  }
+  va_end(args);
+
 }
 
 void initValueLeafAST(ShadowValue* val){
@@ -62,8 +76,8 @@ void updateAST(Op_Info* op, ValueASTNode* trace_ast){
   }
   // This doesn't (shouldn't) affect the functionality of this
   // function, but allows us to print AST's on update, mostly for
-  // debugging purposes. Or like, you might be into that, in which
-  // case more power to you.
+  // debugging purposes. Or like, you might just be into that, in
+  // which case more power to you.
   if (print_expr_updates){
     char* opASTString = opASTtoString(op->ast);
     VG_(printf)("Updating op ast to: %s\n", opASTString);
