@@ -7,7 +7,7 @@
 
 #include "pub_tool_basics.h"
 
-typedef struct _ValueASTNode {
+struct _ValueASTNode {
   // A circular reference the the value that this AST belongs to.
   ShadowValue* val;
   // The op which turned the args into the represented shadow value,
@@ -18,14 +18,14 @@ typedef struct _ValueASTNode {
   // The arguments that created this AST, or NULL if this came from an
   // input/constant.
   ValueASTNode** args;
-} ValueASTNode;
+};
 
 typedef enum {
   Node_Leaf,
   Node_Branch,
 } NodeType;
 
-typedef struct _OpASTNode {
+struct _OpASTNode {
   NodeType tag;
   union {
     struct {
@@ -44,7 +44,7 @@ typedef struct _OpASTNode {
       OpASTNode** args;
     } Branch;
   } nd;
-} OpASTNode;
+};
 
 // Initialize a branch node ast for a shadow value that has just been
 // produced as the result of an operation. You must set the args that
