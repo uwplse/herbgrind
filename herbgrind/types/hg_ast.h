@@ -5,7 +5,27 @@
 #include "hg_opinfo.hh"
 #include "hg_shadowvals.hh"
 
+#include "pub_tool_hashtable.h"
+#include "pub_tool_xarray.h"
 #include "pub_tool_basics.h"
+
+typedef struct _OpVarMapEntry {
+  struct _OpVarMapEntry* next;
+  OpASTNode* key;
+  int varidx;
+} OpVarMapEntry;
+
+typedef struct _ValVarMapEntry {
+  struct _ValVarMapEntry* next;
+  ValueASTNode* key;
+  int varidx;
+} ValVarMapEntry;
+
+typedef struct _ValMapEntry {
+  struct _ValMapEntry* next;
+  double key;
+  int varidx;
+} ValMapEntry;
 
 struct _ValueASTNode {
   // A circular reference the the value that this AST belongs to.
@@ -13,11 +33,17 @@ struct _ValueASTNode {
   // The op which turned the args into the represented shadow value,
   // or NULL if this came from an input/constant.
   Op_Info* op;
-  // Number of arguments (zero if this came from a constant).
+  // Number of arguments (zero if this came from a constant or input).
   SizeT nargs;
   // The arguments that created this AST, or NULL if this came from an
   // input/constant.
   ValueASTNode** args;
+  // The following is information for associating instances of the
+  // "same" varaible with each other.
+
+  // A map from [pointers to var op nodes] to [variable indices]. NULL
+  // if this is from an input or constant.
+  VgHashTable* var_map;
 };
 
 typedef enum {
@@ -42,6 +68,12 @@ struct _OpASTNode {
       SizeT nargs;
       // The ops that resulted in our args
       OpASTNode** args;
+      // The following is information for associating instances of the
+      // "same" varaible with each other.
+
+      // A map from [variable indices] to [xarray of leaf nodes which
+      // have that variable index]
+      XArray* var_map;
     } Branch;
   } nd;
 };
@@ -86,6 +118,23 @@ void generalizeAST(OpASTNode* opast, ValueASTNode* valast);
 // A recursive tree walk which produces from a value AST an equivalent
 // op AST, linking together ops instead of concrete values.
 OpASTNode* convertValASTtoOpAST(ValueASTNode* valAST);
+// Register a particular leaf node in a set of maps, to be used to
+// merge a set of leafs into a var_map which maps them to variable
+// indices which group them by double value. Uses idx_counter and
+// val_to_idx for state. Not a pretty thing, not meant to be reused
+// outside of a few places in hg_ast.c.
+void registerLeaf(ValueASTNode* leaf, int* idx_counter,
+                  VgHashTable* val_to_idx, VgHashTable* var_map);
+// Converts a valvarmap from a value, which maps leaf values to
+// variable indices, to a opvarmap for ops, which maps cooresponding
+// leaf ops to the same variable indices.
+XArray* opvarmapFromValvarmap(VgHashTable* valVarMap);
+// Get a lookup table by directly converting a valvarmap
+VgHashTable* opLookupTable(VgHashTable* valVarMap);
+// Generalize an op var sufficiently, but splitting some of it's
+// variable groups, so that it doesn't group any leaf nodes that the
+// valVarMap doesn't group.
+void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap);
 // Print out an op AST, currently in the stupidest possible way.
 char* opASTtoString(OpASTNode* opAST);
 #endif
