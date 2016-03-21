@@ -30,6 +30,66 @@ void initValueBranchAST(ShadowValue* val, Op_Info* opinfo,
   va_end(args);
 
   val->ast->var_map = VG_(HT_construct)("val_var_map");
+  initValVarMap(val->ast);
+}
+
+void initValVarMap(ValueASTNode* valAST){
+  // Now, build up a map from double values to variable indices, so
+  // that we can identify when variable leaf nodes are the "same"
+  // variable. At the same time, build up the var_map for our shadow
+  // value.
+  VgHashTable* val_to_idx = VG_(HT_construct)("val_to_idx");
+  int next_idx = 0;
+  for (int i = 0; i < valAST->nargs; ++i){
+    ValueASTNode* arg = valAST->args[i];
+    if (arg->op == NULL){
+      registerLeaf(arg, &next_idx, val_to_idx, valAST->var_map);
+    } else {
+      VG_(HT_ResetIter)(arg->var_map);
+      for (ValVarMapEntry* entry = VG_(HT_Next)(arg->var_map);
+           entry != NULL; entry = VG_(HT_Next)(arg->var_map)){
+        registerLeaf(entry->key, &next_idx, val_to_idx,
+                     valAST->var_map);
+      }
+    }
+  }
+  VG_(HT_destruct)(val_to_idx, VG_(free));
+}
+
+void registerLeaf(ValueASTNode* leaf, int* idx_counter,
+                  VgHashTable* val_to_idx, VgHashTable* var_map){
+  VG_(printf)("Adding leaf with op ast: %p\n", leaf->op->ast);
+  double val = mpfr_get_d(leaf->val->value, MPFR_RNDN);
+  ValMapEntry* val_entry = VG_(HT_lookup)(val_to_idx, val);
+  int cur_idx;
+  // If there isn't an already existing entry with the same
+  // value, then this is a value we haven't seen before, so
+  // create a fresh variable index for it.
+  if (val_entry == NULL){
+    // Add a new entry to our local map from values to
+    // indices, so that next time we get a value that matches
+    // this we'll map it to the same index.
+    ALLOC(val_entry, "val_to_idx entry", 1, sizeof(ValMapEntry));
+    val_entry->key = val;
+    val_entry->varidx = (*idx_counter)++;
+    VG_(HT_add_node)(val_to_idx, val_entry);
+
+    // Use our new idx.
+    cur_idx = val_entry->varidx;
+  } else {
+    // Use the old idx.
+    cur_idx = val_entry->varidx;
+  }
+  // Here we'll update our var_map for this op node, to map the
+  // leaf node we're currently processing to a index which is
+  // unique to it's value. Now, this may not actually be a
+  // variable, it might still be a constant at this point, but
+  // we don't know yet.
+  ValVarMapEntry* valvar_entry;
+  ALLOC(valvar_entry, "leaf_to_idx entry", 1, sizeof(ValVarMapEntry));
+  valvar_entry->key = leaf;
+  valvar_entry->varidx = cur_idx;
+  VG_(HT_add_node)(var_map, valvar_entry);
 }
 
 void initValueLeafAST(ShadowValue* val){
@@ -127,8 +187,8 @@ void generalizeAST(OpASTNode* opast, ValueASTNode* valast){
     } else if (opast->nd.Branch.op != NULL) {
       // Otherwise, if they both continue and match, generalize the
       // variable map appropriately, and recurse on children,
+      generalizeVarMap(opast->nd.Branch.var_map, valast->var_map);
       for(int i = 0; i < valast->nargs; ++i){
-        generalizeVarMap(opast->nd.Branch.var_map, valast->var_map);
         generalizeAST(opast->nd.Branch.args[i], valast->args[i]);
       }
     }
@@ -162,26 +222,6 @@ OpASTNode* convertValASTtoOpAST(ValueASTNode* valAST){
       result->nd.Branch.args[i] = convertValASTtoOpAST(valAST->args[i]);
     }
 
-    // Now, build up a map from double values to variable indices, so
-    // that we can identify when variable leaf nodes are the "same"
-    // variable. At the same time, build up the var_map for our shadow
-    // value.
-    VgHashTable* val_to_idx = VG_(HT_construct)("val_to_idx");
-    int next_idx = 0;
-    for (int i = 0; i < valAST->nargs; ++i){
-      ValueASTNode* arg = valAST->args[i];
-      if (arg->op == NULL){
-        registerLeaf(arg, &next_idx, val_to_idx, valAST->var_map);
-      } else {
-        VG_(HT_ResetIter)(arg->var_map);
-        for (ValVarMapEntry* entry = VG_(HT_Next)(arg->var_map);
-             entry != NULL; entry = VG_(HT_Next)(arg->var_map)){
-          registerLeaf(entry->key, &next_idx, val_to_idx,
-                       valAST->var_map);
-        }
-      }
-    }
-    VG_(HT_destruct)(val_to_idx, VG_(free));
     // Finally, since this is the first value map this op has seen, it
     // copies it as it's own this means that any values that were the
     // same this time are currently assumed to be the same variable
@@ -190,41 +230,6 @@ OpASTNode* convertValASTtoOpAST(ValueASTNode* valAST){
     result->nd.Branch.var_map = opvarmapFromValvarmap(valAST->var_map);
   }
   return result;
-}
-
-void registerLeaf(ValueASTNode* leaf, int* idx_counter,
-                  VgHashTable* val_to_idx, VgHashTable* var_map){
-  double val = mpfr_get_d(leaf->val->value, MPFR_RNDN);
-  ValMapEntry* val_entry = VG_(HT_lookup)(val_to_idx, val);
-  int cur_idx;
-  // If there isn't an already existing entry with the same
-  // value, then this is a value we haven't seen before, so
-  // create a fresh variable index for it.
-  if (val_entry == NULL){
-    // Add a new entry to our local map from values to
-    // indices, so that next time we get a value that matches
-    // this we'll map it to the same index.
-    ALLOC(val_entry, "val_to_idx entry", 1, sizeof(ValMapEntry));
-    val_entry->key = val;
-    val_entry->varidx = (*idx_counter)++;
-    VG_(HT_add_node)(val_to_idx, val_entry);
-
-    // Use our new idx.
-    cur_idx = val_entry->varidx;
-  } else {
-    // Use the old idx.
-    cur_idx = val_entry->varidx;
-  }
-  // Here we'll update our var_map for this op node, to map the
-  // leaf node we're currently processing to a index which is
-  // unique to it's value. Now, this may not actually be a
-  // variable, it might still be a constant at this point, but
-  // we don't know yet.
-  ValVarMapEntry* valvar_entry;
-  ALLOC(valvar_entry, "leaf_to_idx entry", 1, sizeof(ValVarMapEntry));
-  valvar_entry->key = leaf;
-  valvar_entry->varidx = cur_idx;
-  VG_(HT_add_node)(var_map, valvar_entry);
 }
 
 XArray* opvarmapFromValvarmap(VgHashTable* valVarMap){
@@ -266,6 +271,16 @@ typedef struct _IdxMapEntry {
   int val;
 } IdxMapEntry;
 
+void printOpLookupTableKeys(VgHashTable* opLookupTable);
+void printOpLookupTableKeys(VgHashTable* opLookupTable){
+  VG_(HT_ResetIter)(opLookupTable);
+  for(OpVarMapEntry* entry = VG_(HT_Next)(opLookupTable);
+      entry != NULL; entry = VG_(HT_Next)(opLookupTable)){
+    VG_(printf)("%p, ", entry->key);
+  }
+  VG_(printf)("\n");
+}
+
 void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
   VgHashTable* valueLookupTable = opLookupTable(valVarMap);
   for (int i = 0; i < VG_(sizeXA)(opVarMap); ++i){
@@ -278,16 +293,18 @@ void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
     // leaves in this group that match it's index in the valVarMap
     // will be mapped to the same new group.
     VgHashTable* splitMap = VG_(HT_construct)("splitMap");
-    XArray* varGroup = *(XArray**)VG_(indexXA)(opVarMap, i);
+    XArray** varGroupEntry = VG_(indexXA)(opVarMap, i);
+    OpASTNode** firstNodeEntry = VG_(indexXA)(*varGroupEntry, 0);
+    printOpLookupTableKeys(valueLookupTable);
+    OpVarMapEntry* valOpEntry =
+      VG_(HT_lookup)(valueLookupTable, (UWord)*firstNodeEntry);
     IdxMapEntry* splitEntry;
     ALLOC(splitEntry, "splitEntry", 1, sizeof(IdxMapEntry));
-    OpVarMapEntry* valOpEntry =
-      VG_(HT_lookup)(valueLookupTable, *(UWord*)VG_(indexXA)(varGroup, 0));
     splitEntry->key = valOpEntry->varidx;
     splitEntry->val = i;
     VG_(HT_add_node)(splitMap, splitEntry);
-    for(int j = 1; j < VG_(sizeXA)(varGroup); ++j){
-      OpASTNode* curNode = *(OpASTNode**)VG_(indexXA)(varGroup, j);
+    for(int j = 1; j < VG_(sizeXA)(*varGroupEntry); ++j){
+      OpASTNode* curNode = *(OpASTNode**)VG_(indexXA)(*varGroupEntry, j);
       valOpEntry = VG_(HT_lookup)(valueLookupTable, (UWord)curNode);
       splitEntry = VG_(HT_lookup)(splitMap, valOpEntry->varidx);
       if (splitEntry == NULL){
@@ -307,13 +324,13 @@ void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
         VG_(HT_add_node)(splitMap, splitEntry);
 
         // Remove the old group entry
-        VG_(removeIndexXA)(varGroup, j--);
+        VG_(removeIndexXA)(*varGroupEntry, j--);
       } else if (splitEntry->val != i) {
         // If we already have an entry in the split map for it, but it
         // doesn't map to the current group, move it to the correct
         // group.
         VG_(addToXA)(VG_(indexXA)(opVarMap, splitEntry->val), curNode);
-        VG_(removeIndexXA)(varGroup, j--);
+        VG_(removeIndexXA)(*varGroupEntry, j--);
       }
     }
     VG_(HT_destruct)(splitMap, VG_(free));
@@ -321,23 +338,62 @@ void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
   VG_(HT_destruct)(valueLookupTable, VG_(free));
 }
 
+VgHashTable* flipOpVarMap(XArray* opVarMap){
+  VgHashTable* result = VG_(HT_construct)("flippedOpVarMap");
+  for (int i = 0; i < VG_(sizeXA)(opVarMap); ++i){
+    XArray** rowEntry = VG_(indexXA)(opVarMap, i);
+    for (int j = 0; j < VG_(sizeXA)(*rowEntry); ++j){
+      OpASTNode** entry = VG_(indexXA)(*rowEntry, j);
+      OpVarMapEntry* mapEntry;
+      ALLOC(mapEntry, "opMapEntry", 1, sizeof(OpVarMapEntry));
+      mapEntry->key = *entry;
+      mapEntry->varidx = i;
+      VG_(HT_add_node)(result, mapEntry);
+    }
+  }
+  return result;
+}
+
+static const char* varNames[8] = {"x", "y", "z", "w", "a", "b", "c", "d"};
+
+char* opASTtoString(OpASTNode* opAST){
+  VgHashTable* map = NULL;
+  if (opAST->tag == Node_Branch){
+    map = flipOpVarMap(opAST->nd.Branch.var_map);
+  }
+  char* result = opASTtoStringwithVarMap(opAST, map);
+  if (map != NULL)
+    VG_(HT_destruct)(map, VG_(free));
+  return result;
+}
 // This is a crude and wasteful function, but hopefully no one will
 // notice.
-char* opASTtoString(OpASTNode* opAST){
+char* opASTtoStringwithVarMap(OpASTNode* opAST, VgHashTable* varMap){
   char* buf;
   // This is our "cursor" in the output string.
   SizeT bufpos = 0;
-  ALLOC(buf, "hg.ast_string", 1, sizeof(char)*MAX_AST_STR_LEN);
+  ALLOC(buf, "hg.ast_string", MAX_AST_STR_LEN, sizeof(char));
 
   // If this is a leaf node...
   if (opAST->tag == Node_Leaf){
     // It could either be a constant or a variable. 
-    if (opAST->nd.Leaf.val == NULL)
-      // Variables we'll print as "x" for now, but soon we should give
-      // them distinct names when we don't have a reason to believe
-      // they come from the same place.
-      VG_(snprintf)(buf, 2, "x");
-    else
+    if (opAST->nd.Leaf.val == NULL){
+      // If we're straight printing a leaf without any context, varMap
+      // will be passed as null, so let's just print the first
+      // variable name we can find.
+      if (varMap == NULL)
+        VG_(snprintf)(buf, 2, "%s", varNames[0]);
+      else {
+        // Otherwise, try to look up the leaf in our varmap.
+        OpVarMapEntry* varIdxEntry = VG_(HT_lookup)(varMap, (UWord)opAST);
+        if (varIdxEntry == NULL){
+          // This should never happen.
+          VG_(printf)("Problem! Couldn't find entry for leaf node in var map.\n");
+          VG_(snprintf)(buf, 4, "XXX");
+        } else
+          VG_(snprintf)(buf, 2, "%s", varNames[varIdxEntry->varidx]);
+      }
+    } else
       // For constants we'll get the double value associated with the
       // constant, and print it.
       VG_(snprintf)(buf, MAX_AST_STR_LEN, "%f",

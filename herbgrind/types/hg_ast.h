@@ -87,6 +87,15 @@ struct _OpASTNode {
 // values will indicate that that node is a leaf node.
 void initValueBranchAST(ShadowValue* val, Op_Info* opinfo,
                         SizeT nargs, ShadowValue* firstarg, ...);
+// Initialize the variable map for a value ast.
+void initValVarMap(ValueASTNode* valAST);
+// Register a particular leaf node in a set of maps, to be used to
+// merge a set of leafs into a var_map which maps them to variable
+// indices which group them by double value. Uses idx_counter and
+// val_to_idx for state. Not a pretty thing, not meant to be reused
+// outside of a few places in hg_ast.c.
+void registerLeaf(ValueASTNode* leaf, int* idx_counter,
+                  VgHashTable* val_to_idx, VgHashTable* var_map);
 // Initialize a leaf node ast for a shadow value that is being
 // created.
 void initValueLeafAST(ShadowValue* val);
@@ -118,23 +127,21 @@ void generalizeAST(OpASTNode* opast, ValueASTNode* valast);
 // A recursive tree walk which produces from a value AST an equivalent
 // op AST, linking together ops instead of concrete values.
 OpASTNode* convertValASTtoOpAST(ValueASTNode* valAST);
-// Register a particular leaf node in a set of maps, to be used to
-// merge a set of leafs into a var_map which maps them to variable
-// indices which group them by double value. Uses idx_counter and
-// val_to_idx for state. Not a pretty thing, not meant to be reused
-// outside of a few places in hg_ast.c.
-void registerLeaf(ValueASTNode* leaf, int* idx_counter,
-                  VgHashTable* val_to_idx, VgHashTable* var_map);
 // Converts a valvarmap from a value, which maps leaf values to
 // variable indices, to a opvarmap for ops, which maps cooresponding
 // leaf ops to the same variable indices.
 XArray* opvarmapFromValvarmap(VgHashTable* valVarMap);
 // Get a lookup table by directly converting a valvarmap
 VgHashTable* opLookupTable(VgHashTable* valVarMap);
+// Flips a var map that maps from variable indexes to leaf nodes to
+// the other way around.
+VgHashTable* flipOpVarMap(XArray* opVarMap);
 // Generalize an op var sufficiently, but splitting some of it's
 // variable groups, so that it doesn't group any leaf nodes that the
 // valVarMap doesn't group.
 void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap);
 // Print out an op AST, currently in the stupidest possible way.
 char* opASTtoString(OpASTNode* opAST);
+// A helper function.
+char* opASTtoStringwithVarMap(OpASTNode* opAST, VgHashTable* varMap);
 #endif
