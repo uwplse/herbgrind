@@ -30,8 +30,7 @@ typedef struct _ValMapEntry {
 struct _ValueASTNode {
   // A circular reference the the value that this AST belongs to.
   ShadowValue* val;
-  // The op which turned the args into the represented shadow value,
-  // or NULL if this came from an input/constant.
+  // The op which turned the args into the represented shadow value.
   Op_Info* op;
   // Number of arguments (zero if this came from a constant or input).
   SizeT nargs;

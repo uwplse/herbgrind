@@ -42,7 +42,7 @@ void initValVarMap(ValueASTNode* valAST){
   int next_idx = 0;
   for (int i = 0; i < valAST->nargs; ++i){
     ValueASTNode* arg = valAST->args[i];
-    if (arg->op == NULL){
+    if (arg->op->tag == Op_Leaf){
       registerLeaf(arg, &next_idx, val_to_idx, valAST->var_map);
     } else {
       VG_(HT_ResetIter)(arg->var_map);
@@ -58,7 +58,6 @@ void initValVarMap(ValueASTNode* valAST){
 
 void registerLeaf(ValueASTNode* leaf, int* idx_counter,
                   VgHashTable* val_to_idx, VgHashTable* var_map){
-  VG_(printf)("Adding leaf with op ast: %p\n", leaf->op->ast);
   double val = mpfr_get_d(leaf->val->value, MPFR_RNDN);
   ValMapEntry* val_entry = VG_(HT_lookup)(val_to_idx, val);
   int cur_idx;
@@ -94,7 +93,7 @@ void registerLeaf(ValueASTNode* leaf, int* idx_counter,
 
 void initValueLeafAST(ShadowValue* val){
   val->ast->val = val;
-  val->ast->op = NULL;
+  val->ast->op = mkLeafOp_Info(val);
   val->ast->nargs = 0;
   val->ast->args = NULL;
   val->ast->var_map = NULL;
@@ -173,7 +172,7 @@ void generalizeAST(OpASTNode* opast, ValueASTNode* valast){
     }
   } else {
     // We're at a branch node.
-    if (valast->op == NULL || valast->op != opast->nd.Branch.op){
+    if (valast->op != opast->nd.Branch.op){
       // If the valast is a leaf node, or it continues but it doesn't
       // match the opast, cut off the opast here, with a variable leaf
       // node (one where the shadow value is NULL, because we've seen
@@ -198,37 +197,38 @@ void generalizeAST(OpASTNode* opast, ValueASTNode* valast){
 OpASTNode* convertValASTtoOpAST(ValueASTNode* valAST){
   // First, check if we've already made an AST for the op that this
   // value came from. If so, just share that.
-  if (valAST->op != NULL && valAST->op->ast != NULL) return valAST->op->ast;
+  if (valAST->op->ast != NULL) {
+    return valAST->op->ast;
+  }
 
-  // Otherwise, we need to create a new AST node.
+  // Otherwise, we need to create a new AST node. It'll be a branch,
+  // since leaves start initialized.
   OpASTNode* result;
   ALLOC(result, "hg.op_ast", 1, sizeof(OpASTNode));
-  // If the value we're copying is a leaf...
-  if (valAST->op == NULL){
-    // Make a leaf node for the op ast.
-    initOpLeafAST(result, valAST->val);
-  } else {
-    // Otherwise, start a branch node.
-    initOpBranchAST(result, valAST->op, valAST->nargs);
-    // Convert all of the children recursively. Usually they won't hit
-    // this branch again, since we generally build subexpression AST's
-    // before their parents, with the exception of leaf nodes since
-    // they don't get build until a branch needs them. So, our
-    // children should either already have an op ast somewhere, or
-    // they are leaf nodes. This isn't necessarily an invariant I'm
-    // commited to, so we should operate fine if it's not true, but
-    // for clarity's sake that is what I currently expect.
-    for (int i = 0; i < valAST->nargs; ++i){
-      result->nd.Branch.args[i] = convertValASTtoOpAST(valAST->args[i]);
-    }
-
-    // Finally, since this is the first value map this op has seen, it
-    // copies it as it's own this means that any values that were the
-    // same this time are currently assumed to be the same variable
-    // (or constant), and anything that isn't the same this time can
-    // never be the same variable.
-    result->nd.Branch.var_map = opvarmapFromValvarmap(valAST->var_map);
+  initOpBranchAST(result, valAST->op, valAST->nargs);
+  // Convert all of the children recursively. Usually they won't hit
+  // this branch again, since we generally build subexpression AST's
+  // before their parents, with the exception of leaf nodes since
+  // they don't get build until a branch needs them. So, our
+  // children should either already have an op ast somewhere, or
+  // they are leaf nodes. This isn't necessarily an invariant I'm
+  // commited to, so we should operate fine if it's not true, but
+  // for clarity's sake that is what I currently expect.
+  for (int i = 0; i < valAST->nargs; ++i){
+    result->nd.Branch.args[i] = convertValASTtoOpAST(valAST->args[i]);
   }
+
+  // Finally, since this is the first value map this op has seen, it
+  // copies it as it's own this means that any values that were the
+  // same this time are currently assumed to be the same variable
+  // (or constant), and anything that isn't the same this time can
+  // never be the same variable.
+  result->nd.Branch.var_map = opvarmapFromValvarmap(valAST->var_map);
+
+  // Set the ast field of the op info so that next time we can reuse
+  // what we've created.
+  valAST->op->ast = result;
+
   return result;
 }
 

@@ -2,6 +2,7 @@
 #define _HG_OPINFO
 
 #include "hg_opinfo.hh"
+#include "hg_shadowvals.hh"
 #include "hg_ast.hh"
 
 #include "pub_tool_basics.h"
@@ -125,7 +126,13 @@ struct _Quadnary_Args {
   UWord* arg4_value;
 };
 
+typedef enum {
+  Op_Branch,
+  Op_Leaf,
+} OpInfoType;
+
 struct _Op_Info {
+  OpInfoType tag;
   // The arity of the operation. This determines which of the args
   // structures we are allowed to put in and pull out.
   SizeT nargs;
@@ -155,6 +162,8 @@ struct _Op_Info {
 
 Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
                    const HChar* name, const HChar* symbol);
+
+Op_Info* mkLeafOp_Info(ShadowValue* val);
 
 #ifdef VG_LITTLEENDIAN
 #define ENDIAN Iend_LE
