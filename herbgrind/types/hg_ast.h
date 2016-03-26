@@ -146,4 +146,9 @@ void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap);
 char* opASTtoString(OpASTNode* opAST);
 // A helper function.
 char* opASTtoStringwithVarMap(OpASTNode* opAST, VgHashTable* varMap);
+// Some debugging printer functions.
+
+// Prints a table from pointers to indices.
+void printLookupTable(VgHashTable* opLookupTable);
+void printOpVarMap(XArray* opVarMap);
 #endif

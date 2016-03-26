@@ -301,6 +301,28 @@ OpASTNode* convertValASTtoOpAST(ValueASTNode* valAST){
   return result;
 }
 
+void printLookupTable(VgHashTable* opLookupTable){
+  VG_(HT_ResetIter)(opLookupTable);
+  VG_(printf)("==================================\n");
+  for(OpVarMapEntry* entry = VG_(HT_Next)(opLookupTable);
+      entry != NULL; entry = VG_(HT_Next)(opLookupTable)){
+    VG_(printf)("%p -> %d\n", entry->key, entry->varidx);
+  }
+  VG_(printf)("\n");
+}
+
+void printOpVarMap(XArray* opVarMap){
+  for(int i = 0; i < VG_(sizeXA)(opVarMap); ++i){
+    XArray** varGroupEntry = VG_(indexXA)(opVarMap, i);
+    for (int j = 0; j < VG_(sizeXA)(*varGroupEntry); ++j){
+      OpASTNode** nodeEntry = VG_(indexXA)(*varGroupEntry, j);
+      VG_(printf)("%p, ", *nodeEntry);
+    }
+    VG_(printf)("\n");
+  }
+  VG_(printf)("\n");
+}
+
 XArray* opvarmapFromValvarmap(VgHashTable* valVarMap){
   XArray* opVarMap = VG_(newXA)(VG_(malloc), "opVarMap",
                                 VG_(free), sizeof(XArray*));
@@ -339,16 +361,6 @@ typedef struct _IdxMapEntry {
   UWord key;
   int val;
 } IdxMapEntry;
-
-void printOpLookupTableKeys(VgHashTable* opLookupTable);
-void printOpLookupTableKeys(VgHashTable* opLookupTable){
-  VG_(HT_ResetIter)(opLookupTable);
-  for(OpVarMapEntry* entry = VG_(HT_Next)(opLookupTable);
-      entry != NULL; entry = VG_(HT_Next)(opLookupTable)){
-    VG_(printf)("%p, ", entry->key);
-  }
-  VG_(printf)("\n");
-}
 
 // The purpose of this function is to take an existing variable map
 // from an op node, and generalize it using a trace variable map tied
