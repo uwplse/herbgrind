@@ -96,8 +96,11 @@ void initValVarMap(ValueASTNode* valAST);
 void registerLeaf(ValueASTNode* leaf, int* idx_counter,
                   VgHashTable* val_to_idx, VgHashTable* var_map);
 // Initialize a leaf node ast for a shadow value that is being
-// created.
-void initValueLeafAST(ShadowValue* val);
+// created. Takes the value itself, and the location of the slot in
+// the branch operation we're creating this for which cooresponds to
+// it. This part is a bit confusing, see the comment in the
+// implementation of this function in hg_ast.c
+void initValueLeafAST(ShadowValue* val, Op_Info** src_loc);
 // Cleanup a values AST for destroying the value
 void cleanupValueAST(ShadowValue* val);
 // Deep copy a value AST.

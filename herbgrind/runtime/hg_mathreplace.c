@@ -120,9 +120,47 @@ void performOp(OpType op, double* result, double* args){
     mpfr_init2(args_m[i], 64);
     // Get the actual value from the pointer they gave us.
     mpfr_set_d(args_m[i], args[i], MPFR_RNDN);
-    // Lookup the address in our shadow hash table to get the
-    // shadow argument.
-    arg_shadows[i] = getShadowLocMem((uintptr_t)&(args[i]), args[i], i);
+    // Get the location of the arg source slot in the op structure.
+    Op_Info** src_loc_slot;
+    // Get the slot in the op info structure for the value source
+    // structure cooresponding to this argument.
+    switch(nargs){
+    case 1:
+      src_loc_slot = &(entry->info->args.uargs.arg_src);
+      break;
+    case 2:
+      switch(i){
+      case 1:
+        src_loc_slot = &(entry->info->args.bargs.arg1_src);
+        break;
+      case 2:
+        src_loc_slot = &(entry->info->args.bargs.arg2_src);
+        break;
+      default:
+        return;
+      }
+      break;
+    case 3:
+      switch(i){
+      case 1:
+        src_loc_slot = &(entry->info->args.targs.arg1_src);
+        break;
+      case 2:
+        src_loc_slot = &(entry->info->args.targs.arg2_src);
+        break;
+      case 3:
+        src_loc_slot = &(entry->info->args.targs.arg3_src);
+        break;
+      default:
+        break;
+      }
+    default:
+      break;
+    }
+    // Lookup the address in our shadow hash table to get the shadow
+    // argument.
+    arg_shadows[i] = getShadowLocMem((uintptr_t)&(args[i]), args[i],
+                                     i, src_loc_slot);
   }
   mpfr_init2(res,64);
   res_shadow = mkShadowLocation(Lt_Double);
@@ -223,7 +261,8 @@ void performOp(OpType op, double* result, double* args){
   VG_(free)(arg_shadows);
 }
 
-ShadowLocation* getShadowLocMem(Addr addr, double float_arg, Int argIndex){
+ShadowLocation* getShadowLocMem(Addr addr, double float_arg,
+                                Int argIndex, Op_Info** arg_src){
   ShadowLocation* loc = getMem(addr);
   if (loc != NULL) return loc;
   if (getSavedArg(argIndex) != NULL){
@@ -234,6 +273,6 @@ ShadowLocation* getShadowLocMem(Addr addr, double float_arg, Int argIndex){
   setMem(addr, loc);
 
   mpfr_set_d(loc->values[0].value, float_arg, MPFR_RNDN);
-  initValueLeafAST(&(loc->values[0]));
+  initValueLeafAST(&(loc->values[0]), arg_src);
   return loc;
 }

@@ -53,50 +53,85 @@ void initValVarMap(ValueASTNode* valAST){
       }
     }
   }
+  // We only use the val_to_idx map to easily check for nodes that
+  // have matching values in this trace, so that we can build up our
+  // var map. We don't actually need it after we've built up the
+  // var_map, so just destruct it now.
   VG_(HT_destruct)(val_to_idx, VG_(free));
 }
 
 void registerLeaf(ValueASTNode* leaf, int* idx_counter,
                   VgHashTable* val_to_idx, VgHashTable* var_map){
+  // We're going to be matching leaf nodes based on the 64-bit double
+  // version of their values. Since their high precision MPFR values
+  // should have just been initialized from some float bits, and no
+  // operations have yet been done on them since they are a leaf node,
+  // this should be all we need to compare them.
   double val = mpfr_get_d(leaf->val->value, MPFR_RNDN);
+  // Lookup the value in our val_to_idx map to see if we've already
+  // registered a leaf with the same double value. If so, we're going
+  // to say that this leaf node and that one are the "same" variable
+  // in the context of the current trace.
   ValMapEntry* val_entry = VG_(HT_lookup)(val_to_idx, val);
-  int cur_idx;
   // If there isn't an already existing entry with the same
   // value, then this is a value we haven't seen before, so
-  // create a fresh variable index for it.
+  // create a fresh variable index for it in val_to_idx.
   if (val_entry == NULL){
     // Add a new entry to our local map from values to
     // indices, so that next time we get a value that matches
     // this we'll map it to the same index.
     ALLOC(val_entry, "val_to_idx entry", 1, sizeof(ValMapEntry));
+    // The key is the value of the leaf node, for future matching.
     val_entry->key = val;
+    // The variable index will use the counter we were passed a
+    // reference to so that we can keep it as state across calls to
+    // registerLeaf within the same map building pass. Increment it
+    // after we use it, so that we use fresh indices on each
+    // registeration.
     val_entry->varidx = (*idx_counter)++;
+    // Finally, add it to the map.
     VG_(HT_add_node)(val_to_idx, val_entry);
-
-    // Use our new idx.
-    cur_idx = val_entry->varidx;
-  } else {
-    // Use the old idx.
-    cur_idx = val_entry->varidx;
   }
-  // Here we'll update our var_map for this op node, to map the
-  // leaf node we're currently processing to a index which is
-  // unique to it's value. Now, this may not actually be a
-  // variable, it might still be a constant at this point, but
-  // we don't know yet.
+  // Here we'll update our var_map for this op node, to map the leaf
+  // node we're currently processing to a index which is unique to
+  // it's value (but not necessarily the identity of this leaf).
   ValVarMapEntry* valvar_entry;
   ALLOC(valvar_entry, "leaf_to_idx entry", 1, sizeof(ValVarMapEntry));
+  // The key is the location in memory of the leaf node.
   valvar_entry->key = leaf;
-  valvar_entry->varidx = cur_idx;
+  // The value is the variable index that we it's value maps to. This
+  // either already existed and we looked it up from a previous leaf
+  // with the same value, or it didn't exist and we created it in the
+  // previous if block.
+  valvar_entry->varidx = val_entry->varidx;
+  // Finally, add the entry.
   VG_(HT_add_node)(var_map, valvar_entry);
 }
 
-void initValueLeafAST(ShadowValue* val){
+void initValueLeafAST(ShadowValue* val, Op_Info** src_loc){
   val->ast->val = val;
-  val->ast->op = mkLeafOp_Info(val);
   val->ast->nargs = 0;
   val->ast->args = NULL;
   val->ast->var_map = NULL;
+
+  // Since this is a leaf value, meaning we didn't know it was even a
+  // floating point value until now, we're going to say that it came
+  // from some sort of "value source." We want to keep track of these
+  // value sources so that we can associate instances of the "same"
+  // variable in different parts of the program with each other. Each
+  // branch op has slots within it for such value sources, so we ask
+  // upon leaf value creation that the location of that slot is given
+  // to us. If it holds null, then we didn't previously know this was
+  // a leaf value, probably because this is the first time this
+  // expression has been evaluated (although it could mean that the
+  // area was recently abstracted into a value source variable, no
+  // good story for what that means yet...). In that case, we'll
+  // create a new source structure, an op leaf node for it. Otherwise
+  // if the slot is already occupied, just link this new leaf value to
+  // it.
+  if (*src_loc == NULL)
+    *src_loc = mkLeafOp_Info(val);
+  val->ast->op = *src_loc;
 }
 
 void cleanupValueAST(ShadowValue* val){
