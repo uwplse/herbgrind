@@ -406,7 +406,7 @@ void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
         // remove it from the old one.
         XArray* newGroup = (VG_(newXA)(VG_(malloc), "varGroup",
                                        VG_(free), sizeof(XArray*)));
-        VG_(addToXA)(newGroup, curNode);
+        VG_(addToXA)(newGroup, &curNode);
         Word newIndex = VG_(addToXA)(opVarMap, &newGroup);
         // After we insert into the opVarMap array, it might outgrow
         // it's currently allocated memory, and have to move. If this
