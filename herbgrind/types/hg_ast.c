@@ -509,7 +509,7 @@ char* opASTtoStringwithVarMap(OpASTNode* opAST, VgHashTable* varMap){
     // Recursively get the subexpression strings, and print them
     // preceded by a space.
     for (SizeT i = 0; i < opAST->nd.Branch.nargs; ++i){
-      char* subexpr = opASTtoString(opAST->nd.Branch.args[i]);
+      char* subexpr = opASTtoStringwithVarMap(opAST->nd.Branch.args[i], varMap);
       bufpos += VG_(snprintf)(buf + bufpos, MAX_AST_STR_LEN - bufpos, " %s",
                               subexpr);
       VG_(free)(subexpr);
