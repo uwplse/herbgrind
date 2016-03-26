@@ -28,6 +28,21 @@ Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
   result->nargs = arity;
   result->op = op;
   getOpDebug_Info(opAddr, name, symbol, &(result->debuginfo));
+
+  // Set the evalinfo up.
+
+  // We want to give the evalinfo an initial max error of negative
+  // one, instead of zero, for the corner case where the user wants to
+  // report all operations. In that case, the user should set the
+  // error threshold to zero. But ops only start getting tracked when
+  // they weren't previously above the error threshold, and their new
+  // value is. If the max error starts at zero, there will never come
+  // that point, since the op starts out in a state we think it should
+  // be tracked it, and we never know when to start tracking it. So
+  // instead, set it to -1, so that any update of it to a non-negative
+  // number will trigger a tracking.
+  result->evalinfo.max_error = -1;
+
   return result;
 }
 

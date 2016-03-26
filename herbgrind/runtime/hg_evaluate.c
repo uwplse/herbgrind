@@ -46,7 +46,7 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
     // This tests whether we didnt want to track it before, but do
     // now. If that's the case, we'll start tracking it.
     if (opinfo->evalinfo.max_error < error_threshold &&
-        bitsError > error_threshold){
+        bitsError >= error_threshold){
       startTrackingOp(opinfo);
     }
     // Update the max error, since the error of this operation
