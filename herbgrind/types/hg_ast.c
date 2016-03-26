@@ -83,17 +83,29 @@ void initValVarMap(ValueASTNode* valAST){
 
 void registerLeaf(ValueASTNode* leaf, int* idx_counter,
                   VgHashTable* val_to_idx, VgHashTable* var_map){
-  // We're going to be matching leaf nodes based on the 64-bit double
+  // We're going to be matching leaf nodes based on the 32-bit float
   // version of their values. Since their high precision MPFR values
   // should have just been initialized from some float bits, and no
   // operations have yet been done on them since they are a leaf node,
-  // this should be all we need to compare them.
-  double val = mpfr_get_d(leaf->val->value, MPFR_RNDN);
+  // this should be all we need to compare them, modulo the difference
+  // between 32-bit and 64-bit. We use float instead of double because
+  // otherwise on 32-bit platforms it might not fit in the key size
+  // for the hash table. This means we're going to think some values
+  // are the same that are actually slightly different, but only ones
+  // that are always very similar, so hopefully that'll be fine.
+  float val = mpfr_get_flt(leaf->val->value, MPFR_RNDN);
   // Lookup the value in our val_to_idx map to see if we've already
   // registered a leaf with the same double value. If so, we're going
   // to say that this leaf node and that one are the "same" variable
   // in the context of the current trace.
-  ValMapEntry* val_entry = VG_(HT_lookup)(val_to_idx, val);
+
+  // Make sure to reinterpret the float byte as a word, instead of
+  // allowing c to do a semantic cast, since that would lose a bunch
+  // of info.
+  UWord valKey = 0;
+  VG_(memcpy)(&valKey, &val, sizeof(float));
+
+  ValMapEntry* val_entry = VG_(HT_lookup)(val_to_idx, valKey);
   // If there isn't an already existing entry with the same
   // value, then this is a value we haven't seen before, so
   // create a fresh variable index for it in val_to_idx.
@@ -103,7 +115,7 @@ void registerLeaf(ValueASTNode* leaf, int* idx_counter,
     // this we'll map it to the same index.
     ALLOC(val_entry, "val_to_idx entry", 1, sizeof(ValMapEntry));
     // The key is the value of the leaf node, for future matching.
-    val_entry->key = val;
+    val_entry->key = valKey;
     // The variable index will use the counter we were passed a
     // reference to so that we can keep it as state across calls to
     // registerLeaf within the same map building pass. Increment it

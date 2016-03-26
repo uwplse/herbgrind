@@ -23,7 +23,7 @@ typedef struct _ValVarMapEntry {
 
 typedef struct _ValMapEntry {
   struct _ValMapEntry* next;
-  double key;
+  UWord key;
   int varidx;
 } ValMapEntry;
 
