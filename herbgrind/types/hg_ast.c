@@ -5,6 +5,7 @@
 #include "../include/hg_options.h"
 
 #include "pub_tool_libcprint.h"
+#include "pub_tool_libcbase.h"
 #include "pub_tool_mallocfree.h"
 
 #include <stdarg.h>
@@ -335,7 +336,7 @@ VgHashTable* opLookupTable(VgHashTable* valVarMap){
 
 typedef struct _IdxMapEntry {
   struct _IdxMapEntry* next;
-  int key;
+  UWord key;
   int val;
 } IdxMapEntry;
 
@@ -363,8 +364,13 @@ void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
   // apples to apples when we use the resulting map to generalize our
   // opVarMap, which also talks about op AST leaves.
   VgHashTable* valueLookupTable = opLookupTable(valVarMap);
+  // There's no point trying to re-split the groups we split off,
+  // since our procedure should make them already consistent with the
+  // valVarMap, so get the size once, and don't touch the entries that
+  // are added later.
+  int initialOpVarMapSize = VG_(sizeXA)(opVarMap);
   // Now, let's iterate over the variable index groups in our opVarMap.
-  for (int i = 0; i < VG_(sizeXA)(opVarMap); ++i){
+  for (int i = 0; i < initialOpVarMapSize; ++i){
     // Lookup the variable index group for i. This get's us a pointer
     // to the location in the XArray where that variable index group
     // resides.
