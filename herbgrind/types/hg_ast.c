@@ -426,8 +426,10 @@ void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
       } else if (splitEntry->val != i) {
         // If we already have an entry in the split map for it, but it
         // doesn't map to the current group, move it to the correct
-        // group.
-        VG_(addToXA)(VG_(indexXA)(opVarMap, splitEntry->val), curNode);
+        // group. This means that we split off a previous entry in
+        // this group into it's own group, and this current entry
+        // matches that one.
+        VG_(addToXA)(*(XArray**)VG_(indexXA)(opVarMap, splitEntry->val), &curNode);
         VG_(removeIndexXA)(*varGroupEntry, j--);
       }
     }
