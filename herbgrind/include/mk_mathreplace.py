@@ -91,6 +91,20 @@ def write_mathreplace_funcs(ops, fname):
                 f.write("  case OP_{}: \\\n".format(op.func.upper()))
         f.write("\n")
 
+        f.write("// A switch statement to populate the static information for the\n")
+        f.write("// operations, plain_opname and op_symbol.\n")
+        f.write("#define GET_OP_STATIC_INFO(op) \\\n")
+        f.write("  switch(op){ \\\n")
+        for op in ops:
+            f.write("    case OP_{}: \\\n".format(op.func.upper()))
+            f.write("      plain_opname = \"{}\"; \\\n".format(op.plain_name))
+            f.write("      op_symbol = \"{}\"; \\\n".format(op.func))
+            f.write("      break; \\\n")
+        f.write("    default: \\\n")
+        f.write("      return; \\\n")
+        f.write("  }\n")
+        f.write("\n")
+
         f.write("// A switch statement to populate the plain_opname, op_symbol, and\n")
         f.write("// mpfr_func for all the unary ops that need a rounding mode.\n")
         f.write("#define GET_UNARY_OPS_ROUND_INFO(op) \\\n")
@@ -98,8 +112,6 @@ def write_mathreplace_funcs(ops, fname):
         for op in ops:
             if (op.nargs == 1 and op.needsround == True):
                 f.write("    case OP_{}: \\\n".format(op.func.upper()))
-                f.write("      plain_opname = \"{}\"; \\\n".format(op.plain_name))
-                f.write("      op_symbol = \"{}\"; \\\n".format(op.func))
                 f.write("      mpfr_func = {}; \\\n".format(op.mpfr_func))
                 f.write("      break; \\\n")
         f.write("    default: \\\n")
@@ -113,8 +125,6 @@ def write_mathreplace_funcs(ops, fname):
         for op in ops:
             if (op.nargs == 1 and op.needsround == False):
                 f.write("    case OP_{}: \\\n".format(op.func.upper()))
-                f.write("      plain_opname = \"{}\"; \\\n".format(op.plain_name))
-                f.write("      op_symbol = \"{}\"; \\\n".format(op.func))
                 f.write("      mpfr_func = {}; \\\n".format(op.mpfr_func))
                 f.write("      break; \\\n")
         f.write("    default: \\\n")
@@ -128,8 +138,6 @@ def write_mathreplace_funcs(ops, fname):
         for op in ops:
             if (op.nargs == 2):
                 f.write("    case OP_{}: \\\n".format(op.func.upper()))
-                f.write("      plain_opname = \"{}\"; \\\n".format(op.plain_name))
-                f.write("      op_symbol = \"{}\"; \\\n".format(op.func))
                 f.write("      mpfr_func = {}; \\\n".format(op.mpfr_func))
                 f.write("      break; \\\n")
         f.write("    default: \\\n")
@@ -143,8 +151,6 @@ def write_mathreplace_funcs(ops, fname):
         for op in ops:
             if (op.nargs == 3):
                 f.write("    case OP_{}: \\\n".format(op.func.upper()))
-                f.write("      plain_opname = \"{}\"; \\\n".format(op.plain_name))
-                f.write("      op_symbol = \"{}\"; \\\n".format(op.func))
                 f.write("      mpfr_func = {}; \\\n".format(op.mpfr_func))
                 f.write("      break; \\\n")
         f.write("    default: \\\n")

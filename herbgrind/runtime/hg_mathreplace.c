@@ -62,6 +62,9 @@ Addr getCallAddr(void){
 
 void performOp(OpType op, double* result, double* args){
   SizeT nargs;
+  const HChar* plain_opname;
+  const HChar* op_symbol;
+
   switch(op){
     // This is a macro defined in include/hg_mathreplace_funcs.h which
     // expands to a bunch of cases like "case OP_SQRT:" which
@@ -85,6 +88,22 @@ void performOp(OpType op, double* result, double* args){
     nargs = 3;
     break;
   }
+
+  // Populate the plain_opname and op_symbol fields.
+  GET_OP_STATIC_INFO(op)
+
+  // Either look up an existing op info entry for this call site, or
+  // create one if one doesn't already exist.
+  Addr callAddr = getCallAddr();
+  OpInfo_Entry* entry = VG_(HT_lookup)(callToOpInfoMap, callAddr);
+  if (entry == NULL){
+    Op_Info* callInfo = mkOp_Info(nargs, 0x0, callAddr, plain_opname, op_symbol);
+    ALLOC(entry, "hg.opinfo_entry.1", 1, sizeof(OpInfo_Entry));
+    entry->call_addr = callAddr;
+    entry->info = callInfo;
+    VG_(HT_add_node)(callToOpInfoMap, entry);
+  }
+
   // We'll need the argument and the result in 64-bit mpfr, and
   // also shadow locations for both. We do the normal calculation
   // in MPFR instead of natively because we can't call the math
@@ -92,8 +111,6 @@ void performOp(OpType op, double* result, double* args){
   // would result in an infinite loop.
   mpfr_t *args_m, res;
   ShadowLocation **arg_shadows, *res_shadow;
-  const HChar* plain_opname;
-  const HChar* op_symbol;
 
   // Initialize our 64-bit mpfr arg and shadow, and get the result
   // shadow set up.
@@ -176,17 +193,6 @@ void performOp(OpType op, double* result, double* args){
   *result = mpfr_get_d(res, MPFR_RNDN);
   setMem((uintptr_t)result, res_shadow);
 
-  // Either look up an existing op info entry for this call site, or
-  // create one if one doesn't already exist.
-  Addr callAddr = getCallAddr();
-  OpInfo_Entry* entry = VG_(HT_lookup)(callToOpInfoMap, callAddr);
-  if (entry == NULL){
-    Op_Info* callInfo = mkOp_Info(nargs, 0x0, callAddr, plain_opname, op_symbol);
-    ALLOC(entry, "hg.opinfo_entry.1", 1, sizeof(OpInfo_Entry));
-    entry->call_addr = callAddr;
-    entry->info = callInfo;
-    VG_(HT_add_node)(callToOpInfoMap, entry);
-  }
   // Set up the ast record of this operation.
   switch(nargs){
   case 1:
