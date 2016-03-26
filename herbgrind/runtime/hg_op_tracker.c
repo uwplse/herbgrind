@@ -7,44 +7,30 @@
 #include "pub_tool_vki.h"
 #include "pub_tool_libcfile.h"
 #include "pub_tool_libcprint.h"
-#include "pub_tool_libcbase.h"
 
-Op_Info** tracked_ops;
-SizeT num_tracked_ops;
-SizeT array_size;
+XArray* tracked_ops;
 
 // How many characters are going to be allowed in each entry.
 #define ENTRY_BUFFER_SIZE 512
-#define START_ARRAY_SIZE 20
 
 void startTrackingOp(Op_Info* opinfo){
-  // If our array is already full...
-  if (num_tracked_ops >= array_size){
-    if (array_size == 0){
-      tracked_ops = VG_(malloc)("hg.init_tracked_op_array.1", START_ARRAY_SIZE);
-      array_size = START_ARRAY_SIZE;
-    } else {
-      tracked_ops = VG_(realloc)("hg.expand_tracked_op_array.1", tracked_ops, array_size * 2);
-      array_size = array_size * 2;
-    }
+  if (tracked_ops == NULL){
+    tracked_ops = VG_(newXA)(VG_(malloc), "op tracker",
+                             VG_(free), sizeof(Op_Info*));
+    VG_(setCmpFnXA)(tracked_ops, cmp_debuginfo);
   }
-  // Put the op into the next slot in the array
-  tracked_ops[num_tracked_ops] = opinfo;
-  // Update the counter for the next available slot.
-  num_tracked_ops++;
+  VG_(addToXA)(tracked_ops, &opinfo);
 }
 
-// Assumes no duplicates. Will result in NULL entries in array where
-// removed items were.
+// Assumes no duplicates.
 void clearTrackedOp(Op_Info* opinfo){
-  for(int i = 0; i < num_tracked_ops; ++i){
-    if (tracked_ops[i] == opinfo){
-      tracked_ops[i] = NULL;
+  for(int i = 0; i < VG_(sizeXA)(tracked_ops); ++i){
+    if (*(Op_Info**)VG_(indexXA)(tracked_ops, i) == opinfo){
+      VG_(removeIndexXA)(tracked_ops, i);
       return;
     }
   }
 }
-void recursivelyClearChildren(OpASTNode* node);
 void recursivelyClearChildren(OpASTNode* node){
   if (node->tag != Node_Branch) return;
   for(int i = 0; i < node->nd.Branch.nargs; ++i){
@@ -55,7 +41,6 @@ void recursivelyClearChildren(OpASTNode* node){
   }
 }
 
-Int cmp_debuginfo(const void* a, const void* b);
 Int cmp_debuginfo(const void* a, const void* b){
   return ((const Op_Info*)b)->evalinfo.max_error -
     ((const Op_Info*)a)->evalinfo.max_error;
@@ -77,22 +62,19 @@ void writeReport(const HChar* filename){
     // For each expression, counting from the back where the bigger
     // expressions should be, eliminate subexpressions from the list
     // for reporting.
-    for(int i = num_tracked_ops - 1; i >= 0; --i){
-      Op_Info* opinfo = tracked_ops[i];
+    for(int i = VG_(sizeXA)(tracked_ops) - 1; i >= 0; --i){
+      Op_Info* opinfo = *(Op_Info**)VG_(indexXA)(tracked_ops, i);
       if (opinfo == NULL) continue;
       recursivelyClearChildren(opinfo->ast);
     }
 
   // Sort the entries by maximum error.
-  VG_(ssort)(tracked_ops, num_tracked_ops, sizeof(Op_Info*), cmp_debuginfo);
+  VG_(sortXA)(tracked_ops);
 
   // Write out an entry for each tracked op.
-  for(int i = 0; i < num_tracked_ops; ++i){
-    Op_Info* opinfo = tracked_ops[i];
+  for(int i = 0; i < VG_(sizeXA)(tracked_ops); ++i){
+    Op_Info* opinfo = *(Op_Info**)VG_(indexXA)(tracked_ops, i);
 
-    // This will happen if we had an item in the list we decided to
-    // eliminate.
-    if (opinfo == NULL) continue;
     UInt entry_len;
     char* astString = opASTtoString(opinfo->ast);
     if (human_readable){
