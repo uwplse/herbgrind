@@ -22,11 +22,15 @@ void startTrackingOp(Op_Info* opinfo){
   VG_(addToXA)(tracked_ops, &opinfo);
 }
 
-// Assumes no duplicates.
+// Assumes no duplicates. Will result in NULL's in the tracked ops
+// list, does not actually remove from the list, just sets matching op
+// to NULL.
 void clearTrackedOp(Op_Info* opinfo){
   for(int i = 0; i < VG_(sizeXA)(tracked_ops); ++i){
-    if (*(Op_Info**)VG_(indexXA)(tracked_ops, i) == opinfo){
-      VG_(removeIndexXA)(tracked_ops, i);
+    Op_Info** entry = VG_(indexXA)(tracked_ops, i);
+    if (*entry == NULL) continue;
+    if (*entry == opinfo){
+      *entry = NULL;
       return;
     }
   }
@@ -58,12 +62,19 @@ void writeReport(const HChar* filename){
   }
   Int file_d = sr_Res(file_result);
 
+  if (tracked_ops == NULL){
+    VG_(write)(file_d, "No errors found.\n", 18);
+    VG_(close)(file_d);
+    return;
+  }
+
   if (report_exprs)
     // For each expression, counting from the back where the bigger
     // expressions should be, eliminate subexpressions from the list
     // for reporting.
     for(int i = VG_(sizeXA)(tracked_ops) - 1; i >= 0; --i){
-      Op_Info* opinfo = *(Op_Info**)VG_(indexXA)(tracked_ops, i);
+      Op_Info** entry = VG_(indexXA)(tracked_ops, i);
+      Op_Info* opinfo = *entry;
       if (opinfo == NULL) continue;
       recursivelyClearChildren(opinfo->ast);
     }
@@ -74,6 +85,8 @@ void writeReport(const HChar* filename){
   // Write out an entry for each tracked op.
   for(int i = 0; i < VG_(sizeXA)(tracked_ops); ++i){
     Op_Info* opinfo = *(Op_Info**)VG_(indexXA)(tracked_ops, i);
+
+    if (opinfo == NULL) continue;
 
     UInt entry_len;
     char* astString = opASTtoString(opinfo->ast);
