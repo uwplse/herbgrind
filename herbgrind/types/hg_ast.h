@@ -130,10 +130,11 @@ void generalizeAST(OpASTNode* opast, ValueASTNode* valast);
 // op AST, linking together ops instead of concrete values.
 OpASTNode* convertValASTtoOpAST(ValueASTNode* valAST);
 // Converts a valvarmap from a value, which maps leaf values to
-// variable indices, to a opvarmap for ops, which maps cooresponding
-// leaf ops to the same variable indices.
+// variable indices, to a opvarmap for ops, which maps variable
+// indices to groups of op nodes which match them.
 XArray* opvarmapFromValvarmap(VgHashTable* valVarMap);
-// Get a lookup table by directly converting a valvarmap
+// Convert a map from var nodes to indices, to an equivalent map from
+// the cooresponding op nodes to the same indices.
 VgHashTable* opLookupTable(VgHashTable* valVarMap);
 // Flips a var map that maps from variable indexes to leaf nodes to
 // the other way around.

@@ -326,17 +326,24 @@ void printOpVarMap(XArray* opVarMap){
 XArray* opvarmapFromValvarmap(VgHashTable* valVarMap){
   XArray* opVarMap = VG_(newXA)(VG_(malloc), "opVarMap",
                                 VG_(free), sizeof(XArray*));
+  // Go through the entries of the value var map
   VG_(HT_ResetIter)(valVarMap);
   for (ValVarMapEntry* valEntry = VG_(HT_Next)(valVarMap);
        valEntry != NULL; valEntry = VG_(HT_Next)(valVarMap)){
+    // If it has an index higher than any one we've seen so far,
+    // create empty groups up through that index.
     while(VG_(sizeXA)(opVarMap) <= valEntry->varidx){
       XArray* newVarGroup = VG_(newXA)(VG_(malloc), "opVarMapRow",
                                         VG_(free), sizeof(OpASTNode*));
       VG_(addToXA)(opVarMap, &newVarGroup);
     }
+    // Extract the group that matches the index that our var map maps
+    // to.
     XArray** entry = VG_(indexXA)(opVarMap, valEntry->varidx);
     XArray* varGroup = *entry;
+    // Convert the key to it's equivalent op node.
     OpASTNode* opNode = convertValASTtoOpAST(valEntry->key);
+    // Add the op node to the group that it's key maps to.
     VG_(addToXA)(varGroup, &opNode);
   }
   return opVarMap;
@@ -344,12 +351,15 @@ XArray* opvarmapFromValvarmap(VgHashTable* valVarMap){
 
 VgHashTable* opLookupTable(VgHashTable* valVarMap){
   VgHashTable* lookupTable = VG_(HT_construct)("lookupTable");
+  // Go through the entries...
   VG_(HT_ResetIter)(valVarMap);
   for (ValVarMapEntry* valEntry = VG_(HT_Next)(valVarMap);
        valEntry != NULL; valEntry = VG_(HT_Next)(valVarMap)){
     OpVarMapEntry* opEntry;
     ALLOC(opEntry, "opEntry", 1, sizeof(OpVarMapEntry));
+    // Get the cooresponding key
     opEntry->key = convertValASTtoOpAST(valEntry->key);
+    // Map it to the same value
     opEntry->varidx = valEntry->varidx;
     VG_(HT_add_node)(lookupTable, opEntry);
   }
@@ -472,12 +482,16 @@ void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
   VG_(HT_destruct)(valueLookupTable, VG_(free));
 }
 
+// Take a map from indices to groups of op nodes, and flip it to a map
+// from each op node to the index which represented its group.
 VgHashTable* flipOpVarMap(XArray* opVarMap){
   VgHashTable* result = VG_(HT_construct)("flippedOpVarMap");
+  // Go through the rows and columns of the opVarMap...
   for (int i = 0; i < VG_(sizeXA)(opVarMap); ++i){
     XArray** rowEntry = VG_(indexXA)(opVarMap, i);
     for (int j = 0; j < VG_(sizeXA)(*rowEntry); ++j){
       OpASTNode** entry = VG_(indexXA)(*rowEntry, j);
+      // For each one, map it to it's row number in the resulting map.
       OpVarMapEntry* mapEntry;
       ALLOC(mapEntry, "opMapEntry", 1, sizeof(OpVarMapEntry));
       mapEntry->key = *entry;
@@ -490,14 +504,24 @@ VgHashTable* flipOpVarMap(XArray* opVarMap){
 
 static const char* varNames[8] = {"x", "y", "z", "w", "a", "b", "c", "d"};
 
+// Give a printed representation of an op ast.
 char* opASTtoString(OpASTNode* opAST){
+  // If we're trying to print a leaf node, then we don't have any map
+  // to label variables. In this case, pass NULL to the inner
+  // function, opASTtoStringwithVarMap, and we'll just print it as "x".
   VgHashTable* map = NULL;
   if (opAST->tag == Node_Branch){
+    // If it's a branch, take the representation which was most
+    // convenient for building up the maps, and flip it around so that
+    // it'll be useful for printing.
     map = flipOpVarMap(opAST->nd.Branch.var_map);
   }
+  // Get the resulting string we're going to return.
   char* result = opASTtoStringwithVarMap(opAST, map);
+  // If we made a flipped map, free it up now.
   if (map != NULL)
     VG_(HT_destruct)(map, VG_(free));
+  // Return the representation.
   return result;
 }
 // This is a crude and wasteful function, but hopefully no one will
