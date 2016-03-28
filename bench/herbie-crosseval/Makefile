@@ -15,7 +15,7 @@ NMSE-problem-3.4.4.out-errors.gh NMSE-problem-3.4.5.out-errors.gh	\
 NMSE-problem-3.4.6.out-errors.gh NMSE-section-3.11.out-errors.gh	\
 NMSE-section-3.5.out-errors.gh
 
-FLAGS=-g -std=c11 -lm -I../../valgrind/herbgrind/include
+FLAGS=-g -std=c11 -lm -lmpfr -I../../valgrind/herbgrind/include
 
 RHOST=uwplse.org
 RHOSTDIR=/var/www/herbie/herbgrind/hamming
