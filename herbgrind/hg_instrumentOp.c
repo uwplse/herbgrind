@@ -236,6 +236,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
         result_size = sizeof(double) * 2;
         break;
       case Iop_Sqrt64Fx4:
+      case Iop_XorV128:
         arg_size = sizeof(double) * 4;
         result_size = sizeof(double) * 4;
         break;
@@ -281,6 +282,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_Div64F0x2:
       case Iop_SetV128lo32:
       case Iop_SetV128lo64:
+      case Iop_XorV128:
         // Allocate and partially setup the argument structure
         opInfo = mkOp_Info(2, expr->Iex.Binop.op,
                            opAddr,
@@ -613,6 +615,7 @@ const HChar* getPlainOpname(IROp op){
   case Iop_NegF32:
   case Iop_NegF64:
   case Iop_Neg32Fx2:
+  case Iop_XorV128:
     return "negation";
   case Iop_Sqrt32F0x4:
   case Iop_Sqrt64F0x2:
@@ -727,6 +730,7 @@ const HChar* getOpSymbol(IROp op){
   case Iop_NegF32:
   case Iop_NegF64:
   case Iop_Neg32Fx2:
+  case Iop_XorV128:
     return "-";
   case Iop_Sqrt32F0x4:
   case Iop_Sqrt64F0x2:

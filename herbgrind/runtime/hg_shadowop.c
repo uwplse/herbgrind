@@ -750,6 +750,67 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       // evaluate it's error.
     }
     break;
+  case Iop_XorV128:
+    // Probably a negation
+    {
+      LocType argType;
+      if (*opInfo->args.bargs.arg1_value == 0x8000000000000000 ||
+          *opInfo->args.bargs.arg2_value == 0x8000000000000000 ||
+          *opInfo->args.bargs.arg1_value == 0x2424242424242424 ||
+          *opInfo->args.bargs.arg2_value == 0x2424242424242424){
+        // Pull the shadow values for the arguments. If we don't already
+        // have shadow values for these arguments, we'll generate fresh
+        // ones from the runtime float values.
+        if(*opInfo->args.bargs.arg1_value == 0x8000000000000000){
+          arg1Location =
+            getShadowLocation(opInfo->args.bargs.arg2_tmp,
+                              Lt_Doublex2,
+                              opInfo->args.bargs.arg2_value,
+                              &(opInfo->args.bargs.arg2_src));
+          argType = Lt_Doublex2;
+        } else if (*opInfo->args.bargs.arg2_value == 0x8000000000000000){
+          arg1Location =
+            getShadowLocation(opInfo->args.bargs.arg1_tmp,
+                              Lt_Doublex2,
+                              opInfo->args.bargs.arg1_value,
+                              &(opInfo->args.bargs.arg1_src));
+          argType = Lt_Doublex2;
+        } else if (*opInfo->args.bargs.arg1_value == 0x2424242424242424){
+          arg1Location =
+            getShadowLocation(opInfo->args.bargs.arg2_tmp,
+                              Lt_Floatx4,
+                              opInfo->args.bargs.arg2_value,
+                              &(opInfo->args.bargs.arg2_src));
+          argType = Lt_Floatx4;
+        } else if (*opInfo->args.bargs.arg2_value == 0x2424242424242424){
+          arg1Location =
+            getShadowLocation(opInfo->args.bargs.arg1_tmp,
+                              Lt_Floatx4,
+                              opInfo->args.bargs.arg1_value,
+                              &(opInfo->args.bargs.arg1_src));
+          argType = Lt_Floatx4;
+        }
+
+        // Now we'll allocate memory for the shadowed result of this
+        // operation.
+        destLocation = mkShadowLocation(argType);
+
+        // Set the destination shadow values to the result of a
+        // high-precision shadowing operation.
+        mpfr_neg(destLocation->values[0].value, arg1Location->values[0].value,
+                 MPFR_RNDN);
+        // Set up the ast record of this operation.
+        initValueBranchAST(&(destLocation->values[0]), opInfo, 1,
+                           &(arg1Location->values[0]));
+        // Now, we'll evaluate the shadow value against the result
+        // value.
+        evaluateOpError_helper(&(destLocation->values[0]),
+                               opInfo->dest_value, argType, 0,
+                               opInfo);
+      } else
+        destLocation = NULL;
+    }
+    break;
   default:
     return;
   }
