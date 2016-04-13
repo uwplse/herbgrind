@@ -6,6 +6,7 @@
 #include "hg_storage_runtime.h"
 #include "../include/hg_options.h"
 #include "../types/hg_ast.h"
+#include "hg_runtime.h"
 
 // Execute a shadow operation, storing the result of the high
 // precision operation applied to the shadow value at the arg_tmp
@@ -15,6 +16,8 @@
 VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
   ShadowLocation* argLocation;
   ShadowLocation* destLocation;
+
+  if (!running) return;
 
   switch(opInfo->op){
     // All the math-y operations
@@ -319,6 +322,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
   ShadowLocation* arg1Location;
   ShadowLocation* arg2Location;
   ShadowLocation* destLocation;
+  if (!running) return;
   switch(opInfo->op){
 
   case Iop_64HLtoV128:
@@ -775,6 +779,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
   int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
   LocType type;
   int num_vals;
+  if (!running) return;
 
   // Figure out the underlying math function of the
   // operation. Some are not in the mpfr library directly, but are
@@ -951,6 +956,7 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
 
   int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
   LocType argType;
+  if (!running) return;
 
   // Determine the mpfr shadow function. In these cases, we don't
   // actually have a mpfr function for fused multiply add/sub, but we
