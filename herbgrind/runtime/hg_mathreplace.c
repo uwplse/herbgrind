@@ -265,6 +265,10 @@ ShadowLocation* getShadowLocMem(Addr addr, double float_arg,
                                 Int argIndex, Op_Info** arg_src){
   ShadowLocation* loc = getMem(addr);
   if (loc != NULL) return loc;
+
+  if (print_moves)
+    VG_(printf)("Creating new shadow location at addr %lx\n", addr);
+
   if (getSavedArg(argIndex) != NULL){
     return getSavedArg(argIndex);
   }
