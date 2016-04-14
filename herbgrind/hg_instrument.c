@@ -31,6 +31,7 @@
 #include "hg_instrument.h"
 #include "include/hg_helper.h"
 #include "include/hg_macros.h"
+#include "runtime/hg_mathreplace.h"
 
 void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr){
   IRExpr* expr;
@@ -58,15 +59,6 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr){
   case Ist_AbiHint:
     // Add the hint into the output.
     addStmtToIRSB(sbOut, st);
-    // Now, store the current address in the field (in our memory, in
-    // hg_runtime.c) for the address of the last executed
-    // ABIHint. We'll pull this out whenever we're in a wrapped
-    // library function, and it should give us the address of the
-    // call.
-    addStmtToIRSB(sbOut,
-                  IRStmt_Store(ENDIAN,
-                               mkU64((uintptr_t)&last_abi_addr),
-                               mkU64((uintptr_t)stAddr)));
     break;
   case Ist_Put:
     // Here we'll want to instrument moving Shadow values into
@@ -81,14 +73,15 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr){
         // Okay, in this one we're reading from a temp instead of the
         // thread state, but otherwise it's pretty much like above.
         copyShadowLocation =
-          unsafeIRDirty_0_N(2,
+          unsafeIRDirty_0_N(3,
                             "copyShadowTmptoTS",
                             VG_(fnptr_to_fnentry)(&copyShadowTmptoTS),
-                            mkIRExprVec_2(// The number of the temporary
+                            mkIRExprVec_3(// The number of the temporary
                                           mkU64(expr->Iex.RdTmp.tmp),
                                           // The thread state offset,
                                           // as above.
-                                          mkU64(st->Ist.Put.offset)));
+                                          mkU64(st->Ist.Put.offset),
+                                          mkU64(stAddr)));
         addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       }
       break;

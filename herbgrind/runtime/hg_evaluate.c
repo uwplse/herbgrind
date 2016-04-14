@@ -30,6 +30,7 @@
 
 #include "hg_evaluate.h"
 #include "hg_runtime.h"
+#include "../types/hg_ast.h"
 #include "../include/hg_options.h"
 #include "hg_op_tracker.h"
 
@@ -64,12 +65,18 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   mpfr_clear(ulpsErrorM);
   mpfr_clear(bitsErrorM);
 
+  // If the opfinfo doesn't have an AST assigned yet, give it a strict
+  // translation of the AST assigned to this shadow value. If it does,
+  // generalize the AST sufficiently to match the AST of the shadow
+  // val.
+  updateAST(opinfo, shadowVal->ast);
+
   // Update the persistent op record
   if (bitsError > opinfo->evalinfo.max_error){
     // This tests whether we didnt want to track it before, but do
     // now. If that's the case, we'll start tracking it.
     if (opinfo->evalinfo.max_error < error_threshold &&
-        bitsError > error_threshold){
+        bitsError >= error_threshold){
       startTrackingOp(opinfo);
     }
     // Update the max error, since the error of this operation

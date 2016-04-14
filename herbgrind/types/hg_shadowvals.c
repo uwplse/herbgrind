@@ -29,6 +29,7 @@
 */
 
 #include "hg_shadowvals.h"
+#include "hg_ast.h"
 #include "../include/hg_macros.h"
 #include "../include/hg_options.h"
 
@@ -48,6 +49,7 @@ ShadowLocation* mkShadowLocation(LocType type){
   ALLOC(location->values, "hg.shadow_values", num_values, sizeof(ShadowValue));
   for(int i = 0; i < num_values; ++i){
     mpfr_init2(location->values[i].value, precision);
+    ALLOC(location->values[i].ast, "hg.shadow_ast", 1, sizeof(ValueASTNode));
   }
   location->ref_count = 1;
   return location;
@@ -86,7 +88,7 @@ void copySL(ShadowLocation* src, ShadowLocation** dest){
   if (src != NULL){
     (src->ref_count) ++;
   }
-  if ((*dest) != NULL){
+  else if ((*dest) != NULL){
     disownSL(*dest);
   }
   (*dest) = src;
@@ -97,15 +99,18 @@ ShadowValue* copySV_ptr(ShadowValue* src){
   ALLOC(result, "hg.shadow_value.1", 1, sizeof(ShadowValue));
   mpfr_init2(result->value, precision);
   mpfr_set(result->value, src->value, MPFR_RNDN);
+  copyValueAST(src, result);
   return result;
 }
 
 void copySV(ShadowValue* src, ShadowValue* dest){
   mpfr_init2(dest->value, precision);
   mpfr_set(dest->value, src->value, MPFR_RNDN);
+  copyValueAST(src, dest);
 }
 
 void cleanupSV(ShadowValue* sv){
   mpfr_clear(sv->value);
+  cleanupValueAST(sv);
 }
 

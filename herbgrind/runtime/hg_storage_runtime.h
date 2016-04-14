@@ -46,7 +46,7 @@
 // The functions that we'll insert into the program to move around
 // shadow values at run time.
 VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp);
-VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg);
+VG_REGPARM(3) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg, Addr instr_addr);
 VG_REGPARM(3) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp);
 VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp);
 VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info);
@@ -67,8 +67,11 @@ ShadowLocation* getTemp(Addr index);
 void setMem(Addr index, ShadowLocation* newLocation);
 ShadowLocation* getMem(Addr index);
 
-void setTS(Addr index, ShadowLocation* newLocation);
+void setTS(Addr index, ShadowLocation* newLocation, Addr instr_addr);
 ShadowLocation* getTS(Addr index);
+
+void setSavedArg(Int index, ShadowLocation* newLocation);
+ShadowLocation* getSavedArg(Int index);
 
 // A helper function that does most of the work for copyShadowMemtoTmp
 // and copyShadowTStoTmp.

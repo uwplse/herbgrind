@@ -32,6 +32,8 @@
 #define _HG_OPINFO
 
 #include "hg_opinfo.hh"
+#include "hg_shadowvals.hh"
+#include "hg_ast.hh"
 
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
@@ -99,6 +101,10 @@ struct _Unary_Args {
   // locations, so we're going to store it as an array that's
   // malloc'd when we know how big it's going to be.
   UWord* arg_value;
+  // If the argument didn't come from the result of another operation,
+  // than we'll keep track of the "source" of that argument as a leaf
+  // operation here.
+  Op_Info* arg_src;
 };
 
 struct _Binary_Args {
@@ -114,6 +120,11 @@ struct _Binary_Args {
   // malloc'd when we know how big they're going to be.
   UWord* arg1_value;
   UWord* arg2_value;
+  // If the argument didn't come from the result of another operation,
+  // than we'll keep track of the "source" of that argument as a leaf
+  // operation here.
+  Op_Info* arg1_src;
+  Op_Info* arg2_src;
 };
 
 struct _Ternary_Args {
@@ -131,6 +142,12 @@ struct _Ternary_Args {
   UWord* arg1_value;
   UWord* arg2_value;
   UWord* arg3_value;
+  // If the argument didn't come from the result of another operation,
+  // than we'll keep track of the "source" of that argument as a leaf
+  // operation here.
+  Op_Info* arg1_src;
+  Op_Info* arg2_src;
+  Op_Info* arg3_src;
 };
 
 struct _Quadnary_Args {
@@ -150,9 +167,22 @@ struct _Quadnary_Args {
   UWord* arg2_value;
   UWord* arg3_value;
   UWord* arg4_value;
+  // If the argument didn't come from the result of another operation,
+  // than we'll keep track of the "source" of that argument as a leaf
+  // operation here.
+  Op_Info* arg1_src;
+  Op_Info* arg2_src;
+  Op_Info* arg3_src;
+  Op_Info* arg4_src;
 };
 
+typedef enum {
+  Op_Branch,
+  Op_Leaf,
+} OpInfoType;
+
 struct _Op_Info {
+  OpInfoType tag;
   // The arity of the operation. This determines which of the args
   // structures we are allowed to put in and pull out.
   SizeT nargs;
@@ -163,7 +193,10 @@ struct _Op_Info {
   OpDebug_Info debuginfo;
   // Information about the evaluated behaviour of the operation
   Eval_Info evalinfo;
-  // This is the index into where we're putting the result.
+  // An AST head representing the most specific expression general
+  // enough to capture all seen inputs to this op.
+  OpASTNode* ast;
+  //This is the index into where we're putting the result.
   UWord dest_tmp;
   // This is the actual computed value of the result, for checking
   // accuracy.
@@ -179,6 +212,8 @@ struct _Op_Info {
 
 Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
                    const HChar* name, const HChar* symbol);
+
+Op_Info* mkLeafOp_Info(ShadowValue* val);
 
 #ifdef VG_LITTLEENDIAN
 #define ENDIAN Iend_LE

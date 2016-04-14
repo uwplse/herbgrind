@@ -32,15 +32,21 @@
 
 #include "pub_tool_basics.h"
 #include "pub_tool_libcprint.h"
+#include "pub_tool_libcbase.h"
 #include "pub_tool_tooliface.h"
 #include "pub_tool_mallocfree.h"
+#include "pub_tool_debuginfo.h"
+#include "pub_tool_stacktrace.h"
+#include "pub_tool_threadstate.h"
 
 #include "mpfr.h"
 
 #include "hg_mathreplace.h"
 #include "hg_evaluate.h"
 #include "hg_runtime.h"
+#include "hg_storage_runtime.h"
 #include "../types/hg_opinfo.h"
+#include "../types/hg_ast.h"
 #include "../include/hg_macros.h"
 #include "../include/hg_mathreplace_funcs.h"
 
@@ -59,8 +65,36 @@ typedef struct _OpInfo_Entry {
   Op_Info* info;
 } OpInfo_Entry;
 
+#define NCALLFRAMES 5
+
+Addr getCallAddr(void){
+  Addr trace[NCALLFRAMES];
+  UInt nframes = VG_(get_StackTrace)(VG_(get_running_tid)(),
+                                     trace, NCALLFRAMES, // Is this right?
+                                     NULL, NULL,
+                                     0);
+  for(int i = 0; i < nframes; ++i){
+    Addr addr = trace[i];
+    // Basically, this whole block discards addresses which are part
+    // of the redirection process or internal to the replacement
+    // function, and are "below" the location of the call in the calls
+    // stack. Currently it looks like we really only have to look at
+    // the second frame up, but screw it, this probably isn't the
+    // performance bottleneck, and it might be nice to have the
+    // robustness somewhere down the line.
+    const HChar* filename;
+    if (!VG_(get_filename)(addr, &filename)) continue;
+    if (VG_(strcmp)(filename, "hg_mathwrap.c") == 0) continue;
+    return addr;
+  }
+  return 0;
+}
+
 void performOp(OpType op, double* result, double* args){
   SizeT nargs;
+  const HChar* plain_opname;
+  const HChar* op_symbol;
+
   switch(op){
     // This is a macro defined in include/hg_mathreplace_funcs.h which
     // expands to a bunch of cases like "case OP_SQRT:" which
@@ -84,6 +118,22 @@ void performOp(OpType op, double* result, double* args){
     nargs = 3;
     break;
   }
+
+  // Populate the plain_opname and op_symbol fields.
+  GET_OP_STATIC_INFO(op)
+
+  // Either look up an existing op info entry for this call site, or
+  // create one if one doesn't already exist.
+  Addr callAddr = getCallAddr();
+  OpInfo_Entry* entry = VG_(HT_lookup)(callToOpInfoMap, callAddr);
+  if (entry == NULL){
+    Op_Info* callInfo = mkOp_Info(nargs, 0x0, callAddr, plain_opname, op_symbol);
+    ALLOC(entry, "hg.opinfo_entry.1", 1, sizeof(OpInfo_Entry));
+    entry->call_addr = callAddr;
+    entry->info = callInfo;
+    VG_(HT_add_node)(callToOpInfoMap, entry);
+  }
+
   // We'll need the argument and the result in 64-bit mpfr, and
   // also shadow locations for both. We do the normal calculation
   // in MPFR instead of natively because we can't call the math
@@ -91,8 +141,6 @@ void performOp(OpType op, double* result, double* args){
   // would result in an infinite loop.
   mpfr_t *args_m, res;
   ShadowLocation **arg_shadows, *res_shadow;
-  const HChar* plain_opname;
-  const HChar* op_symbol;
 
   // Initialize our 64-bit mpfr arg and shadow, and get the result
   // shadow set up.
@@ -102,9 +150,47 @@ void performOp(OpType op, double* result, double* args){
     mpfr_init2(args_m[i], 64);
     // Get the actual value from the pointer they gave us.
     mpfr_set_d(args_m[i], args[i], MPFR_RNDN);
-    // Lookup the address in our shadow hash table to get the
-    // shadow argument.
-    arg_shadows[0] = getShadowLocMem((uintptr_t)&(args[i]), args[i]);
+    // Get the location of the arg source slot in the op structure.
+    Op_Info** src_loc_slot;
+    // Get the slot in the op info structure for the value source
+    // structure cooresponding to this argument.
+    switch(nargs){
+    case 1:
+      src_loc_slot = &(entry->info->args.uargs.arg_src);
+      break;
+    case 2:
+      switch(i){
+      case 1:
+        src_loc_slot = &(entry->info->args.bargs.arg1_src);
+        break;
+      case 2:
+        src_loc_slot = &(entry->info->args.bargs.arg2_src);
+        break;
+      default:
+        return;
+      }
+      break;
+    case 3:
+      switch(i){
+      case 1:
+        src_loc_slot = &(entry->info->args.targs.arg1_src);
+        break;
+      case 2:
+        src_loc_slot = &(entry->info->args.targs.arg2_src);
+        break;
+      case 3:
+        src_loc_slot = &(entry->info->args.targs.arg3_src);
+        break;
+      default:
+        break;
+      }
+    default:
+      break;
+    }
+    // Lookup the address in our shadow hash table to get the shadow
+    // argument.
+    arg_shadows[i] = getShadowLocMem((uintptr_t)&(args[i]), args[i],
+                                     i, src_loc_slot);
   }
   mpfr_init2(res,64);
   res_shadow = mkShadowLocation(Lt_Double);
@@ -175,15 +261,23 @@ void performOp(OpType op, double* result, double* args){
   *result = mpfr_get_d(res, MPFR_RNDN);
   setMem((uintptr_t)result, res_shadow);
 
-  // Either look up an existing op info entry for this call site, or
-  // create one if one doesn't already exist.
-  OpInfo_Entry* entry = VG_(HT_lookup)(callToOpInfoMap, last_abi_addr);
-  if (entry == NULL){
-    Op_Info* callInfo = mkOp_Info(nargs, 0x0, last_abi_addr, plain_opname, op_symbol);
-    ALLOC(entry, "hg.opinfo_entry.1", 1, sizeof(OpInfo_Entry));
-    entry->call_addr = last_abi_addr;
-    entry->info = callInfo;
-    VG_(HT_add_node)(callToOpInfoMap, entry);
+  // Set up the ast record of this operation.
+  switch(nargs){
+  case 1:
+    initValueBranchAST(&(res_shadow->values[0]), entry->info, nargs,
+                       &(arg_shadows[0]->values[0]));
+    break;
+  case 2:
+    initValueBranchAST(&(res_shadow->values[0]), entry->info, nargs,
+                       &(arg_shadows[1]->values[0]),
+                       &(arg_shadows[2]->values[0]));
+    break;
+  case 3:
+    initValueBranchAST(&(res_shadow->values[0]), entry->info, nargs,
+                       &(arg_shadows[1]->values[0]),
+                       &(arg_shadows[2]->values[0]),
+                       &(arg_shadows[3]->values[0]));
+    break;
   }
   // And finally, evaluate the error of the operation.
   evaluateOpError(&(res_shadow->values[0]), *result, entry->info);
@@ -197,13 +291,22 @@ void performOp(OpType op, double* result, double* args){
   VG_(free)(arg_shadows);
 }
 
-ShadowLocation* getShadowLocMem(Addr addr, double float_arg){
+ShadowLocation* getShadowLocMem(Addr addr, double float_arg,
+                                Int argIndex, Op_Info** arg_src){
   ShadowLocation* loc = getMem(addr);
   if (loc != NULL) return loc;
+
+  if (print_moves)
+    VG_(printf)("Creating new shadow location at addr %lx\n", addr);
+
+  if (getSavedArg(argIndex) != NULL){
+    return getSavedArg(argIndex);
+  }
 
   loc = mkShadowLocation(Lt_Double);
   setMem(addr, loc);
 
   mpfr_set_d(loc->values[0].value, float_arg, MPFR_RNDN);
+  initValueLeafAST(&(loc->values[0]), arg_src);
   return loc;
 }

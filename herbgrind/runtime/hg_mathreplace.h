@@ -42,6 +42,12 @@
 extern VgHashTable* callToOpInfoMap;
 
 void performOp(OpType op, double* result, double* args);
-ShadowLocation* getShadowLocMem(Addr addr, double float_arg);
+ShadowLocation* getShadowLocMem(Addr addr, double float_arg,
+                                Int argIndex, Op_Info** arg_src);
+
+// This function, called from within a math replacement function,
+// get's the address of the call site for that function in client
+// code.
+Addr getCallAddr(void);
 
 #endif

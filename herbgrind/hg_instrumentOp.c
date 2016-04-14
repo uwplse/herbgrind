@@ -175,13 +175,17 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
-        ALLOC(opInfo->args.uargs.arg_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->dest_value, "hg.arg_alloc", 1, result_size);
+        ALLOC(opInfo->args.uargs.arg_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->dest_value,
+              "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
-        addStore(sb, expr->Iex.Unop.arg, opInfo->args.uargs.arg_value);
-        addStore(sb, IRExpr_RdTmp(offset), opInfo->dest_value);
+        addStore(sb, expr->Iex.Unop.arg,
+                 opInfo->args.uargs.arg_value);
+        addStore(sb, IRExpr_RdTmp(offset),
+                 opInfo->dest_value);
 
         // Finally, add the statement to call the shadow op procedure.
         executeShadowOp =
@@ -262,6 +266,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
         result_size = sizeof(double) * 2;
         break;
       case Iop_Sqrt64Fx4:
+      case Iop_XorV128:
         arg_size = sizeof(double) * 4;
         result_size = sizeof(double) * 4;
         break;
@@ -307,6 +312,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_Div64F0x2:
       case Iop_SetV128lo32:
       case Iop_SetV128lo64:
+      case Iop_XorV128:
         // Allocate and partially setup the argument structure
         opInfo = mkOp_Info(2, expr->Iex.Binop.op,
                            opAddr,
@@ -314,21 +320,29 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
                            getOpSymbol(expr->Iex.Binop.op));
 
         // Populate the argument/result values we know at instrument time now.
-        opInfo->args.bargs.arg1_tmp = getArgTmp(expr->Iex.Binop.arg1, sb);
-        opInfo->args.bargs.arg2_tmp = getArgTmp(expr->Iex.Binop.arg2, sb);
+        opInfo->args.bargs.arg1_tmp =
+          getArgTmp(expr->Iex.Binop.arg1, sb);
+        opInfo->args.bargs.arg2_tmp =
+          getArgTmp(expr->Iex.Binop.arg2, sb);
         opInfo->dest_tmp = offset;
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
-        ALLOC(opInfo->args.bargs.arg1_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->args.bargs.arg2_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->dest_value, "hg.arg_alloc", 1, result_size);
+        ALLOC(opInfo->args.bargs.arg1_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.bargs.arg2_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->dest_value,
+              "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
-        addStore(sb, expr->Iex.Binop.arg1, opInfo->args.bargs.arg1_value);
-        addStore(sb, expr->Iex.Binop.arg2, opInfo->args.bargs.arg2_value);
-        addStore(sb, IRExpr_RdTmp(offset), opInfo->dest_value);
+        addStore(sb, expr->Iex.Binop.arg1,
+                 opInfo->args.bargs.arg1_value);
+        addStore(sb, expr->Iex.Binop.arg2,
+                 opInfo->args.bargs.arg2_value);
+        addStore(sb, IRExpr_RdTmp(offset),
+                 opInfo->dest_value);
 
         // Finally, add the statement to call the shadow op procedure.
         executeShadowOp =
@@ -450,24 +464,35 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
                            getOpSymbol(expr->Iex.Triop.details->op));
 
         // Populate the values we know at instrument time now.
-        opInfo->args.targs.arg1_tmp = getArgTmp(expr->Iex.Triop.details->arg1, sb);
-        opInfo->args.targs.arg2_tmp = getArgTmp(expr->Iex.Triop.details->arg2, sb);
-        opInfo->args.targs.arg3_tmp = getArgTmp(expr->Iex.Triop.details->arg3, sb);
+        opInfo->args.targs.arg1_tmp =
+          getArgTmp(expr->Iex.Triop.details->arg1, sb);
+        opInfo->args.targs.arg2_tmp =
+          getArgTmp(expr->Iex.Triop.details->arg2, sb);
+        opInfo->args.targs.arg3_tmp =
+          getArgTmp(expr->Iex.Triop.details->arg3, sb);
         opInfo->dest_tmp = offset;
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
-        ALLOC(opInfo->args.targs.arg1_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->args.targs.arg2_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->args.targs.arg3_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->dest_value, "hg.arg_alloc", 1, result_size);
+        ALLOC(opInfo->args.targs.arg1_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.targs.arg2_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.targs.arg3_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->dest_value,
+              "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
-        addStore(sb, expr->Iex.Triop.details->arg1, opInfo->args.targs.arg1_value);
-        addStore(sb, expr->Iex.Triop.details->arg2, opInfo->args.targs.arg2_value);
-        addStore(sb, expr->Iex.Triop.details->arg3, opInfo->args.targs.arg3_value);
-        addStore(sb, IRExpr_RdTmp(offset), opInfo->dest_value);
+        addStore(sb, expr->Iex.Triop.details->arg1,
+                 opInfo->args.targs.arg1_value);
+        addStore(sb, expr->Iex.Triop.details->arg2,
+                 opInfo->args.targs.arg2_value);
+        addStore(sb, expr->Iex.Triop.details->arg3,
+                 opInfo->args.targs.arg3_value);
+        addStore(sb, IRExpr_RdTmp(offset),
+                 opInfo->dest_value);
 
         // Finally, add the statement to call the shadow op procedure.
         executeShadowOp =
@@ -523,27 +548,41 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
 
         // Populate the values we know at instrument time now.
         opInfo->op = expr->Iex.Qop.details->op;
-        opInfo->args.qargs.arg1_tmp = getArgTmp(expr->Iex.Qop.details->arg1, sb);
-        opInfo->args.qargs.arg2_tmp = getArgTmp(expr->Iex.Qop.details->arg2, sb);
-        opInfo->args.qargs.arg3_tmp = getArgTmp(expr->Iex.Qop.details->arg3, sb);
-        opInfo->args.qargs.arg4_tmp = getArgTmp(expr->Iex.Qop.details->arg4, sb);
+        opInfo->args.qargs.arg1_tmp =
+          getArgTmp(expr->Iex.Qop.details->arg1, sb);
+        opInfo->args.qargs.arg2_tmp =
+          getArgTmp(expr->Iex.Qop.details->arg2, sb);
+        opInfo->args.qargs.arg3_tmp =
+          getArgTmp(expr->Iex.Qop.details->arg3, sb);
+        opInfo->args.qargs.arg4_tmp =
+          getArgTmp(expr->Iex.Qop.details->arg4, sb);
         opInfo->dest_tmp = offset;
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
-        ALLOC(opInfo->args.qargs.arg1_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->args.qargs.arg2_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->args.qargs.arg3_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->args.qargs.arg4_value, "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->dest_value, "hg.arg_alloc", 1, result_size);
+        ALLOC(opInfo->args.qargs.arg1_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.qargs.arg2_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.qargs.arg3_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.qargs.arg4_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->dest_value,
+              "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
-        addStore(sb, expr->Iex.Qop.details->arg1, opInfo->args.qargs.arg1_value);
-        addStore(sb, expr->Iex.Qop.details->arg2, opInfo->args.qargs.arg2_value);
-        addStore(sb, expr->Iex.Qop.details->arg3, opInfo->args.qargs.arg3_value);
-        addStore(sb, expr->Iex.Qop.details->arg3, opInfo->args.qargs.arg4_value);
-        addStore(sb, IRExpr_RdTmp(offset), opInfo->dest_value);
+        addStore(sb, expr->Iex.Qop.details->arg1,
+                 opInfo->args.qargs.arg1_value);
+        addStore(sb, expr->Iex.Qop.details->arg2,
+                 opInfo->args.qargs.arg2_value);
+        addStore(sb, expr->Iex.Qop.details->arg3,
+                 opInfo->args.qargs.arg3_value);
+        addStore(sb, expr->Iex.Qop.details->arg3,
+                 opInfo->args.qargs.arg4_value);
+        addStore(sb, IRExpr_RdTmp(offset),
+                 opInfo->dest_value);
 
         // Finally, add the statement to call the shadow op procedure.
         executeShadowOp =
@@ -606,6 +645,7 @@ const HChar* getPlainOpname(IROp op){
   case Iop_NegF32:
   case Iop_NegF64:
   case Iop_Neg32Fx2:
+  case Iop_XorV128:
     return "negation";
   case Iop_Sqrt32F0x4:
   case Iop_Sqrt64F0x2:
@@ -720,6 +760,7 @@ const HChar* getOpSymbol(IROp op){
   case Iop_NegF32:
   case Iop_NegF64:
   case Iop_Neg32Fx2:
+  case Iop_XorV128:
     return "-";
   case Iop_Sqrt32F0x4:
   case Iop_Sqrt64F0x2:

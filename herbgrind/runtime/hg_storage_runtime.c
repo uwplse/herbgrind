@@ -40,6 +40,13 @@
 // leave our workbench area.
 #include "pub_tool_hashtable.h"
 
+// This get's us the line number information so that we can figure out
+// if we're in client code.
+#include "pub_tool_debuginfo.h"
+
+// For matching object file names
+#include "pub_tool_seqmatch.h"
+
 // This header gets us the current running thread.
 #include "pub_tool_threadstate.h"
 
@@ -66,6 +73,12 @@ static size_t maxTempUsed = 0;
 static VgHashTable* globalMemory = NULL;
 static ShadowLocation* threadRegisters[MAX_THREADS][MAX_REGISTERS];
 
+// fma and variants are the only libm function I can think of that
+// goes over two (float) args. If you change this, you'll also want to
+// change the code in setTS.
+#define MAX_LIBM_ARGS 3
+static ShadowLocation* savedArgs[MAX_LIBM_ARGS];
+
 // Copy a shadow value from a temporary to a temporary.
 VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
   if (!running && localTemps[src_tmp] != NULL) return;
@@ -84,9 +97,9 @@ VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
 
 // Copy a shadow value from a temporary to somewhere in the current
 // threads state.
-VG_REGPARM(2) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg){
+VG_REGPARM(3) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg, Addr instr_addr){
   if (!running && localTemps[src_tmp] != NULL) return;
-  copySL(localTemps[src_tmp], &threadRegisters[VG_(get_running_tid)()][dest_reg]);
+  setTS(dest_reg, localTemps[src_tmp], instr_addr);
 
   if (localTemps[src_tmp] != NULL && print_moves){
     mpfr_exp_t shadowValexpt;
@@ -268,12 +281,79 @@ ShadowLocation* getMem(Addr index){
   return entry->sl;
 }
 
-void setTS(Addr index, ShadowLocation* newLocation){
-  copySL(newLocation, &threadRegisters[VG_(get_running_tid)()][index]);
+void setTS(Addr index, ShadowLocation* newLocation, Addr instr_addr){
+  if (!running) return;
+
+  // Okay, so this is a weird bit of code, that fixes a very specific
+  // problem. The problem is, the first time we hit a replaced
+  // function call, we go through the linker to patch up the
+  // connection, and somewhere in there we lose track of the shadow
+  // value being passed into a replaced libm function. So, what we're
+  // going to do here is store libm arguments in a special savedArg
+  // storage location. Then, when libm functions are looking for their
+  // arguments and don't find anything, they'll look in savedArg for
+  // the arguments. This involves several parts. We need to save every
+  // storage into an arg register that could be a libm call. And we
+  // need to overwrite it at the right times with NULL, so that libm
+  // function calls that get constant arguments don't pull the wrong
+  // shadow values. This all happens in this block. First, we match on
+  // the thread state locations which arguments are passed in.
+
+  // Next, only save stuff that we're going to overwrite.
+  if (newLocation == NULL &&
+      // The indexes of the thread state that the first, second, and
+      // third arguments to a replaced libm function are passed
+      // in. This is a pretty horrible hack, but I'm working around a
+      // terrible limitation in valgrind. So, maybe that justfies
+      // it. This might not be cross platform either, but as my
+      // advisor says, we'll burn that bridge when we cross it.
+      (index == 224 || index == 256 || index == 288)){
+    int argIndex;
+    switch(index){
+    case 224:
+      argIndex = 0;
+      break;
+    case 256:
+      argIndex = 1;
+      break;
+    case 288:
+      argIndex = 2;
+      break;
+    default:
+      return;
+    }
+
+    const HChar* objname;
+    VG_(get_objname)(instr_addr, &objname);
+    if (!VG_(string_match)("?*ld-?*.so", objname)){
+      // If not, then it's in user code and is trying to actually
+      // overwrite the location because it's passing an argument
+      // that has not yet determined it's a floating point value, so
+      // doesn't have a shadow value.
+      setSavedArg(argIndex, NULL);
+    } else if (threadRegisters[VG_(get_running_tid)()][index] != NULL){
+      // If we are in the linker code, and the value that we're
+      // about to overwrite isn't null, then we want to save it in
+      // our saved arg register.
+      setSavedArg(argIndex, threadRegisters[VG_(get_running_tid)()][index]);
+    }
+    // Finally, actually do the overwrite.
+    copySL(NULL, &threadRegisters[VG_(get_running_tid)()][index]);
+  } else
+    copySL(newLocation, &threadRegisters[VG_(get_running_tid)()][index]);
 }
 
 ShadowLocation* getTS(Addr index){
+  if (!running) return NULL;
   return threadRegisters[VG_(get_running_tid)()][index];
+}
+
+void setSavedArg(Int index, ShadowLocation* newLocation){
+  savedArgs[index] = newLocation;
+}
+
+ShadowLocation* getSavedArg(Int index){
+  return savedArgs[index];
 }
 
 void initStorage(void){

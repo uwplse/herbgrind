@@ -51,12 +51,6 @@
 #include "mpfr.h"
 
 extern Bool running;
-// This address should be updated at every AbiHint statement, because
-// the last one that happens before we realize we're in a wrapped
-// function is (probably) the location of the call to that
-// function. We want to be able to know the address of the call for
-// reporting error to the user.
-extern Addr last_abi_addr;
 
 void init_runtime(void);
 void cleanup_runtime(void);
