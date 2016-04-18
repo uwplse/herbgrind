@@ -143,7 +143,19 @@ void registerLeaf(ValueASTNode* leaf, int* idx_counter,
 }
 
 void initValueLeafAST(ShadowValue* val, Op_Info** src_loc){
+  // Circular reference to the val. In some contexts we want to pass
+  // just the AST to a function, but we actually want to mess around
+  // with it's cooresponding value. There's probably a better way to
+  // do this, but this doesn't seem too horrible yet.
   val->ast->val = val;
+
+  // These fields really only apply to branch nodes, but instead of
+  // being nice and clean and using a sum type (which has to be a
+  // tagged union in c anyway... ugh), we're just going to set these
+  // fields to 0 and NULL. This acts as an ad hoc tag too, since code
+  // can check whether these are 0 or NULL to tell if the node in
+  // question is a branch or leaf node. Branch nodes should always set
+  // these to something non-zero.
   val->ast->nargs = 0;
   val->ast->args = NULL;
   val->ast->var_map = NULL;
@@ -168,12 +180,19 @@ void initValueLeafAST(ShadowValue* val, Op_Info** src_loc){
   val->ast->op = *src_loc;
 }
 
+// Cleanup the memory associated with the AST attached to the given
+// value.
 void cleanupValueAST(ShadowValue* val){
+  // The var map needs to be specially destructed, since it's a hash
+  // map.
   VG_(HT_destruct)(val->ast->var_map, VG_(free));
+  // Free the argument array
   VG_(free)(val->ast->args);
+  // Free the ast directly
   VG_(free)(val->ast);
 }
 
+// Deep copy a value AST from one shadow value to another.
 void copyValueAST(ShadowValue* src, ShadowValue* dest){
   ALLOC(dest->ast, "hg.val_ast", 1, sizeof(ValueASTNode));
   dest->ast->val = dest;
@@ -188,6 +207,9 @@ void copyValueAST(ShadowValue* src, ShadowValue* dest){
   }
 }
 
+// Initialize OpAST's, which are the persistent ast's that are
+// generalized to fit every value ast that passes through them, and
+// are reported at the end of the run.
 void initOpBranchAST(OpASTNode* out, Op_Info* op, SizeT nargs){
   out->tag = Node_Branch;
   out->nd.Branch.op = op;
@@ -301,6 +323,8 @@ OpASTNode* convertValASTtoOpAST(ValueASTNode* valAST){
   return result;
 }
 
+
+// These two things are for debugging the variable matching code.
 void printLookupTable(VgHashTable* opLookupTable){
   VG_(HT_ResetIter)(opLookupTable);
   VG_(printf)("==================================\n");
