@@ -160,25 +160,25 @@ void performOp(OpType op, double* result, double* args){
       break;
     case 2:
       switch(i){
-      case 1:
+      case 0:
         src_loc_slot = &(entry->info->args.bargs.arg1_src);
         break;
-      case 2:
+      case 1:
         src_loc_slot = &(entry->info->args.bargs.arg2_src);
         break;
       default:
-        return;
+        break;
       }
       break;
     case 3:
       switch(i){
-      case 1:
+      case 0:
         src_loc_slot = &(entry->info->args.targs.arg1_src);
         break;
-      case 2:
+      case 1:
         src_loc_slot = &(entry->info->args.targs.arg2_src);
         break;
-      case 3:
+      case 2:
         src_loc_slot = &(entry->info->args.targs.arg3_src);
         break;
       default:
@@ -214,7 +214,7 @@ void performOp(OpType op, double* result, double* args){
     break;
     // This expands to a bunch of cases for the ops which take one
     // argument and whose mpfr functions don't need a rounding mode.
-  UNARY_OPS_NOROUND_CASES
+    UNARY_OPS_NOROUND_CASES
     {
       int (*mpfr_func)(mpfr_t, mpfr_srcptr);
       // See above comment on UNARY_OPS_ROUND_INFO_CASES
@@ -269,14 +269,14 @@ void performOp(OpType op, double* result, double* args){
     break;
   case 2:
     initValueBranchAST(&(res_shadow->values[0]), entry->info, nargs,
-                       &(arg_shadows[1]->values[0]),
-                       &(arg_shadows[2]->values[0]));
+                       &(arg_shadows[0]->values[0]),
+                       &(arg_shadows[1]->values[0]));
     break;
   case 3:
     initValueBranchAST(&(res_shadow->values[0]), entry->info, nargs,
+                       &(arg_shadows[0]->values[0]),
                        &(arg_shadows[1]->values[0]),
-                       &(arg_shadows[2]->values[0]),
-                       &(arg_shadows[3]->values[0]));
+                       &(arg_shadows[2]->values[0]));
     break;
   }
   // And finally, evaluate the error of the operation.
