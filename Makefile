@@ -7,6 +7,7 @@ GMP_VERSION=6.1.0
 MPFR_VERSION=3.1.3
 # The repo to clone valgrind from.
 VALGRIND_REPO_LOCATION=svn://svn.valgrind.org/valgrind/trunk
+VALGRIND_REVISION=15800
 # The architecture thhat we're buiding herbgrind for, in the syntax of
 # valgrind filename conventions for this sort of thing.
 TARGET_PLAT:=$(shell test `uname` = "Darwin" && echo "amd64-darwin" || echo "amd64-linux")
@@ -46,7 +47,7 @@ all: compile
 # repo currently exists.
 valgrind/README:
 # Check out valgrind from source.
-	svn co $(VALGRIND_REPO_LOCATION) valgrind
+	svn co $(VALGRIND_REPO_LOCATION)@$(VALGRIND_REVISION) valgrind
 # Run a script to modify the setup files to include the herbgrind
 # directory.
 	cd setup && ./modify_makefiles.sh
