@@ -5,15 +5,17 @@ NMSE-example-3.10.out-errors.gh NMSE-example-3.3.out-errors.gh		\
 NMSE-example-3.4.out-errors.gh NMSE-example-3.5.out-errors.gh		\
 NMSE-example-3.6.out-errors.gh NMSE-example-3.7.out-errors.gh		\
 NMSE-example-3.8.out-errors.gh NMSE-example-3.9.out-errors.gh		\
-NMSE-p42-A.out-errors.gh NMSE-p42-B.out-errors.gh			\
-NMSE-problem-3.2.1.out-errors.gh NMSE-problem-3.3.1.out-errors.gh	\
-NMSE-problem-3.3.2.out-errors.gh NMSE-problem-3.3.3.out-errors.gh	\
-NMSE-problem-3.3.4.out-errors.gh NMSE-problem-3.3.5.out-errors.gh	\
-NMSE-problem-3.3.6.out-errors.gh NMSE-problem-3.3.7.out-errors.gh	\
-NMSE-problem-3.4.1.out-errors.gh NMSE-problem-3.4.2.out-errors.gh	\
-NMSE-problem-3.4.3.out-errors.gh NMSE-problem-3.4.4.out-errors.gh	\
-NMSE-problem-3.4.5.out-errors.gh NMSE-problem-3.4.6.out-errors.gh	\
-NMSE-section-3.11.out-errors.gh NMSE-section-3.5.out-errors.gh
+NMSE-p42,-positive.out-errors.gh NMSE-p42,-negative.out-errors.gh	\
+NMSE-problem-3.2.1,-positive.out-errors.gh				\
+NMSE-problem-3.2.1,-negative.out-errors.gh				\
+NMSE-problem-3.3.1.out-errors.gh NMSE-problem-3.3.2.out-errors.gh	\
+NMSE-problem-3.3.3.out-errors.gh NMSE-problem-3.3.4.out-errors.gh	\
+NMSE-problem-3.3.5.out-errors.gh NMSE-problem-3.3.6.out-errors.gh	\
+NMSE-problem-3.3.7.out-errors.gh NMSE-problem-3.4.1.out-errors.gh	\
+NMSE-problem-3.4.2.out-errors.gh NMSE-problem-3.4.3.out-errors.gh	\
+NMSE-problem-3.4.4.out-errors.gh NMSE-problem-3.4.5.out-errors.gh	\
+NMSE-problem-3.4.6.out-errors.gh NMSE-section-3.11.out-errors.gh	\
+NMSE-section-3.5.out-errors.gh
 
 FLAGS=-g -std=c11 -lm -lmpfr -I../../valgrind/herbgrind/include
 
@@ -21,6 +23,7 @@ RHOST=uwplse.org
 RHOSTDIR=/var/www/herbie/herbgrind/hamming
 
 NPTS=8000
+SEED=
 
 .PHONY: all Makefile ../../Makefile.common driver.c driver
 
@@ -60,12 +63,22 @@ HERBGRIND-PATH=~/herbie-all/herbgrind
 		bench/hamming/ $(HERBGRIND-PATH)/bench/herbie-crosseval/
 
 %-pts.c:
+ifeq ($(SEED),)
 	cd $(HERBIE-PATH) && \
 	racket herbie/compile/c-single.rkt \
 		--test '$(shell echo $* | sed -e "s/-/ /g" )' \
 	        --pts \
 		-n $(NPTS) \
 		bench/hamming/ $(HERBGRIND-PATH)/bench/herbie-crosseval/
+else
+	cd $(HERBIE-PATH) && \
+	racket herbie/compile/c-single.rkt \
+		--test '$(shell echo $* | sed -e "s/-/ /g" )' \
+	        --pts \
+		-n $(NPTS) \
+		-r "$(SEED)" \
+		bench/hamming/ $(HERBGRIND-PATH)/bench/herbie-crosseval/
+endif
 
 %.out-errors.gh: %.out
 	$(eval PRECISION=$(shell grep mpfr_set_default_prec $*.c | head -n 1 | cut -d '(' -f 2 | cut -d ')' -f 1))
