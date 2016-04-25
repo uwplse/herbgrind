@@ -25,8 +25,6 @@ RHOSTDIR=/var/www/herbie/herbgrind/hamming
 NPTS=8000
 SEED=
 
-.PHONY: all Makefile ../../Makefile.common driver.c driver
-
 all: $(HAMMING)
 	$(eval B=$(git rev-parse --abbrev-ref HEAD))
 	$(eval C=$(git rev-parse HEAD | sed 's/\(..........\).*/\1/'))

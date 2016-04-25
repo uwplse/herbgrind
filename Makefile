@@ -61,7 +61,8 @@ valgrind/README:
 valgrind/herbgrind/Makefile: valgrind/README herbgrind/Makefile.am
 # Copy over the latest version of all the herbgrind stuff, including
 # the .am file that we need for this step.
-	rm -r valgrind/herbgrind/*
+	rm -r -f valgrind/herbgrind/*
+	mkdir -p valgrind/herbgrind
 	cp -r herbgrind/* valgrind/herbgrind/
 # Run the autogen and configure scripts to turn the .am file into a
 # real makefile.
