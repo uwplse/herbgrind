@@ -207,6 +207,19 @@ void performOp(OpType op, double* result, double* args){
       // unary operation which needs a rounding mode argument to
       // it's mpfr_func.
       GET_UNARY_OPS_ROUND_INFO(op)
+
+      if (print_inputs){
+        char *shadowArg1Str;
+        mpfr_exp_t shadowArg1Expt;
+
+        shadowArg1Str = mpfr_get_str(NULL, &shadowArg1Expt, 10, longprint_len,
+                                     arg_shadows[0]->values[0].value, MPFR_RNDN);
+        VG_(printf)("Shadow arg: %se%ld\n",
+                    shadowArg1Str, shadowArg1Expt);
+        mpfr_free_str(shadowArg1Str);
+
+        VG_(printf)("Computed arg: %f\n", args[0]);
+      }
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0], MPFR_RNDN);
       mpfr_func(res_shadow->values[0].value, arg_shadows[0]->values[0].value, MPFR_RNDN);
@@ -219,6 +232,19 @@ void performOp(OpType op, double* result, double* args){
       int (*mpfr_func)(mpfr_t, mpfr_srcptr);
       // See above comment on UNARY_OPS_ROUND_INFO_CASES
       GET_UNARY_OPS_NOROUND_INFO(op)
+
+      if (print_inputs){
+        char *shadowArg1Str;
+        mpfr_exp_t shadowArg1Expt;
+
+        shadowArg1Str = mpfr_get_str(NULL, &shadowArg1Expt, 10, longprint_len,
+                                     arg_shadows[0]->values[0].value, MPFR_RNDN);
+        VG_(printf)("Shadow arg: %se%ld\n",
+                    shadowArg1Str, shadowArg1Expt);
+        mpfr_free_str(shadowArg1Str);
+
+        VG_(printf)("Computed arg: %f\n", args[0]);
+      }
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0]);
       mpfr_func(res_shadow->values[0].value, arg_shadows[0]->values[0].value);
@@ -231,6 +257,24 @@ void performOp(OpType op, double* result, double* args){
       int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
       // See above comment on UNARY_OPS_ROUND_INFO_CASES
       GET_BINARY_OPS_INFO(op)
+
+      if (print_inputs){
+        char *shadowArg1Str, *shadowArg2Str;
+        mpfr_exp_t shadowArg1Expt, shadowArg2Expt;
+
+        shadowArg1Str = mpfr_get_str(NULL, &shadowArg1Expt, 10, longprint_len,
+                                     arg_shadows[0]->values[0].value, MPFR_RNDN);
+        shadowArg2Str = mpfr_get_str(NULL, &shadowArg2Expt, 10, longprint_len,
+                                     arg_shadows[1]->values[0].value, MPFR_RNDN);
+        VG_(printf)("Shadow first arg: %se%ld\nShadow second arg: %se%ld\n",
+                    shadowArg1Str, shadowArg1Expt, shadowArg2Str, shadowArg2Expt);
+        mpfr_free_str(shadowArg1Str);
+        mpfr_free_str(shadowArg2Str);
+
+        VG_(printf)("Computed first arg: %f\n"
+                    "Computed second arg: %f\n",
+                    args[0], args[1]);
+      }
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0], args_m[1], MPFR_RNDN);
       mpfr_func(res_shadow->values[0].value,
@@ -245,6 +289,32 @@ void performOp(OpType op, double* result, double* args){
       int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
       // See above comment on UNARY_OPS_ROUND_INFO_CASES
       GET_TERNARY_OPS_INFO(op)
+
+      if (print_inputs){
+        char *shadowArg1Str, *shadowArg2Str, *shadowArg3Str;
+        mpfr_exp_t shadowArg1Expt, shadowArg2Expt, shadowArg3Expt;
+
+        shadowArg1Str = mpfr_get_str(NULL, &shadowArg1Expt, 10, longprint_len,
+                                     arg_shadows[0]->values[0].value, MPFR_RNDN);
+        shadowArg2Str = mpfr_get_str(NULL, &shadowArg2Expt, 10, longprint_len,
+                                     arg_shadows[1]->values[0].value, MPFR_RNDN);
+        shadowArg3Str = mpfr_get_str(NULL, &shadowArg3Expt, 10, longprint_len,
+                                     arg_shadows[2]->values[0].value, MPFR_RNDN);
+        VG_(printf)("Shadow first arg: %se%ld\n"
+                    "Shadow second arg: %se%ld\n"
+                    "Shadow third arg: %se%ld\n",
+                    shadowArg1Str, shadowArg1Expt,
+                    shadowArg2Str, shadowArg2Expt,
+                    shadowArg3Str, shadowArg3Expt);
+        mpfr_free_str(shadowArg1Str);
+        mpfr_free_str(shadowArg2Str);
+        mpfr_free_str(shadowArg3Str);
+
+        VG_(printf)("Computed first arg: %f\n"
+                    "Computed second arg: %f\n"
+                    "Computed third arg: %f\n",
+                    args[0], args[1], args[2]);
+      }
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0], args_m[1], args_m[2], MPFR_RNDN);
       mpfr_func(res_shadow->values[0].value,

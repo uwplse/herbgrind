@@ -96,6 +96,8 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
 
       VG_(printf)("The shadowed val is %se%ld, and the actual (computed) val is %f.\n",
                   shadowValstr, shadowValexpt, actualVal);
+      VG_(printf)("The shadowed val is %se%ld, and the actual (computed) val is %f.\n",
+                  shadowValstr, shadowValexpt, actualVal);
       mpfr_free_str(shadowValstr);
     }
     else if (print_errors){
@@ -103,7 +105,7 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
                   shadowValD, actualVal);
     }
   
-    VG_(printf)("The bits error of that operation was: %f.\n", bitsError);
+    VG_(printf)("The bits error of that operation was: %f (%llu ulps).\n", bitsError, ulpsError);
     VG_(printf)("(Operation at %lX)\n", opinfo->debuginfo.op_addr);
     if (opinfo->debuginfo.src_filename != NULL)
       VG_(printf)("%s at %s:%u in %s\n",

@@ -202,6 +202,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
           VG_(printf)("Shadow arg, part %d: %se%ld\n",
                       i, shadowArgStr, shadowArgExpt);
           mpfr_free_str(shadowArgStr);
+          VG_(printf)("Computed arg, part %d: %f\n",
+                      i, ((double*)opInfo->args.uargs.arg_value)[i]);
         }
         mpfr_func(destLocation->values[i].value,
                   argLocation->values[i].value,
@@ -546,6 +548,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
           VG_(printf)("Shadow arg, part %d: %se%ld\n",
                       i, shadowArgStr, shadowArgExpt);
           mpfr_free_str(shadowArgStr);
+          VG_(printf)("Computed arg, part %d: %f\n",
+                      i, ((double*)opInfo->args.uargs.arg_value)[i]);
         }
         // Set the low order bits to the result of the operation, but in
         // higher precision.
@@ -701,6 +705,10 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
                       i, shadowArg1Str, shadowArg1Expt, i, shadowArg2Str, shadowArg2Expt);
           mpfr_free_str(shadowArg1Str);
           mpfr_free_str(shadowArg2Str);
+          VG_(printf)("Computed first arg, part %d: %f\n"
+                      "Computed second arg, part %d: %f\n",
+                      i, ((double*)opInfo->args.bargs.arg1_value)[i],
+                      i, ((double*)opInfo->args.bargs.arg2_value)[i]);
         }
         // Set the destination shadow values to the result of a
         // high-precision shadowing operation, for each channel in which
@@ -1017,6 +1025,10 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
                   i, shadowArg3Str, shadowArg3Expt);
       mpfr_free_str(shadowArg2Str);
       mpfr_free_str(shadowArg3Str);
+      VG_(printf)("Computed first arg, part %d: %f\n"
+                  "Computed second arg, part %d: %f\n",
+                  i, ((double*)opInfo->args.targs.arg2_value)[i],
+                  i, ((double*)opInfo->args.targs.arg3_value)[i]);
     }
     // Set the destination shadow value to the result of a
     // high-precision shadowing operation.
@@ -1125,15 +1137,21 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
     shadowArg2Str = mpfr_get_str(NULL, &shadowArg2Expt, 10, longprint_len, arg2Location->values[0].value, MPFR_RNDN);
     shadowArg3Str = mpfr_get_str(NULL, &shadowArg3Expt, 10, longprint_len, arg3Location->values[0].value, MPFR_RNDN);
     shadowArg4Str = mpfr_get_str(NULL, &shadowArg4Expt, 10, longprint_len, arg4Location->values[0].value, MPFR_RNDN);
-    VG_(printf)("Shadow first arg, part 0: %se%ld\n"
-                "Shadow second arg, part 0: %se%ld\n"
-                "Shadow third arg, part 0: %se%ld\n",
+    VG_(printf)("Shadow first arg: %se%ld\n"
+                "Shadow second arg: %se%ld\n"
+                "Shadow third arg: %se%ld\n",
                 shadowArg2Str, shadowArg2Expt,
                 shadowArg3Str, shadowArg3Expt,
                 shadowArg4Str, shadowArg4Expt);
     mpfr_free_str(shadowArg2Str);
     mpfr_free_str(shadowArg3Str);
     mpfr_free_str(shadowArg4Str);
+    VG_(printf)("Computed first arg: %f\n"
+                "Computed second arg: %f\n"
+                "Computed third arg: %f\n",
+                ((double*)opInfo->args.qargs.arg2_value)[0],
+                ((double*)opInfo->args.qargs.arg3_value)[0],
+                ((double*)opInfo->args.qargs.arg4_value)[0]);
   }
   // Now, we'll evaluate the shadow value against the result value.
   evaluateOpError_helper(&(destLocation->values[0]),
