@@ -53,6 +53,9 @@ HERBGRIND-PATH=~/herbie-all/herbgrind
         -o $@ $^
 	chmod u+x $@
 
+driver.c:
+	true
+
 %.c:
 	cd $(HERBIE-PATH) && \
 	racket herbie/compile/c-single.rkt \
