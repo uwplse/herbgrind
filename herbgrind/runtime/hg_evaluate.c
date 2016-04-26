@@ -140,8 +140,8 @@ unsigned long long ulpd(double x, double y) {
   if (y == 0) y = 0; // -0 == 0
 
   if (x != x && y != y) return 0;
-  if (x != x) return LLONG_MIN; // Maximum error
-  if (y != y) return LLONG_MIN; // Maximum error
+  if (x != x) return ULLONG_MAX; // Maximum error
+  if (y != y) return ULLONG_MAX; // Maximum error
 
   long long xx = *((long long*) &x);
   xx = xx < 0 ? LLONG_MIN - xx : xx;
