@@ -43,21 +43,11 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr){
     // the result IR.
   case Ist_NoOp:
   case Ist_IMark:
-    // If it's a memory bus event or an exit, we shouldn't have to
+    // If it's a memory bus event, an exit, or a hint, we shouldn't have to
     // do much with it either.
   case Ist_MBE:
   case Ist_Exit:
-    addStmtToIRSB(sbOut, st);
-    break;
-    // So, ABI hints can mean that we're about to enter a wrapped
-    // function. They don't always mean that, but they (seem to)
-    // always happen before we enter a wrapped function, so they can
-    // give us a hint as to where this wrapping is
-    // happening. Unfortunately, valgrind doesn't provide us with a
-    // mechanism to detect where wrapped functions are being called,
-    // but this hack should do the trick.
   case Ist_AbiHint:
-    // Add the hint into the output.
     addStmtToIRSB(sbOut, st);
     break;
   case Ist_Put:
