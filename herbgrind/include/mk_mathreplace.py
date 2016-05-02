@@ -41,7 +41,7 @@ class Op(object):
             self.mpfr_func = mpfr_func
 
 def write_mathreplace_funcs(ops, fname):
-    with open(fname, "x") as f:
+    with open(fname, "w") as f:
         f.write("#ifndef _HG_MATHREPLACE_FUNCS\n")
         f.write("#define _HG_MATHREPLACE_FUNCS\n")
         f.write("\n")
