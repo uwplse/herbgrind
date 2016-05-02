@@ -258,7 +258,6 @@ ShadowLocation* getTemp(Addr index){
 void setMem(Addr index, ShadowLocation* newLocation){
   ShadowLocation_ptr *newEntry, *existingEntry;
   existingEntry = VG_(HT_lookup)(globalMemory, index);
-  ALLOC(newEntry, "hg.memoryentry.1", 1, sizeof(ShadowLocation_ptr));
 
   // If an entry already exists at that location, then we're going to
   // overwrite it, so clean it up properly.
@@ -269,6 +268,7 @@ void setMem(Addr index, ShadowLocation* newLocation){
   }
   // Now, add our new entry.
   if (newLocation != NULL){
+    ALLOC(newEntry, "hg.memoryentry.1", 1, sizeof(ShadowLocation_ptr));
     copySL(newLocation, &(newEntry->sl));
     newEntry->addr = index;
     VG_(HT_add_node)(globalMemory, newEntry);
