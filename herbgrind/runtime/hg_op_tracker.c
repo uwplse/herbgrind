@@ -120,45 +120,81 @@ void writeReport(const HChar* filename){
     if (opinfo->debuginfo.fnname == NULL) continue;
 
     UInt entry_len;
-    char* astString = opASTtoString(opinfo->ast);
-    if (human_readable){
-      entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                                "%s\n"
-                                "%s in %s at %s:%u (address %lX)\n"
-                                "%f bits average error\n"
-                                "%f bits max error\n"
-                                "Aggregated over %lu instances\n\n",
-                                astString,
-                                opinfo->debuginfo.plain_opname,
-                                opinfo->debuginfo.fnname,
-                                opinfo->debuginfo.src_filename,
-                                opinfo->debuginfo.src_line,
-                                opinfo->debuginfo.op_addr,
-                                opinfo->evalinfo.total_error / opinfo->evalinfo.num_calls,
-                                opinfo->evalinfo.max_error,
-                                opinfo->evalinfo.num_calls);
+    if (report_exprs){
+      char* astString = opASTtoString(opinfo->ast);
+      if (human_readable){
+        entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
+                                  "%s\n"
+                                  "%s in %s at %s:%u (address %lX)\n"
+                                  "%f bits average error\n"
+                                  "%f bits max error\n"
+                                  "Aggregated over %lu instances\n\n",
+                                  astString,
+                                  opinfo->debuginfo.plain_opname,
+                                  opinfo->debuginfo.fnname,
+                                  opinfo->debuginfo.src_filename,
+                                  opinfo->debuginfo.src_line,
+                                  opinfo->debuginfo.op_addr,
+                                  opinfo->evalinfo.total_error / opinfo->evalinfo.num_calls,
+                                  opinfo->evalinfo.max_error,
+                                  opinfo->evalinfo.num_calls);
+      } else {
+        entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
+                                  "((expr %s) "
+                                  "(plain-name \"%s\") "
+                                  "(function \"%s\") "
+                                  "(filename \"%s\") "
+                                  "(line-num %u) "
+                                  "(instr-addr %lX) "
+                                  "(avg-error %f) "
+                                  "(max-error %f) "
+                                  "(num-calls %lu))\n",
+                                  astString,
+                                  opinfo->debuginfo.plain_opname,
+                                  opinfo->debuginfo.fnname,
+                                  opinfo->debuginfo.src_filename,
+                                  opinfo->debuginfo.src_line,
+                                  opinfo->debuginfo.op_addr,
+                                  opinfo->evalinfo.total_error / opinfo->evalinfo.num_calls,
+                                  opinfo->evalinfo.max_error,
+                                  opinfo->evalinfo.num_calls);
+      }
+      VG_(free)(astString);
     } else {
-      entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                                "((expr %s) "
-                                 "(plain-name \"%s\") "
-                                 "(function \"%s\") "
-                                 "(filename \"%s\") "
-                                 "(line-num %u) "
-                                 "(instr-addr %lX) "
-                                 "(avg-error %f) "
-                                 "(max-error %f) "
-                                 "(num-calls %lu))\n",
-                                astString,
-                                opinfo->debuginfo.plain_opname,
-                                opinfo->debuginfo.fnname,
-                                opinfo->debuginfo.src_filename,
-                                opinfo->debuginfo.src_line,
-                                opinfo->debuginfo.op_addr,
-                                opinfo->evalinfo.total_error / opinfo->evalinfo.num_calls,
-                                opinfo->evalinfo.max_error,
-                                opinfo->evalinfo.num_calls);
+      if (human_readable){
+        entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
+                                  "%s in %s at %s:%u (address %lX)\n"
+                                  "%f bits average error\n"
+                                  "%f bits max error\n"
+                                  "Aggregated over %lu instances\n\n",
+                                  opinfo->debuginfo.plain_opname,
+                                  opinfo->debuginfo.fnname,
+                                  opinfo->debuginfo.src_filename,
+                                  opinfo->debuginfo.src_line,
+                                  opinfo->debuginfo.op_addr,
+                                  opinfo->evalinfo.total_error / opinfo->evalinfo.num_calls,
+                                  opinfo->evalinfo.max_error,
+                                  opinfo->evalinfo.num_calls);
+      } else {
+        entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
+                                  "(plain-name \"%s\") "
+                                  "(function \"%s\") "
+                                  "(filename \"%s\") "
+                                  "(line-num %u) "
+                                  "(instr-addr %lX) "
+                                  "(avg-error %f) "
+                                  "(max-error %f) "
+                                  "(num-calls %lu))\n",
+                                  opinfo->debuginfo.plain_opname,
+                                  opinfo->debuginfo.fnname,
+                                  opinfo->debuginfo.src_filename,
+                                  opinfo->debuginfo.src_line,
+                                  opinfo->debuginfo.op_addr,
+                                  opinfo->evalinfo.total_error / opinfo->evalinfo.num_calls,
+                                  opinfo->evalinfo.max_error,
+                                  opinfo->evalinfo.num_calls);
+      }
     }
-    VG_(free)(astString);
     VG_(write)(file_d, buf, entry_len);
   }
 
