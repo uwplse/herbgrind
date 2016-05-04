@@ -65,11 +65,13 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   mpfr_clear(ulpsErrorM);
   mpfr_clear(bitsErrorM);
 
-  // If the opfinfo doesn't have an AST assigned yet, give it a strict
-  // translation of the AST assigned to this shadow value. If it does,
-  // generalize the AST sufficiently to match the AST of the shadow
-  // val.
-  updateAST(opinfo, shadowVal->ast);
+  if (report_exprs){
+    // If the opfinfo doesn't have an AST assigned yet, give it a strict
+    // translation of the AST assigned to this shadow value. If it does,
+    // generalize the AST sufficiently to match the AST of the shadow
+    // val.
+    updateAST(opinfo, shadowVal->ast);
+  }
 
   // Update the persistent op record
   if (bitsError > opinfo->evalinfo.max_error){
