@@ -448,6 +448,20 @@ void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
     // Allocate a new entry for this initial splitmap 
     IdxMapEntry* splitEntry;
     ALLOC(splitEntry, "splitEntry", 1, sizeof(IdxMapEntry));
+    if (valOpEntry == NULL){
+      VG_(printf)("hey!!! i is %d\n", i);
+      printLookupTable(valueLookupTable);
+      VG_(printf)("varGroupEntry is %p\n", varGroupEntry);
+      printOpVarMap(opVarMap);
+      VG_(printf)("Tried to look up key: %p\n", firstNodeEntry);
+    } else {
+      VG_(printf)("hey2!!! i is %d\n", i);
+      printLookupTable(valueLookupTable);
+      VG_(printf)("varGroupEntry is %p\n", varGroupEntry);
+      printOpVarMap(opVarMap);
+      VG_(printf)("Tried to look up key: %p\n", firstNodeEntry);
+    }
+    return;
     // The key is the first elements varidx.
     splitEntry->key = valOpEntry->varidx;
     // The value is the current group.
