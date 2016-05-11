@@ -820,7 +820,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
                               opInfo->args.bargs.arg2_value,
                               &(opInfo->args.bargs.arg2_src));
           argType = Lt_Floatx4;
-        } else if (*opInfo->args.bargs.arg2_value == 0x2424242424242424){
+        } else {
           arg1Location =
             getShadowLocation(opInfo->args.bargs.arg1_tmp,
                               Lt_Floatx4,
