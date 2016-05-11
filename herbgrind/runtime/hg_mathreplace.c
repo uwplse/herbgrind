@@ -167,6 +167,7 @@ void performOp(OpType op, double* result, double* args){
         src_loc_slot = &(entry->info->args.bargs.arg2_src);
         break;
       default:
+        VG_(dmsg)("BAD THINGS!");
         return;
       }
       break;
@@ -182,9 +183,11 @@ void performOp(OpType op, double* result, double* args){
         src_loc_slot = &(entry->info->args.targs.arg3_src);
         break;
       default:
+        VG_(dmsg)("BAD THINGS!");
         return;
       }
     default:
+        VG_(dmsg)("BAD THINGS!");
       return;
     }
     // Lookup the address in our shadow hash table to get the shadow
