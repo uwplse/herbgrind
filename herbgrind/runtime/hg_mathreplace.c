@@ -151,7 +151,7 @@ void performOp(OpType op, double* result, double* args){
     // Get the actual value from the pointer they gave us.
     mpfr_set_d(args_m[i], args[i], MPFR_RNDN);
     // Get the location of the arg source slot in the op structure.
-    Op_Info** src_loc_slot;
+    Op_Info** src_loc_slot = NULL;
     // Get the slot in the op info structure for the value source
     // structure cooresponding to this argument.
     switch(nargs){
