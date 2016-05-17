@@ -38,6 +38,8 @@
 #include "../types/hg_ast.h"
 #include "hg_runtime.h"
 
+#include "../include/pub_tool_libcassert.h"
+
 // Execute a shadow operation, storing the result of the high
 // precision operation applied to the shadow value at the arg_tmp
 // offset, into the shadow value at the dest_tmp offset. Depending on
@@ -827,6 +829,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
                               opInfo->args.bargs.arg1_value,
                               &(opInfo->args.bargs.arg1_src));
           argType = Lt_Floatx4;
+        } else {
+          /* impossible? */
+          tl_assert(0);
         }
 
         // Now we'll allocate memory for the shadowed result of this
