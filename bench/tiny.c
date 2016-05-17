@@ -3,9 +3,9 @@
 
 int main(int argc, char** argv){
   int x;
-  HERBGRIND_BEGIN();
+  /* HERBGRIND_BEGIN(); */
   x = 1 + 2;
-  HERBGRIND_END();
+  /* HERBGRIND_END(); */
   printf("x\n");
   return 0;
 }
