@@ -217,7 +217,7 @@ Op_Info* mkLeafOp_Info(ShadowValue* val);
 
 #ifdef VG_LITTLEENDIAN
 #define ENDIAN Iend_LE
-#elif
+#else
 #define ENDIAN Iend_BE;
 #endif
 
