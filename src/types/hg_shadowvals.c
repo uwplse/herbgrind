@@ -42,20 +42,38 @@
 #include "pub_tool_libcprint.h"
 
 ShadowLocation* mkShadowLocation(LocType type){
+  ShadowLocation* location = mkShadowLocation_bare(type);
+  for (SizeT i = 0; i < capacity(type); ++i){
+    location->values[i] = mkShadowValue();
+  }
+  return location;
+}
+ShadowLocation* mkShadowLocation_bare(LocType type){
   ShadowLocation* location;
   ALLOC(location, "hg.shadow_location.1", 1, sizeof(ShadowLocation));
-  size_t num_values = capacity(type);
+  ALLOC(location->values, "hg.shadow_values", capacity(type), sizeof(ShadowValue*));
   location->type = type;
-  ALLOC(location->values, "hg.shadow_values", num_values, sizeof(ShadowValue));
-  for(int i = 0; i < num_values; ++i){
-    mpfr_init2(location->values[i].value, precision);
-    ALLOC(location->values[i].ast, "hg.shadow_ast", 1, sizeof(ValueASTNode));
-  }
-  location->ref_count = 1;
   return location;
 }
 
-size_t capacity(LocType bytestype){
+void freeSL(ShadowLocation* sl){
+  for (int i = 0; i < capacity(sl->type); ++i)
+    disownSV(sl->values[i]);
+  free(sl);
+}
+
+void copySL(ShadowLocation* src, ShadowLocation** dest){
+  if (src != NULL){
+    for (int i = 0; i < capacity(sl->type); ++i)
+      (sl->values[i]->ref_count) ++;
+  }
+  else if ((*dest) != NULL){
+    freeSL(*dest);
+  }
+  (*dest) = src;
+}
+
+SizeT capacity(LocType bytestype){
   switch(bytestype){
   case Lt_Float:
   case Lt_Double:
@@ -73,44 +91,47 @@ size_t capacity(LocType bytestype){
   }
   return 0;
 }
-
-void disownSL(ShadowLocation* sl){
-  (sl->ref_count) --;
-  if (sl->ref_count < 1){
-    for (int i = 0; i < capacity(sl->type); ++i)
-      cleanupSV(&(sl->values[i]));
-    VG_(free)(sl->values);
-    VG_(free)(sl);
+SizeT el_size(LocType bytestype){
+  switch(bytestype){
+  case Lt_Float:
+  case Lt_Floatx2:
+  case Lt_Floatx4:
+  case Lt_Floatx8:
+    return sizeof(float);
+  case Lt_Double:
+  case Lt_Doublex2:
+  case Lt_Doublex4:
+    return sizeof(double);
+  case Lt_DoubleDouble:
+    return sizeof(double) * 2;
+  case Lt_DoubleDoubleDouble:
+    return sizeof(double) * 4;
   }
+  return 0;
 }
 
-void copySL(ShadowLocation* src, ShadowLocation** dest){
+ShadowValue* mkShadowValue(void){
+  ShadowValue* result;
+  ALLOC(result, "hg.shadow_val", 1, sizeof(ShadowValue));
+  ALLOC(result.ast, "hg.shadow_ast", 1, sizeof(ValueASTNode));
+  mpfr_init2(result.value, precision);
+  result.ref_count = 1;
+}
+
+void copySV(ShadowValue* src, ShadowValue** dest){
   if (src != NULL){
     (src->ref_count) ++;
-  }
-  else if ((*dest) != NULL){
-    disownSL(*dest);
+  } else if ((*dest) != NULL) {
+    disownSV(*dest);
   }
   (*dest) = src;
 }
 
-ShadowValue* copySV_ptr(ShadowValue* src){
-  ShadowValue* result;
-  ALLOC(result, "hg.shadow_value.1", 1, sizeof(ShadowValue));
-  mpfr_init2(result->value, precision);
-  mpfr_set(result->value, src->value, MPFR_RNDN);
-  copyValueAST(src, result);
-  return result;
+void disownSV(ShadowValue* sv){
+  (sv->ref_count) --;
+  if (sv->ref_count < 1){
+    mpfr_clear(sv->value);
+    cleanupValueAST(sv);
+    free(sv);
+  }
 }
-
-void copySV(ShadowValue* src, ShadowValue* dest){
-  mpfr_init2(dest->value, precision);
-  mpfr_set(dest->value, src->value, MPFR_RNDN);
-  copyValueAST(src, dest);
-}
-
-void cleanupSV(ShadowValue* sv){
-  mpfr_clear(sv->value);
-  cleanupValueAST(sv);
-}
-

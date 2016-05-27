@@ -64,11 +64,18 @@ void cleanupStorage(void);
 void setTemp(Addr index, ShadowLocation* newLocation);
 ShadowLocation* getTemp(Addr index);
 
-void setMem(Addr index, ShadowLocation* newLocation);
-ShadowLocation* getMem(Addr index);
+void setMem(Addr index, ShadowValue* newValue);
+ShadowValue* getMem(Addr index);
+void setLocMem(Addr index, ShadowLocation* newLocation);
+ShadowLocation* getLocMem(Addr index, LocType type);
 
-void setTS(Addr index, ShadowLocation* newLocation, Addr instr_addr);
-ShadowLocation* getTS(Addr index);
+void setTS(Addr index, ShadowValue* newValue);
+ShadowValue* getTS(Addr index);
+void setLocTS(Addr index, ShadowLocation* newLocation, Addr instr_addr);
+ShadowLocation* getLocTS(Addr index, LocType type);
+
+void setLoc__(Addr index, ShadowLocation* newLoc, void* (*setter)(Addr index, ShadowValue* val));
+ShadowLocation* getLoc__(Addr index, ShadowLocation* (*getter)(Addr index), LocType type);
 
 void setSavedArg(Int index, ShadowLocation* newLocation);
 ShadowLocation* getSavedArg(Int index);
