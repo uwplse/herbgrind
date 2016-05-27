@@ -32,6 +32,7 @@
 #include "include/hg_helper.h"
 #include "include/hg_macros.h"
 #include "runtime/hg_mathreplace.h"
+#include "include/pub_tool_libcassert.h"
 
 void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr){
   IRExpr* expr;
@@ -131,6 +132,7 @@ That doesn't seem flattened...\n");
     // Here we'll instrument moving Shadow values into temps. See
     // above.
     addStmtToIRSB(sbOut, st);
+
     if (!isFloat(sbOut->tyenv, st->Ist.WrTmp.tmp)) break;
     expr = st->Ist.WrTmp.data;
     switch(expr->tag) {
@@ -143,6 +145,7 @@ That doesn't seem flattened...\n");
                                         mkU64(expr->Iex.Get.ty),
                                         mkU64(st->Ist.WrTmp.tmp)));
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+
       break;
     case Iex_GetI:
       // See comments above on PutI to make sense of this thing.
@@ -158,6 +161,7 @@ That doesn't seem flattened...\n");
                                         mkU64(expr->Iex.Get.ty),
                                         mkU64(st->Ist.WrTmp.tmp)));
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+
       break;
     case Iex_RdTmp:
       copyShadowLocation =
@@ -202,6 +206,7 @@ That doesn't seem flattened...\n");
                             mkIRExprVec_2(mkU64(condTmp),
                                           mkU64(st->Ist.WrTmp.tmp)));
         addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+
       }
       break;
     case Iex_Load:
@@ -214,6 +219,7 @@ That doesn't seem flattened...\n");
                                           mkU64(expr->Iex.Load.ty),
                                           mkU64(st->Ist.WrTmp.tmp)));
         addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+
       }
       break;
     case Iex_Qop:
@@ -239,6 +245,7 @@ That doesn't seem flattened...\n");
     // Here we'll instrument moving Shadow values into memory,
     // unconditionally.
     addStmtToIRSB(sbOut, st);
+
     expr = st->Ist.Store.data;
     switch (expr->tag) {
     case Iex_RdTmp:
@@ -250,6 +257,7 @@ That doesn't seem flattened...\n");
                             mkIRExprVec_2(mkU64(expr->Iex.RdTmp.tmp),
                                           st->Ist.Store.addr));
         addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+
       }
       break;
     case Iex_Const:
@@ -266,10 +274,27 @@ That doesn't seem flattened...\n");
     // Same as above, but only assigns the value to memory if a
     // guard returns true.
     addStmtToIRSB(sbOut, st);
+
+    // TEST TROUBLE HERE
+    // break;
+    //
+
     expr = st->Ist.Store.data;
+
     switch(expr->tag) {
+
     case Iex_RdTmp:
+      /*
+
+      VG_(dmsg)("\
+100\n");
+      VG_(exit)(100);
+
       if (isFloat(sbOut->tyenv, expr->Iex.RdTmp.tmp)){
+
+      VG_(dmsg)("\
+101\n");
+      VG_(exit)(101);
         copyShadowLocation =
           unsafeIRDirty_0_N(3,
                             "copyShadowTmptoMemG",
@@ -277,16 +302,32 @@ That doesn't seem flattened...\n");
                             mkIRExprVec_3(st->Ist.StoreG.details->guard,
                                           mkU64(expr->Iex.RdTmp.tmp),
                                           st->Ist.StoreG.details->addr));
+      VG_(dmsg)("\
+110\n");
+      VG_(exit)(110);
         addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+
+      VG_(dmsg)("\
+111\n");
+      VG_(exit)(111);
+    // TEST
+    break;
       }
+      */
       break;
+      /*
     case Iex_Const:
+      VG_(dmsg)("\
+102\n");
+      VG_(exit)(102);
       break;
+      */
     default:
       // This shouldn't happen in flattened IR.
       VG_(dmsg)("\
 A non-constant or temp is being placed into memory in a single IR statement! \
 That doesn't seem flattened...\n");
+      VG_(exit)(109);
       break;
     }
     break;
@@ -294,6 +335,9 @@ That doesn't seem flattened...\n");
     // Guarded load. This will load a value from memory, and write
     // it to a temp, but only if a condition returns true.
     addStmtToIRSB(sbOut, st);
+
+    // TEST
+    break;
     if (isFloat(sbOut->tyenv, st->Ist.LoadG.details->dst)){
       ALLOC(loadGInfo, "hg.loadGmalloc.1", 1, sizeof(LoadG_Info));
       // These are the lines we'd like to write. Unfortunately, we
@@ -308,7 +352,7 @@ That doesn't seem flattened...\n");
       addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((uintptr_t)&(loadGInfo->cond)),
                                         st->Ist.LoadG.details->guard));
       addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((uintptr_t)&(loadGInfo->src_mem)),
-                                        st->Ist.LoadG.details->addr));
+                                       st->Ist.LoadG.details->addr));
       addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, mkU64((uintptr_t)&(loadGInfo->alt_tmp)),
                                         st->Ist.LoadG.details->alt));
       loadGInfo->dest_tmp = st->Ist.LoadG.details->dst;
@@ -320,6 +364,9 @@ That doesn't seem flattened...\n");
                           VG_(fnptr_to_fnentry)(&copyShadowMemtoTmpIf),
                           mkIRExprVec_1(mkU64((uintptr_t)loadGInfo)));
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
+
+    // TEST
+    break;
     }
     break;
   case Ist_CAS:
@@ -332,6 +379,9 @@ That doesn't seem flattened...\n");
     // TODO: Add something here if we ever want to support multithreading.
 
     addStmtToIRSB(sbOut, st);
+
+    // TEST
+    break;
     VG_(dmsg)("\
 Warning! Herbgrind does not currently support the Compare and Swap instruction, \
 because we don't support multithreaded programs.\n");
@@ -342,6 +392,9 @@ because we don't support multithreaded programs.\n");
     // TODO: Add something here if we ever want to support multithreading.
 
     addStmtToIRSB(sbOut, st);
+
+    // TEST
+    break;
     VG_(dmsg)("\
 Warning! Herbgrind does not currently support the Load Linked / Store Conditional \
 set of instructions, because we don't support multithreaded programs.\n");
@@ -351,6 +404,9 @@ set of instructions, because we don't support multithreaded programs.\n");
     // side effects should be denoted in the attributes of this
     // instruction.
     addStmtToIRSB(sbOut, st);
+
+    // TEST
+    break;
     break;
   }
 }

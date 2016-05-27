@@ -68,7 +68,7 @@ valgrind/herbgrind/Makefile: valgrind/README herbgrind/Makefile.am
 # real makefile.
 	cd valgrind && ./autogen.sh
 	cd valgrind && \
-		CFLAGS="-fno-stack-protector" \
+		CFLAGS="-fno-stack-protector -O0" \
 		./configure --prefix=$(shell pwd)/valgrind/$(HG_LOCAL_INSTALL_NAME) \
 		            --enable-only64bit \
 		            --build=$(TARGET_PLAT)
@@ -113,7 +113,7 @@ deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz setup/patch_gmp.sh
 # locally instead of in a global location, so it doesn't conflict with
 # other versions of gmp.
 	cd deps/gmp-$*/ && \
-		CFLAGS="-fno-stack-protector" \
+		CFLAGS="-fno-stack-protector -O0" \
 		ABI=$* \
 		./configure --prefix=$(shell pwd)/deps/gmp-$*/$(HG_LOCAL_INSTALL_NAME)
 	$(MAKE) -C deps/gmp-$*
@@ -130,7 +130,7 @@ MPFR_CONFIGURE_FLAGS = --disable-thread-safe
 
 configure-mpfr-32:
 	cd deps/mpfr-32/ && \
-		CFLAGS="-fno-stack-protector" \
+		CFLAGS="-fno-stack-protector -O0" \
 		./configure --prefix=$(shell pwd)/deps/mpfr-32/$(HG_LOCAL_INSTALL_NAME) \
 		            --with-gmp-build=$(shell pwd)/deps/gmp-32 \
 		            --build=i386 \

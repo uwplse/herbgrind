@@ -89,6 +89,7 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
     if (st->tag == Ist_IMark)
       cur_addr = st->Ist.IMark.addr;
     // Take a look at hg_instrument.c to see what's going on here.
+
     instrumentStatement(st, sbOut, cur_addr);
   }
 
