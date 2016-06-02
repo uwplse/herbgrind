@@ -1,6 +1,6 @@
-herbgrind/docs/Makefile
-herbgrind/tests/Makefile
-herbgrind/include/hg_mathreplace_funcs.h
+src/docs/Makefile
+src/tests/Makefile
+src/include/hg_mathreplace_funcs.h
 *Makefile.in
 herbgrind/.deps/
 valgrind/
