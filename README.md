@@ -1,4 +1,4 @@
-HerbGrind -- A Valgrind Tool For Herbie
+Herbgrind -- A Valgrind Tool For Herbie
 =======================================
 
 <img src="logo.jpg" alt="Herbgrind logo" width="150"/>
