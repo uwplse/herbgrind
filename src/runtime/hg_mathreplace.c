@@ -92,6 +92,7 @@ Addr getCallAddr(void){
 
 void performOp(OpType op, double* result, double* args){
   SizeT nargs;
+  SizeT op_precision;
   const HChar* plain_opname;
   const HChar* op_symbol;
 
@@ -147,7 +148,7 @@ void performOp(OpType op, double* result, double* args){
   args_m = VG_(malloc)("wrapped-args", nargs * sizeof(mpfr_t));
   arg_shadows = VG_(malloc)("wrapped-shadow", nargs * sizeof(ShadowLocation*));
   for (SizeT i = 0; i < nargs; ++i){
-    mpfr_init2(args_m[i], 64);
+    mpfr_init2(args_m[i], op_precision);
     // Get the actual value from the pointer they gave us.
     mpfr_set_d(args_m[i], args[i], MPFR_RNDN);
     // Get the location of the arg source slot in the op structure.
@@ -195,8 +196,8 @@ void performOp(OpType op, double* result, double* args){
     arg_shadows[i] = getShadowLocMem((uintptr_t)&(args[i]), args[i],
                                      i, src_loc_slot);
   }
-  mpfr_init2(res,64);
   res_shadow = mkShadowLocation(Lt_Double);
+  mpfr_init2(res,op_precision);
 
   switch(op){
     // This expands to the cases for ops which take one argument and
