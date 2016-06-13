@@ -655,7 +655,12 @@ char* opASTtoBench(OpASTNode* opAST){
   // We're assuming here that each variable is only one character long
   // to size this allocation.
   SizeT binderStringSize = (VG_(sizeXA)(vars) * 2);
+  // No matter what we need enough space for the null character
+  if (binderStringSize == 0)
+    binderStringSize = 1;
+
   ALLOC(binderString, "hg.binder_string", sizeof(char), binderStringSize);
+
   SizeT cursor = 0;
   for (int i = 0; i < VG_(sizeXA)(vars); ++i){
     // Same assumption again.
@@ -666,7 +671,7 @@ char* opASTtoBench(OpASTNode* opAST){
   char* exprString = opASTtoExpr(opAST);
   SizeT exprStringSize = VG_(strlen)(exprString);
   SizeT benchStringSize =
-    9 /* "(FPCore (" */ + binderStringSize +
+    9 /* "(FPCore (" */ + binderStringSize - 1 /* This one includes a null char which we don't need */ +
     23 /* ")\n  :type binary64\n  " */ + exprStringSize +
     2 /* ")\0" */;
   char* benchString;
