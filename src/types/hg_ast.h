@@ -143,10 +143,17 @@ VgHashTable* flipOpVarMap(XArray* opVarMap);
 // variable groups, so that it doesn't group any leaf nodes that the
 // valVarMap doesn't group.
 void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap);
-// Print out an op AST, currently in the stupidest possible way.
-char* opASTtoString(OpASTNode* opAST);
+// Tests whether an int is in an xarray of ints
+Bool inXArray(XArray* haystack, int needle);
+// Given an AST (as the node at the top of one), returns all the
+// variables bound in that ast.
+XArray* usedVars(OpASTNode* opAST);
+// Print out an op AST as an expression, currently in the stupidest possible way.
+char* opASTtoExpr(OpASTNode* opAST);
 // A helper function.
-char* opASTtoStringwithVarMap(OpASTNode* opAST, VgHashTable* varMap);
+char* opASTtoExprwithVarMap(OpASTNode* opAST, VgHashTable* varMap);
+// Print out an op AST as an FPBench benchmark.
+char* opASTtoBench(OpASTNode* opAST);
 // Some debugging printer functions.
 
 // Prints a table from pointers to indices.

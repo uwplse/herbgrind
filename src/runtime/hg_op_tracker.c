@@ -121,7 +121,7 @@ void writeReport(const HChar* filename){
 
     UInt entry_len;
     if (report_exprs){
-      char* astString = opASTtoString(opinfo->ast);
+      char* benchString = opASTtoBench(opinfo->ast);
       if (human_readable){
         entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
                                   "%s\n"
@@ -129,7 +129,7 @@ void writeReport(const HChar* filename){
                                   "%f bits average error\n"
                                   "%f bits max error\n"
                                   "Aggregated over %lu instances\n\n",
-                                  astString,
+                                  benchString,
                                   opinfo->debuginfo.plain_opname,
                                   opinfo->debuginfo.fnname,
                                   opinfo->debuginfo.src_filename,
@@ -140,7 +140,7 @@ void writeReport(const HChar* filename){
                                   opinfo->evalinfo.num_calls);
       } else {
         entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                                  "((expr %s) "
+                                  "((bench %s) "
                                   "(plain-name \"%s\") "
                                   "(function \"%s\") "
                                   "(filename \"%s\") "
@@ -149,7 +149,7 @@ void writeReport(const HChar* filename){
                                   "(avg-error %f) "
                                   "(max-error %f) "
                                   "(num-calls %lu))\n",
-                                  astString,
+                                  benchString,
                                   opinfo->debuginfo.plain_opname,
                                   opinfo->debuginfo.fnname,
                                   opinfo->debuginfo.src_filename,
@@ -159,7 +159,7 @@ void writeReport(const HChar* filename){
                                   opinfo->evalinfo.max_error,
                                   opinfo->evalinfo.num_calls);
       }
-      VG_(free)(astString);
+      VG_(free)(benchString);
     } else {
       if (human_readable){
         entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
@@ -177,7 +177,7 @@ void writeReport(const HChar* filename){
                                   opinfo->evalinfo.num_calls);
       } else {
         entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                                  "(plain-name \"%s\") "
+                                  "((plain-name \"%s\") "
                                   "(function \"%s\") "
                                   "(filename \"%s\") "
                                   "(line-num %u) "

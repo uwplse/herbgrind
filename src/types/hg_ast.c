@@ -239,7 +239,7 @@ void updateAST(Op_Info* op, ValueASTNode* trace_ast){
   // debugging purposes. Or like, you might just be into that, in
   // which case more power to you.
   if (print_expr_updates){
-    char* opASTString = opASTtoString(op->ast);
+    char* opASTString = opASTtoExpr(op->ast);
     VG_(printf)("Updating op ast to: %s\n", opASTString);
     VG_(free)(opASTString);
   }
@@ -528,8 +528,60 @@ VgHashTable* flipOpVarMap(XArray* opVarMap){
 
 static const char* varNames[8] = {"x", "y", "z", "w", "a", "b", "c", "d"};
 
+Bool inXArray(XArray* haystack, int needle){
+  for(int i = 0; i < VG_(sizeXA)(haystack); ++i){
+    if (*(int*)VG_(indexXA)(haystack, i) == needle)
+      return True;
+  }
+  return False;
+}
+
+// Internal
+void getUsedIndices(XArray* acc, OpASTNode* opAST, VgHashTable* varMap);
+void getUsedIndices(XArray* acc, OpASTNode* opAST, VgHashTable* varMap){
+  if (opAST->tag == Node_Leaf){
+    if (opAST->nd.Leaf.val == NULL){      // If it's a variable and not a constant...
+      OpVarMapEntry* varIdxEntry = VG_(HT_lookup)(varMap, (UWord)opAST);
+      if (varIdxEntry == NULL){
+          VG_(printf)("Problem! Couldn't find entry for leaf node in var map.\n");
+      } else {
+        int varIdx = varIdxEntry->varidx;
+        if (!inXArray(acc, varIdx)){
+          VG_(addToXA)(acc, &varIdx);
+        }
+      }
+    }
+  } else {
+    // Walk down the tree recursively, updating our acc array.
+    for (SizeT i = 0; i < opAST->nd.Branch.nargs; ++i){
+      getUsedIndices(acc, opAST->nd.Branch.args[i], varMap);
+    }
+  }
+}
+
+// Given an AST (as the node at the top of one), returns all the
+// variables bound in that ast.
+XArray* usedVars(OpASTNode* opAST){
+  XArray* usedVars = VG_(newXA)(VG_(malloc), "used_vars",
+                                VG_(free), sizeof(char*));
+  if (opAST->tag == Node_Leaf){
+    if (opAST->nd.Leaf.val == NULL){
+      VG_(addToXA)(usedVars, &(varNames[0]));
+    }
+    return usedVars;
+  }
+  XArray* usedIndices = VG_(newXA)(VG_(malloc), "used_indices",
+                                   VG_(free), sizeof(int));
+  getUsedIndices(usedIndices, opAST, flipOpVarMap(opAST->nd.Branch.var_map));
+  for(int i = 0; i < VG_(sizeXA)(usedIndices); ++i){
+    VG_(addToXA)(usedVars, &(varNames[*(int*)VG_(indexXA)(usedIndices, i)]));
+  }
+  VG_(deleteXA)(usedIndices);
+  return usedVars;
+}
+
 // Give a printed representation of an op ast.
-char* opASTtoString(OpASTNode* opAST){
+char* opASTtoExpr(OpASTNode* opAST){
   // If we're trying to print a leaf node, then we don't have any map
   // to label variables. In this case, pass NULL to the inner
   // function, opASTtoStringwithVarMap, and we'll just print it as "x".
@@ -541,7 +593,7 @@ char* opASTtoString(OpASTNode* opAST){
     map = flipOpVarMap(opAST->nd.Branch.var_map);
   }
   // Get the resulting string we're going to return.
-  char* result = opASTtoStringwithVarMap(opAST, map);
+  char* result = opASTtoExprwithVarMap(opAST, map);
   // If we made a flipped map, free it up now.
   if (map != NULL)
     VG_(HT_destruct)(map, VG_(free));
@@ -550,7 +602,7 @@ char* opASTtoString(OpASTNode* opAST){
 }
 // This is a crude and wasteful function, but hopefully no one will
 // notice.
-char* opASTtoStringwithVarMap(OpASTNode* opAST, VgHashTable* varMap){
+char* opASTtoExprwithVarMap(OpASTNode* opAST, VgHashTable* varMap){
   char* buf;
   // This is our "cursor" in the output string.
   SizeT bufpos = 0;
@@ -587,7 +639,7 @@ char* opASTtoStringwithVarMap(OpASTNode* opAST, VgHashTable* varMap){
     // Recursively get the subexpression strings, and print them
     // preceded by a space.
     for (SizeT i = 0; i < opAST->nd.Branch.nargs; ++i){
-      char* subexpr = opASTtoStringwithVarMap(opAST->nd.Branch.args[i], varMap);
+      char* subexpr = opASTtoExprwithVarMap(opAST->nd.Branch.args[i], varMap);
       bufpos += VG_(snprintf)(buf + bufpos, MAX_AST_STR_LEN - bufpos, " %s",
                               subexpr);
       VG_(free)(subexpr);
@@ -596,4 +648,34 @@ char* opASTtoStringwithVarMap(OpASTNode* opAST, VgHashTable* varMap){
     bufpos += VG_(snprintf)(buf + bufpos, MAX_AST_STR_LEN - bufpos, ")");
   }
   return buf;
+}
+char* opASTtoBench(OpASTNode* opAST){
+  XArray* vars = usedVars(opAST);
+  char* binderString;
+  // We're assuming here that each variable is only one character long
+  // to size this allocation.
+  SizeT binderStringSize = (VG_(sizeXA)(vars) * 2);
+  ALLOC(binderString, "hg.binder_string", sizeof(char), binderStringSize);
+  SizeT cursor = 0;
+  for (int i = 0; i < VG_(sizeXA)(vars); ++i){
+    // Same assumption again.
+    binderString[cursor++] = (*(char**)VG_(indexXA)(vars, i))[0];
+    if (i < VG_(sizeXA)(vars) - 1)
+      binderString[cursor++] = ' ';
+  }
+  char* exprString = opASTtoExpr(opAST);
+  SizeT exprStringSize = VG_(strlen)(exprString);
+  SizeT benchStringSize =
+    9 /* "(FPCore (" */ + binderStringSize +
+    23 /* ")\n  :type binary64\n  " */ + exprStringSize +
+    2 /* ")\0" */;
+  char* benchString;
+  ALLOC(benchString, "hg.bench_string", sizeof(char), benchStringSize);
+  VG_(snprintf)(benchString, benchStringSize,
+                "(FPCore (%s)\n  :type binary64\n  %s)",
+                binderString,
+                exprString);
+  VG_(free)(binderString);
+  VG_(free)(exprString);
+  return benchString;
 }
