@@ -185,15 +185,17 @@ void initValueLeafAST(ShadowValue* val, Op_Info** src_loc){
 // Cleanup the memory associated with the AST attached to the given
 // value.
 void cleanupValueAST(ShadowValue* val){
-  // The var map needs to be specially destructed, since it's a hash
-  // map.
-  VG_(HT_destruct)(val->ast->var_map, VG_(free));
-  // Release our references to the shadow values
-  for (int i = 0; i < val->ast->nargs; ++i){
-    disownSV(val->ast->args[i]);
+  if (val->ast->nargs != 0){
+    // The var map needs to be specially destructed, since it's a hash
+    // map.
+    VG_(HT_destruct)(val->ast->var_map, VG_(free));
+    // Release our references to the shadow values
+    for (int i = 0; i < val->ast->nargs; ++i){
+      disownSV(val->ast->args[i]->val);
+    }
+    // Free the argument array
+    VG_(free)(val->ast->args);
   }
-  // Free the argument array
-  VG_(free)(val->ast->args);
   // Free the ast directly
   VG_(free)(val->ast);
 }
@@ -208,7 +210,8 @@ void copyValueAST(ShadowValue* src, ShadowValue* dest){
   if (src->ast->nargs != 0){
     ALLOC(dest->ast->args, "hg.val_ast_args", src->ast->nargs, sizeof(ShadowValue*));
     for (int i = 0; i < src->ast->nargs; ++i){
-      copySV(src->ast->args[i], &(dest->ast->args[i]));
+      dest->ast->args[i] = src->ast->args[i];
+      addRef(src->ast->args[i]->val);
     }
   }
 }

@@ -68,6 +68,7 @@ struct _ShadowValue_ptr {
 // ownership of the shadow value.
 ShadowValue* mkShadowValue(void);
 void copySV(ShadowValue* src, ShadowValue** dest);
+void addRef(ShadowValue* val);
 void disownSV(ShadowValue* src);
 
 // The type of a floating point location. Many locations contain just
@@ -113,5 +114,7 @@ ShadowLocation* mkShadowLocation_bare(LocType type);
 void freeSL(ShadowLocation* sl);
 // Copy a shadow location from one area to another
 void copySL(ShadowLocation* src, ShadowLocation** dest);
+// Print out a shadowlocation, not padded with newlines or spaces.
+void printShadowLoc(ShadowLocation* sl);
 
 #endif

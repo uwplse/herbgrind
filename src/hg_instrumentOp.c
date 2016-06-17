@@ -51,158 +51,158 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
   // called function, I'm going to try passing them as a malloc'd
   // array.
   switch (expr->tag){
-  /* case Iex_Unop: */
-  /*   { */
-  /*     Op_Info* opInfo; */
-  /*     // Determine the argument sizes of each operation we might */
-  /*     // encounter so we can allocate the right amount of space in the */
-  /*     // argument structure to the runtime shadow execution code. */
-  /*     switch(expr->Iex.Unop.op){ */
-  /*     case Iop_V128to64: */
-  /*     case Iop_V128HIto64: */
-  /*     case Iop_F128HItoF64: */
-  /*     case Iop_F128LOtoF64: */
-  /*       arg_size = sizeof(double) * 2; */
-  /*       result_size = sizeof(double); */
-  /*       break; */
-  /*     case Iop_64UtoV128: */
-  /*     case Iop_SetV128lo64: */
-  /*       arg_size = sizeof(double); */
-  /*       result_size = sizeof(double)*2; */
-  /*     case Iop_V128to32: */
-  /*       arg_size = sizeof(float) * 4; */
-  /*       result_size = sizeof(float); */
-  /*     case Iop_F32toF64: */
-  /*       arg_size = sizeof(float); */
-  /*       result_size = sizeof(double); */
-  /*       break; */
-  /*     case Iop_TruncF64asF32: */
-  /*       arg_size = sizeof(double); */
-  /*       result_size = sizeof(float); */
-  /*       break; */
-  /*     case Iop_NegF32: */
-  /*     case Iop_AbsF32: */
-  /*       arg_size = sizeof(float); */
-  /*       result_size = sizeof(float); */
-  /*       break; */
-  /*     case Iop_RSqrtEst32Fx2: */
-  /*     case Iop_RecipEst32Fx2: */
-  /*     case Iop_RoundF64toF32: */
-  /*     case Iop_RSqrtEst5GoodF64: */
-  /*     case Iop_NegF64: */
-  /*     case Iop_AbsF64: */
-  /*     case Iop_RoundF64toF64_NEAREST: */
-  /*     case Iop_RoundF64toF64_NegINF: */
-  /*     case Iop_RoundF64toF64_PosINF: */
-  /*     case Iop_RoundF64toF64_ZERO: */
-  /*       arg_size = sizeof(double); */
-  /*       result_size = sizeof(double); */
-  /*       break; */
-  /*     case Iop_RecipEst32Fx4: */
-  /*     case Iop_RSqrtEst32Fx4: */
-  /*     case Iop_RecipEst32F0x4: */
-  /*     case Iop_RSqrtEst32F0x4: */
-  /*     case Iop_Sqrt32F0x4: */
-  /*     case Iop_Abs32Fx4: */
-  /*     case Iop_Neg32Fx4: */
-  /*     case Iop_ZeroHI96ofV128: */
-  /*       arg_size = sizeof(float)*4; */
-  /*       result_size = sizeof(float)*4; */
-  /*       break; */
-  /*     case Iop_RSqrtEst32Fx8: */
-  /*     case Iop_RecipEst32Fx8: */
-  /*       arg_size = sizeof(float) * 8; */
-  /*       result_size = sizeof(float) * 8; */
-  /*       break; */
-  /*     case Iop_ZeroHI64ofV128: */
-  /*     case Iop_RecipEst64Fx2: */
-  /*     case Iop_RSqrtEst64Fx2: */
-  /*     case Iop_Abs64Fx2: */
-  /*     case Iop_Neg64Fx2: */
-  /*     case Iop_Sqrt64F0x2: */
-  /*       arg_size = sizeof(double) * 2; */
-  /*       result_size = sizeof(double) * 2; */
-  /*       break; */
-  /*     default: */
-  /*       return; */
-  /*     } */
+  case Iex_Unop:
+    {
+      Op_Info* opInfo;
+      // Determine the argument sizes of each operation we might
+      // encounter so we can allocate the right amount of space in the
+      // argument structure to the runtime shadow execution code.
+      switch(expr->Iex.Unop.op){
+      case Iop_V128to64:
+      case Iop_V128HIto64:
+      case Iop_F128HItoF64:
+      case Iop_F128LOtoF64:
+        arg_size = sizeof(double) * 2;
+        result_size = sizeof(double);
+        break;
+      case Iop_64UtoV128:
+      case Iop_SetV128lo64:
+        arg_size = sizeof(double);
+        result_size = sizeof(double)*2;
+      case Iop_V128to32:
+        arg_size = sizeof(float) * 4;
+        result_size = sizeof(float);
+      case Iop_F32toF64:
+        arg_size = sizeof(float);
+        result_size = sizeof(double);
+        break;
+      case Iop_TruncF64asF32:
+        arg_size = sizeof(double);
+        result_size = sizeof(float);
+        break;
+      case Iop_NegF32:
+      case Iop_AbsF32:
+        arg_size = sizeof(float);
+        result_size = sizeof(float);
+        break;
+      case Iop_RSqrtEst32Fx2:
+      case Iop_RecipEst32Fx2:
+      case Iop_RoundF64toF32:
+      case Iop_RSqrtEst5GoodF64:
+      case Iop_NegF64:
+      case Iop_AbsF64:
+      case Iop_RoundF64toF64_NEAREST:
+      case Iop_RoundF64toF64_NegINF:
+      case Iop_RoundF64toF64_PosINF:
+      case Iop_RoundF64toF64_ZERO:
+        arg_size = sizeof(double);
+        result_size = sizeof(double);
+        break;
+      case Iop_RecipEst32Fx4:
+      case Iop_RSqrtEst32Fx4:
+      case Iop_RecipEst32F0x4:
+      case Iop_RSqrtEst32F0x4:
+      case Iop_Sqrt32F0x4:
+      case Iop_Abs32Fx4:
+      case Iop_Neg32Fx4:
+      case Iop_ZeroHI96ofV128:
+        arg_size = sizeof(float)*4;
+        result_size = sizeof(float)*4;
+        break;
+      case Iop_RSqrtEst32Fx8:
+      case Iop_RecipEst32Fx8:
+        arg_size = sizeof(float) * 8;
+        result_size = sizeof(float) * 8;
+        break;
+      case Iop_ZeroHI64ofV128:
+      case Iop_RecipEst64Fx2:
+      case Iop_RSqrtEst64Fx2:
+      case Iop_Abs64Fx2:
+      case Iop_Neg64Fx2:
+      case Iop_Sqrt64F0x2:
+        arg_size = sizeof(double) * 2;
+        result_size = sizeof(double) * 2;
+        break;
+      default:
+        return;
+      }
 
-  /*     // Only bother instrumenting operations that we care about and */
-  /*     // can do something useful with. */
-  /*     switch (expr->Iex.Unop.op){ */
-  /*       // Add all supported unary ops to this list. */
-  /*     case Iop_RecipEst32Fx4: */
-  /*     case Iop_RSqrtEst32Fx4: */
-  /*     case Iop_Abs32Fx4: */
-  /*     case Iop_Neg32Fx4: */
-  /*     case Iop_ZeroHI96ofV128: */
-  /*     case Iop_ZeroHI64ofV128: */
-  /*     case Iop_V128to32: */
-  /*     case Iop_V128to64: */
-  /*     case Iop_V128HIto64: */
-  /*     case Iop_64UtoV128: */
-  /*     case Iop_SetV128lo64: */
-  /*     case Iop_RecipEst64Fx2: */
-  /*     case Iop_RSqrtEst64Fx2: */
-  /*     case Iop_Abs64Fx2: */
-  /*     case Iop_Neg64Fx2: */
-  /*     case Iop_RecipEst32F0x4: */
-  /*     case Iop_Sqrt32F0x4: */
-  /*     case Iop_RSqrtEst32F0x4: */
-  /*     case Iop_RSqrtEst32Fx2: */
-  /*     case Iop_RecipEst32Fx2: */
-  /*     case Iop_RoundF64toF32: */
-  /*     case Iop_TruncF64asF32: */
-  /*     case Iop_RSqrtEst5GoodF64: */
-  /*     case Iop_RoundF64toF64_NEAREST: */
-  /*     case Iop_RoundF64toF64_NegINF: */
-  /*     case Iop_RoundF64toF64_PosINF: */
-  /*     case Iop_RoundF64toF64_ZERO: */
-  /*     case Iop_F128HItoF64: */
-  /*     case Iop_F128LOtoF64: */
-  /*     case Iop_F32toF64: */
-  /*     case Iop_NegF32: */
-  /*     case Iop_AbsF32: */
-  /*     case Iop_NegF64: */
-  /*     case Iop_AbsF64: */
-  /*     case Iop_Sqrt64F0x2: */
-  /*       // Allocate and partially setup the argument structure */
-  /*       opInfo = mkOp_Info(1, expr->Iex.Unop.op, */
-  /*                          opAddr, */
-  /*                          getPlainOpname(expr->Iex.Unop.op), */
-  /*                          getOpSymbol(expr->Iex.Unop.op)); */
+      // Only bother instrumenting operations that we care about and
+      // can do something useful with.
+      switch (expr->Iex.Unop.op){
+        // Add all supported unary ops to this list.
+      case Iop_RecipEst32Fx4:
+      case Iop_RSqrtEst32Fx4:
+      case Iop_Abs32Fx4:
+      case Iop_Neg32Fx4:
+      case Iop_ZeroHI96ofV128:
+      case Iop_ZeroHI64ofV128:
+      case Iop_V128to32:
+      case Iop_V128to64:
+      case Iop_V128HIto64:
+      case Iop_64UtoV128:
+      case Iop_SetV128lo64:
+      case Iop_RecipEst64Fx2:
+      case Iop_RSqrtEst64Fx2:
+      case Iop_Abs64Fx2:
+      case Iop_Neg64Fx2:
+      case Iop_RecipEst32F0x4:
+      case Iop_Sqrt32F0x4:
+      case Iop_RSqrtEst32F0x4:
+      case Iop_RSqrtEst32Fx2:
+      case Iop_RecipEst32Fx2:
+      case Iop_RoundF64toF32:
+      case Iop_TruncF64asF32:
+      case Iop_RSqrtEst5GoodF64:
+      case Iop_RoundF64toF64_NEAREST:
+      case Iop_RoundF64toF64_NegINF:
+      case Iop_RoundF64toF64_PosINF:
+      case Iop_RoundF64toF64_ZERO:
+      case Iop_F128HItoF64:
+      case Iop_F128LOtoF64:
+      case Iop_F32toF64:
+      case Iop_NegF32:
+      case Iop_AbsF32:
+      case Iop_NegF64:
+      case Iop_AbsF64:
+      case Iop_Sqrt64F0x2:
+        // Allocate and partially setup the argument structure
+        opInfo = mkOp_Info(1, expr->Iex.Unop.op,
+                           opAddr,
+                           getPlainOpname(expr->Iex.Unop.op),
+                           getOpSymbol(expr->Iex.Unop.op));
 
-  /*       // Populate the argument/result values we know at instrument time now. */
-  /*       opInfo->args.uargs.arg_tmp = getArgTmp(expr->Iex.Unop.arg, sb); */
-  /*       opInfo->dest_tmp = offset; */
+        // Populate the argument/result values we know at instrument time now.
+        opInfo->args.uargs.arg_tmp = getArgTmp(expr->Iex.Unop.arg, sb);
+        opInfo->dest_tmp = offset;
 
-  /*       // Allocate the space for the values we won't know until */
-  /*       // runtime, but know their size now. */
-  /*       ALLOC(opInfo->args.uargs.arg_value, */
-  /*             "hg.arg_alloc", 1, arg_size); */
-  /*       ALLOC(opInfo->dest_value, */
-  /*             "hg.arg_alloc", 1, result_size); */
+        // Allocate the space for the values we won't know until
+        // runtime, but know their size now.
+        ALLOC(opInfo->args.uargs.arg_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->dest_value,
+              "hg.arg_alloc", 1, result_size);
 
-  /*       // Add statements to populate the values we don't know until */
-  /*       // runtime. */
-  /*       addStore(sb, expr->Iex.Unop.arg, */
-  /*                opInfo->args.uargs.arg_value); */
-  /*       addStore(sb, IRExpr_RdTmp(offset), */
-  /*                opInfo->dest_value); */
+        // Add statements to populate the values we don't know until
+        // runtime.
+        addStore(sb, expr->Iex.Unop.arg,
+                 &(opInfo->args.uargs.arg_value));
+        addStore(sb, IRExpr_RdTmp(offset),
+                 &(opInfo->dest_value));
 
-  /*       // Finally, add the statement to call the shadow op procedure. */
-  /*       executeShadowOp = */
-  /*         unsafeIRDirty_0_N(1, */
-  /*                           "executeUnaryShadowOp", */
-  /*                           VG_(fnptr_to_fnentry)(&executeUnaryShadowOp), */
-  /*                           mkIRExprVec_1(mkU64((uintptr_t)opInfo))); */
-  /*       addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp)); */
-  /*       break; */
-  /*     default: */
-  /*       break; */
-  /*     } */
-  /*   } */
-  /*   break; */
+        // Finally, add the statement to call the shadow op procedure.
+        executeShadowOp =
+          unsafeIRDirty_0_N(1,
+                            "executeUnaryShadowOp",
+                            VG_(fnptr_to_fnentry)(&executeUnaryShadowOp),
+                            mkIRExprVec_1(mkU64((uintptr_t)opInfo)));
+        addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+        break;
+      default:
+        break;
+      }
+    }
+    break;
   case Iex_Binop:
     {
       Op_Info* opInfo;
@@ -360,248 +360,248 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       }
     }
     break;
-  /* case Iex_Triop: */
-  /*   { */
-  /*     Op_Info* opInfo; */
+  case Iex_Triop:
+    {
+      Op_Info* opInfo;
 
-  /*     // Determine the argument sizes of each operation we might */
-  /*     // encounter so we can allocate the right amount of space in the */
-  /*     // argument structure to the runtime shadow execution code. */
-  /*     switch (expr->Iex.Triop.details->op){ */
-  /*     case Iop_AtanF64: */
-  /*     case Iop_Yl2xF64: */
-  /*     case Iop_Yl2xp1F64: */
-  /*     case Iop_ScaleF64: */
-  /*     case Iop_AddF64: */
-  /*     case Iop_SubF64: */
-  /*     case Iop_MulF64: */
-  /*     case Iop_DivF64: */
-  /*     case Iop_AddF64r32: */
-  /*     case Iop_SubF64r32: */
-  /*     case Iop_MulF64r32: */
-  /*     case Iop_DivF64r32: */
-  /*       arg_size = sizeof(double); */
-  /*       result_size = sizeof(double); */
-  /*       break; */
-  /*     case Iop_AddF32: */
-  /*     case Iop_SubF32: */
-  /*     case Iop_MulF32: */
-  /*     case Iop_DivF32: */
-  /*       arg_size = sizeof(float); */
-  /*       result_size = sizeof(float); */
-  /*       break; */
-  /*     case Iop_Add32Fx4: */
-  /*     case Iop_Sub32Fx4: */
-  /*     case Iop_Mul32Fx4: */
-  /*     case Iop_Div32Fx4: */
-  /*       arg_size = sizeof(float) * 4; */
-  /*       result_size = sizeof(float) * 4; */
-  /*       break; */
-  /*     case Iop_Add64Fx2: */
-  /*     case Iop_Sub64Fx2: */
-  /*     case Iop_Mul64Fx2: */
-  /*     case Iop_Div64Fx2: */
-  /*       arg_size = sizeof(double) * 2; */
-  /*       result_size = sizeof(double) * 2; */
-  /*       break; */
-  /*     case Iop_Add32Fx8: */
-  /*     case Iop_Sub32Fx8: */
-  /*     case Iop_Mul32Fx8: */
-  /*     case Iop_Div32Fx8: */
-  /*       arg_size = sizeof(float) * 8; */
-  /*       result_size = sizeof(float) * 8; */
-  /*     case Iop_Add64Fx4: */
-  /*     case Iop_Sub64Fx4: */
-  /*     case Iop_Mul64Fx4: */
-  /*     case Iop_Div64Fx4: */
-  /*       arg_size = sizeof(double) * 4; */
-  /*       result_size = sizeof(double) * 4; */
-  /*       break; */
-  /*     default: */
-  /*       return; */
-  /*     } */
+      // Determine the argument sizes of each operation we might
+      // encounter so we can allocate the right amount of space in the
+      // argument structure to the runtime shadow execution code.
+      switch (expr->Iex.Triop.details->op){
+      case Iop_AtanF64:
+      case Iop_Yl2xF64:
+      case Iop_Yl2xp1F64:
+      case Iop_ScaleF64:
+      case Iop_AddF64:
+      case Iop_SubF64:
+      case Iop_MulF64:
+      case Iop_DivF64:
+      case Iop_AddF64r32:
+      case Iop_SubF64r32:
+      case Iop_MulF64r32:
+      case Iop_DivF64r32:
+        arg_size = sizeof(double);
+        result_size = sizeof(double);
+        break;
+      case Iop_AddF32:
+      case Iop_SubF32:
+      case Iop_MulF32:
+      case Iop_DivF32:
+        arg_size = sizeof(float);
+        result_size = sizeof(float);
+        break;
+      case Iop_Add32Fx4:
+      case Iop_Sub32Fx4:
+      case Iop_Mul32Fx4:
+      case Iop_Div32Fx4:
+        arg_size = sizeof(float) * 4;
+        result_size = sizeof(float) * 4;
+        break;
+      case Iop_Add64Fx2:
+      case Iop_Sub64Fx2:
+      case Iop_Mul64Fx2:
+      case Iop_Div64Fx2:
+        arg_size = sizeof(double) * 2;
+        result_size = sizeof(double) * 2;
+        break;
+      case Iop_Add32Fx8:
+      case Iop_Sub32Fx8:
+      case Iop_Mul32Fx8:
+      case Iop_Div32Fx8:
+        arg_size = sizeof(float) * 8;
+        result_size = sizeof(float) * 8;
+      case Iop_Add64Fx4:
+      case Iop_Sub64Fx4:
+      case Iop_Mul64Fx4:
+      case Iop_Div64Fx4:
+        arg_size = sizeof(double) * 4;
+        result_size = sizeof(double) * 4;
+        break;
+      default:
+        return;
+      }
 
-  /*     // Only bother instrumenting operations that we care about and */
-  /*     // can do something useful with. */
-  /*     switch (expr->Iex.Triop.details->op){ */
-  /*       // Add all supported ternary ops to this list */
-  /*     case Iop_Add32Fx8: */
-  /*     case Iop_Sub32Fx8: */
-  /*     case Iop_Mul32Fx8: */
-  /*     case Iop_Div32Fx8: */
-  /*     case Iop_Add64Fx4: */
-  /*     case Iop_Sub64Fx4: */
-  /*     case Iop_Mul64Fx4: */
-  /*     case Iop_Div64Fx4: */
-  /*     case Iop_Add32Fx4: */
-  /*     case Iop_Sub32Fx4: */
-  /*     case Iop_Mul32Fx4: */
-  /*     case Iop_Div32Fx4: */
-  /*     case Iop_Add64Fx2: */
-  /*     case Iop_Sub64Fx2: */
-  /*     case Iop_Mul64Fx2: */
-  /*     case Iop_Div64Fx2: */
-  /*     case Iop_AtanF64: */
-  /*     case Iop_Yl2xF64: */
-  /*     case Iop_Yl2xp1F64: */
-  /*     case Iop_ScaleF64: */
-  /*     case Iop_AddF128: */
-  /*     case Iop_SubF128: */
-  /*     case Iop_MulF128: */
-  /*     case Iop_DivF128: */
-  /*     case Iop_AddF64: */
-  /*     case Iop_SubF64: */
-  /*     case Iop_MulF64: */
-  /*     case Iop_DivF64: */
-  /*     case Iop_AddF32: */
-  /*     case Iop_SubF32: */
-  /*     case Iop_MulF32: */
-  /*     case Iop_DivF32: */
-  /*     case Iop_AddF64r32: */
-  /*     case Iop_SubF64r32: */
-  /*     case Iop_MulF64r32: */
-  /*     case Iop_DivF64r32: */
-  /*       // Allocate and partially setup the argument structure */
-  /*       opInfo = mkOp_Info(3, expr->Iex.Triop.details->op, opAddr, */
-  /*                          getPlainOpname(expr->Iex.Triop.details->op), */
-  /*                          getOpSymbol(expr->Iex.Triop.details->op)); */
+      // Only bother instrumenting operations that we care about and
+      // can do something useful with.
+      switch (expr->Iex.Triop.details->op){
+        // Add all supported ternary ops to this list
+      case Iop_Add32Fx8:
+      case Iop_Sub32Fx8:
+      case Iop_Mul32Fx8:
+      case Iop_Div32Fx8:
+      case Iop_Add64Fx4:
+      case Iop_Sub64Fx4:
+      case Iop_Mul64Fx4:
+      case Iop_Div64Fx4:
+      case Iop_Add32Fx4:
+      case Iop_Sub32Fx4:
+      case Iop_Mul32Fx4:
+      case Iop_Div32Fx4:
+      case Iop_Add64Fx2:
+      case Iop_Sub64Fx2:
+      case Iop_Mul64Fx2:
+      case Iop_Div64Fx2:
+      case Iop_AtanF64:
+      case Iop_Yl2xF64:
+      case Iop_Yl2xp1F64:
+      case Iop_ScaleF64:
+      case Iop_AddF128:
+      case Iop_SubF128:
+      case Iop_MulF128:
+      case Iop_DivF128:
+      case Iop_AddF64:
+      case Iop_SubF64:
+      case Iop_MulF64:
+      case Iop_DivF64:
+      case Iop_AddF32:
+      case Iop_SubF32:
+      case Iop_MulF32:
+      case Iop_DivF32:
+      case Iop_AddF64r32:
+      case Iop_SubF64r32:
+      case Iop_MulF64r32:
+      case Iop_DivF64r32:
+        // Allocate and partially setup the argument structure
+        opInfo = mkOp_Info(3, expr->Iex.Triop.details->op, opAddr,
+                           getPlainOpname(expr->Iex.Triop.details->op),
+                           getOpSymbol(expr->Iex.Triop.details->op));
 
-  /*       // Populate the values we know at instrument time now. */
-  /*       opInfo->args.targs.arg1_tmp = */
-  /*         getArgTmp(expr->Iex.Triop.details->arg1, sb); */
-  /*       opInfo->args.targs.arg2_tmp = */
-  /*         getArgTmp(expr->Iex.Triop.details->arg2, sb); */
-  /*       opInfo->args.targs.arg3_tmp = */
-  /*         getArgTmp(expr->Iex.Triop.details->arg3, sb); */
-  /*       opInfo->dest_tmp = offset; */
+        // Populate the values we know at instrument time now.
+        opInfo->args.targs.arg1_tmp =
+          getArgTmp(expr->Iex.Triop.details->arg1, sb);
+        opInfo->args.targs.arg2_tmp =
+          getArgTmp(expr->Iex.Triop.details->arg2, sb);
+        opInfo->args.targs.arg3_tmp =
+          getArgTmp(expr->Iex.Triop.details->arg3, sb);
+        opInfo->dest_tmp = offset;
 
-  /*       // Allocate the space for the values we won't know until */
-  /*       // runtime, but know their size now. */
-  /*       ALLOC(opInfo->args.targs.arg1_value, */
-  /*             "hg.arg_alloc", 1, arg_size); */
-  /*       ALLOC(opInfo->args.targs.arg2_value, */
-  /*             "hg.arg_alloc", 1, arg_size); */
-  /*       ALLOC(opInfo->args.targs.arg3_value, */
-  /*             "hg.arg_alloc", 1, arg_size); */
-  /*       ALLOC(opInfo->dest_value, */
-  /*             "hg.arg_alloc", 1, result_size); */
+        // Allocate the space for the values we won't know until
+        // runtime, but know their size now.
+        ALLOC(opInfo->args.targs.arg1_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.targs.arg2_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.targs.arg3_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->dest_value,
+              "hg.arg_alloc", 1, result_size);
 
-  /*       // Add statements to populate the values we don't know until */
-  /*       // runtime. */
-  /*       addStore(sb, expr->Iex.Triop.details->arg1, */
-  /*                opInfo->args.targs.arg1_value); */
-  /*       addStore(sb, expr->Iex.Triop.details->arg2, */
-  /*                opInfo->args.targs.arg2_value); */
-  /*       addStore(sb, expr->Iex.Triop.details->arg3, */
-  /*                opInfo->args.targs.arg3_value); */
-  /*       addStore(sb, IRExpr_RdTmp(offset), */
-  /*                opInfo->dest_value); */
+        // Add statements to populate the values we don't know until
+        // runtime.
+        addStore(sb, expr->Iex.Triop.details->arg1,
+                 opInfo->args.targs.arg1_value);
+        addStore(sb, expr->Iex.Triop.details->arg2,
+                 opInfo->args.targs.arg2_value);
+        addStore(sb, expr->Iex.Triop.details->arg3,
+                 opInfo->args.targs.arg3_value);
+        addStore(sb, IRExpr_RdTmp(offset),
+                 opInfo->dest_value);
 
-  /*       // Finally, add the statement to call the shadow op procedure. */
-  /*       executeShadowOp = */
-  /*         unsafeIRDirty_0_N(1, */
-  /*                           "executeTernaryShadowOp", */
-  /*                           VG_(fnptr_to_fnentry)(&executeTernaryShadowOp), */
-  /*                           mkIRExprVec_1(mkU64((uintptr_t)opInfo))); */
-  /*       addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp)); */
-  /*       break; */
-  /*     default: */
-  /*       break; */
-  /*     } */
-  /*   } */
-  /*   break; */
-  /* case Iex_Qop: */
-  /*   { */
-  /*     Op_Info* opInfo; */
+        // Finally, add the statement to call the shadow op procedure.
+        executeShadowOp =
+          unsafeIRDirty_0_N(1,
+                            "executeTernaryShadowOp",
+                            VG_(fnptr_to_fnentry)(&executeTernaryShadowOp),
+                            mkIRExprVec_1(mkU64((uintptr_t)opInfo)));
+        addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+        break;
+      default:
+        break;
+      }
+    }
+    break;
+  case Iex_Qop:
+    {
+      Op_Info* opInfo;
 
-  /*     // Determine the argument sizes of each operation we might */
-  /*     // encounter so we can allocate the right amount of space in the */
-  /*     // argument structure to the runtime shadow execution code. */
-  /*     switch (expr->Iex.Qop.details->op){ */
-  /*     case Iop_MAddF32: */
-  /*     case Iop_MSubF32: */
-  /*       arg_size = sizeof(float); */
-  /*       result_size = sizeof(float); */
-  /*       break; */
-  /*     case Iop_MAddF64: */
-  /*     case Iop_MSubF64: */
-  /*     case Iop_MAddF64r32: */
-  /*     case Iop_MSubF64r32: */
-  /*       arg_size = sizeof(double); */
-  /*       result_size = sizeof(double); */
-  /*       break; */
-  /*     default: */
-  /*       return; */
-  /*     } */
+      // Determine the argument sizes of each operation we might
+      // encounter so we can allocate the right amount of space in the
+      // argument structure to the runtime shadow execution code.
+      switch (expr->Iex.Qop.details->op){
+      case Iop_MAddF32:
+      case Iop_MSubF32:
+        arg_size = sizeof(float);
+        result_size = sizeof(float);
+        break;
+      case Iop_MAddF64:
+      case Iop_MSubF64:
+      case Iop_MAddF64r32:
+      case Iop_MSubF64r32:
+        arg_size = sizeof(double);
+        result_size = sizeof(double);
+        break;
+      default:
+        return;
+      }
 
-  /*     // Only bother instrumenting operations that we care about and */
-  /*     // can do something useful with. */
-  /*     switch (expr->Iex.Qop.details->op){ */
-  /*       // Add all supported quadnary ops to this list */
-  /*     case Iop_MAddF32: */
-  /*     case Iop_MSubF32: */
-  /*     case Iop_MAddF64: */
-  /*     case Iop_MSubF64: */
-  /*     case Iop_MAddF64r32: */
-  /*     case Iop_MSubF64r32: */
-  /*       // Allocate and partially setup the argument structure */
-  /*       opInfo = mkOp_Info(4, expr->Iex.Qop.details->op, opAddr, */
-  /*                          getPlainOpname(expr->Iex.Qop.details->op), */
-  /*                          getOpSymbol(expr->Iex.Qop.details->op)); */
+      // Only bother instrumenting operations that we care about and
+      // can do something useful with.
+      switch (expr->Iex.Qop.details->op){
+        // Add all supported quadnary ops to this list
+      case Iop_MAddF32:
+      case Iop_MSubF32:
+      case Iop_MAddF64:
+      case Iop_MSubF64:
+      case Iop_MAddF64r32:
+      case Iop_MSubF64r32:
+        // Allocate and partially setup the argument structure
+        opInfo = mkOp_Info(4, expr->Iex.Qop.details->op, opAddr,
+                           getPlainOpname(expr->Iex.Qop.details->op),
+                           getOpSymbol(expr->Iex.Qop.details->op));
 
-  /*       // Populate the values we know at instrument time now. */
-  /*       opInfo->op = expr->Iex.Qop.details->op; */
-  /*       opInfo->args.qargs.arg1_tmp = */
-  /*         getArgTmp(expr->Iex.Qop.details->arg1, sb); */
-  /*       opInfo->args.qargs.arg2_tmp = */
-  /*         getArgTmp(expr->Iex.Qop.details->arg2, sb); */
-  /*       opInfo->args.qargs.arg3_tmp = */
-  /*         getArgTmp(expr->Iex.Qop.details->arg3, sb); */
-  /*       opInfo->args.qargs.arg4_tmp = */
-  /*         getArgTmp(expr->Iex.Qop.details->arg4, sb); */
-  /*       opInfo->dest_tmp = offset; */
+        // Populate the values we know at instrument time now.
+        opInfo->op = expr->Iex.Qop.details->op;
+        opInfo->args.qargs.arg1_tmp =
+          getArgTmp(expr->Iex.Qop.details->arg1, sb);
+        opInfo->args.qargs.arg2_tmp =
+          getArgTmp(expr->Iex.Qop.details->arg2, sb);
+        opInfo->args.qargs.arg3_tmp =
+          getArgTmp(expr->Iex.Qop.details->arg3, sb);
+        opInfo->args.qargs.arg4_tmp =
+          getArgTmp(expr->Iex.Qop.details->arg4, sb);
+        opInfo->dest_tmp = offset;
 
-  /*       // Allocate the space for the values we won't know until */
-  /*       // runtime, but know their size now. */
-  /*       ALLOC(opInfo->args.qargs.arg1_value, */
-  /*             "hg.arg_alloc", 1, arg_size); */
-  /*       ALLOC(opInfo->args.qargs.arg2_value, */
-  /*             "hg.arg_alloc", 1, arg_size); */
-  /*       ALLOC(opInfo->args.qargs.arg3_value, */
-  /*             "hg.arg_alloc", 1, arg_size); */
-  /*       ALLOC(opInfo->args.qargs.arg4_value, */
-  /*             "hg.arg_alloc", 1, arg_size); */
-  /*       ALLOC(opInfo->dest_value, */
-  /*             "hg.arg_alloc", 1, result_size); */
+        // Allocate the space for the values we won't know until
+        // runtime, but know their size now.
+        ALLOC(opInfo->args.qargs.arg1_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.qargs.arg2_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.qargs.arg3_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->args.qargs.arg4_value,
+              "hg.arg_alloc", 1, arg_size);
+        ALLOC(opInfo->dest_value,
+              "hg.arg_alloc", 1, result_size);
 
-  /*       // Add statements to populate the values we don't know until */
-  /*       // runtime. */
-  /*       addStore(sb, expr->Iex.Qop.details->arg1, */
-  /*                opInfo->args.qargs.arg1_value); */
-  /*       addStore(sb, expr->Iex.Qop.details->arg2, */
-  /*                opInfo->args.qargs.arg2_value); */
-  /*       addStore(sb, expr->Iex.Qop.details->arg3, */
-  /*                opInfo->args.qargs.arg3_value); */
-  /*       addStore(sb, expr->Iex.Qop.details->arg3, */
-  /*                opInfo->args.qargs.arg4_value); */
-  /*       addStore(sb, IRExpr_RdTmp(offset), */
-  /*                opInfo->dest_value); */
+        // Add statements to populate the values we don't know until
+        // runtime.
+        addStore(sb, expr->Iex.Qop.details->arg1,
+                 opInfo->args.qargs.arg1_value);
+        addStore(sb, expr->Iex.Qop.details->arg2,
+                 opInfo->args.qargs.arg2_value);
+        addStore(sb, expr->Iex.Qop.details->arg3,
+                 opInfo->args.qargs.arg3_value);
+        addStore(sb, expr->Iex.Qop.details->arg3,
+                 opInfo->args.qargs.arg4_value);
+        addStore(sb, IRExpr_RdTmp(offset),
+                 opInfo->dest_value);
 
-  /*       // Finally, add the statement to call the shadow op procedure. */
-  /*       executeShadowOp = */
-  /*         unsafeIRDirty_0_N(1, */
-  /*                           "executeQuadnaryShadowOp", */
-  /*                           VG_(fnptr_to_fnentry)(&executeQuadnaryShadowOp), */
-  /*                           mkIRExprVec_1(mkU64((uintptr_t)opInfo))); */
-  /*       addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp)); */
-  /*       break; */
-  /*     default: */
-  /*       break; */
-  /*     } */
-  /*     break; */
-  /*   } */
+        // Finally, add the statement to call the shadow op procedure.
+        executeShadowOp =
+          unsafeIRDirty_0_N(1,
+                            "executeQuadnaryShadowOp",
+                            VG_(fnptr_to_fnentry)(&executeQuadnaryShadowOp),
+                            mkIRExprVec_1(mkU64((uintptr_t)opInfo)));
+        addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+        break;
+      default:
+        break;
+      }
+      break;
+    }
   default:
-    /* VG_(dmsg)("BAD THINGS!!!!\n"); */
+    VG_(dmsg)("BAD THINGS!!!!\n");
     break;
   }
 }

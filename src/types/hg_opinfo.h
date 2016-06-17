@@ -55,6 +55,13 @@ struct _LoadG_Info {
   IRType dest_type;
 };
 
+struct _CpShadow_Info {
+  UWord src_idx;
+  UWord dest_idx;
+  Addr instr_addr;
+  IRType type;
+};
+
 struct _OpDebug_Info {
   // The address of the operation in the binary
   Addr op_addr;

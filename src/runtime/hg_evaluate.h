@@ -47,6 +47,6 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal, Op_Info* opinfo);
 // array of whatever datatype bytestype indicates, and then index into
 // it with el_index to get the actual floating point value that we'll
 // test against the shadow value.
-void evaluateOpError_helper(ShadowValue* shadowVal, UWord* valbytes, LocType bytestype, int el_index, Op_Info* opinfo);
+void evaluateOpError_helper(ShadowValue* shadowVal, LocType bytestype, int el_index, Op_Info* opinfo);
 
 #endif

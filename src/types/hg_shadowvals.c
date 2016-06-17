@@ -58,19 +58,39 @@ ShadowLocation* mkShadowLocation_bare(LocType type){
 
 void freeSL(ShadowLocation* sl){
   for (int i = 0; i < capacity(sl->type); ++i)
-    disownSV(sl->values[i]);
-  free(sl);
+    if (sl->values[i] != NULL)
+      disownSV(sl->values[i]);
+  VG_(free)(sl);
 }
 
 void copySL(ShadowLocation* src, ShadowLocation** dest){
   if (src != NULL){
-    for (int i = 0; i < capacity(sl->type); ++i)
-      (sl->values[i]->ref_count) ++;
+    for (int i = 0; i < capacity(src->type); ++i)
+      (src->values[i]->ref_count) ++;
   }
   else if ((*dest) != NULL){
     freeSL(*dest);
   }
   (*dest) = src;
+}
+
+void printShadowLoc(ShadowLocation* sl){
+  VG_(printf)("(");
+  for (SizeT i = 0; i < capacity(sl->type); ++i){
+    if (sl->values[i] == NULL)
+      VG_(printf)("None");
+    else {
+      mpfr_exp_t shadowValexpt;
+      char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
+                                        sl->values[i]->value, MPFR_RNDN);
+      VG_(printf)("%c.%se%ld", shadowValstr[0], shadowValstr + 1, shadowValexpt);
+      mpfr_free_str(shadowValstr);
+    }
+    if (i < capacity(sl->type) - 1){
+      VG_(printf)(", ");
+    }
+  }
+  VG_(printf)(")");
 }
 
 SizeT capacity(LocType bytestype){
@@ -88,8 +108,10 @@ SizeT capacity(LocType bytestype){
     return 4;
   case Lt_Floatx8:
     return 8;
+  default:
+    VG_(dmsg)("Bad loc type.\n");
+    return 0;
   }
-  return 0;
 }
 SizeT el_size(LocType bytestype){
   switch(bytestype){
@@ -113,9 +135,10 @@ SizeT el_size(LocType bytestype){
 ShadowValue* mkShadowValue(void){
   ShadowValue* result;
   ALLOC(result, "hg.shadow_val", 1, sizeof(ShadowValue));
-  ALLOC(result.ast, "hg.shadow_ast", 1, sizeof(ValueASTNode));
-  mpfr_init2(result.value, precision);
-  result.ref_count = 1;
+  ALLOC(result->ast, "hg.shadow_ast", 1, sizeof(ValueASTNode));
+  mpfr_init2(result->value, precision);
+  result->ref_count = 1;
+  return result;
 }
 
 void copySV(ShadowValue* src, ShadowValue** dest){
@@ -132,6 +155,9 @@ void disownSV(ShadowValue* sv){
   if (sv->ref_count < 1){
     mpfr_clear(sv->value);
     cleanupValueAST(sv);
-    free(sv);
+    VG_(free)(sv);
   }
+}
+void addRef(ShadowValue* val){
+  (val->ref_count)++;
 }
