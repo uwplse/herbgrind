@@ -380,8 +380,8 @@ ShadowLocation* getLoc__(Addr index, ShadowValue* (*getter)(Addr index), LocType
   else return result;
 }
 
-void setSavedArg(Int index, ShadowValue* newLocation){
-  savedArgs[index] = newLocation;
+void setSavedArg(Int index, ShadowValue* newValue){
+  copySV(newValue, &savedArgs[index]);
 }
 
 ShadowValue* getSavedArg(Int index){
