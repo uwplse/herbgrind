@@ -100,7 +100,7 @@ void printMPFRVal(mpfr_t val){
   mpfr_exp_t shadowValexpt;
   char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
                                     val, MPFR_RNDN);
-  VG_(printf)("%c.%se%ld", shadowValstr[0], shadowValstr + 1, shadowValexpt);
+  VG_(printf)("%c.%se%ld", shadowValstr[0], shadowValstr + 1, shadowValexpt - 1);
   mpfr_free_str(shadowValstr);
 }
 
