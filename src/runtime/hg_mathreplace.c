@@ -377,7 +377,7 @@ ShadowValue* getShadowValMem(Addr addr, double float_arg,
   }
 
   if (print_moves)
-    VG_(printf)("Creating new shadow location at addr %lx\n", addr);
+    VG_(printf)("Creating new shadow location at addr %p\n", (void*)(uintptr_t)addr);
 
   val = mkShadowValue();
   setMem(addr, val);

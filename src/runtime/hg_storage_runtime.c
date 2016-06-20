@@ -28,6 +28,8 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
+#include <stdint.h>
+
 // The prototypes for the functions we'll implement here.
 #include "hg_storage_runtime.h"
 // Some helper macros
@@ -139,8 +141,8 @@ VG_REGPARM(1) void copyShadowMemtoTmp(CpShadow_Info* info){
   if (loc != NULL && print_moves){
     VG_(printf)("Copying value ");
     printShadowLoc(loc);
-    VG_(printf)(" from address %lx to temp %lu\n",
-                info->src_idx, info->dest_idx);
+    VG_(printf)(" from address %p to temp %lu\n",
+                (void*)(uintptr_t)info->src_idx, info->dest_idx);
   }
 }
 
@@ -182,8 +184,8 @@ VG_REGPARM(1) void copyShadowTmptoMem(CpShadow_Info* info){
   if (getTemp(info->src_idx) != NULL && print_moves){
     VG_(printf)("Copying value ");
     printShadowLoc(getTemp(info->src_idx));
-    VG_(printf)(" from temp %lu to address %lx\n",
-                info->src_idx, info->dest_idx);
+    VG_(printf)(" from temp %lu to address %p\n",
+                info->src_idx, (void*)(uintptr_t)info->dest_idx);
   }
 }
 
