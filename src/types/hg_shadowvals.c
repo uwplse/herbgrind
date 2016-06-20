@@ -75,22 +75,33 @@ void copySL(ShadowLocation* src, ShadowLocation** dest){
 }
 
 void printShadowLoc(ShadowLocation* sl){
-  VG_(printf)("(");
-  for (SizeT i = 0; i < capacity(sl->type); ++i){
-    if (sl->values[i] == NULL)
-      VG_(printf)("None");
-    else {
-      mpfr_exp_t shadowValexpt;
-      char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
-                                        sl->values[i]->value, MPFR_RNDN);
-      VG_(printf)("%c.%se%ld", shadowValstr[0], shadowValstr + 1, shadowValexpt);
-      mpfr_free_str(shadowValstr);
+  if (sl == NULL)
+    VG_(printf)("NULL");
+  else {
+    VG_(printf)("[");
+    for (SizeT i = 0; i < capacity(sl->type); ++i){
+      printShadowVal(sl->values[i]);
+      if (i < capacity(sl->type) - 1){
+        VG_(printf)(", ");
+      }
     }
-    if (i < capacity(sl->type) - 1){
-      VG_(printf)(", ");
-    }
+    VG_(printf)("]");
   }
-  VG_(printf)(")");
+}
+
+void printShadowVal(ShadowValue* sv){
+  if (sv == NULL)
+    VG_(printf)("None");
+  else
+    printMPFRVal(sv->value);
+}
+
+void printMPFRVal(mpfr_t val){
+  mpfr_exp_t shadowValexpt;
+  char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
+                                    val, MPFR_RNDN);
+  VG_(printf)("%c.%se%ld", shadowValstr[0], shadowValstr + 1, shadowValexpt);
+  mpfr_free_str(shadowValstr);
 }
 
 SizeT capacity(LocType bytestype){

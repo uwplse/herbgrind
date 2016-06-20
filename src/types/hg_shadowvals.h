@@ -114,7 +114,12 @@ ShadowLocation* mkShadowLocation_bare(LocType type);
 void freeSL(ShadowLocation* sl);
 // Copy a shadow location from one area to another
 void copySL(ShadowLocation* src, ShadowLocation** dest);
-// Print out a shadowlocation, not padded with newlines or spaces.
+
+// Print out a potentially null shadowlocation, not padded with newlines or spaces.
 void printShadowLoc(ShadowLocation* sl);
+// Print out a potentially null shadow value, not padded with newlines or spaces.
+void printShadowVal(ShadowValue* sv);
+// Print out an MPFR value, not padded with newlines or spaces.
+void printMPFRVal(mpfr_t val);
 
 #endif
