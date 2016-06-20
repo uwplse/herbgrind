@@ -11,3 +11,4 @@ bench/*.gh
 bench/herbie-crosseval/*.gh
 bench/herbie-crosseval/*.c
 !bench/herbie-crosseval/driver.c
+vgcore*
