@@ -164,6 +164,8 @@ void copySV(ShadowValue* src, ShadowValue** dest){
 void disownSV(ShadowValue* sv){
   (sv->ref_count) --;
   if (sv->ref_count < 1){
+    if (print_moves)
+      VG_(printf)("Cleaning up shadow value %p\n", sv);
     mpfr_clear(sv->value);
     cleanupValueAST(sv);
     VG_(free)(sv);
