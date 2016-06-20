@@ -344,6 +344,11 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
   }
 
   // Put the resulting location in the space for the dest temp.
+  if (print_moves && destLocation != NULL){
+    VG_(printf)("Putting shadow location ");
+    printShadowLoc(destLocation);
+    VG_(printf)(" in temp %lu.\n", opInfo->dest_tmp);
+  }
   setTemp(opInfo->dest_tmp, destLocation);
 
 }
@@ -852,6 +857,11 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
     return;
   }
   // Put the resulting location in the space for the dest temp.
+  if (print_moves && destLocation != NULL){
+    VG_(printf)("Putting shadow location ");
+    printShadowLoc(destLocation);
+    VG_(printf)(" in temp %lu.\n", opInfo->dest_tmp);
+  }
   setTemp(opInfo->dest_tmp, destLocation);
 
 }
@@ -1041,6 +1051,11 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
   }
 
   // Put the resulting location in the space for the dest temp.
+  if (print_moves && destLocation != NULL){
+    VG_(printf)("Putting shadow location ");
+    printShadowLoc(destLocation);
+    VG_(printf)(" in temp %lu.\n", opInfo->dest_tmp);
+  }
   setTemp(opInfo->dest_tmp, destLocation);
 }
 VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
@@ -1146,6 +1161,11 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
                          opInfo);
 
   // Put the resulting location in the space for the dest temp.
+  if (print_moves && destLocation != NULL){
+    VG_(printf)("Putting shadow location ");
+    printShadowLoc(destLocation);
+    VG_(printf)(" in temp %lu.\n", opInfo->dest_tmp);
+  }
   setTemp(opInfo->dest_tmp, destLocation);
 }
 

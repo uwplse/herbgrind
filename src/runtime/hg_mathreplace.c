@@ -349,6 +349,15 @@ void performOp(OpType op, double* result, double* args){
   // And finally, evaluate the error of the operation.
   evaluateOpError(res_shadow, *result, entry->info);
 
+  // If we're printing debug info about where values are flowing, let
+  // the user know that we're putting the result of this operation in
+  // memory.
+  if (print_moves && res_shadow != NULL){
+    VG_(printf)("Putting shadow location ");
+    printShadowVal(res_shadow);
+    VG_(printf)(" in memory address %p.\n", result);
+  }
+
   // And free up the arrays we malloc for variable number of args.
   for (int i = 0; i < nargs; ++i){
     mpfr_clear(args_m[i]);

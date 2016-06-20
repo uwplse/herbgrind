@@ -237,11 +237,6 @@ void cleanupStorage(void){
 }
 
 void setTemp(Addr index, ShadowLocation* newLocation){
-  if (print_moves && newLocation != NULL){
-    VG_(printf)("Putting shadow location ");
-    printShadowLoc(newLocation);
-    VG_(printf)(" in temp %lu.\n", index);
-  }
   if (index > maxTempUsed) maxTempUsed = index;
   if (localTemps[index] != NULL){
     freeSL(localTemps[index]);
