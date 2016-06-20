@@ -53,7 +53,6 @@ void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr){
   case Ist_AbiHint:
     break;
   case Ist_Put:
-    break;
     // Here we'll want to instrument moving Shadow values into
     // thread state. In flattened IR, these shadow values should
     // always come from temporaries.
@@ -89,7 +88,6 @@ That doesn't seem flattened...\n");
     }
     break;
   case Ist_PutI:
-    break;
     // This will look a lot like above, but we have to deal with not
     // knowing at compile time which piece of thread state we're
     // putting into. This will probably involve putting more burden
