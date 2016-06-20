@@ -213,16 +213,9 @@ void performOp(OpType op, double* result, double* args){
       GET_UNARY_OPS_ROUND_INFO(op)
 
       if (print_inputs){
-        char *shadowArg1Str;
-        mpfr_exp_t shadowArg1Expt;
-
-        shadowArg1Str = mpfr_get_str(NULL, &shadowArg1Expt, 10, longprint_len,
-                                     arg_shadows[0]->value, MPFR_RNDN);
-        VG_(printf)("Shadow arg: %se%ld\n",
-                    shadowArg1Str, shadowArg1Expt);
-        mpfr_free_str(shadowArg1Str);
-
-        VG_(printf)("Computed arg: %f\n", args[0]);
+        VG_(printf)("Shadow arg: ");
+        printShadowVal(arg_shadows[0]);
+        VG_(printf)("\nComputed arg: %f\n", args[0]);
       }
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0], MPFR_RNDN);
@@ -370,12 +363,12 @@ ShadowValue* getShadowValMem(Addr addr, double float_arg,
   ShadowValue* val = getMem(addr);
   if (val != NULL) return val;
 
-  if (print_moves)
-    VG_(printf)("Creating new shadow location at addr %lx\n", addr);
-
   if (getSavedArg(argIndex) != NULL){
     return getSavedArg(argIndex);
   }
+
+  if (print_moves)
+    VG_(printf)("Creating new shadow location at addr %lx\n", addr);
 
   val = mkShadowValue();
   setMem(addr, val);

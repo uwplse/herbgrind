@@ -1188,7 +1188,6 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type,
   for(int i = 0; i < capacity(type); ++i){
     initValueLeafAST(location->values[i], src_loc);
   }
-  setTemp(tmp_num, location);
   switch(type){
     // Intialize the shadow values from the float_vals we were
     // given.
@@ -1222,5 +1221,6 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type,
   default:
     location = NULL;
   }
+  setTemp(tmp_num, location);
   return location;
 }
