@@ -31,9 +31,10 @@ void initValueBranchAST(ShadowValue* val, Op_Info* opinfo,
   va_list args;
 
   va_start(args, firstarg);
-  val->ast->args[0] = firstarg->ast;
+  ShadowValue* newReference;
+  copySV(firstarg, &newReference);
+  val->ast->args[0] = newReference->ast;
   for(int i = 1; i < nargs; ++i){
-    ShadowValue* newReference;
     copySV(va_arg(args, ShadowValue*), &newReference);
     val->ast->args[i] = newReference->ast;
   }
