@@ -149,6 +149,8 @@ ShadowValue* mkShadowValue(void){
   ALLOC(result->ast, "hg.shadow_ast", 1, sizeof(ValueASTNode));
   mpfr_init2(result->value, precision);
   result->ref_count = 1;
+  if (print_moves)
+    VG_(printf)("Making shadow value %p\n", result);
   return result;
 }
 

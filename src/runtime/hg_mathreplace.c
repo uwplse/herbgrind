@@ -356,7 +356,7 @@ void performOp(OpType op, double* result, double* args){
   // the user know that we're putting the result of this operation in
   // memory.
   if (print_moves && res_shadow != NULL){
-    VG_(printf)("Putting shadow location ");
+    VG_(printf)("Putting shadow value ");
     printShadowVal(res_shadow);
     VG_(printf)(" in memory address %p.\n", result);
   }
