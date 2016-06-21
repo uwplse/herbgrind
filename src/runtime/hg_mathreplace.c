@@ -327,6 +327,9 @@ void performOp(OpType op, double* result, double* args){
   // were given to the result memory.
   *result = mpfr_get_d(res, MPFR_RNDN);
   setMem((uintptr_t)result, res_shadow);
+  // Disown a reference for this since it gets one when it starts up
+  // (to keep it alive), and putting it in memory adds another.
+  disownSV(res_shadow);
 
   // Set up the ast record of this operation.
   switch(nargs){

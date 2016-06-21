@@ -155,7 +155,8 @@ ShadowValue* mkShadowValue(void){
 void copySV(ShadowValue* src, ShadowValue** dest){
   if (src != NULL){
     (src->ref_count) ++;
-  } else if ((*dest) != NULL) {
+  }
+  if ((*dest) != NULL) {
     disownSV(*dest);
   }
   (*dest) = src;
