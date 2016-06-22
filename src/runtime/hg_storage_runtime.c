@@ -236,6 +236,8 @@ void cleanupStorage(void){
     disownSV(next->sv);
   }
   VG_(HT_destruct)(globalMemory, VG_(free));
+  for (int i = 0; i < MAX_LIBM_ARGS; ++i)
+    setSavedArg(i, NULL);
 }
 
 void setTemp(Addr index, ShadowLocation* newLocation){
