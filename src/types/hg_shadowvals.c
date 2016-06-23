@@ -64,14 +64,19 @@ void freeSL(ShadowLocation* sl){
 }
 
 void copySL(ShadowLocation* src, ShadowLocation** dest){
-  if (src != NULL){
-    for (int i = 0; i < capacity(src->type); ++i)
-      (src->values[i]->ref_count) ++;
-  }
-  else if ((*dest) != NULL){
+  if (src == (*dest)) return;
+  if ((*dest) != NULL){
     freeSL(*dest);
   }
-  (*dest) = src;
+  if (src == NULL){
+    (*dest) = NULL;
+  } else {
+    (*dest)->type = src->type;
+    ALLOC((*dest)->values, "hg.shadow_values", capacity(src->type), sizeof(ShadowValue*));
+    for (int i = 0; i < capacity(src->type); ++i){
+      copySV(src->values[i], &((*dest)->values[i]));
+    }
+  }
 }
 
 void printShadowLoc(ShadowLocation* sl){
@@ -156,7 +161,7 @@ ShadowValue* mkShadowValue(void){
 
 void copySV(ShadowValue* src, ShadowValue** dest){
   if (src != NULL){
-    (src->ref_count) ++;
+    addRef(src);
   }
   if ((*dest) != NULL) {
     disownSV(*dest);
