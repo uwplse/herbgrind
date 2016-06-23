@@ -243,6 +243,8 @@ void cleanupStorage(void){
 void setTemp(Addr index, ShadowLocation* newLocation){
   if (index > maxTempUsed) maxTempUsed = index;
   if (localTemps[index] != NULL){
+    if (print_moves)
+      VG_(printf)("Overwriting temp at %lu\n", index);
     freeSL(localTemps[index]);
   }
   localTemps[index] = newLocation;
@@ -261,6 +263,8 @@ void setMem(Addr index, ShadowValue* newValue){
     disownSV(existingEntry->sv);
     VG_(HT_remove)(globalMemory, index);
     VG_(free)(existingEntry);
+    if (print_moves)
+      VG_(printf)("Overwriting memory shadow at %p\n", (void*)(uintptr_t)index);
   }
   // Now, add our new entry.
   if (newValue != NULL){
@@ -285,6 +289,8 @@ ShadowLocation* getLocMem(Addr index, LocType type){
 }
 
 void setTS(Addr index, ShadowValue* val){
+  if (threadRegisters[VG_(get_running_tid)()][index] != NULL && print_moves)
+    VG_(printf)("Overwriting thread state at %lu\n", index);
   copySV(val, &threadRegisters[VG_(get_running_tid)()][index]);
 }
 
