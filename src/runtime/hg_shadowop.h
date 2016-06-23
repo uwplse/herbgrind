@@ -44,11 +44,14 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo);
 VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo);
 VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo);
 
+// Get's the current shadow location in the given temporary, or makes
+// a new bare one with the given type if it doesn't exist.
+ShadowLocation* getShadowLocation(UWord tmp_num, LocType type);
 // Get a shadow value for the given temporary. If the temporary does
 // not have a shadow value, create one with the given type using the
 // given bytes to initialize the value.
-ShadowLocation* getShadowLocation(UWord tmp_num, LocType type,
-                                  UWord* float_vals, Op_Info** arg_src);
+ShadowValue* getShadowValue(ShadowLocation* loc, UWord index,
+                            UWord* loc_bytes, Op_Info** src_loc);
 // Convert IR rounding mode codes to MPFR rounding mode codes.
 mpfr_rnd_t roundmodeIRtoMPFR(IRRoundingMode round);
 #endif //_HG_SHADOWOP

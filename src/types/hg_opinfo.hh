@@ -34,6 +34,7 @@
 // You probably don't want to include this outside of the .h files in
 // this directory.
 typedef struct _LoadG_Info LoadG_Info;
+typedef struct _CpShadow_Info CpShadow_Info;
 typedef struct _OpDebug_Info OpDebug_Info;
 typedef struct _Eval_Info Eval_Info;
 typedef struct _Unary_Args Unary_Args;

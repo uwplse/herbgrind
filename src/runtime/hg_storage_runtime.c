@@ -28,6 +28,8 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
+#include <stdint.h>
+
 // The prototypes for the functions we'll implement here.
 #include "hg_storage_runtime.h"
 // Some helper macros
@@ -71,75 +73,76 @@
 static ShadowLocation* localTemps[MAX_TEMPS];
 static size_t maxTempUsed = 0;
 static VgHashTable* globalMemory = NULL;
-static ShadowLocation* threadRegisters[MAX_THREADS][MAX_REGISTERS];
+static ShadowValue* threadRegisters[MAX_THREADS][MAX_REGISTERS];
 
 // fma and variants are the only libm function I can think of that
 // goes over two (float) args. If you change this, you'll also want to
 // change the code in setTS.
 #define MAX_LIBM_ARGS 3
-static ShadowLocation* savedArgs[MAX_LIBM_ARGS];
+static ShadowValue* savedArgs[MAX_LIBM_ARGS];
 
 // Copy a shadow value from a temporary to a temporary.
-VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp){
-  if (!running && localTemps[src_tmp] != NULL) return;
-  if (dest_tmp > maxTempUsed) maxTempUsed = dest_tmp;
-  copySL(localTemps[src_tmp], &localTemps[dest_tmp]);
+VG_REGPARM(1) void copyShadowTmptoTmp(CpShadow_Info* info){
+  if (!running && getTemp(info->src_idx) != NULL) return;
+  return;
+  if (info->dest_idx > maxTempUsed) maxTempUsed = info->dest_idx;
+  copySL(getTemp(info->src_idx), &localTemps[info->dest_idx]);
 
-  if (localTemps[src_tmp] != NULL && print_moves){
-    mpfr_exp_t shadowValexpt;
-    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
-                                      localTemps[src_tmp]->values[0].value, MPFR_RNDN);
-    VG_(printf)("Copying value %se%ld from temp %lu to temp %lu\n",
-                shadowValstr, shadowValexpt, src_tmp, dest_tmp);
-    mpfr_free_str(shadowValstr);
+  if (getTemp(info->src_idx) != NULL &&
+      print_moves){
+    VG_(printf)("Copying value ");
+    printShadowLoc(getTemp(info->src_idx));
+    VG_(printf)(" from temp %lu to temp %lu\n",
+                info->src_idx, info->dest_idx);
   }
 }
 
 // Copy a shadow value from a temporary to somewhere in the current
 // threads state.
-VG_REGPARM(3) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg, Addr instr_addr){
-  if (!running && localTemps[src_tmp] != NULL) return;
-  setTS(dest_reg, localTemps[src_tmp], instr_addr);
+VG_REGPARM(1) void copyShadowTmptoTS(CpShadow_Info* info){
+  if (!running && getTemp(info->src_idx) != NULL) return;
+  setLocTS(info->dest_idx, getTemp(info->src_idx),
+           IRTypetoLocType(info->type), info->instr_addr);
 
-  if (localTemps[src_tmp] != NULL && print_moves){
-    mpfr_exp_t shadowValexpt;
-    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
-                                      localTemps[src_tmp]->values[0].value, MPFR_RNDN);
-    VG_(printf)("Copying value %se%ld from temp %lu to thread state %lu\n",
-                shadowValstr, shadowValexpt, src_tmp, dest_reg);
-    mpfr_free_str(shadowValstr);
+  if (getTemp(info->src_idx) != NULL &&
+      print_moves){
+    VG_(printf)("Copying value ");
+    printShadowLoc(getTemp(info->src_idx));
+    VG_(printf)(" from temp %lu to thread state %lu\n",
+                info->src_idx, info->dest_idx);
   }
 }
 
 // Copy a shadow value from somewhere in the thread state to a temporary.
-VG_REGPARM(3) void copyShadowTStoTmp(UWord src_reg, IRType dest_type, UWord dest_tmp){
-  if (!running && getTS(src_reg) != NULL) return;
-  if (dest_tmp > maxTempUsed) maxTempUsed = dest_tmp;
-  copyShadow___toTmp(src_reg, dest_type, dest_tmp, getTS);
+VG_REGPARM(1) void copyShadowTStoTmp(CpShadow_Info* info){
+  ShadowLocation* loc;
+  if (!running && getTS(info->src_idx) != NULL) return;
+  if (info->dest_idx > maxTempUsed) maxTempUsed = info->dest_idx;
+  loc = getLocTS(info->src_idx, IRTypetoLocType(info->type));
+  setTemp(info->dest_idx, loc);
 
-  if (getTS(src_reg) != NULL && print_moves){
-    mpfr_exp_t shadowValexpt;
-    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
-                                      getTS(src_reg)->values[0].value, MPFR_RNDN);
-    VG_(printf)("Copying value %se%ld from thread state %lu to temp %lu\n",
-                shadowValstr, shadowValexpt, src_reg, dest_tmp);
-    mpfr_free_str(shadowValstr);
+  if (loc != NULL &&
+      print_moves){
+    VG_(printf)("Copying value ");
+    printShadowLoc(loc);
+    VG_(printf)(" from thread state %lu to temp %lu\n",
+                info->src_idx, info->dest_idx);
   }
 }
 
 // Copy a shadow value from memory to a temporary
-VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType dest_type, UWord dest_tmp){
-  if (!running && getMem(src_mem) != NULL) return;
-  if (dest_tmp > maxTempUsed) maxTempUsed = dest_tmp;
-  copyShadow___toTmp(src_mem, dest_type, dest_tmp, getMem);
+VG_REGPARM(1) void copyShadowMemtoTmp(CpShadow_Info* info){
+  ShadowLocation* loc;
+  if (!running && getMem(info->src_idx) != NULL) return;
+  if (info->dest_idx > maxTempUsed) maxTempUsed = info->dest_idx;
+  loc = getLocMem(info->src_idx, IRTypetoLocType(info->type));
+  setTemp(info->dest_idx, loc);
 
-  if (getMem(src_mem) != NULL && print_moves){
-    mpfr_exp_t shadowValexpt;
-    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
-                                      getMem(src_mem)->values[0].value, MPFR_RNDN);
-    VG_(printf)("Copying value %se%ld from address %lx to temp %lu\n",
-                shadowValstr, shadowValexpt, src_mem, dest_tmp);
-    mpfr_free_str(shadowValstr);
+  if (loc != NULL && print_moves){
+    VG_(printf)("Copying value ");
+    printShadowLoc(loc);
+    VG_(printf)(" from address %p to temp %lu\n",
+                (void*)(uintptr_t)info->src_idx, info->dest_idx);
   }
 }
 
@@ -147,68 +150,57 @@ VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType dest_type, UWord dest
 // evaluates to true. Otherwise, copy the shadow value from another
 // temporary, "alt_tmp".
 VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
-  ShadowLocation* src = NULL;
   if (info->dest_tmp > maxTempUsed) maxTempUsed = info->dest_tmp;
   if (info->cond) {
     if (!running && getMem(info->src_mem) != NULL) return;
-    copyShadow___toTmp(info->src_mem, info->dest_type, info->dest_tmp, getMem);
+    ShadowLocation* loc;
+    loc = getLocMem(info->src_mem, IRTypetoLocType(info->dest_type));
+    setTemp(info->dest_tmp, loc);
 
     if (getMem(info->src_mem) != NULL && print_moves){
-      mpfr_exp_t shadowValexpt;
-      char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
-                                        getMem(info->src_mem)->values[0].value,
-                                        MPFR_RNDN);
-      VG_(printf)("Copying value %se%ld from address %lx to temp %lu\n",
-                  shadowValstr, shadowValexpt, info->src_mem, info->dest_tmp);
-      mpfr_free_str(shadowValstr);
+      VG_(printf)("Copying value ");
+      printShadowLoc(loc);
+      VG_(printf)(" from address %lx to temp %lu\n",
+                  info->src_mem, info->dest_tmp);
     }
   } else {
-    if (!running && localTemps[info->alt_tmp] != NULL) return;
-    src = localTemps[info->alt_tmp];
+    if (!running && getTemp(info->alt_tmp) != NULL) return;
+    copySL(getTemp(info->alt_tmp), &localTemps[info->dest_tmp]);
 
-    if (src != NULL && print_moves){
-      mpfr_exp_t shadowValexpt;
-      char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
-                                        localTemps[info->alt_tmp]->values[0].value,
-                                        MPFR_RNDN);
-      VG_(printf)("Copying value %se%ld from temp %lu to temp %lu\n",
-                  shadowValstr, shadowValexpt, info->alt_tmp, info->dest_tmp);
-      mpfr_free_str(shadowValstr);
+    if (getTemp(info->alt_tmp) != NULL && print_moves){
+      VG_(printf)("Copying value ");
+      printShadowLoc(getTemp(info->alt_tmp));
+      VG_(printf)(" from temp %lu to temp %lu\n",
+                  info->alt_tmp, info->dest_tmp);
     }
   }
-  copySL(src, &localTemps[info->dest_tmp]);
 }
 
 // Copy a shadow value from a temporary to memory.
-VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem){
-  if (!running && getTemp(src_tmp) != NULL) return;
-  setMem(dest_mem, getTemp(src_tmp));
+VG_REGPARM(1) void copyShadowTmptoMem(CpShadow_Info* info){
+  if (!running && getTemp(info->src_idx) != NULL) return;
+  setLocMem(info->dest_idx, getTemp(info->src_idx), IRTypetoLocType(info->type));
 
-  if (getTemp(src_tmp) != NULL && print_moves){
-    mpfr_exp_t shadowValexpt;
-    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
-                                      localTemps[src_tmp]->values[0].value,
-                                      MPFR_RNDN);
-    VG_(printf)("Copying value %se%ld from temp %lu to address %lx\n",
-                shadowValstr, shadowValexpt, src_tmp, dest_mem);
-    mpfr_free_str(shadowValstr);
+  if (getTemp(info->src_idx) != NULL && print_moves){
+    VG_(printf)("Copying value ");
+    printShadowLoc(getTemp(info->src_idx));
+    VG_(printf)(" from temp %lu to address %p\n",
+                info->src_idx, (void*)(uintptr_t)info->dest_idx);
   }
 }
 
 // Copy a shadow value from a temporary to memory, only if cond
 // evaluates to true. Otherwise, do nothing.
-VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem){
-  if (!running && getTemp(src_tmp) != NULL) return;
-  if (cond) copyShadowTmptoMem(src_tmp, dest_mem);
+VG_REGPARM(2) void copyShadowTmptoMemG(UWord cond, CpShadow_Info* info){
+  if (!running && getTemp(info->src_idx) != NULL) return;
+  if (cond) copyShadowTmptoMem(info);
 
-  if (getTemp(src_tmp) != NULL && cond && print_moves){
-    mpfr_exp_t shadowValexpt;
-    char* shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len,
-                                      localTemps[src_tmp]->values[0].value,
-                                      MPFR_RNDN);
-    VG_(printf)("Copying value %se%ld from temp %lu to address %lx\n",
-                shadowValstr, shadowValexpt, src_tmp, dest_mem);
-    mpfr_free_str(shadowValstr);
+  if (getTemp(info->src_idx) != NULL &&
+      cond && print_moves){
+    VG_(printf)("Copying value ");
+    printShadowLoc(getTemp(info->src_idx));
+    VG_(printf)(" from temp %lu to address %lx\n",
+                info->src_idx, info->dest_idx);
   }
 }
 
@@ -224,7 +216,7 @@ VG_REGPARM(0) void cleanupBlock(void){
   // maxTempsUsed variable.
   for(size_t i = 0; i <= maxTempUsed; ++i){
     if (localTemps[i] != NULL){
-      disownSL(localTemps[i]);
+      freeSL(localTemps[i]);
       localTemps[i] = NULL;
     }
   }
@@ -235,55 +227,79 @@ void cleanupStorage(void){
   for (int i = 0; i < MAX_THREADS; ++i)
     for (int j = 0; j < MAX_REGISTERS; ++j)
       if (threadRegisters[i][j] != NULL){
-        disownSL(threadRegisters[i][j]);
+        disownSV(threadRegisters[i][j]);
         threadRegisters[i][j] = NULL;
       }
   // Clean up the memory shadowing table
   VG_(HT_ResetIter)(globalMemory);
-  for (ShadowLocation_ptr* next = VG_(HT_Next)(globalMemory); next != NULL; next = VG_(HT_Next)(globalMemory)){
-    disownSL(next->sl);
+  for (ShadowValue_ptr* next = VG_(HT_Next)(globalMemory); next != NULL; next = VG_(HT_Next)(globalMemory)){
+    disownSV(next->sv);
   }
+  VG_(HT_destruct)(globalMemory, VG_(free));
+  for (int i = 0; i < MAX_LIBM_ARGS; ++i)
+    setSavedArg(i, NULL);
 }
 
 void setTemp(Addr index, ShadowLocation* newLocation){
   if (index > maxTempUsed) maxTempUsed = index;
-  copySL(newLocation, &localTemps[index]);
+  if (localTemps[index] != NULL){
+    if (print_moves)
+      VG_(printf)("Overwriting temp at %lu\n", index);
+    freeSL(localTemps[index]);
+  }
+  localTemps[index] = newLocation;
 }
 
 ShadowLocation* getTemp(Addr index){
-  ShadowLocation* result = localTemps[index];
-  return result;
+  return localTemps[index];
 }
 
-void setMem(Addr index, ShadowLocation* newLocation){
-  ShadowLocation_ptr *newEntry, *existingEntry;
+void setMem(Addr index, ShadowValue* newValue){
+  ShadowValue_ptr *newEntry, *existingEntry;
   existingEntry = VG_(HT_lookup)(globalMemory, index);
-
   // If an entry already exists at that location, then we're going to
   // overwrite it, so clean it up properly.
   if (existingEntry != NULL){
-    disownSL(existingEntry->sl);
+    disownSV(existingEntry->sv);
     VG_(HT_remove)(globalMemory, index);
     VG_(free)(existingEntry);
+    if (print_moves)
+      VG_(printf)("Overwriting memory shadow at %p\n", (void*)(uintptr_t)index);
   }
   // Now, add our new entry.
-  if (newLocation != NULL){
-    ALLOC(newEntry, "hg.memoryentry.1", 1, sizeof(ShadowLocation_ptr));
-    copySL(newLocation, &(newEntry->sl));
+  if (newValue != NULL){
+    ALLOC(newEntry, "hg.memoryentry.1", 1, sizeof(ShadowValue_ptr));
+    copySV(newValue, &(newEntry->sv));
     newEntry->addr = index;
     VG_(HT_add_node)(globalMemory, newEntry);
   }
 }
 
-ShadowLocation* getMem(Addr index){
-  ShadowLocation_ptr* entry = VG_(HT_lookup)(globalMemory, index);
+ShadowValue* getMem(Addr index){
+  ShadowValue_ptr* entry = VG_(HT_lookup)(globalMemory, index);
   if (entry == NULL) return NULL;
-  return entry->sl;
+  return entry->sv;
 }
 
-void setTS(Addr index, ShadowLocation* newLocation, Addr instr_addr){
-  if (!running) return;
+void setLocMem(Addr index, ShadowLocation* newLocation, LocType move_type){
+  setLoc__(index, newLocation, move_type, setMem);
+}
+ShadowLocation* getLocMem(Addr index, LocType type){
+  return getLoc__(index, getMem, type);
+}
 
+void setTS(Addr index, ShadowValue* val){
+  if (threadRegisters[VG_(get_running_tid)()][index] != NULL && print_moves)
+    VG_(printf)("Overwriting thread state at %lu\n", index);
+  copySV(val, &threadRegisters[VG_(get_running_tid)()][index]);
+}
+
+ShadowValue* getTS(Addr index){
+  if (!running) return NULL;
+  return threadRegisters[VG_(get_running_tid)()][index];
+}
+
+void setLocTS(Addr index, ShadowLocation* newLocation, LocType move_type, Addr instr_addr){
   // Okay, so this is a weird bit of code, that fixes a very specific
   // problem. The problem is, the first time we hit a replaced
   // function call, we go through the linker to patch up the
@@ -337,22 +353,43 @@ void setTS(Addr index, ShadowLocation* newLocation, Addr instr_addr){
       // our saved arg register.
       setSavedArg(argIndex, threadRegisters[VG_(get_running_tid)()][index]);
     }
-    // Finally, actually do the overwrite.
-    copySL(NULL, &threadRegisters[VG_(get_running_tid)()][index]);
-  } else
-    copySL(newLocation, &threadRegisters[VG_(get_running_tid)()][index]);
+  }
+  // Finally, actually do the overwrite.
+  setLoc__(index, newLocation, move_type, setTS);
 }
 
-ShadowLocation* getTS(Addr index){
-  if (!running) return NULL;
-  return threadRegisters[VG_(get_running_tid)()][index];
+ShadowLocation* getLocTS(Addr index, LocType type){
+  return getLoc__(index, getTS, type);
 }
 
-void setSavedArg(Int index, ShadowLocation* newLocation){
-  savedArgs[index] = newLocation;
+void setLoc__(Addr index, ShadowLocation* newLoc, LocType move_type,
+              void (*setter)(Addr index, ShadowValue* val)){
+  for (SizeT i = 0; i < capacity(move_type); ++i){
+    ShadowValue* val;
+    if (newLoc != NULL)
+      val = newLoc->values[i];
+    else
+      val = NULL;
+    setter(index + el_size(move_type) * i, val);
+  }
+}
+ShadowLocation* getLoc__(Addr index, ShadowValue* (*getter)(Addr index), LocType type){
+  ShadowLocation* result = mkShadowLocation_bare(type);
+  Bool allNull = True;
+  for (SizeT i = 0; i < capacity(type); ++i){
+    copySV(getter(index + el_size(type) * i), &(result->values[i]));
+    if (result->values[i] != NULL)
+      allNull = False;
+  }
+  if (allNull) return NULL;
+  else return result;
 }
 
-ShadowLocation* getSavedArg(Int index){
+void setSavedArg(Int index, ShadowValue* newValue){
+  copySV(newValue, &savedArgs[index]);
+}
+
+ShadowValue* getSavedArg(Int index){
   return savedArgs[index];
 }
 
@@ -360,147 +397,31 @@ void initStorage(void){
   globalMemory = VG_(HT_construct)("memory_shadows");
 }
 
-// This needs a rewrite to actually support everything that could
-// happen without completely going crazy.
-void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp,
-                        ShadowLocation* (*get)(Addr idx)){
-  ShadowLocation* srcLoc = get(src_idx);
-  // If we didn't think this location held a float before, then we
-  // don't think that wherever we're assigning to does now.
-  if (srcLoc == NULL){
-    setTemp(dest_tmp, srcLoc);
-    return;
-  }
-  // Based on the type, we may have to pull only one of the shadow
-  // values out of a multiple-value location.
-  switch(dest_type){
+// This is super unsound. Let's find out if it's safe.
+LocType IRTypetoLocType(IRType ty){
+  switch(ty){
   case Ity_I32:
   case Ity_F32:
-    switch(srcLoc->type){
-    case Lt_Floatx8:
-    case Lt_Floatx4:
-    case Lt_Floatx2:
-      {
-        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
-        copySV(&srcLoc->values[0], &tmpLoc->values[0]);
-        localTemps[dest_tmp] = tmpLoc;
-      }
-      break;
-    case Lt_Float:
-      copySL(srcLoc, &localTemps[dest_tmp]);
-      break;
-    default:
-      VG_(dmsg)("We don't support that mixed size get!\n");
-      VG_(printf)("(we're trying to get a value of type: ");
-      ppIRType(dest_type);
-      VG_(printf)(", but the location has type %d)\n", srcLoc->type);
-      break;
-    }
-    break;
+    return Lt_Float;
   case Ity_I64:
   case Ity_F64:
-    switch(srcLoc->type){
-    case Lt_Doublex4:
-    case Lt_Doublex2:
-      {
-        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Double);
-        copySV(&srcLoc->values[0], &tmpLoc->values[0]);
-        setTemp(dest_tmp, tmpLoc);
-      }
-      break;
-    case Lt_Floatx2:
-    case Lt_Double:
-      setTemp(dest_tmp, srcLoc);
-      break;
-    case Lt_Float:
-      {
-        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Floatx2);
-        copySV(&srcLoc->values[0], &tmpLoc->values[0]);
-        ShadowLocation* nextSrcLoc = get(src_idx + sizeof(float));
-        if (nextSrcLoc != NULL)
-          copySV(&nextSrcLoc->values[0], &tmpLoc->values[1]);
-        setTemp(dest_tmp, tmpLoc);
-      }
-      break;
-    default:
-      VG_(dmsg)("We don't support that mixed size get!\n");
-      VG_(printf)("(we're trying to get a value of type: ");
-      ppIRType(dest_type);
-      VG_(printf)(")\n");
-      break;
-    }
-    break;
+    return Lt_Double;
+  case Ity_D128:
   case Ity_F128:
   case Ity_V128:
-    switch (srcLoc->type){
-    case Lt_Doublex2:
-    case Lt_Floatx4:
-      setTemp(dest_tmp, srcLoc);
-      break;
-      // This is a crazy thing to support. I mean, I want this tool to
-      // be usable, so I'm going to try my best, but this is super
-      // weird, so I'm only going to support it as-needed until this
-      // file gets a much needed refactor. So, these cases will be
-      // inconsistent for now. If you see this message in any version
-      // of the code that is released in any sense, please yell at me
-      // or send me an angry email, as needed. asnchstr@cs.washington.edu
-    case Lt_Double:
-      {
-        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Doublex2);
-        copySV(&srcLoc->values[0], &tmpLoc->values[0]);
-        ShadowLocation* nextSrcLoc = get(src_idx + sizeof(double));
-        if (nextSrcLoc != NULL)
-          copySV(&nextSrcLoc->values[0], &tmpLoc->values[1]);
-        setTemp(dest_tmp, tmpLoc);
-      }
-      break;
-    case Lt_Floatx2:
-      {
-        ShadowLocation* tmpLoc = mkShadowLocation(Lt_Floatx4);
-        copySV(&srcLoc->values[0], &tmpLoc->values[0]);
-        copySV(&srcLoc->values[1], &tmpLoc->values[1]);
-        ShadowLocation* nextSrcLoc = get(src_idx + sizeof(float)*2);
-        if (nextSrcLoc != NULL){
-          switch (nextSrcLoc->type){
-          case Lt_Floatx2:
-            copySV(&nextSrcLoc->values[0], &tmpLoc->values[2]);
-            copySV(&nextSrcLoc->values[1], &tmpLoc->values[3]);
-            break;
-          default:
-            VG_(dmsg)("Oh shit that's a weird read. I don't know how to handle that.\n");
-            break;
-          }
-        }
-        setTemp(dest_tmp, tmpLoc);
-      }
-      break;
-    default:
-      VG_(dmsg)("We don't support that mixed size thread state get!\n");
-      VG_(printf)("(we're trying to get a value of type: ");
-      ppIRType(dest_type);
-      VG_(printf)(")\n");
-      break;
-    }
-    break;
+    return Lt_Doublex2;
   case Ity_V256:
-    switch(srcLoc->type){
-    case Lt_Doublex4:
-    case Lt_Floatx8:
-      setTemp(dest_tmp, srcLoc);
-      break;
-    default:
-      VG_(dmsg)("We don't support that mixed size thread state get!\n");
-      VG_(printf)("(we're trying to get a value of type: ");
-      ppIRType(dest_type);
-      VG_(printf)(")\n");
-      break;
-    }
-    break;
+    return Lt_Doublex4;
+  case Ity_INVALID:
+  case Ity_I1:
+  case Ity_I8:
+  case Ity_I16:
+  case Ity_I128:
+  case Ity_F16:
+  case Ity_D32:
+  case Ity_D64:
   default:
-    VG_(dmsg)("We don't support that mixed size thread state get!\n");
-    VG_(printf)("(we're trying to get a value of type: ");
-    ppIRType(dest_type);
-    VG_(printf)(")\n");
-    break;
+    VG_(dmsg)("Unrecognized IRType!\n");
+    return 0;
   }
 }

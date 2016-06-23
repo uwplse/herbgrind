@@ -36,6 +36,9 @@
 void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
   IRDirty* executeShadowOp;
   SizeT arg_size, result_size;
+  (void)executeShadowOp;
+  (void)arg_size;
+  (void)result_size;
 
   // So, I recently learned that valgrind doesn't like passing more
   // than three arguments to a c function called by client code. I
@@ -183,9 +186,9 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
         // Add statements to populate the values we don't know until
         // runtime.
         addStore(sb, expr->Iex.Unop.arg,
-                 opInfo->args.uargs.arg_value);
+                 &(opInfo->args.uargs.arg_value));
         addStore(sb, IRExpr_RdTmp(offset),
-                 opInfo->dest_value);
+                 &(opInfo->dest_value));
 
         // Finally, add the statement to call the shadow op procedure.
         executeShadowOp =
@@ -599,6 +602,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
     }
   default:
     VG_(dmsg)("BAD THINGS!!!!\n");
+    break;
   }
 }
 

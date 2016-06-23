@@ -45,13 +45,13 @@
 
 // The functions that we'll insert into the program to move around
 // shadow values at run time.
-VG_REGPARM(2) void copyShadowTmptoTmp(UWord src_tmp, UWord dest_tmp);
-VG_REGPARM(3) void copyShadowTmptoTS(UWord src_tmp, UWord dest_reg, Addr instr_addr);
-VG_REGPARM(3) void copyShadowTStoTmp(UWord src_reg, IRType type, UWord dest_tmp);
-VG_REGPARM(3) void copyShadowMemtoTmp(Addr src_mem, IRType type, UWord dest_tmp);
+VG_REGPARM(1) void copyShadowTmptoTmp(CpShadow_Info* info);
+VG_REGPARM(1) void copyShadowTmptoTS(CpShadow_Info* info);
+VG_REGPARM(1) void copyShadowTStoTmp(CpShadow_Info* info);
+VG_REGPARM(1) void copyShadowMemtoTmp(CpShadow_Info* info);
 VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info);
-VG_REGPARM(2) void copyShadowTmptoMem(UWord src_tmp, Addr dest_mem);
-VG_REGPARM(3) void copyShadowTmptoMemG(UWord cond, UWord src_tmp, Addr dest_mem);
+VG_REGPARM(1) void copyShadowTmptoMem(CpShadow_Info* info);
+VG_REGPARM(2) void copyShadowTmptoMemG(UWord cond, CpShadow_Info* info);
 // Disown all shadow values held in temporaries and set the
 // temporaries array to nulls.
 VG_REGPARM(0) void initBlock(void);
@@ -59,19 +59,29 @@ VG_REGPARM(0) void cleanupBlock(void);
 void initStorage(void);
 void cleanupStorage(void);
 
+LocType IRTypetoLocType(IRType ty);
+
 // Getters and setters for temporaries, memory, and thread
 // state. Handles reference counting properly.
 void setTemp(Addr index, ShadowLocation* newLocation);
 ShadowLocation* getTemp(Addr index);
 
-void setMem(Addr index, ShadowLocation* newLocation);
-ShadowLocation* getMem(Addr index);
+void setMem(Addr index, ShadowValue* newValue);
+ShadowValue* getMem(Addr index);
+void setLocMem(Addr index, ShadowLocation* newLocation, LocType move_type);
+ShadowLocation* getLocMem(Addr index, LocType type);
 
-void setTS(Addr index, ShadowLocation* newLocation, Addr instr_addr);
-ShadowLocation* getTS(Addr index);
+void setTS(Addr index, ShadowValue* newValue);
+ShadowValue* getTS(Addr index);
+void setLocTS(Addr index, ShadowLocation* newLocation, LocType move_type, Addr instr_addr);
+ShadowLocation* getLocTS(Addr index, LocType type);
 
-void setSavedArg(Int index, ShadowLocation* newLocation);
-ShadowLocation* getSavedArg(Int index);
+void setLoc__(Addr index, ShadowLocation* newLoc, LocType move_type,
+              void (*setter)(Addr index, ShadowValue* val));
+ShadowLocation* getLoc__(Addr index, ShadowValue* (*getter)(Addr index), LocType type);
+
+void setSavedArg(Int index, ShadowValue* newLocation);
+ShadowValue* getSavedArg(Int index);
 
 // A helper function that does most of the work for copyShadowMemtoTmp
 // and copyShadowTStoTmp.

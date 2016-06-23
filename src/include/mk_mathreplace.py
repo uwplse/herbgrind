@@ -30,11 +30,12 @@
 
 
 class Op(object):
-    def __init__(self, func, plain_name, nargs, mpfr_func=None, needsround=True):
+    def __init__(self, func, plain_name, nargs, mpfr_func=None, needsround=True, precision=64):
         self.func = func
         self.nargs = nargs
         self.plain_name = plain_name
         self.needsround = needsround
+        self.precision = precision
         if (mpfr_func == None):
             self.mpfr_func = "mpfr_{}".format(func)
         else:
@@ -128,6 +129,7 @@ def write_mathreplace_funcs(ops, fname):
             f.write("    case OP_{}: \\\n".format(op.func.upper()))
             f.write("      plain_opname = \"{}\"; \\\n".format(op.plain_name))
             f.write("      op_symbol = \"{}\"; \\\n".format(op.func))
+            f.write("      op_precision = {}; \\\n".format(op.precision))
             f.write("      break; \\\n")
         f.write("    default: \\\n")
         f.write("      return; \\\n")
@@ -239,7 +241,8 @@ def addOp(name, plain_name, nargs,
                       plain_name + " (float)",
                       nargs,
                       mpfr_func=mpfr_fn,
-                      needsround=needsRound))
+                      needsround=needsRound,
+                      precision=32))
 
 addOp("sqrt", "square root", 1)
 addOp("cbrt", "cube root", 1)

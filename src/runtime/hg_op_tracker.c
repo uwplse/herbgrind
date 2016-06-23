@@ -93,7 +93,7 @@ void writeReport(const HChar* filename){
   Int file_d = sr_Res(file_result);
 
   if (tracked_ops == NULL){
-    VG_(write)(file_d, "No errors found.\n", 18);
+    VG_(write)(file_d, "No errors found.\n", 17);
     VG_(close)(file_d);
     return;
   }

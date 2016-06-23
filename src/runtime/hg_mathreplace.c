@@ -92,6 +92,7 @@ Addr getCallAddr(void){
 
 void performOp(OpType op, double* result, double* args){
   SizeT nargs;
+  SizeT op_precision;
   const HChar* plain_opname;
   const HChar* op_symbol;
 
@@ -140,14 +141,14 @@ void performOp(OpType op, double* result, double* args){
   // library here, and where we can it's being wrapped so doing so
   // would result in an infinite loop.
   mpfr_t *args_m, res;
-  ShadowLocation **arg_shadows, *res_shadow;
+  ShadowValue **arg_shadows, *res_shadow;
 
   // Initialize our 64-bit mpfr arg and shadow, and get the result
   // shadow set up.
   args_m = VG_(malloc)("wrapped-args", nargs * sizeof(mpfr_t));
-  arg_shadows = VG_(malloc)("wrapped-shadow", nargs * sizeof(ShadowLocation*));
+  arg_shadows = VG_(malloc)("wrapped-shadow", nargs * sizeof(ShadowValue*));
   for (SizeT i = 0; i < nargs; ++i){
-    mpfr_init2(args_m[i], 64);
+    mpfr_init2(args_m[i], op_precision);
     // Get the actual value from the pointer they gave us.
     mpfr_set_d(args_m[i], args[i], MPFR_RNDN);
     // Get the location of the arg source slot in the op structure.
@@ -192,11 +193,11 @@ void performOp(OpType op, double* result, double* args){
     }
     // Lookup the address in our shadow hash table to get the shadow
     // argument.
-    arg_shadows[i] = getShadowLocMem((uintptr_t)&(args[i]), args[i],
+    arg_shadows[i] = getShadowValMem((uintptr_t)&(args[i]), args[i],
                                      i, src_loc_slot);
   }
-  mpfr_init2(res,64);
-  res_shadow = mkShadowLocation(Lt_Double);
+  mpfr_init2(res,op_precision);
+  res_shadow = mkShadowValue();
 
   switch(op){
     // This expands to the cases for ops which take one argument and
@@ -212,20 +213,13 @@ void performOp(OpType op, double* result, double* args){
       GET_UNARY_OPS_ROUND_INFO(op)
 
       if (print_inputs){
-        char *shadowArg1Str;
-        mpfr_exp_t shadowArg1Expt;
-
-        shadowArg1Str = mpfr_get_str(NULL, &shadowArg1Expt, 10, longprint_len,
-                                     arg_shadows[0]->values[0].value, MPFR_RNDN);
-        VG_(printf)("Shadow arg: %se%ld\n",
-                    shadowArg1Str, shadowArg1Expt);
-        mpfr_free_str(shadowArg1Str);
-
-        VG_(printf)("Computed arg: %f\n", args[0]);
+        VG_(printf)("Shadow arg: ");
+        printShadowVal(arg_shadows[0]);
+        VG_(printf)("\nComputed arg: %f\n", args[0]);
       }
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0], MPFR_RNDN);
-      mpfr_func(res_shadow->values[0].value, arg_shadows[0]->values[0].value, MPFR_RNDN);
+      mpfr_func(res_shadow->value, arg_shadows[0]->value, MPFR_RNDN);
     }
     break;
     // This expands to a bunch of cases for the ops which take one
@@ -241,7 +235,7 @@ void performOp(OpType op, double* result, double* args){
         mpfr_exp_t shadowArg1Expt;
 
         shadowArg1Str = mpfr_get_str(NULL, &shadowArg1Expt, 10, longprint_len,
-                                     arg_shadows[0]->values[0].value, MPFR_RNDN);
+                                     arg_shadows[0]->value, MPFR_RNDN);
         VG_(printf)("Shadow arg: %se%ld\n",
                     shadowArg1Str, shadowArg1Expt);
         mpfr_free_str(shadowArg1Str);
@@ -250,7 +244,7 @@ void performOp(OpType op, double* result, double* args){
       }
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0]);
-      mpfr_func(res_shadow->values[0].value, arg_shadows[0]->values[0].value);
+      mpfr_func(res_shadow->value, arg_shadows[0]->value);
     }
     break;
     // This expands to a bunch of cases for operations which take two
@@ -266,9 +260,9 @@ void performOp(OpType op, double* result, double* args){
         mpfr_exp_t shadowArg1Expt, shadowArg2Expt;
 
         shadowArg1Str = mpfr_get_str(NULL, &shadowArg1Expt, 10, longprint_len,
-                                     arg_shadows[0]->values[0].value, MPFR_RNDN);
+                                     arg_shadows[0]->value, MPFR_RNDN);
         shadowArg2Str = mpfr_get_str(NULL, &shadowArg2Expt, 10, longprint_len,
-                                     arg_shadows[1]->values[0].value, MPFR_RNDN);
+                                     arg_shadows[1]->value, MPFR_RNDN);
         VG_(printf)("Shadow first arg: %se%ld\nShadow second arg: %se%ld\n",
                     shadowArg1Str, shadowArg1Expt, shadowArg2Str, shadowArg2Expt);
         mpfr_free_str(shadowArg1Str);
@@ -280,9 +274,9 @@ void performOp(OpType op, double* result, double* args){
       }
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0], args_m[1], MPFR_RNDN);
-      mpfr_func(res_shadow->values[0].value,
-                arg_shadows[0]->values[0].value,
-                arg_shadows[1]->values[0].value, MPFR_RNDN);
+      mpfr_func(res_shadow->value,
+                arg_shadows[0]->value,
+                arg_shadows[1]->value, MPFR_RNDN);
     }
     break;
     // This expands to a bunch of cases for operations which take two
@@ -298,11 +292,11 @@ void performOp(OpType op, double* result, double* args){
         mpfr_exp_t shadowArg1Expt, shadowArg2Expt, shadowArg3Expt;
 
         shadowArg1Str = mpfr_get_str(NULL, &shadowArg1Expt, 10, longprint_len,
-                                     arg_shadows[0]->values[0].value, MPFR_RNDN);
+                                     arg_shadows[0]->value, MPFR_RNDN);
         shadowArg2Str = mpfr_get_str(NULL, &shadowArg2Expt, 10, longprint_len,
-                                     arg_shadows[1]->values[0].value, MPFR_RNDN);
+                                     arg_shadows[1]->value, MPFR_RNDN);
         shadowArg3Str = mpfr_get_str(NULL, &shadowArg3Expt, 10, longprint_len,
-                                     arg_shadows[2]->values[0].value, MPFR_RNDN);
+                                     arg_shadows[2]->value, MPFR_RNDN);
         VG_(printf)("Shadow first arg: %se%ld\n"
                     "Shadow second arg: %se%ld\n"
                     "Shadow third arg: %se%ld\n",
@@ -320,10 +314,10 @@ void performOp(OpType op, double* result, double* args){
       }
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0], args_m[1], args_m[2], MPFR_RNDN);
-      mpfr_func(res_shadow->values[0].value,
-                arg_shadows[0]->values[0].value,
-                arg_shadows[1]->values[0].value,
-                arg_shadows[2]->values[0].value,
+      mpfr_func(res_shadow->value,
+                arg_shadows[0]->value,
+                arg_shadows[1]->value,
+                arg_shadows[2]->value,
                 MPFR_RNDN);
     }
     break;
@@ -333,27 +327,39 @@ void performOp(OpType op, double* result, double* args){
   // were given to the result memory.
   *result = mpfr_get_d(res, MPFR_RNDN);
   setMem((uintptr_t)result, res_shadow);
+  // Disown a reference for this since it gets one when it starts up
+  // (to keep it alive), and putting it in memory adds another.
+  disownSV(res_shadow);
 
   // Set up the ast record of this operation.
   switch(nargs){
   case 1:
-    initValueBranchAST(&(res_shadow->values[0]), entry->info, nargs,
-                       &(arg_shadows[0]->values[0]));
+    initValueBranchAST(res_shadow, entry->info, nargs,
+                       arg_shadows[0]);
     break;
   case 2:
-    initValueBranchAST(&(res_shadow->values[0]), entry->info, nargs,
-                       &(arg_shadows[0]->values[0]),
-                       &(arg_shadows[1]->values[0]));
+    initValueBranchAST(res_shadow, entry->info, nargs,
+                       arg_shadows[0],
+                       arg_shadows[1]);
     break;
   case 3:
-    initValueBranchAST(&(res_shadow->values[0]), entry->info, nargs,
-                       &(arg_shadows[0]->values[0]),
-                       &(arg_shadows[1]->values[0]),
-                       &(arg_shadows[2]->values[0]));
+    initValueBranchAST(res_shadow, entry->info, nargs,
+                       arg_shadows[0],
+                       arg_shadows[1],
+                       arg_shadows[2]);
     break;
   }
   // And finally, evaluate the error of the operation.
-  evaluateOpError(&(res_shadow->values[0]), *result, entry->info);
+  evaluateOpError(res_shadow, *result, entry->info);
+
+  // If we're printing debug info about where values are flowing, let
+  // the user know that we're putting the result of this operation in
+  // memory.
+  if (print_moves && res_shadow != NULL){
+    VG_(printf)("Putting shadow value ");
+    printShadowVal(res_shadow);
+    VG_(printf)(" in memory address %p.\n", result);
+  }
 
   // And free up the arrays we malloc for variable number of args.
   for (int i = 0; i < nargs; ++i){
@@ -364,22 +370,22 @@ void performOp(OpType op, double* result, double* args){
   VG_(free)(arg_shadows);
 }
 
-ShadowLocation* getShadowLocMem(Addr addr, double float_arg,
-                                Int argIndex, Op_Info** arg_src){
-  ShadowLocation* loc = getMem(addr);
-  if (loc != NULL) return loc;
-
-  if (print_moves)
-    VG_(printf)("Creating new shadow location at addr %lx\n", addr);
+ShadowValue* getShadowValMem(Addr addr, double float_arg,
+                             Int argIndex, Op_Info** arg_src){
+  ShadowValue* val = getMem(addr);
+  if (val != NULL) return val;
 
   if (getSavedArg(argIndex) != NULL){
     return getSavedArg(argIndex);
   }
 
-  loc = mkShadowLocation(Lt_Double);
-  setMem(addr, loc);
+  if (print_moves)
+    VG_(printf)("Creating new shadow location at addr %p\n", (void*)(uintptr_t)addr);
 
-  mpfr_set_d(loc->values[0].value, float_arg, MPFR_RNDN);
-  initValueLeafAST(&(loc->values[0]), arg_src);
-  return loc;
+  val = mkShadowValue();
+  setMem(addr, val);
+
+  mpfr_set_d(val->value, float_arg, MPFR_RNDN);
+  initValueLeafAST(val, arg_src);
+  return val;
 }

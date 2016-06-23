@@ -201,8 +201,8 @@ static void hg_fini(Int exitcode){
     VG_(snprintf)(filename, 100, "%s-errors.gh", VG_(args_the_exename));
     outfile_path = filename;
   }
-  VG_(printf)("Writing report out to %s\n", outfile_path);
   writeReport(outfile_path);
+  VG_(printf)("Wrote report out to %s\n", outfile_path);
 }
 // This does any initialization that needs to be done after command
 // line processing.

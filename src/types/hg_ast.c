@@ -31,9 +31,13 @@ void initValueBranchAST(ShadowValue* val, Op_Info* opinfo,
   va_list args;
 
   va_start(args, firstarg);
+
   val->ast->args[0] = firstarg->ast;
+  addRef(firstarg);
   for(int i = 1; i < nargs; ++i){
-    val->ast->args[i] = va_arg(args, ShadowValue*)->ast;
+    ShadowValue* newReference = NULL;
+    copySV(va_arg(args, ShadowValue*), &newReference);
+    val->ast->args[i] = newReference->ast;
   }
   va_end(args);
 
@@ -183,11 +187,17 @@ void initValueLeafAST(ShadowValue* val, Op_Info** src_loc){
 // Cleanup the memory associated with the AST attached to the given
 // value.
 void cleanupValueAST(ShadowValue* val){
-  // The var map needs to be specially destructed, since it's a hash
-  // map.
-  VG_(HT_destruct)(val->ast->var_map, VG_(free));
-  // Free the argument array
-  VG_(free)(val->ast->args);
+  if (val->ast->nargs != 0){
+    // The var map needs to be specially destructed, since it's a hash
+    // map.
+    VG_(HT_destruct)(val->ast->var_map, VG_(free));
+    // Release our references to the shadow values
+    for (int i = 0; i < val->ast->nargs; ++i){
+      disownSV(val->ast->args[i]->val);
+    }
+    // Free the argument array
+    VG_(free)(val->ast->args);
+  }
   // Free the ast directly
   VG_(free)(val->ast);
 }
@@ -203,6 +213,7 @@ void copyValueAST(ShadowValue* src, ShadowValue* dest){
     ALLOC(dest->ast->args, "hg.val_ast_args", src->ast->nargs, sizeof(ShadowValue*));
     for (int i = 0; i < src->ast->nargs; ++i){
       dest->ast->args[i] = src->ast->args[i];
+      addRef(src->ast->args[i]->val);
     }
   }
 }
@@ -221,7 +232,7 @@ void initOpBranchAST(OpASTNode* out, Op_Info* op, SizeT nargs){
 
 void initOpLeafAST(OpASTNode* out, ShadowValue* val){
   out->tag = Node_Leaf;
-  out->nd.Leaf.val = val;
+  copySV(val, &(out->nd.Leaf.val));
 }
 
 void updateAST(Op_Info* op, ValueASTNode* trace_ast){
@@ -258,7 +269,7 @@ void generalizeAST(OpASTNode* opast, ValueASTNode* valast){
     // Otherwise, it's some sort of input that changes, so abstract it
     // into a variable by setting it's val field to NULL.
     else {
-      opast->nd.Leaf.val = NULL;
+      copySV(NULL, &(opast->nd.Leaf.val));
       return;
     }
   } else {
@@ -448,6 +459,13 @@ void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
     // Allocate a new entry for this initial splitmap 
     IdxMapEntry* splitEntry;
     ALLOC(splitEntry, "splitEntry", 1, sizeof(IdxMapEntry));
+    if (valOpEntry == NULL){
+      VG_(printf)("hey!!! i is %d\n", i);
+      printLookupTable(valueLookupTable);
+      VG_(printf)("varGroupEntry is %p\n", varGroupEntry);
+      printOpVarMap(opVarMap);
+      VG_(printf)("Tried to look up key: %p\n", firstNodeEntry);
+    }
     // The key is the first elements varidx.
     splitEntry->key = valOpEntry->varidx;
     // The value is the current group.
