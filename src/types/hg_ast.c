@@ -34,8 +34,6 @@ void initValueBranchAST(ShadowValue* val, Op_Info* opinfo,
 
   val->ast->args[0] = firstarg->ast;
   addRef(firstarg);
-  VG_(printf)("Creating parent reference from parent %p to child %p\n",
-              val, firstarg);
   for(int i = 1; i < nargs; ++i){
     ShadowValue* newReference = NULL;
     copySV(va_arg(args, ShadowValue*), &newReference);
