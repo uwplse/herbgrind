@@ -7,6 +7,7 @@
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcbase.h"
 #include "pub_tool_mallocfree.h"
+#include "pub_tool_libcassert.h"
 
 #include <stdarg.h>
 
@@ -407,6 +408,50 @@ typedef struct _IdxMapEntry {
   int val;
 } IdxMapEntry;
 
+Bool inOpVarMap(XArray* haystack, OpASTNode* needle);
+Bool inOpVarMap(XArray* haystack, OpASTNode* needle){
+  for (int i = 0; i < VG_(sizeXA)(haystack); ++i){
+    XArray** varGroupEntry = VG_(indexXA)(haystack, i);
+    for (int j = 0; j < VG_(sizeXA)(*varGroupEntry); ++j){
+      OpASTNode** cellEntry = VG_(indexXA)(*varGroupEntry, j);
+      if ((*cellEntry) == needle){
+        return True;
+      }
+    }
+  }
+  return False;
+}
+
+// This is an invariant checker, for debugging.  It checks the
+// following invariant: the set of keys in the valueLookupTable and
+// the items in the two dimentonal array opVarMap should match.
+void checkOpVarMapValueLookupTableMatch(XArray* opVarMap, VgHashTable* valueLookupTable);
+void checkOpVarMapValueLookupTableMatch(XArray* opVarMap, VgHashTable* valueLookupTable){
+  for (int i = 0; i < VG_(sizeXA)(opVarMap); ++i){
+    XArray** varGroupEntry = VG_(indexXA)(opVarMap, i);
+    for (int j = 0; j < VG_(sizeXA)(*varGroupEntry); ++j){
+      OpASTNode** cellEntry = VG_(indexXA)(*varGroupEntry, j);
+      OpVarMapEntry* valOpEntry =
+        VG_(HT_lookup)(valueLookupTable, (UWord)*cellEntry);
+      tl_assert(valOpEntry != NULL);
+    }
+  }
+  VG_(printf)("Lookup table: \n");
+  printLookupTable(valueLookupTable);
+  VG_(printf)("opVarMap: \n");
+  printOpVarMap(opVarMap);
+  VG_(HT_ResetIter)(valueLookupTable);
+  for (OpVarMapEntry* opEntry = VG_(HT_Next)(valueLookupTable);
+       opEntry != NULL; opEntry = VG_(HT_Next)(valueLookupTable)){
+    tl_assert(inOpVarMap(opVarMap, opEntry->key));
+  }
+}
+
+void checkOpVarMapValVarMapSameLeaves(XArray* opVarMap, VgHashTable* valVarMap){
+  VgHashTable* valueLookupTable = opLookupTable(valVarMap);
+  checkOpVarMapValueLookupTableMatch(opVarMap, valueLookupTable);
+}
+
 // The purpose of this function is to take an existing variable map
 // from an op node, and generalize it using a trace variable map tied
 // to a particular shadow value ast. This generalization should be
@@ -421,6 +466,8 @@ void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
   // apples to apples when we use the resulting map to generalize our
   // opVarMap, which also talks about op AST leaves.
   VgHashTable* valueLookupTable = opLookupTable(valVarMap);
+  checkOpVarMapValueLookupTableMatch(opVarMap, valueLookupTable);
+  VG_(printf)("Got past this at least once.\n");
   // There's no point trying to re-split the groups we split off,
   // since our procedure should make them already consistent with the
   // valVarMap, so get the size once, and don't touch the entries that
@@ -464,7 +511,7 @@ void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
       printLookupTable(valueLookupTable);
       VG_(printf)("varGroupEntry is %p\n", varGroupEntry);
       printOpVarMap(opVarMap);
-      VG_(printf)("Tried to look up key: %p\n", firstNodeEntry);
+      VG_(printf)("Tried to look up key: %p\n", (void*)(UWord)*firstNodeEntry);
     }
     // The key is the first elements varidx.
     splitEntry->key = valOpEntry->varidx;
