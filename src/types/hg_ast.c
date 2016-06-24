@@ -451,9 +451,38 @@ void checkOpVarMapValueLookupTableMatch(XArray* opVarMap, VgHashTable* valueLook
   }
 }
 
+XArray* getKeyOpNodes(VgHashTable* valVarMap);
+XArray* getKeyOpNodes(VgHashTable* valVarMap){
+  XArray* result = VG_(newXA)(VG_(malloc), "varGroup",
+                              VG_(free), sizeof(XArray*));
+  VG_(HT_ResetIter)(valVarMap);
+  for (ValVarMapEntry* valEntry = VG_(HT_Next)(valVarMap);
+       valEntry != NULL; valEntry = VG_(HT_Next)(valVarMap)){
+    VG_(addToXA)(result, &(valEntry->key->op));
+  }
+  return result;
+}
+
+Bool hasLeaf(XArray* haystack, Op_Info* needle);
+Bool hasLeaf(XArray* haystack, Op_Info* needle){
+  for (int i = 0; i < VG_(sizeXA)(haystack); ++i){
+    Op_Info** item = VG_(indexXA)(haystack, i);
+    if ((*item) == needle)
+      return True;
+  }
+  return False;
+}
+
+void checkOpVarMapValVarMapSameLeaves(XArray* opVarMap, VgHashTable* valVarMap);
 void checkOpVarMapValVarMapSameLeaves(XArray* opVarMap, VgHashTable* valVarMap){
-  VgHashTable* valueLookupTable = opLookupTable(valVarMap);
-  checkOpVarMapValueLookupTableMatch(opVarMap, valueLookupTable);
+  XArray* valVarMapLeaves = getKeyOpNodes(valVarMap);
+  for (int i = 0; i < VG_(sizeXA)(opVarMap); ++i){
+    XArray** varGroupEntry = VG_(indexXA)(opVarMap, i);
+    for (int j = 0; j < VG_(sizeXA)(*varGroupEntry); ++j){
+      OpASTNode** cellEntry = VG_(indexXA)(*varGroupEntry, j);
+      tl_assert(hasLeaf(valVarMapLeaves, (*cellEntry)->nd.Leaf.op));
+    }
+  }
 }
 
 // The purpose of this function is to take an existing variable map
@@ -464,13 +493,13 @@ void checkOpVarMapValVarMapSameLeaves(XArray* opVarMap, VgHashTable* valVarMap){
 // result, but other than that the op node map stays as unchanged as
 // possible.
 void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
+  checkOpVarMapValVarMapSameLeaves(opVarMap, valVarMap);
   // The first thing we need to do is take our trace var map, which
   // maps trace leaves to variable indices, and get a map from op AST
   // leaves to the same variable indices. This way, we'll be comparing
   // apples to apples when we use the resulting map to generalize our
   // opVarMap, which also talks about op AST leaves.
   VgHashTable* valueLookupTable = opLookupTable(valVarMap);
-  checkOpVarMapValueLookupTableMatch(opVarMap, valueLookupTable);
   VG_(printf)("Got past this at least once.\n");
   // There's no point trying to re-split the groups we split off,
   // since our procedure should make them already consistent with the
