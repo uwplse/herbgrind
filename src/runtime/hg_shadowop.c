@@ -565,7 +565,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
 
         if (print_inputs){
           VG_(printf)("Computed arg, part %d: %f\n",
-                      i, ((double*)opInfo->arg_values[1])[i]);
+                      i, ((double*)opInfo->arg_values[0])[i]);
         }
         // Initialize a shadow value in the given slot in
         // destLocation.
