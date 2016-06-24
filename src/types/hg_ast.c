@@ -500,7 +500,6 @@ void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
   // apples to apples when we use the resulting map to generalize our
   // opVarMap, which also talks about op AST leaves.
   VgHashTable* valueLookupTable = opLookupTable(valVarMap);
-  VG_(printf)("Got past this at least once.\n");
   // There's no point trying to re-split the groups we split off,
   // since our procedure should make them already consistent with the
   // valVarMap, so get the size once, and don't touch the entries that
