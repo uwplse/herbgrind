@@ -57,6 +57,7 @@ struct _OpASTNode {
       // The value which this leaf node was initialized with, or NULL
       // if it has been initialized with multiple different values.
       ShadowValue* val;
+      Op_Info* op;
     } Leaf;
     struct {
       // Point back to the thing that holds us, for consistencies sake
@@ -108,11 +109,11 @@ void copyValueAST(ShadowValue* src, ShadowValue* dest);
 // Initialize a branch node ast for an operation. You must set the
 // operation nodes from which the arguments came explicitly after
 // calling this function.
-void initOpBranchAST(OpASTNode* out, Op_Info* op, SizeT nargs);
+void initOpBranchAST(Op_Info* op, SizeT nargs);
 // Initialize a leaf node ast, for a shadow value that was not
 // produced as the result of an operation. This doesn't actually
 // coorespond to any op, except the "initialize value" op.
-void initOpLeafAST(OpASTNode* out, ShadowValue* val);
+void initOpLeafAST(Op_Info* out, ShadowValue* val);
 // Given an operation, and the ast of a value just produced by that
 // operation, update the ast of the operation so that it is the most
 // specific AST which is general enough so that: every value ast that
@@ -125,7 +126,7 @@ void updateAST(Op_Info* op, ValueASTNode* result);
 // is nearly identical to updateAST, but does not handle the case
 // where the operation doesn't already have an AST, because this is
 // the first time it has been invoked.
-void generalizeAST(OpASTNode* opast, ValueASTNode* valast);
+void generalizeAST(OpASTNode* opast, ValueASTNode* valast, Op_Info* pSource);
 // A recursive tree walk which produces from a value AST an equivalent
 // op AST, linking together ops instead of concrete values.
 OpASTNode* convertValASTtoOpAST(ValueASTNode* valAST);

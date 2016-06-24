@@ -82,8 +82,7 @@ Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
 Op_Info* mkLeafOp_Info(ShadowValue* val){
   Op_Info* result;
   ALLOC(result, "leaf op", 1, sizeof(Op_Info));
-  ALLOC(result->ast, "ast", 1, sizeof(OpASTNode));
-  initOpLeafAST(result->ast, val);
+  initOpLeafAST(result, val);
   result->ast->nd.Leaf.val = NULL;
   result->tag = Op_Leaf;
   return result;

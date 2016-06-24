@@ -222,18 +222,26 @@ void copyValueAST(ShadowValue* src, ShadowValue* dest){
 // Initialize OpAST's, which are the persistent ast's that are
 // generalized to fit every value ast that passes through them, and
 // are reported at the end of the run.
-void initOpBranchAST(OpASTNode* out, Op_Info* op, SizeT nargs){
-  out->tag = Node_Branch;
-  out->nd.Branch.op = op;
-  out->nd.Branch.nargs = nargs;
-  ALLOC(out->nd.Branch.args, "hg.val_ast_args", nargs, sizeof(OpASTNode*));
-  out->nd.Branch.var_map = VG_(newXA)(VG_(malloc), "var_map",
-                                      VG_(free), sizeof(XArray*));
+void initOpBranchAST(Op_Info* op, SizeT nargs){
+  if (op->ast == NULL) {
+    ALLOC(op->ast, "hg.op_branch_ast", 1, sizeof(OpASTNode));
+  } else if (op->ast->nd.Branch.var_map != NULL)
+    VG_(deleteXA)(op->ast->nd.Branch.var_map);
+
+  op->ast->tag = Node_Branch;
+  op->ast->nd.Branch.op = op;
+  op->ast->nd.Branch.nargs = nargs;
+  ALLOC(op->ast->nd.Branch.args, "hg.val_ast_args", nargs, sizeof(OpASTNode*));
+  op->ast->nd.Branch.var_map = VG_(newXA)(VG_(malloc), "var_map",
+                                          VG_(free), sizeof(XArray*));
 }
 
-void initOpLeafAST(OpASTNode* out, ShadowValue* val){
-  out->tag = Node_Leaf;
-  copySV(val, &(out->nd.Leaf.val));
+void initOpLeafAST(Op_Info* op, ShadowValue* val){
+  if (op->ast == NULL)
+    ALLOC(op->ast, "hg.op_leaf_ast", 1, sizeof(OpASTNode));
+  op->ast->tag = Node_Leaf;
+  op->ast->nd.Leaf.op = op;
+  copySV(val, &(op->ast->nd.Leaf.val));
 }
 
 void updateAST(Op_Info* op, ValueASTNode* trace_ast){
@@ -244,7 +252,7 @@ void updateAST(Op_Info* op, ValueASTNode* trace_ast){
   } else {
     // If we've already seen values, we'll want to generalize the AST
     // we have sufficiently to match the new value.
-    generalizeAST(op->ast, trace_ast);
+    generalizeAST(op->ast, trace_ast, NULL);
   }
   // This doesn't (shouldn't) affect the functionality of this
   // function, but allows us to print AST's on update, mostly for
@@ -257,7 +265,7 @@ void updateAST(Op_Info* op, ValueASTNode* trace_ast){
   }
 }
 
-void generalizeAST(OpASTNode* opast, ValueASTNode* valast){
+void generalizeAST(OpASTNode* opast, ValueASTNode* valast, Op_Info* pSource){
   if (opast->tag == Node_Leaf){
     // If we hit a value leaf, and it matches the one we've already
     // seen, then our best guess right now is that that is a constant
@@ -285,13 +293,15 @@ void generalizeAST(OpASTNode* opast, ValueASTNode* valast){
       // overwrite everything with new initial values, and things will
       // probably turn out fine.
       VG_(free)(opast->nd.Branch.args);
-      initOpLeafAST(opast, NULL);
+      tl_assert(pSource != NULL);
+      initOpLeafAST(pSource, NULL);
     } else if (opast->nd.Branch.op != NULL) {
       // Otherwise, if they both continue and match, generalize the
       // variable map appropriately, and recurse on children,
       generalizeVarMap(opast->nd.Branch.var_map, valast->var_map);
       for(int i = 0; i < valast->nargs; ++i){
-        generalizeAST(opast->nd.Branch.args[i], valast->args[i]);
+        generalizeAST(opast->nd.Branch.args[i], valast->args[i],
+                      opast->nd.Branch.op->arg_srcs[i]);
       }
     }
   }
@@ -306,9 +316,7 @@ OpASTNode* convertValASTtoOpAST(ValueASTNode* valAST){
 
   // Otherwise, we need to create a new AST node. It'll be a branch,
   // since leaves start initialized.
-  OpASTNode* result;
-  ALLOC(result, "hg.op_ast", 1, sizeof(OpASTNode));
-  initOpBranchAST(result, valAST->op, valAST->nargs);
+  initOpBranchAST(valAST->op, valAST->nargs);
   // Convert all of the children recursively. Usually they won't hit
   // this branch again, since we generally build subexpression AST's
   // before their parents, with the exception of leaf nodes since
@@ -318,7 +326,7 @@ OpASTNode* convertValASTtoOpAST(ValueASTNode* valAST){
   // commited to, so we should operate fine if it's not true, but
   // for clarity's sake that is what I currently expect.
   for (int i = 0; i < valAST->nargs; ++i){
-    result->nd.Branch.args[i] = convertValASTtoOpAST(valAST->args[i]);
+    valAST->op->ast->nd.Branch.args[i] = convertValASTtoOpAST(valAST->args[i]);
   }
 
   // Finally, since this is the first value map this op has seen, it
@@ -326,13 +334,9 @@ OpASTNode* convertValASTtoOpAST(ValueASTNode* valAST){
   // same this time are currently assumed to be the same variable
   // (or constant), and anything that isn't the same this time can
   // never be the same variable.
-  result->nd.Branch.var_map = opvarmapFromValvarmap(valAST->var_map);
+  valAST->op->ast->nd.Branch.var_map = opvarmapFromValvarmap(valAST->var_map);
 
-  // Set the ast field of the op info so that next time we can reuse
-  // what we've created.
-  valAST->op->ast = result;
-
-  return result;
+  return valAST->op->ast;
 }
 
 
