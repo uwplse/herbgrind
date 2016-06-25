@@ -298,6 +298,8 @@ void generalizeAST(OpASTNode* opast, ValueASTNode* valast, Op_Info* pSource){
     } else if (opast->nd.Branch.op != NULL) {
       // Otherwise, if they both continue and match, generalize the
       // variable map appropriately, and recurse on children,
+      tl_assert(valast->op->ast == opast);
+      checkOpVarMapValVarMapSameLeaves(opast->nd.Branch.var_map, valast->var_map);
       generalizeVarMap(opast->nd.Branch.var_map, valast->var_map);
       for(int i = 0; i < valast->nargs; ++i){
         generalizeAST(opast->nd.Branch.args[i], valast->args[i],
@@ -359,6 +361,14 @@ void printOpVarMap(XArray* opVarMap){
       VG_(printf)("%p, ", *nodeEntry);
     }
     VG_(printf)("\n");
+  }
+  VG_(printf)("\n");
+}
+
+void printLeafList(XArray* leafList){
+  for (int i = 0; i < VG_(sizeXA)(leafList); ++i){
+    Op_Info** leaf = VG_(indexXA)(leafList, i);
+    VG_(printf)("%p, ", *leaf);
   }
   VG_(printf)("\n");
 }
@@ -462,6 +472,20 @@ XArray* getKeyOpNodes(VgHashTable* valVarMap){
   }
   return result;
 }
+XArray* getCellOpNodes(XArray* opVarMap);
+XArray* getCellOpNodes(XArray* opVarMap){
+  XArray* result = VG_(newXA)(VG_(malloc), "varGroup",
+                              VG_(free), sizeof(XArray*));
+  for (int i = 0; i < VG_(sizeXA)(opVarMap); ++i){
+    XArray** varGroupEntry = VG_(indexXA)(opVarMap, i);
+    for (int j = 0; j < VG_(sizeXA)(*varGroupEntry); ++j){
+      OpASTNode** cellEntry = VG_(indexXA)(*varGroupEntry, j);
+      tl_assert((*cellEntry)->tag == Node_Leaf);
+      VG_(addToXA)(result, &(*cellEntry)->nd.Leaf.op);
+    }
+  }
+  return result;
+}
 
 Bool hasLeaf(XArray* haystack, Op_Info* needle);
 Bool hasLeaf(XArray* haystack, Op_Info* needle){
@@ -473,14 +497,26 @@ Bool hasLeaf(XArray* haystack, Op_Info* needle){
   return False;
 }
 
-void checkOpVarMapValVarMapSameLeaves(XArray* opVarMap, VgHashTable* valVarMap);
 void checkOpVarMapValVarMapSameLeaves(XArray* opVarMap, VgHashTable* valVarMap){
   XArray* valVarMapLeaves = getKeyOpNodes(valVarMap);
   for (int i = 0; i < VG_(sizeXA)(opVarMap); ++i){
     XArray** varGroupEntry = VG_(indexXA)(opVarMap, i);
     for (int j = 0; j < VG_(sizeXA)(*varGroupEntry); ++j){
       OpASTNode** cellEntry = VG_(indexXA)(*varGroupEntry, j);
-      tl_assert(hasLeaf(valVarMapLeaves, (*cellEntry)->nd.Leaf.op));
+      if (!hasLeaf(valVarMapLeaves, (*cellEntry)->nd.Leaf.op)){
+        VG_(printf)("Couldn't find %p in ", (*cellEntry)->nd.Leaf.op);
+        printLeafList(valVarMapLeaves);
+        tl_assert(hasLeaf(valVarMapLeaves, (*cellEntry)->nd.Leaf.op));
+      }
+    }
+  }
+  XArray* opVarMapLeaves = getCellOpNodes(opVarMap);
+  for (int i = 0; i < VG_(sizeXA)(valVarMapLeaves); ++i){
+    Op_Info** valVarLeaf = VG_(indexXA)(valVarMapLeaves, i);
+    if (!hasLeaf(opVarMapLeaves, *valVarLeaf)){
+      VG_(printf)("Couldn't find %p in ", *valVarLeaf);
+      printLeafList(opVarMapLeaves);
+      tl_assert(hasLeaf(opVarMapLeaves, *valVarLeaf));
     }
   }
 }
@@ -493,7 +529,6 @@ void checkOpVarMapValVarMapSameLeaves(XArray* opVarMap, VgHashTable* valVarMap){
 // result, but other than that the op node map stays as unchanged as
 // possible.
 void generalizeVarMap(XArray* opVarMap, VgHashTable* valVarMap){
-  checkOpVarMapValVarMapSameLeaves(opVarMap, valVarMap);
   // The first thing we need to do is take our trace var map, which
   // maps trace leaves to variable indices, and get a map from op AST
   // leaves to the same variable indices. This way, we'll be comparing

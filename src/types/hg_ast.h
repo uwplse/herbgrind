@@ -160,4 +160,7 @@ char* opASTtoBench(OpASTNode* opAST);
 // Prints a table from pointers to indices.
 void printLookupTable(VgHashTable* opLookupTable);
 void printOpVarMap(XArray* opVarMap);
+void printLeafList(XArray* leafList);
+// Invariant checkers
+void checkOpVarMapValVarMapSameLeaves(XArray* opVarMap, VgHashTable* valVarMap);
 #endif
