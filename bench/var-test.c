@@ -7,6 +7,8 @@ double __attribute__ ((noinline)) add(double x, double y){
 }
 int main(int argc, char** argv){
   volatile double x, y;
+  HERBGRIND_BEGIN();
   x = add(4, 5);
-  y = add(6, add(x, 4));
+  y = add(6, 5 + 6);
+  HERBGRIND_END();
 }

@@ -36,6 +36,15 @@
 
 VgHashTable* opinfo_store;
 
+// TODO: It looks like there's a problem here where we might
+// instrument a superblock multiple times. If we do, we end up
+// creating multiple opinfo data structures for it, and we split up
+// it's traces into multiple aggregates. To fix this, we should store
+// initialized opinfo structures in a hash table structure describing
+// where they are. This is made a little tricky by the fact that there
+// can be multiple operations per instruction in some cases, so we
+// can't use addresses as the key.
+
 // Add instrumenting expressions to sb for an operation, storing the
 // result in the temporary at offset. opNum is a zero-based index of
 // which op this is in the current instruction translation.
