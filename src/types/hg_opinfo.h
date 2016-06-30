@@ -37,6 +37,7 @@
 
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
+#include "pub_tool_xarray.h"
 
 // When I was looking through the FpDebug source as inspiration for
 // this project, I kept seeing these structures all over the place
@@ -134,6 +135,18 @@ struct _Op_Info {
   // than we'll keep track of the "source" of that argument as a leaf
   // operation here.
   Op_Info** arg_srcs;
+};
+
+struct _Op_Infos_ptr {
+  // This member is here to make this structure compatible with the
+  // hash table implementation in pub_tool_hashtable. None of our code
+  // will actually use it.
+  struct _Op_Infos_ptr* next;
+  // This part is also here for the hash table structure, but we'll
+  // actually be messing with it as we'll set it to the key.
+  UWord addr;
+  // The actual opinfo we're pointing too.
+  XArray* infos;
 };
 
 Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,

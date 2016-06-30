@@ -81,14 +81,17 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
   // The address cooresponding to the statement we're currently
   // instrumenting.
   Addr cur_addr = 0x0;
+  int opNum = 0;
   // Now, let's loop through these statements, and instrument them to
   // add our shadow values.
   for (int i = 0; i < bb->stmts_used; i++){
     IRStmt* st = bb->stmts[i];
     // Use the IMarks to get a cooresponding address for each
     // statement.
-    if (st->tag == Ist_IMark)
+    if (st->tag == Ist_IMark){
       cur_addr = st->Ist.IMark.addr;
+      opNum = 0;
+    }
     // Only instrument statements after the preamble, not before the
     // first IMark.
     if (cur_addr)
@@ -96,6 +99,8 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
       instrumentStatement(st, sbOut, cur_addr, opNum);
     else
       addStmtToIRSB(sbOut, st);
+    if (isOp(st))
+      opNum ++;
   }
 
   // Add instrumentation that cleans up per-block state.
@@ -216,6 +221,7 @@ static void hg_fini(Int exitcode){
 // This does any initialization that needs to be done after command
 // line processing.
 static void hg_post_clo_init(void){
+   init_instrumentation();
    // Set up the data structures we'll need to keep track of our MPFR
    // shadow values.
    init_runtime();

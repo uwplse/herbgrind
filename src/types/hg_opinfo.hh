@@ -42,5 +42,6 @@ typedef struct _Binary_Args Binary_Args;
 typedef struct _Ternary_Args Ternary_Args;
 typedef struct _Quadnary_Args Quadnary_Args;
 typedef struct _Op_Info Op_Info;
+typedef struct _Op_Infos_ptr Op_Infos_ptr;
 
 #endif
