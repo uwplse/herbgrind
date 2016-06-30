@@ -61,9 +61,8 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
                       const VexArchInfo* archinfo_host,
                       IRType gWordTy, IRType hWordTy )
 {
-  // For right now, just print out the VEX representation as we
-  // process it.
-
+  // Print out the input blocks if the appropriate flags have been
+  // turned on.
   if (print_in_blocks && running){
     VG_(printf)("Instrumenting block:\n");
     printSuperBlock(bb);
@@ -76,9 +75,11 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
   // as well as some info about the exit jump, from the old superblock.
   IRSB* sbOut = deepCopyIRSBExceptStmts(bb);
 
+  // Add instrumentation that initializes per-block state.
   startBlock(sbOut);
 
-  // The address cooresponding to the statement we're currently instrumenting.
+  // The address cooresponding to the statement we're currently
+  // instrumenting.
   Addr cur_addr = 0x0;
   // Now, let's loop through these statements, and instrument them to
   // add our shadow values.
@@ -92,8 +93,11 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
     instrumentStatement(st, sbOut, cur_addr);
   }
 
+  // Add instrumentation that cleans up per-block state.
   finalizeBlock(sbOut);
 
+  // Print out the output blocks, if the appropriate flags have been
+  // turned on.
   if (print_out_blocks && running){
     VG_(printf)("Instrumented into:\n");
     printSuperBlock(sbOut);
