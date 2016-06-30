@@ -186,9 +186,9 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
         // Add statements to populate the values we don't know until
         // runtime.
         addStore(sb, expr->Iex.Unop.arg,
-                 &(opInfo->arg_values[0]));
+                 opInfo->arg_values[0]);
         addStore(sb, IRExpr_RdTmp(offset),
-                 &(opInfo->dest_value));
+                 opInfo->dest_value);
 
         // Finally, add the statement to call the shadow op procedure.
         executeShadowOp =
