@@ -89,8 +89,13 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
     // statement.
     if (st->tag == Ist_IMark)
       cur_addr = st->Ist.IMark.addr;
-    // Take a look at hg_instrument.c to see what's going on here.
-    instrumentStatement(st, sbOut, cur_addr);
+    // Only instrument statements after the preamble, not before the
+    // first IMark.
+    if (cur_addr)
+      // Take a look at hg_instrument.c to see what's going on here.
+      instrumentStatement(st, sbOut, cur_addr, opNum);
+    else
+      addStmtToIRSB(sbOut, st);
   }
 
   // Add instrumentation that cleans up per-block state.
