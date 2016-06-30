@@ -61,11 +61,12 @@
 
 // Instrument a single statement, adding the instrumented statements
 // to sbOut.
-void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr);
+void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr, int opNum);
 
 // Add instrumenting expressions to sb for an operation, storing the
 // result in the temporary at offset.
-void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr);
+void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum);
+Op_Info* populateOpInfo(Addr opAddr, int opNum, int nargs, SizeT arg_size, SizeT result_size, IROp op);
 
 // Get the plain name of the op, like "subtraction"
 const HChar* getPlainOpname(IROp op);
@@ -86,4 +87,7 @@ void finalizeBlock(IRSB* sbOut);
 // VEX's type system.
 int isFloat(IRTypeEnv* env, IRTemp temp);
 int isFloatType(IRType type);
+
+Bool isOp(IRStmt* st);
+void init_instrumentation(void);
 #endif

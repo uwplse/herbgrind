@@ -155,42 +155,7 @@ void performOp(OpType op, double* result, double* args){
     Op_Info** src_loc_slot;
     // Get the slot in the op info structure for the value source
     // structure cooresponding to this argument.
-    switch(nargs){
-    case 1:
-      src_loc_slot = &(entry->info->args.uargs.arg_src);
-      break;
-    case 2:
-      switch(i){
-      case 0:
-        src_loc_slot = &(entry->info->args.bargs.arg1_src);
-        break;
-      case 1:
-        src_loc_slot = &(entry->info->args.bargs.arg2_src);
-        break;
-      default:
-        VG_(dmsg)("BAD THINGS!");
-        return;
-      }
-      break;
-    case 3:
-      switch(i){
-      case 0:
-        src_loc_slot = &(entry->info->args.targs.arg1_src);
-        break;
-      case 1:
-        src_loc_slot = &(entry->info->args.targs.arg2_src);
-        break;
-      case 2:
-        src_loc_slot = &(entry->info->args.targs.arg3_src);
-        break;
-      default:
-        VG_(dmsg)("BAD THINGS!");
-        return;
-      }
-    default:
-        VG_(dmsg)("BAD THINGS!");
-      return;
-    }
+    src_loc_slot = &(entry->info->arg_srcs[i]);
     // Lookup the address in our shadow hash table to get the shadow
     // argument.
     arg_shadows[i] = getShadowValMem((uintptr_t)&(args[i]), args[i],

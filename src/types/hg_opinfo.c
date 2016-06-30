@@ -54,6 +54,9 @@ Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
                    const HChar* name, const HChar* symbol){
   Op_Info* result;
   ALLOC(result, "hg.op_info.1", 1, sizeof(Op_Info));
+  ALLOC(result->arg_tmps, "hg.op_tmps", arity, sizeof(UWord));
+  ALLOC(result->arg_values, "hg.op_values", arity, sizeof(UWord*));
+  ALLOC(result->arg_srcs, "hg.op_srcs", arity, sizeof(Op_Info**));
   result->tag = Op_Branch;
   result->nargs = arity;
   result->op = op;
@@ -78,12 +81,10 @@ Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
 
 Op_Info* mkLeafOp_Info(ShadowValue* val){
   Op_Info* result;
-  OpASTNode* ast;
   ALLOC(result, "leaf op", 1, sizeof(Op_Info));
-  ALLOC(ast, "leaf op ast", 1, sizeof(OpASTNode*));
-  ast->nd.Leaf.val = NULL;
-  initOpLeafAST(ast, val);
+  ALLOC(result->ast, "ast", 1, sizeof(OpASTNode));
+  initOpLeafAST(result->ast, val);
+  result->ast->nd.Leaf.val = NULL;
   result->tag = Op_Leaf;
-  result->ast = ast;
   return result;
 }

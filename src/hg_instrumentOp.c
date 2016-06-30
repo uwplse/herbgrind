@@ -30,10 +30,16 @@
 
 #include "hg_instrument.h"
 #include "include/hg_macros.h"
+#include "pub_tool_hashtable.h"
+#include "pub_tool_xarray.h"
+#include "pub_tool_libcassert.h"
+
+VgHashTable* opinfo_store;
 
 // Add instrumenting expressions to sb for an operation, storing the
-// result in the temporary at offset.
-void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
+// result in the temporary at offset. opNum is a zero-based index of
+// which op this is in the current instruction translation.
+void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
   IRDirty* executeShadowOp;
   SizeT arg_size, result_size;
   (void)executeShadowOp;
@@ -166,29 +172,21 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_NegF64:
       case Iop_AbsF64:
       case Iop_Sqrt64F0x2:
-        // Allocate and partially setup the argument structure
-        opInfo = mkOp_Info(1, expr->Iex.Unop.op,
-                           opAddr,
-                           getPlainOpname(expr->Iex.Unop.op),
-                           getOpSymbol(expr->Iex.Unop.op));
+        opInfo = populateOpInfo(opAddr, opNum, 1, arg_size, result_size, expr->Iex.Unop.op);
 
-        // Populate the argument/result values we know at instrument time now.
-        opInfo->args.uargs.arg_tmp = getArgTmp(expr->Iex.Unop.arg, sb);
+        // Populate the argument/result temporaries we know at
+        // instrument time now. This might change between
+        // instrumentations of the same operation, so we write it
+        // even if there's an existing entry.
+        opInfo->arg_tmps[0] = getArgTmp(expr->Iex.Unop.arg, sb);
         opInfo->dest_tmp = offset;
-
-        // Allocate the space for the values we won't know until
-        // runtime, but know their size now.
-        ALLOC(opInfo->args.uargs.arg_value,
-              "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->dest_value,
-              "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
         addStore(sb, expr->Iex.Unop.arg,
-                 &(opInfo->args.uargs.arg_value));
+                 opInfo->arg_values[0]);
         addStore(sb, IRExpr_RdTmp(offset),
-                 &(opInfo->dest_value));
+                 opInfo->dest_value);
 
         // Finally, add the statement to call the shadow op procedure.
         executeShadowOp =
@@ -316,34 +314,21 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_SetV128lo32:
       case Iop_SetV128lo64:
       case Iop_XorV128:
-        // Allocate and partially setup the argument structure
-        opInfo = mkOp_Info(2, expr->Iex.Binop.op,
-                           opAddr,
-                           getPlainOpname(expr->Iex.Binop.op),
-                           getOpSymbol(expr->Iex.Binop.op));
+        opInfo = populateOpInfo(opAddr, opNum, 2, arg_size, result_size, expr->Iex.Binop.op);
 
         // Populate the argument/result values we know at instrument time now.
-        opInfo->args.bargs.arg1_tmp =
+        opInfo->arg_tmps[0] =
           getArgTmp(expr->Iex.Binop.arg1, sb);
-        opInfo->args.bargs.arg2_tmp =
+        opInfo->arg_tmps[1] =
           getArgTmp(expr->Iex.Binop.arg2, sb);
         opInfo->dest_tmp = offset;
-
-        // Allocate the space for the values we won't know until
-        // runtime, but know their size now.
-        ALLOC(opInfo->args.bargs.arg1_value,
-              "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->args.bargs.arg2_value,
-              "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->dest_value,
-              "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
         addStore(sb, expr->Iex.Binop.arg1,
-                 opInfo->args.bargs.arg1_value);
+                 opInfo->arg_values[0]);
         addStore(sb, expr->Iex.Binop.arg2,
-                 opInfo->args.bargs.arg2_value);
+                 opInfo->arg_values[1]);
         addStore(sb, IRExpr_RdTmp(offset),
                  opInfo->dest_value);
 
@@ -461,39 +446,25 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_SubF64r32:
       case Iop_MulF64r32:
       case Iop_DivF64r32:
-        // Allocate and partially setup the argument structure
-        opInfo = mkOp_Info(3, expr->Iex.Triop.details->op, opAddr,
-                           getPlainOpname(expr->Iex.Triop.details->op),
-                           getOpSymbol(expr->Iex.Triop.details->op));
+        opInfo = populateOpInfo(opAddr, opNum, 3, arg_size, result_size, expr->Iex.Triop.details->op);
 
         // Populate the values we know at instrument time now.
-        opInfo->args.targs.arg1_tmp =
+        opInfo->arg_tmps[0] =
           getArgTmp(expr->Iex.Triop.details->arg1, sb);
-        opInfo->args.targs.arg2_tmp =
+        opInfo->arg_tmps[1] =
           getArgTmp(expr->Iex.Triop.details->arg2, sb);
-        opInfo->args.targs.arg3_tmp =
+        opInfo->arg_tmps[2] =
           getArgTmp(expr->Iex.Triop.details->arg3, sb);
         opInfo->dest_tmp = offset;
-
-        // Allocate the space for the values we won't know until
-        // runtime, but know their size now.
-        ALLOC(opInfo->args.targs.arg1_value,
-              "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->args.targs.arg2_value,
-              "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->args.targs.arg3_value,
-              "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->dest_value,
-              "hg.arg_alloc", 1, result_size);
 
         // Add statements to populate the values we don't know until
         // runtime.
         addStore(sb, expr->Iex.Triop.details->arg1,
-                 opInfo->args.targs.arg1_value);
+                 opInfo->arg_values[0]);
         addStore(sb, expr->Iex.Triop.details->arg2,
-                 opInfo->args.targs.arg2_value);
+                 opInfo->arg_values[1]);
         addStore(sb, expr->Iex.Triop.details->arg3,
-                 opInfo->args.targs.arg3_value);
+                 opInfo->arg_values[2]);
         addStore(sb, IRExpr_RdTmp(offset),
                  opInfo->dest_value);
 
@@ -544,32 +515,28 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
       case Iop_MSubF64:
       case Iop_MAddF64r32:
       case Iop_MSubF64r32:
-        // Allocate and partially setup the argument structure
-        opInfo = mkOp_Info(4, expr->Iex.Qop.details->op, opAddr,
-                           getPlainOpname(expr->Iex.Qop.details->op),
-                           getOpSymbol(expr->Iex.Qop.details->op));
+        opInfo = populateOpInfo(opAddr, opNum, 4, arg_size, result_size, expr->Iex.Qop.details->op);
 
         // Populate the values we know at instrument time now.
-        opInfo->op = expr->Iex.Qop.details->op;
-        opInfo->args.qargs.arg1_tmp =
+        opInfo->arg_tmps[0] =
           getArgTmp(expr->Iex.Qop.details->arg1, sb);
-        opInfo->args.qargs.arg2_tmp =
+        opInfo->arg_tmps[1] =
           getArgTmp(expr->Iex.Qop.details->arg2, sb);
-        opInfo->args.qargs.arg3_tmp =
+        opInfo->arg_tmps[2] =
           getArgTmp(expr->Iex.Qop.details->arg3, sb);
-        opInfo->args.qargs.arg4_tmp =
+        opInfo->arg_tmps[3] =
           getArgTmp(expr->Iex.Qop.details->arg4, sb);
         opInfo->dest_tmp = offset;
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
-        ALLOC(opInfo->args.qargs.arg1_value,
+        ALLOC(opInfo->arg_values[0],
               "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->args.qargs.arg2_value,
+        ALLOC(opInfo->arg_values[1],
               "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->args.qargs.arg3_value,
+        ALLOC(opInfo->arg_values[2],
               "hg.arg_alloc", 1, arg_size);
-        ALLOC(opInfo->args.qargs.arg4_value,
+        ALLOC(opInfo->arg_values[3],
               "hg.arg_alloc", 1, arg_size);
         ALLOC(opInfo->dest_value,
               "hg.arg_alloc", 1, result_size);
@@ -577,13 +544,13 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
         // Add statements to populate the values we don't know until
         // runtime.
         addStore(sb, expr->Iex.Qop.details->arg1,
-                 opInfo->args.qargs.arg1_value);
+                 opInfo->arg_values[0]);
         addStore(sb, expr->Iex.Qop.details->arg2,
-                 opInfo->args.qargs.arg2_value);
+                 opInfo->arg_values[1]);
         addStore(sb, expr->Iex.Qop.details->arg3,
-                 opInfo->args.qargs.arg3_value);
+                 opInfo->arg_values[2]);
         addStore(sb, expr->Iex.Qop.details->arg3,
-                 opInfo->args.qargs.arg4_value);
+                 opInfo->arg_values[3]);
         addStore(sb, IRExpr_RdTmp(offset),
                  opInfo->dest_value);
 
@@ -603,6 +570,44 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr){
   default:
     VG_(dmsg)("BAD THINGS!!!!\n");
     break;
+  }
+}
+
+// This function tries to lookup a previously created opinfo for the
+// op, identified by the address in client code and which op it is in
+// the translation of that structure. If it can't find an existing
+// op_info, it creates a new one, and saves it for next time.
+Op_Info* populateOpInfo(Addr opAddr, int opNum, int nargs, SizeT arg_size, SizeT result_size, IROp op){
+  Op_Infos_ptr* entry = VG_(HT_lookup)(opinfo_store, opAddr);
+  if (entry == NULL){
+    ALLOC(entry, "hg.op_infos_entry", 1, sizeof(Op_Infos_ptr));
+    entry->addr = opAddr;
+    entry->infos = VG_(newXA)(VG_(malloc), "op_infos",
+                              VG_(free), sizeof(Op_Info*));
+    VG_(HT_add_node)(opinfo_store, entry);
+  }
+  if (VG_(sizeXA)(entry->infos) <= opNum){
+    // Allocate and partially setup the argument structure
+    Op_Info* opInfo = mkOp_Info(nargs, op,
+                                opAddr,
+                                getPlainOpname(op),
+                                getOpSymbol(op));
+
+    // Allocate the space for the values we won't know until
+    // runtime, but know their size now.
+    for (int i = 0; i < nargs; ++i){
+      ALLOC(opInfo->arg_values[i],
+            "hg.arg_alloc", 1, arg_size);
+    }
+    ALLOC(opInfo->dest_value,
+          "hg.arg_alloc", 1, result_size);
+    VG_(addToXA)(entry->infos, &opInfo);
+    tl_assert(opInfo->arg_tmps != NULL);
+    return opInfo;
+  } else {
+    Op_Info* opInfo = *(Op_Info**)(VG_(indexXA)(entry->infos, opNum));
+    tl_assert(opInfo->arg_tmps != NULL);
+    return opInfo;
   }
 }
 

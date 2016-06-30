@@ -32,8 +32,11 @@
 #include "include/hg_helper.h"
 #include "include/hg_macros.h"
 #include "runtime/hg_mathreplace.h"
+#include "pub_tool_hashtable.h"
 
-void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr){
+VgHashTable* opinfo_store;
+
+void instrumentStatement(IRStmt* st, IRSB* sbOut, Addr stAddr, int opNum){
   IRExpr* expr;
   IRDirty* copyShadowLocation;
   LoadG_Info* loadGInfo;
@@ -272,7 +275,7 @@ That doesn't seem flattened...\n");
     case Iex_Triop:
     case Iex_Binop:
     case Iex_Unop:
-      instrumentOp(sbOut, st->Ist.WrTmp.tmp, expr, stAddr);
+      instrumentOp(sbOut, st->Ist.WrTmp.tmp, expr, stAddr, opNum);
       break;
       // We don't have to do anything for constants, since a
       // constant isn't considered a float yet.
@@ -495,4 +498,23 @@ int isFloatType(IRType type){
   return type == Ity_F32 || type == Ity_F64
     || type == Ity_V128 || type == Ity_I32
     || type == Ity_I64;
+}
+Bool isOp(IRStmt* st){
+  switch(st->tag){
+  case Ist_WrTmp:
+    switch(st->Ist.WrTmp.data->tag){
+    case Iex_Qop:
+    case Iex_Triop:
+    case Iex_Binop:
+    case Iex_Unop:
+      return True;
+    default:
+      return False;
+    }
+  default:
+    return False;
+  }
+}
+void init_instrumentation(){
+  opinfo_store = VG_(HT_construct)("opinfo store");
 }

@@ -61,9 +61,8 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
                       const VexArchInfo* archinfo_host,
                       IRType gWordTy, IRType hWordTy )
 {
-  // For right now, just print out the VEX representation as we
-  // process it.
-
+  // Print out the input blocks if the appropriate flags have been
+  // turned on.
   if (print_in_blocks && running){
     VG_(printf)("Instrumenting block:\n");
     printSuperBlock(bb);
@@ -76,24 +75,39 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
   // as well as some info about the exit jump, from the old superblock.
   IRSB* sbOut = deepCopyIRSBExceptStmts(bb);
 
+  // Add instrumentation that initializes per-block state.
   startBlock(sbOut);
 
-  // The address cooresponding to the statement we're currently instrumenting.
+  // The address cooresponding to the statement we're currently
+  // instrumenting.
   Addr cur_addr = 0x0;
+  int opNum = 0;
   // Now, let's loop through these statements, and instrument them to
   // add our shadow values.
   for (int i = 0; i < bb->stmts_used; i++){
     IRStmt* st = bb->stmts[i];
     // Use the IMarks to get a cooresponding address for each
     // statement.
-    if (st->tag == Ist_IMark)
+    if (st->tag == Ist_IMark){
       cur_addr = st->Ist.IMark.addr;
-    // Take a look at hg_instrument.c to see what's going on here.
-    instrumentStatement(st, sbOut, cur_addr);
+      opNum = 0;
+    }
+    // Only instrument statements after the preamble, not before the
+    // first IMark.
+    if (cur_addr)
+      // Take a look at hg_instrument.c to see what's going on here.
+      instrumentStatement(st, sbOut, cur_addr, opNum);
+    else
+      addStmtToIRSB(sbOut, st);
+    if (isOp(st))
+      opNum ++;
   }
 
+  // Add instrumentation that cleans up per-block state.
   finalizeBlock(sbOut);
 
+  // Print out the output blocks, if the appropriate flags have been
+  // turned on.
   if (print_out_blocks && running){
     VG_(printf)("Instrumented into:\n");
     printSuperBlock(sbOut);
@@ -207,6 +221,7 @@ static void hg_fini(Int exitcode){
 // This does any initialization that needs to be done after command
 // line processing.
 static void hg_post_clo_init(void){
+   init_instrumentation();
    // Set up the data structures we'll need to keep track of our MPFR
    // shadow values.
    init_runtime();
