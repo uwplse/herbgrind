@@ -236,12 +236,14 @@ void initOpBranchAST(Op_Info* op, SizeT nargs){
                                           VG_(free), sizeof(XArray*));
 }
 
-void initOpLeafAST(Op_Info* op, ShadowValue* val){
-  if (op->ast == NULL)
-    ALLOC(op->ast, "hg.op_leaf_ast", 1, sizeof(OpASTNode));
-  op->ast->tag = Node_Leaf;
-  op->ast->nd.Leaf.op = op;
-  copySV(val, &(op->ast->nd.Leaf.val));
+void initOpLeafAST(Op_Info** op, ShadowValue* val){
+  if (*op == NULL)
+    *op = mkLeafOp_Info(val);
+  if ((*op)->ast == NULL)
+    ALLOC((*op)->ast, "hg.op_leaf_ast", 1, sizeof(OpASTNode));
+  (*op)->ast->tag = Node_Leaf;
+  (*op)->ast->nd.Leaf.op = *op;
+  copySV(val, &((*op)->ast->nd.Leaf.val));
 }
 
 void updateAST(Op_Info* op, ValueASTNode* trace_ast){
@@ -265,7 +267,7 @@ void updateAST(Op_Info* op, ValueASTNode* trace_ast){
   }
 }
 
-void generalizeAST(OpASTNode* opast, ValueASTNode* valast, Op_Info* pSource){
+void generalizeAST(OpASTNode* opast, ValueASTNode* valast, Op_Info** pSource){
   if (opast->tag == Node_Leaf){
     // If we hit a value leaf, and it matches the one we've already
     // seen, then our best guess right now is that that is a constant
@@ -283,7 +285,7 @@ void generalizeAST(OpASTNode* opast, ValueASTNode* valast, Op_Info* pSource){
     }
   } else {
     // We're at a branch node.
-    if (valast->op != opast->nd.Branch.op){
+    if (valast->op != opast->nd.Branch.op || valast->nargs == 0){
       // If the valast is a leaf node, or it continues but it doesn't
       // match the opast, cut off the opast here, with a variable leaf
       // node (one where the shadow value is NULL, because we've seen
@@ -293,17 +295,15 @@ void generalizeAST(OpASTNode* opast, ValueASTNode* valast, Op_Info* pSource){
       // overwrite everything with new initial values, and things will
       // probably turn out fine.
       VG_(free)(opast->nd.Branch.args);
-      tl_assert(pSource != NULL);
       initOpLeafAST(pSource, NULL);
     } else if (opast->nd.Branch.op != NULL) {
       // Otherwise, if they both continue and match, generalize the
       // variable map appropriately, and recurse on children,
-      tl_assert(valast->op->ast == opast);
       checkOpVarMapValVarMapSameLeaves(opast->nd.Branch.var_map, valast->var_map);
       generalizeVarMap(opast->nd.Branch.var_map, valast->var_map);
       for(int i = 0; i < valast->nargs; ++i){
         generalizeAST(opast->nd.Branch.args[i], valast->args[i],
-                      opast->nd.Branch.op->arg_srcs[i]);
+                      &(opast->nd.Branch.op->arg_srcs[i]));
       }
     }
   }
