@@ -188,7 +188,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       // Pull the shadow values for the argument. If we don't already
       // have shadow values for this argument, we'll generate a fresh
       // one from the runtime float value.
-      argLocation = getShadowLocation(opInfo->args.uargs.arg_tmp,
+      argLocation = getShadowLocation(opInfo->arg_tmps[0],
                                       argType);
       // Allocate space for the result
       destLocation = mkShadowLocation_bare(argType);
@@ -200,13 +200,13 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       int i;
       for (i = 0; i < num_vals; ++i){
         arg = getShadowValue(argLocation, i,
-                             opInfo->args.uargs.arg_value,
-                             &(opInfo->args.uargs.arg_src));
+                             opInfo->arg_values[0],
+                             &(opInfo->arg_srcs[0]));
         dest = mkShadowValue();
         destLocation->values[i] = dest;
         if (print_inputs){
           VG_(printf)("Computed arg, part %d: %f\n",
-                      i, ((double*)opInfo->args.uargs.arg_value)[i]);
+                      i, ((double*)opInfo->arg_values[0])[i]);
         }
         mpfr_func(dest->value, arg->value, MPFR_RNDN);
         // Set up the ast record of this operation.
@@ -275,7 +275,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       }
       // Get the input location. If it don't exist, skip the whole
       // thing, and overwrite the destination with NULL.
-      argLocation = getTemp(opInfo->args.uargs.arg_tmp);
+      argLocation = getTemp(opInfo->arg_tmps[0]);
       // Initialize the output location.
       if (argLocation == NULL){
         destLocation = NULL;
@@ -316,7 +316,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
   case Iop_RoundF64toF64_PosINF:
   case Iop_RoundF64toF64_ZERO:
     // Set up space for the argument and result shadow values.
-    argLocation = getTemp(opInfo->args.uargs.arg_tmp);
+    argLocation = getTemp(opInfo->arg_tmps[0]);
     if (argLocation == NULL){
       destLocation = NULL;
       break;
@@ -374,22 +374,22 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
     // already have a shadow location for one argument, but we do for
     // the other, we'll generate a fresh location from the runtime
     // float value.
-    if (getTemp(opInfo->args.bargs.arg1_tmp) == NULL &&
-        getTemp(opInfo->args.bargs.arg2_tmp) == NULL){
+    if (getTemp(opInfo->arg_tmps[0]) == NULL &&
+        getTemp(opInfo->arg_tmps[1]) == NULL){
       destLocation = NULL;
       break;
     }
     return;
-    arg1Location = getShadowLocation(opInfo->args.bargs.arg1_tmp,
+    arg1Location = getShadowLocation(opInfo->arg_tmps[0],
                                      Lt_Double);
-    arg2Location = getShadowLocation(opInfo->args.bargs.arg2_tmp,
+    arg2Location = getShadowLocation(opInfo->arg_tmps[1],
                                      Lt_Double);
     arg1 = getShadowValue(arg1Location, 0,
-                          opInfo->args.bargs.arg1_value,
-                          &(opInfo->args.bargs.arg1_src));
+                          opInfo->arg_values[0],
+                          &(opInfo->arg_srcs[0]));
     arg2 = getShadowValue(arg2Location, 0,
-                          opInfo->args.bargs.arg2_value,
-                          &(opInfo->args.bargs.arg2_src));
+                          opInfo->arg_values[1],
+                          &(opInfo->arg_srcs[1]));
 
     // Now we'll allocate memory for the shadowed result of this
     // operation.
@@ -406,7 +406,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
   case Iop_RoundF32toInt:
     {
       LocType argType;
-      if (getTemp(opInfo->args.bargs.arg2_tmp) == NULL){
+      if (getTemp(opInfo->arg_tmps[1]) == NULL){
         destLocation = NULL;
         break;
       }
@@ -420,11 +420,11 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       default:
         return;
       }
-      arg2Location = getShadowLocation(opInfo->args.bargs.arg2_tmp,
+      arg2Location = getShadowLocation(opInfo->arg_tmps[1],
                                        argType);
       arg2 = getShadowValue(arg2Location, 0,
-                            opInfo->args.bargs.arg2_value,
-                            &(opInfo->args.bargs.arg2_src));
+                            opInfo->arg_values[1],
+                            &(opInfo->arg_srcs[1]));
       destLocation = mkShadowLocation_bare(argType);
       destLocation->values[0] = mkShadowValue();
       copyValueAST(arg2, destLocation->values[0]);
@@ -434,15 +434,15 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
   case Iop_F64toF32:
     // For semantic conversions between floating point types we can
     // just copy across the values, if they're there.
-    if (getTemp(opInfo->args.bargs.arg2_tmp) == NULL){
+    if (getTemp(opInfo->arg_tmps[1]) == NULL){
       destLocation = NULL;
       break;
     }
-    arg2Location = getShadowLocation(opInfo->args.bargs.arg2_tmp,
+    arg2Location = getShadowLocation(opInfo->arg_tmps[1],
                                      Lt_Double);
     arg2 = getShadowValue(arg2Location, 0,
-                          opInfo->args.bargs.arg2_value,
-                          &(opInfo->args.bargs.arg2_src));
+                          opInfo->arg_values[1],
+                          &(opInfo->arg_srcs[1]));
     destLocation = mkShadowLocation_bare(Lt_Float);
     copySV(arg2, &destLocation->values[0]);
     break;
@@ -547,12 +547,12 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       // have shadow values for these arguments, we'll generate fresh
       // ones from the runtime float values.
       arg2Location =
-        getShadowLocation(opInfo->args.bargs.arg2_tmp,
+        getShadowLocation(opInfo->arg_tmps[1],
                           argType);
       for (int i = 0; i < num_values; ++i)
         getShadowValue(arg2Location, i,
-                       opInfo->args.bargs.arg2_value,
-                       &(opInfo->args.bargs.arg2_src));
+                       opInfo->arg_values[1],
+                       &(opInfo->arg_srcs[1]));
       // Now we'll allocate memory for the shadowed result of this
       // operation.
       destLocation = mkShadowLocation_bare(argType);
@@ -565,7 +565,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
 
         if (print_inputs){
           VG_(printf)("Computed arg, part %d: %f\n",
-                      i, ((double*)opInfo->args.uargs.arg_value)[i]);
+                      i, ((double*)opInfo->arg_values[1])[i]);
         }
         // Initialize a shadow value in the given slot in
         // destLocation.
@@ -699,20 +699,20 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       // have shadow values for these arguments, we'll generate fresh
       // ones from the runtime float values.
       arg1Location =
-        getShadowLocation(opInfo->args.bargs.arg1_tmp,
+        getShadowLocation(opInfo->arg_tmps[0],
                           argType);
       arg2Location =
-        getShadowLocation(opInfo->args.bargs.arg2_tmp,
+        getShadowLocation(opInfo->arg_tmps[1],
                           argType);
                           
 
       for(int i = 0; i < num_values; ++i){
         getShadowValue(arg1Location, i,
-                       opInfo->args.bargs.arg1_value,
-                       &(opInfo->args.bargs.arg1_src));
+                       opInfo->arg_values[0],
+                       &(opInfo->arg_srcs[0]));
         getShadowValue(arg2Location, i,
-                          opInfo->args.bargs.arg2_value,
-                          &(opInfo->args.bargs.arg2_src));
+                          opInfo->arg_values[1],
+                          &(opInfo->arg_srcs[1]));
       }
   
       // Now we'll allocate memory for the shadowed result of this
@@ -731,8 +731,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         if (print_inputs){
           VG_(printf)("Computed first arg, part %d: %f\n"
                       "Computed second arg, part %d: %f\n",
-                      i, ((double*)opInfo->args.bargs.arg1_value)[i],
-                      i, ((double*)opInfo->args.bargs.arg2_value)[i]);
+                      i, ((double*)opInfo->arg_values[0])[i],
+                      i, ((double*)opInfo->arg_values[1])[i]);
         }
         destLocation->values[i] = mkShadowValue();
         // Set the destination shadow values to the result of a
@@ -764,8 +764,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       // For operations like this, since it's not a math-y operation,
       // we're not going to track it unless it's already being
       // tracked.
-      if (getTemp(opInfo->args.bargs.arg1_tmp) == NULL &&
-          getTemp(opInfo->args.bargs.arg2_tmp) == NULL){
+      if (getTemp(opInfo->arg_tmps[0]) == NULL &&
+          getTemp(opInfo->arg_tmps[1]) == NULL){
         destLocation = NULL;
         break;
       }
@@ -785,10 +785,10 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       // have shadow values for these arguments, we'll generate fresh
       // ones from the runtime float values.
       arg1Location =
-        getShadowLocation(opInfo->args.bargs.arg1_tmp,
+        getShadowLocation(opInfo->arg_tmps[0],
                           type);
       arg2Location =
-        getShadowLocation(opInfo->args.bargs.arg2_tmp,
+        getShadowLocation(opInfo->arg_tmps[1],
                           type);
       // Now we'll allocate memory for the shadowed result of this
       // operation, which is a 128-bit SIMD value. The high order
@@ -812,47 +812,46 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
     // Probably a negation
     {
       LocType argType;
-      if (*(opInfo->args.bargs.arg1_value) == 0x8000000000000000 ||
-          *(opInfo->args.bargs.arg2_value) == 0x8000000000000000 ||
-          *(opInfo->args.bargs.arg1_value) == 0x2424242424242424 ||
-          *(opInfo->args.bargs.arg2_value) == 0x2424242424242424){
+      if (*(opInfo->arg_values[0]) == 0x8000000000000000 ||
+          *(opInfo->arg_values[1]) == 0x8000000000000000 ||
+          *(opInfo->arg_values[0]) == 0x2424242424242424 ||
+          *(opInfo->arg_values[1]) == 0x2424242424242424){
         // Pull the shadow values for the arguments. If we don't already
         // have shadow values for these arguments, we'll generate fresh
         // ones from the runtime float values.
-        if(*(opInfo->args.bargs.arg1_value) == 0x8000000000000000){
+        if(*(opInfo->arg_values[0]) == 0x8000000000000000){
           arg1Location =
-            getShadowLocation(opInfo->args.bargs.arg2_tmp,
+            getShadowLocation(opInfo->arg_tmps[1],
                               Lt_Doublex2);
           arg1 = getShadowValue(arg1Location, 0,
-                              opInfo->args.bargs.arg2_value,
-                              &(opInfo->args.bargs.arg2_src));
+                              opInfo->arg_values[1],
+                              &(opInfo->arg_srcs[1]));
           argType = Lt_Doublex2;
-        } else if (*(opInfo->args.bargs.arg2_value) == 0x8000000000000000){
+        } else if (*(opInfo->arg_values[1]) == 0x8000000000000000){
           arg1Location =
-            getShadowLocation(opInfo->args.bargs.arg1_tmp,
+            getShadowLocation(opInfo->arg_tmps[0],
                               Lt_Doublex2);
           arg1 = getShadowValue(arg1Location, 0,
-                              opInfo->args.bargs.arg1_value,
-                              &(opInfo->args.bargs.arg1_src));
+                              opInfo->arg_values[0],
+                              &(opInfo->arg_srcs[0]));
           argType = Lt_Doublex2;
-        } else if (*(opInfo->args.bargs.arg1_value) == 0x2424242424242424){
+        } else if (*(opInfo->arg_values[0]) == 0x2424242424242424){
           arg1Location =
-            getShadowLocation(opInfo->args.bargs.arg2_tmp,
+            getShadowLocation(opInfo->arg_tmps[1],
                               Lt_Floatx4);
           arg1 = getShadowValue(arg1Location, 0,
-                              opInfo->args.bargs.arg2_value,
-                              &(opInfo->args.bargs.arg2_src));
+                              opInfo->arg_values[1],
+                              &(opInfo->arg_srcs[1]));
           argType = Lt_Floatx4;
-        } else if (*(opInfo->args.bargs.arg2_value) == 0x2424242424242424){
+        } else if (*(opInfo->arg_values[1]) == 0x2424242424242424){
           arg1Location =
-            getShadowLocation(opInfo->args.bargs.arg1_tmp,
+            getShadowLocation(opInfo->arg_tmps[0],
                               Lt_Floatx4);
           arg1 = getShadowValue(arg1Location, 0,
-                              opInfo->args.bargs.arg1_value,
-                              &(opInfo->args.bargs.arg1_src));
+                              opInfo->arg_values[0],
+                              &(opInfo->arg_srcs[0]));
           argType = Lt_Floatx4;
         }
-        return;
 
         // Now we'll allocate memory for the shadowed result of this
         // operation.
@@ -1029,19 +1028,19 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
   // have shadow values for these arguments, we'll generate fresh
   // ones from the runtime float values.
   arg2Location =
-    getShadowLocation(opInfo->args.targs.arg2_tmp,
+    getShadowLocation(opInfo->arg_tmps[1],
                       type);
   arg3Location =
-    getShadowLocation(opInfo->args.targs.arg3_tmp,
+    getShadowLocation(opInfo->arg_tmps[2],
                       type);
 
   for(int i = 0; i < num_vals; ++i){
     getShadowValue(arg2Location, i,
-                   opInfo->args.targs.arg2_value,
-                   &(opInfo->args.targs.arg2_src));
+                   opInfo->arg_values[1],
+                   &(opInfo->arg_srcs[1]));
     getShadowValue(arg3Location, i,
-                   opInfo->args.targs.arg3_value,
-                   &(opInfo->args.targs.arg3_src));
+                   opInfo->arg_values[2],
+                   &(opInfo->arg_srcs[2]));
   }
 
   // Now we'll allocate memory for the shadowed result of this
@@ -1059,14 +1058,14 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
     if (print_inputs){
       VG_(printf)("Computed first arg, part %d: %f\n"
                   "Computed second arg, part %d: %f\n",
-                  i, ((double*)opInfo->args.targs.arg2_value)[i],
-                  i, ((double*)opInfo->args.targs.arg3_value)[i]);
+                  i, ((double*)opInfo->arg_values[1])[i],
+                  i, ((double*)opInfo->arg_values[2])[i]);
     }
     // Set the destination shadow value to the result of a
     // high-precision shadowing operation.
     mpfr_func(destLocation->values[i]->value, arg2Location->values[i]->value,
               arg3Location->values[i]->value,
-              roundmodeIRtoMPFR(*((IRRoundingMode*)opInfo->args.targs.arg1_value)));
+              roundmodeIRtoMPFR(*((IRRoundingMode*)opInfo->arg_values[0])));
     // Set up the ast record of this operation.
     initValueBranchAST(destLocation->values[i], opInfo, 2,
                        arg2Location->values[i],
@@ -1138,24 +1137,24 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
   // have shadow values for these arguments, we'll generate fresh
   // ones from the runtime float values.
   arg2Location =
-    getShadowLocation(opInfo->args.qargs.arg2_tmp,
+    getShadowLocation(opInfo->arg_tmps[1],
                       argType);
   arg2 = getShadowValue(arg2Location, 0,
-                        opInfo->args.qargs.arg2_value,
-                        &(opInfo->args.qargs.arg2_src));
+                        opInfo->arg_values[1],
+                        &(opInfo->arg_srcs[1]));
   
   arg3Location =
-    getShadowLocation(opInfo->args.qargs.arg3_tmp,
+    getShadowLocation(opInfo->arg_tmps[2],
                       argType);
   arg3 = getShadowValue(arg3Location, 0,
-                        opInfo->args.qargs.arg3_value,
-                        &(opInfo->args.qargs.arg3_src));
+                        opInfo->arg_values[2],
+                        &(opInfo->arg_srcs[2]));
   arg4Location =
-    getShadowLocation(opInfo->args.qargs.arg4_tmp,
+    getShadowLocation(opInfo->arg_tmps[3],
                       argType);
   arg4 = getShadowValue(arg4Location, 0,
-                        opInfo->args.qargs.arg4_value,
-                        &(opInfo->args.qargs.arg4_src));
+                        opInfo->arg_values[3],
+                        &(opInfo->arg_srcs[3]));
 
   // Now we'll allocate memory for the shadowed result of this
   // operation.
@@ -1166,7 +1165,7 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
   // high-precision shadowing operation.
   mpfr_func(destLocation->values[0]->value, arg2->value,
             arg3->value, arg4->value,
-            roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->args.qargs.arg1_value)[0]));
+            roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg_values[0])[0]));
   // Set up the ast record of this operation.
   initValueBranchAST(destLocation->values[0], opInfo, 3,
                      arg2, arg3, arg4);
@@ -1182,9 +1181,9 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
     VG_(printf)("Computed first arg: %f\n"
                 "Computed second arg: %f\n"
                 "Computed third arg: %f\n",
-                ((double*)opInfo->args.qargs.arg2_value)[0],
-                ((double*)opInfo->args.qargs.arg3_value)[0],
-                ((double*)opInfo->args.qargs.arg4_value)[0]);
+                ((double*)opInfo->arg_values[1])[0],
+                ((double*)opInfo->arg_values[2])[0],
+                ((double*)opInfo->arg_values[3])[0]);
   }
   // Now, we'll evaluate the shadow value against the result value.
   evaluateOpError_helper(destLocation->values[0],

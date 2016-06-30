@@ -92,98 +92,6 @@ struct _Eval_Info {
 };
 
 typedef enum {
-  Unary,
-  Binary,
-  Ternary,
-  Quadnary
-} Arity;
-
-struct _Unary_Args {
-  // This is the index of the temporary that holds these values. We'll
-  // use this index to index into the shadow value array too.
-  UWord arg_tmp;
-  // If we don't have a shadow value yet for these arguments, we're
-  // going to use the existing float value to create one. This float
-  // value can be as big as 256 bits, since we account for SIMD
-  // locations, so we're going to store it as an array that's
-  // malloc'd when we know how big it's going to be.
-  UWord* arg_value;
-  // If the argument didn't come from the result of another operation,
-  // than we'll keep track of the "source" of that argument as a leaf
-  // operation here.
-  Op_Info* arg_src;
-};
-
-struct _Binary_Args {
-  // These are the indicies of the temporaries that hold these
-  // values. We'll use these indices to index into the shadow value
-  // array too.
-  UWord arg1_tmp;
-  UWord arg2_tmp;
-  // If we don't have a shadow value yet for these arguments, we're
-  // going to use the existing float values to create one. These float
-  // values can be as big as 256 bits, since we account for SIMD
-  // locations, so we're going to store them as an array that's
-  // malloc'd when we know how big they're going to be.
-  UWord* arg1_value;
-  UWord* arg2_value;
-  // If the argument didn't come from the result of another operation,
-  // than we'll keep track of the "source" of that argument as a leaf
-  // operation here.
-  Op_Info* arg1_src;
-  Op_Info* arg2_src;
-};
-
-struct _Ternary_Args {
-  // These are the indicies of the temporaries that hold these
-  // values. We'll use these indices to index into the shadow value
-  // array too.
-  UWord arg1_tmp;
-  UWord arg2_tmp;
-  UWord arg3_tmp;
-  // If we don't have a shadow value yet for these arguments, we're
-  // going to use the existing float values to create one. These float
-  // values can be as big as 256 bits, since we account for SIMD
-  // locations, so we're going to store them as an array that's
-  // malloc'd when we know how big they're going to be.
-  UWord* arg1_value;
-  UWord* arg2_value;
-  UWord* arg3_value;
-  // If the argument didn't come from the result of another operation,
-  // than we'll keep track of the "source" of that argument as a leaf
-  // operation here.
-  Op_Info* arg1_src;
-  Op_Info* arg2_src;
-  Op_Info* arg3_src;
-};
-
-struct _Quadnary_Args {
-  // These are the indicies of the temporaries that hold these
-  // values. We'll use these indices to index into the shadow value
-  // array too.
-  UWord arg1_tmp;
-  UWord arg2_tmp;
-  UWord arg3_tmp;
-  UWord arg4_tmp;
-  // If we don't have a shadow value yet for these arguments, we're
-  // going to use the existing float values to create one. These float
-  // values can be as big as 256 bits, since we account for SIMD
-  // locations, so we're going to store them as an array that's
-  // malloc'd when we know how big they're going to be.
-  UWord* arg1_value;
-  UWord* arg2_value;
-  UWord* arg3_value;
-  UWord* arg4_value;
-  // If the argument didn't come from the result of another operation,
-  // than we'll keep track of the "source" of that argument as a leaf
-  // operation here.
-  Op_Info* arg1_src;
-  Op_Info* arg2_src;
-  Op_Info* arg3_src;
-  Op_Info* arg4_src;
-};
-
-typedef enum {
   Op_Branch,
   Op_Leaf,
 } OpInfoType;
@@ -209,12 +117,23 @@ struct _Op_Info {
   // accuracy.
   UWord* dest_value;
   // The argument information for the op
-  union {
-    Unary_Args uargs;
-    Binary_Args bargs;
-    Ternary_Args targs;
-    Quadnary_Args qargs;
-  } args;
+
+  // These are the indicies of the temporaries that hold these
+  // values. We'll use these indices to index into the shadow value
+  // array too.
+  UWord* arg_tmps;
+
+  // If we don't have a shadow value yet for these arguments, we're
+  // going to use the existing float values to create one. These float
+  // values can be as big as 256 bits, since we account for SIMD
+  // locations, so we're going to store them as an array that's
+  // malloc'd when we know how big they're going to be.
+  UWord** arg_values;
+
+  // If the argument didn't come from the result of another operation,
+  // than we'll keep track of the "source" of that argument as a leaf
+  // operation here.
+  Op_Info** arg_srcs;
 };
 
 Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
