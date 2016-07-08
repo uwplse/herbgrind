@@ -1,5 +1,5 @@
-#!/usr/bin/racket
-#lang racket
+;; #!/usr/bin/racket
+;; #lang racket
 
 (define (flip-lists list-list)
   (apply map list list-list))
@@ -98,6 +98,10 @@
 (define (equality-valid? equality tree)
   (match equality
     [`(= ,pos1 ,pos2)
+     (when (not (valid-pos? pos1 tree))
+       (error "Invalid position" pos1 tree))
+     (when (not (valid-pos? pos2 tree))
+       (error "Invalid position" pos2 tree))
      (pequal? (position-get pos1 tree)
               (position-get pos2 tree))]
     [else #f]))
@@ -134,7 +138,8 @@
 (define (var-map-complete? aggr traces)
   (let ([universal-equalities 
          (if (null? traces) '()
-           (apply set-intersect (map get-all-equalities traces)))])
+           (apply set-intersect (map (curry get-equalities (get-var-positions aggr))
+                                     traces)))])
     (for/and ([equality universal-equalities])
       (equality-valid? equality aggr))))
 
@@ -142,6 +147,83 @@
   (and (structure-matches? aggr traces)
        (var-map-sound? aggr traces)
        (var-map-complete? aggr traces)))
+
+;; TODO: Fill these in.
+
+(define (get-abstract-structure traces)
+  (if (and (andmap list? traces) (all-op? (car (first traces)) traces))
+    (cons (car (first traces))
+          (for/list ([child-traces (flip-lists (map rest traces))])
+            (get-abstract-structure child-traces)))
+    'x))
+
+(define (trim-to-structure structure trace)
+  (if (list? structure)
+    (cons (car structure) (map trim-to-structure (rest structure) (rest trace)))
+    (precompute trace)))
+
+(define (fill-consts structure traces)
+  (if (list? structure)
+    (cons (car structure) (map fill-consts (rest structure) (flip-lists (map rest traces))))
+    (let ([pfirst (precompute (first traces))])
+      (if (all-pequal? pfirst traces)
+        pfirst
+        'x))))
+
+(define (assign-variables-from-equalities structure-with-consts var-equalities)
+  (define (equal-positions position equalities)
+    (remove-duplicates
+      (for/list ([equality equalities]
+                 #:when (member position (rest equality)))
+        (if (equal? (cadr equality) position)
+          (caddr equality)
+          (cadr equality)))))
+  (define (get-existing-var-sym positions mapping)
+    (for/or ([pos positions])
+      (hash-ref mapping pos #f)))
+  (let ([pos-var-mapping (make-hash)])
+    (for ([var-pos (get-var-positions structure-with-consts)])
+      (let* ([eq-positions (equal-positions var-pos var-equalities)]
+             [var-sym (get-existing-var-sym eq-positions pos-var-mapping)])
+        (if var-sym
+          (hash-set! pos-var-mapping var-pos var-sym)
+          (let ([newsym (gensym "x")])
+            (hash-set! pos-var-mapping var-pos newsym)
+            newsym))))
+    (assign-variables-from-map structure-with-consts pos-var-mapping)))
+
+(define (assign-variables-from-map structure mapping)
+  (let recurse ([structure structure] [cur-pos '()])
+    (let ([var (hash-ref mapping cur-pos #f)])
+      (if var var
+        (if (list? structure)
+          (cons (car structure)
+                (for/list ([child (cdr structure)] [idx (in-naturals 1)])
+                  (recurse child (append cur-pos (list idx)))))
+          structure)))))
+
+(define (abstract-traces-1 traces)
+  (let* ([structure (get-abstract-structure traces)]
+         [trimmed-traces (map (curry trim-to-structure structure) traces)]
+         [structure-with-consts (fill-consts structure traces)]
+         [var-equalities (apply set-intersect (map (curry get-equalities 
+                                                          (get-var-positions structure-with-consts))
+                                                   traces))])
+    (assign-variables-from-equalities structure-with-consts var-equalities)))
+
+;; (define (abstract-traces-2 traces)
+;;   (let* ([structure (get-structure-with-consts traces)]
+;;          [var-positions (get-var-positions structure)]
+;;          [var-mapping (for/fold ([var-mapping (get-equiv-mapping var-positions (first traces))])
+;;                                 ([trace (rest traces)])
+;;                         (merge-var-mappings var-mapping (get-equiv-mapping var-positions trace)))])
+;;     (assign-variables-from-map structure var-mapping)))
+;; 
+;; (define (generalize-aggr aggr trace)
+;;   (let* ([structure (generalize-structure aggr trace)]
+;;          [var-mapping (merge-var-mappings (get-var-mapping aggr)
+;;                                           (get-equiv-mapping (var-positions aggr) trace))])
+;;     (assign-variables-from-map structure var-mapping)))
 
 (require rackunit)
 
@@ -176,3 +258,44 @@
 (check-true (aggregate-correct? '(+ 5 x) '((+ 5 5) (+ (+ 2 3) 4))))
 (check-false (aggregate-correct? '(+ x x) '((+ 5 5) (+ (+ 2 3) 4))))
 (check-false (aggregate-correct? '(+ y x) '((+ 5 5) (+ (+ 2 3) 4))))
+
+(require racket/random)
+
+(define tallest-trace 4)
+
+(define (random-trace [max-height tallest-trace] [min-height 2])
+  (if (or (and (random-ref '(#f #t #t #t)) (> max-height 0))
+          (> min-height 0))
+    (cons (random-ref '(+ -)) (build-list 2
+                                          (lambda _ (random-trace (sub1 max-height)
+                                                                  (sub1 min-height)))))
+    (random-ref '(1 2))))
+
+(define (random-trace-deviation base-trace)
+  (if (random-ref '(#f #t #t #t #t #t))
+    (if (list? base-trace)
+      (cons (car base-trace) (map random-trace-deviation (cdr base-trace)))
+      base-trace)
+    (random-trace tallest-trace 0)))
+
+(define (random-traces)
+  (let ([base-trace (random-trace)])
+    (cons base-trace
+          (for/list ([n (in-range (random 6))])
+            (random-trace-deviation base-trace)))))
+
+(for ([n (in-range 100)])
+  (let ([traces (random-traces)])
+    ;; (printf "Checking that:\n")
+    ;; (for ([trace traces])
+    ;;   (printf "~a\n" trace))
+    ;; (printf "computes the correct aggregate.\n")
+    (let ([computed-aggregate (abstract-traces-1 traces)])
+      ;; (printf "computed as ~a\n" computed-aggregate)
+      (when (not (aggregate-correct? computed-aggregate traces))
+        (printf "Incorrect aggregate ~a computed for traces:\n" computed-aggregate)
+        (for ([trace traces])
+          (printf "~a\n" trace))
+        (error "Bad aggregate")))
+    ;; (printf "done!\n")))
+    ))
