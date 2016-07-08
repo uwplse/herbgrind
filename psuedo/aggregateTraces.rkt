@@ -10,12 +10,11 @@
          (for/list (defs ...)
            bodies ...)))
 
-(define (all-consts? const traces)
-  (and (andmap number? traces)
-       (andmap (curry = const) traces)))
+(define (all-pequal? const traces)
+  (andmap (curry pequal? const) traces))
 
-(define (all-same-const? traces)
-  (all-consts? (first traces) traces))
+(define (all-same-pequal? traces)
+  (all-pequal? (precompute (first traces)) traces))
 
 (define (all-op? op traces)
   (and (andmap list? traces)
@@ -23,8 +22,9 @@
                (map first traces))))
 
 (define (all-same-op? traces)
-  (and (list? (first traces))
-       (all-op? (first (first traces)) traces)))
+  (or (null? traces)
+      (and (list? (first traces))
+           (all-op? (first (first traces)) traces))))
 
 (define (structure-matches? aggr traces)
   (match aggr
@@ -33,10 +33,11 @@
           (for/and ([arg args] [trace-args (flip-lists (map rest traces))])
             (structure-matches? arg trace-args)))]
     [(? number?)
-     (all-consts? aggr traces)]
+     (and (not (all-same-op? traces))
+          (all-pequal? aggr traces))]
     [(? symbol?)
       (and (not (all-same-op? traces))
-           (not (all-same-const? traces)))]))
+           (not (all-same-pequal? traces)))]))
 
 (define (valid-pos? pos tree)
   (if (null? pos) #t
@@ -144,7 +145,6 @@
 
 (require rackunit)
 
-(check-true (aggregate-correct? 4 '()))
 (check-true (aggregate-correct? 4 '(4 4 4)))
 (check-false (aggregate-correct? 'x '(4 4 4)))
 (check-true (aggregate-correct? 'x '(4 4 5)))
@@ -170,3 +170,9 @@
 (check-true (aggregate-correct? '(+ x y) '((+ 1 3) (+ 2 2))))
 (check-true (aggregate-correct? '(+ y x) '((+ 2 2) (+ 1 3))))
 (check-false (aggregate-correct? '(+ x y) '((+ 1 1) (+ 2 2))))
+
+(check-true (aggregate-correct? 5 '(5 (+ 2 3))))
+
+(check-true (aggregate-correct? '(+ 5 x) '((+ 5 5) (+ (+ 2 3) 4))))
+(check-false (aggregate-correct? '(+ x x) '((+ 5 5) (+ (+ 2 3) 4))))
+(check-false (aggregate-correct? '(+ y x) '((+ 5 5) (+ (+ 2 3) 4))))
