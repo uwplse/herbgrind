@@ -1,0 +1,93 @@
+#lang racket
+(require "aggregateTraces-spec.rkt")
+(require rackunit)
+
+(check-true (aggregate-correct? 4 '(4 4 4)))
+(check-false (aggregate-correct? 'x '(4 4 4)))
+(check-true (aggregate-correct? 'x '(4 4 5)))
+(check-false (aggregate-correct? 4 '(4 4 5)))
+(check-true (aggregate-correct? '(+ 4 5) '((+ 4 5))))
+(check-false (aggregate-correct? 'x '((+ 4 5))))
+(check-false (aggregate-correct? '(- 4 5) '((+ 4 5))))
+(check-false (aggregate-correct? '(+ x 5) '((+ 4 5))))
+(check-true (aggregate-correct? 
+            '(+ x y) 
+            '((+ (+ 2 3) 4) (+ 4 5))))
+(check-false (aggregate-correct? 
+              'x 
+              '((+ (+ 2 3) 4) (+ 4 5))))
+
+(check-equal? (get-var-positions '(+ 1 (- x (* (+ y 3) x))))
+              '((2 1) (2 2 1 1) (2 2 2)))
+
+(check-true (aggregate-correct? '(+ x x) '((+ 1 1) (+ 2 2))))
+(check-false (aggregate-correct? '(+ x x) '((+ 1 2) (+ 2 2))))
+(check-false (aggregate-correct? '(+ x x) '((+ 2 2) (+ 1 2))))
+
+(check-true (aggregate-correct? '(+ x y) '((+ 1 3) (+ 2 2))))
+(check-true (aggregate-correct? '(+ y x) '((+ 2 2) (+ 1 3))))
+(check-false (aggregate-correct? '(+ x y) '((+ 1 1) (+ 2 2))))
+
+(check-true (aggregate-correct? 5 '(5 (+ 2 3))))
+
+(check-true (aggregate-correct? '(+ 5 x) '((+ 5 5) (+ (+ 2 3) 4))))
+(check-false (aggregate-correct? '(+ x x) '((+ 5 5) (+ (+ 2 3) 4))))
+(check-false (aggregate-correct? '(+ y x) '((+ 5 5) (+ (+ 2 3) 4))))
+
+(require "aggregateTraces-impl.rkt")
+(require racket/random)
+
+(define tallest-trace 4)
+
+(define (random-trace [max-height tallest-trace] [min-height 2])
+  (if (or (and (random-ref '(#f #t #t #t)) (> max-height 0))
+          (> min-height 0))
+    (cons (random-ref '(+ -)) (build-list 2
+                                          (lambda _ (random-trace (sub1 max-height)
+                                                                  (sub1 min-height)))))
+    (random-ref '(1 2))))
+
+(define (random-trace-deviation base-trace)
+  (if (random-ref '(#f #t #t #t #t #t))
+    (if (list? base-trace)
+      (cons (car base-trace) (map random-trace-deviation (cdr base-trace)))
+      base-trace)
+    (random-trace tallest-trace 0)))
+
+(define (random-traces)
+  (let ([base-trace (random-trace)])
+    (cons base-trace
+          (for/list ([n (in-range (random 6))])
+            (random-trace-deviation base-trace)))))
+
+(for ([n (in-range 100)])
+  (let ([traces (random-traces)])
+    ;; (printf "Checking that:\n")
+    ;; (for ([trace traces])
+    ;;   (printf "~a\n" trace))
+    ;; (printf "computes the correct aggregate.\n")
+    (let ([computed-aggregate (abstract-traces-1 traces)])
+      ;; (printf "computed as ~a\n" computed-aggregate)
+      (when (not (aggregate-correct? computed-aggregate traces))
+        (printf "Incorrect aggregate ~a computed for traces:\n" computed-aggregate)
+        (for ([trace traces])
+          (printf "~a\n" trace))
+        (error "Bad aggregate")))
+    ;; (printf "done!\n")))
+    ))
+
+(for ([n (in-range 100)])
+  (let ([traces (random-traces)])
+    ;; (printf "Checking that:\n")
+    ;; (for ([trace traces])
+    ;;   (printf "~a\n" trace))
+    ;; (printf "computes the correct aggregate.\n")
+    (let ([computed-aggregate (abstract-traces-2 traces)])
+      ;; (printf "computed as ~a\n" computed-aggregate)
+      (when (not (aggregate-correct? computed-aggregate traces))
+        (printf "Incorrect aggregate ~a computed for traces:\n" computed-aggregate)
+        (for ([trace traces])
+          (printf "~a\n" trace))
+        (error "Bad aggregate")))
+    ;; (printf "done!\n")))
+    ))
