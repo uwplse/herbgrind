@@ -1,8 +1,9 @@
 #lang racket
-  
-(require "aggregateTraces-spec.rkt")
+
 (provide abstract-traces-1
          abstract-traces-2)
+
+(require "aggregateTraces-spec.rkt")
 
 (define (get-abstract-structure traces)
   (if (and (andmap list? traces) (all-op? (car (first traces)) traces))

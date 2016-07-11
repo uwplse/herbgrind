@@ -81,18 +81,17 @@
   (null? (get-var-positions tree)))
 
 (define (pequal? t1 t2)
-  (if (or (number? t1) (number? t2))
-      (and (precomputable? t1) (precomputable? t2)
-           (= (precompute t1) (precompute t2)))
-      (match t1
-        [`(,op . ,args)
-          (and (list? t1)
-               (equal? op (first t2))
-               (= (length args) (length (rest t2)))
-               (for/and ([arg args] [arg2 (rest t2)])
-                 (pequal? arg arg2)))]
-        [(? symbol?)
-         (equal? t1 t2)])))
+  (if (and (precomputable? t1) (precomputable? t2))
+    (= (precompute t1) (precompute t2))
+    (match t1
+      [`(,op . ,args)
+        (and (list? t1)
+             (equal? op (first t2))
+             (= (length args) (length (rest t2)))
+             (for/and ([arg args] [arg2 (rest t2)])
+               (pequal? arg arg2)))]
+      [(? symbol?)
+       (equal? t1 t2)])))
 
 (define (get-possible-equalities positions)
   (for/append ([pos1 positions])
@@ -138,7 +137,6 @@
 
 ;; Determine whether every equality that holds in every trace holds in
 ;; the aggregate.
-
 
 (define (var-map-complete? aggr traces)
   (let ([universal-equalities 
