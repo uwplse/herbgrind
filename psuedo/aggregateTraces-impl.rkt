@@ -1,9 +1,12 @@
 #lang racket
 
 (provide abstract-traces-1
-         abstract-traces-2)
+         abstract-traces-2
+         generalize-aggr
+         abstract-traces-3)
 
 (require "aggregateTraces-spec.rkt")
+(require racket/hash)
 
 (define (get-abstract-structure traces)
   (if (and (andmap list? traces) (all-op? (car (first traces)) traces))
@@ -134,9 +137,58 @@
                                               trace)))])
     (assign-variables-from-map structure var-mapping)))
 
-;; (define (generalize-aggr aggr trace)
-;;   (let* ([structure (generalize-structure aggr trace)]
-;;          [var-mapping (merge-var-mappings (get-var-mapping aggr)
-;;                                           (get-equiv-mapping (var-positions aggr) trace))])
-;;     (assign-variables-from-map structure var-mapping)))
+(define (generalize-structure aggr-expr trace)
+  (match aggr-expr
+    [(? number?)
+     (if (= aggr-expr (precompute trace))
+       aggr-expr
+       'x)]
+    [(? symbol?)
+     aggr-expr]
+    [`(,op . ,args)
+     (if (and (list? trace) (eq? (car trace) op))
+       (cons op (map generalize-structure args (cdr trace)))
+       (if (and (precomputable? aggr-expr) (= (precompute aggr-expr) (precompute trace)))
+         (precompute aggr-expr)
+         'x))]))
 
+(define (get-var-mapping aggr)
+  (let recurse ([aggr aggr] [pos '()])
+    (match aggr
+     [(? number?)
+      (hash)]
+     [(? symbol?)
+      (hash pos aggr)]
+     [`(,op . ,args)
+      (apply hash-union
+       (for/list ([arg args] [idx (in-naturals 1)])
+         (recurse arg (append pos (list idx)))))])))
+
+(struct aggregate (node-map expr))
+(define (trace->aggregate trace)
+  (aggregate (get-equiv-mapping (get-all-positions trace) trace)
+             trace))
+
+(define (aggregate->full-expr aggr)
+  (assign-variables-from-map (aggregate-expr aggr)
+                             (prune-var-map (aggregate-node-map aggr)
+                                            (get-var-positions (aggregate-expr aggr)))))
+
+(define (prune-var-map var-map positions)
+  (for/hash ([pos positions])
+    (values pos (hash-ref var-map pos))))
+
+(define (generalize-aggr aggr trace)
+  (let* ([structure (generalize-structure (aggregate-expr aggr) trace)]
+         [var-mapping (merge-var-mappings (prune-var-map
+                                            (aggregate-node-map aggr)
+                                            (get-all-positions structure))
+                                          (get-equiv-mapping (get-all-positions structure)
+                                                             trace))])
+    (aggregate var-mapping structure)))
+
+(define (abstract-traces-3 traces)
+  (aggregate->full-expr
+    (foldl (lambda (trace aggr) (generalize-aggr aggr trace))
+           (trace->aggregate (first traces))
+           (rest traces))))
