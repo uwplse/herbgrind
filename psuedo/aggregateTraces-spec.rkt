@@ -1,9 +1,9 @@
 #lang racket
 (provide flip-lists for/append
-         position-get get-var-positions
+         position-get get-var-positions get-all-positions
          get-equalities aggregate-correct?
-         all-op? precompute
-         all-pequal?)
+         all-op? all-pequal?
+         precomputable? precompute)
 
 (define (flip-lists list-list)
   (apply map list list-list))
