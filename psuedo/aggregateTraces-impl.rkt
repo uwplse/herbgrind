@@ -5,6 +5,8 @@
          generalize-aggr
          abstract-traces-3)
 
+(provide (all-defined-out))
+
 (require "aggregateTraces-spec.rkt")
 (require racket/hash)
 
@@ -164,31 +166,61 @@
        (for/list ([arg args] [idx (in-naturals 1)])
          (recurse arg (append pos (list idx)))))])))
 
-(struct aggregate (node-map expr))
-(define (trace->aggregate trace)
-  (aggregate (get-equiv-mapping (get-all-positions trace) trace)
-             trace))
+(struct aggregate0 (node-equiv-map node-const-map expr) #:transparent)
 
-(define (aggregate->full-expr aggr)
-  (assign-variables-from-map (aggregate-expr aggr)
-                             (prune-var-map (aggregate-node-map aggr)
-                                            (get-var-positions (aggregate-expr aggr)))))
-
-(define (prune-var-map var-map positions)
+(define (get-const-mapping positions stem)
   (for/hash ([pos positions])
-    (values pos (hash-ref var-map pos))))
+    (values pos (precompute (position-get pos stem)))))
+
+(define (merge-const-mappings mapping1 mapping2)
+  (for/hash ([(pos1 val1) (in-hash mapping1)]
+             #:when (= val1 (hash-ref mapping2 pos1 #f)))
+    (values pos1 val1)))
+(define (trace->aggregate0 trace)
+  (aggregate0 (get-equiv-mapping (get-all-positions trace) trace)
+              (get-const-mapping (get-all-positions trace) trace)
+              trace))
+
+(define (aggregate0->full-expr aggr)
+  (assign-constants-from-map
+    (assign-variables-from-map 
+      (aggregate0-expr aggr)
+      (prune-pos-map (aggregate0-node-equiv-map aggr)
+                     (get-var-positions (aggregate0-expr aggr))))
+    (prune-pos-map (aggregate0-node-const-map aggr)
+                   (get-var-positions (aggregate0-expr aggr)))))
+
+(define (assign-constants-from-map tea-expr mapping)
+  (let recurse ([cur-pos '()] [cur-expr tea-expr])
+    (let ([constant (hash-ref mapping cur-pos #f)])
+      (if constant constant
+        (if (list? cur-expr)
+          (cons (car cur-expr)
+                (for/list ([subexpr (cdr cur-expr)] [idx (in-naturals 1)])
+                  (recurse (cons idx cur-pos) subexpr)))
+          cur-expr)))))
+
+(define (prune-pos-map pos-map positions)
+  (for/hash ([pos positions]
+             #:when (hash-ref pos-map pos #f))
+    (values pos (hash-ref pos-map pos))))
 
 (define (generalize-aggr aggr trace)
-  (let* ([structure (generalize-structure (aggregate-expr aggr) trace)]
-         [var-mapping (merge-var-mappings (prune-var-map
-                                            (aggregate-node-map aggr)
+  (let* ([structure (generalize-structure (aggregate0-expr aggr) trace)]
+         [var-mapping (merge-var-mappings (prune-pos-map
+                                            (aggregate0-node-equiv-map aggr)
                                             (get-all-positions structure))
                                           (get-equiv-mapping (get-all-positions structure)
-                                                             trace))])
-    (aggregate var-mapping structure)))
+                                                             trace))]
+         [const-mapping (merge-const-mappings (prune-pos-map
+                                                (aggregate0-node-const-map aggr)
+                                                (get-all-positions structure))
+                                              (get-const-mapping (get-all-positions structure)
+                                                                 trace))])
+    (aggregate0 var-mapping const-mapping structure)))
 
 (define (abstract-traces-3 traces)
-  (aggregate->full-expr
+  (aggregate0->full-expr
     (foldl (lambda (trace aggr) (generalize-aggr aggr trace))
-           (trace->aggregate (first traces))
+           (trace->aggregate0 (first traces))
            (rest traces))))
