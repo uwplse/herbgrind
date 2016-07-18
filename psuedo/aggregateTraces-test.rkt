@@ -110,7 +110,7 @@
 
 (require "aggregateTraces-impl2.rkt")
 
-(for ([n (in-range 1000)])
+(for ([n (in-range 100)])
   (let ([traces (random-traces)])
     ; (printf "Checking that:\n")
     ; (for ([trace traces])
@@ -123,5 +123,28 @@
         (for ([trace traces])
           (printf "~a\n" trace))
         (error "Bad aggregate")))
+    ; (printf "done!\n")
+  ))
+
+(for ([n (in-range 100)])
+  (let ([traces (random-traces)])
+    ; (printf "Checking that:\n")
+    ; (for ([trace traces])
+    ;   (printf "~a\n" trace))
+    ; (printf "computes equivalent aggregates with all algorithms.\n")
+    (when (not (equal-modulo-alpha-renaming?
+                (abstract-traces-1 traces)
+                (abstract-traces-2 traces)
+                (abstract-traces-3 traces)
+                (abstract-traces-4 traces)))
+      (printf "Computed aggregates are not the same! For traces:\n")
+      (for ([trace traces])
+        (printf "~a\n" trace))
+      (printf "1: ~a\n2: ~a\n3: ~a\n4: ~a\n"
+        (abstract-traces-1 traces)
+        (abstract-traces-2 traces)
+        (abstract-traces-3 traces)
+        (abstract-traces-4 traces))
+      (error "Non-matching aggregates"))
     ; (printf "done!\n")
   ))

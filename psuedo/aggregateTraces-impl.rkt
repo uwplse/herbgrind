@@ -5,8 +5,6 @@
          generalize-aggr
          abstract-traces-3)
 
-(provide (all-defined-out))
-
 (require "aggregateTraces-spec.rkt")
 (require racket/hash)
 

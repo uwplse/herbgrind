@@ -3,7 +3,8 @@
          position-get get-var-positions get-all-positions
          get-equalities aggregate-correct?
          all-op? all-pequal?
-         precomputable? precompute)
+         precomputable? precompute
+         equal-modulo-alpha-renaming?)
 
 (define (flip-lists list-list)
   (apply map list list-list))
@@ -152,3 +153,25 @@
 
        (var-map-complete? aggr traces)))
 
+(define (all-equal? items)
+  (map (curry equal? (car items)) (cdr items)))
+
+(define (same-equalities? exprs)
+  (all-equal? (for/list ([expr exprs])
+                (list->set
+                  (get-equalities
+                    (get-var-positions expr)
+                      expr)))))
+(define (expr-structure-match? exprs)
+  (or
+    (andmap symbol? exprs)
+    (and (andmap number? exprs) (apply = exprs))
+    (and (andmap list? exprs)
+         (all-equal? (map car exprs))
+         (for/list ([cooresponding-args
+                     (flip-lists (map cdr exprs))])
+           (expr-structure-match? cooresponding-args)))))
+
+(define (equal-modulo-alpha-renaming? . exprs)
+  (and (expr-structure-match? exprs)
+       (same-equalities? exprs)))
