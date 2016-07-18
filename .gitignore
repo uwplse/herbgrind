@@ -13,3 +13,4 @@ bench/herbie-crosseval/*.c
 !bench/herbie-crosseval/driver.c
 vgcore*
 *.swp
+*#*#
