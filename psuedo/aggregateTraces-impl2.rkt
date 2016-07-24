@@ -27,6 +27,7 @@
 (require/typed "aggregateTraces-spec.rkt"
                [precompute (-> concrete-expression Number)])
 
+; O(n) where n is number of nodes
 (: symbolic->concrete (-> symbolic-expression concrete-expression))
 (define (symbolic->concrete expr)
   (cond
@@ -45,10 +46,12 @@
 
 (define-type hg-pos (Listof Integer))
 
+; O(n^2), where n is the number of nodes in all stems.
 (: abstract-traces-4 (-> (Listof concrete-expression) symbolic-expression))
 (define (abstract-traces-4 traces)
   (tea->full-expr (make-tea (map expr->stem traces))))
 
+; O(n) where n is number of nodes
 (: tea->full-expr (-> hg-tea symbolic-expression))
 (define (tea->full-expr tea)
   (cond
@@ -76,6 +79,8 @@
                         [idx (in-naturals 1)])
                (recurse arg (cons idx cur-pos))))])))]))
 
+; O(n^2) where n is number of nodes (each node might have to compute
+; all nodes below it to generate intermediary values). 
 (: expr->stem (-> concrete-expression hg-stem))
 (define (expr->stem expr)
   (if (number? expr)
@@ -88,6 +93,7 @@
                    (map expr->stem (cdr expr)))
       (error "Not a valid expression!"))))
 
+; O(n), where n is the total number of nodes in all stems.
 (: make-tea (-> (Listof hg-stem) hg-tea))
 (define (make-tea stems)
   (let ([tea-box (box (stem->tea (first stems)))])
@@ -95,6 +101,7 @@
       (add-stem! tea-box stem))
     (unbox tea-box)))
 
+; O(n) where n is the number of nodes in the stem.
 (: stem->tea (-> hg-stem hg-tea))
 (define (stem->tea stem)
   (cond
@@ -106,6 +113,7 @@
                 (get-stem-equivs stem)
                 (box (stem-branch-value stem)))]))
 
+; O(n) where n is the number of nodes in the tea.
 (: generalize-structure! (-> (Boxof hg-tea) hg-stem Void))
 (define (generalize-structure! tea-box stem)
   (let ([tea (unbox tea-box)])
@@ -161,6 +169,7 @@
                          (tea-const (stem-branch-value stem)))
                (set-box! tea-box (tea-var)))))])])))
 
+; O(n) where n is the number of entries in the node-map.
 (: get-groups (-> (HashTable hg-pos Integer) (Vectorof (Listof hg-pos))))
 (define (get-groups node-map)
   (let ([groups : (Vectorof (Listof hg-pos))
@@ -173,6 +182,8 @@
       (vector-set! groups idx (cons pos (vector-ref groups idx))))
     groups))
 
+; O(n1 + n2), where n1 is the number of nodes in the tea and n2 is the
+; number of nodes in the stem.
 (: merge-branch-node-map! (-> tea-branch stem-branch Void)) 
 (define (merge-branch-node-map! tea stem)
   (let* ([tea-map-groups (get-groups (tea-branch-node-map tea))]
@@ -199,6 +210,8 @@
                            pos
                            new-idx)))))))))
 
+; O(n*d), where n is the number of entries in the given tea's
+; node-map, and the d is the depth of the tea.
 (: prune-map-to-structure! (-> tea-branch Void))
 (define (prune-map-to-structure! tea)
   (: position-valid? (-> hg-pos Boolean))
@@ -233,6 +246,7 @@
           tea
           stem))])))
 
+; O(n) where n is the number of nodes in stem
 (: get-stem-equivs (-> hg-stem (HashTable hg-pos Integer)))
 (define (get-stem-equivs stem)
   (let ([var-mapping : (HashTable hg-pos Integer) (make-hash)]
