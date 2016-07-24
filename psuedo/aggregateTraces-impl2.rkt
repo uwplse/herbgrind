@@ -18,6 +18,14 @@
    (stem-leaf-value stem)]
   [(stem-branch? stem)
    (stem-branch-value stem)]))
+
+(: tea-value (-> hg-tea (Boxof (U False Number))))
+(define (tea-value tea)
+  (cond
+    [(tea-leaf? tea)
+     (tea-leaf-value tea)]
+    [(tea-branch? tea)
+     (tea-branch-value tea)]))
  
 (define-type concrete-expression 
   (U Number (Pairof Symbol (Listof concrete-expression))))
@@ -35,9 +43,8 @@
    [(symbol? expr) (error "Cannot convert variable to concrete expression")]
    [(list? expr) (cons (car expr) (map symbolic->concrete (cdr expr)))]))
 
-(define-type hg-tea (U tea-var tea-const tea-branch))
-(struct tea-var ())
-(struct tea-const ([value : Number])
+(define-type hg-tea (U tea-leaf tea-branch))
+(struct tea-leaf ([value : (Boxof (U Number False))])
         #:transparent)
 (struct tea-branch ([op : Symbol] [args : (Vectorof hg-tea)]
                     [node-map : (HashTable hg-pos Integer)]
@@ -55,10 +62,11 @@
 (: tea->full-expr (-> hg-tea symbolic-expression))
 (define (tea->full-expr tea)
   (cond
-   [(tea-var? tea)
-    'x]
-   [(tea-const? tea)
-    (tea-const-value tea)]
+   [(tea-leaf? tea)
+    (let ([value (unbox (tea-leaf-value tea))])
+      (if value 
+        value
+        'x))]
    [(tea-branch? tea)
     (let ([idx->var : (HashTable Integer Symbol) (make-hash)]
           [pos->idx : (HashTable hg-pos Integer) 
@@ -67,11 +75,12 @@
                    ([cur-tea : hg-tea tea]
                     [cur-pos : (Listof Integer) '()])
         (cond
-          [(tea-var? cur-tea)
-           (hash-ref! idx->var (hash-ref pos->idx cur-pos)
-                      (lambda () (gensym "x")))]
-          [(tea-const? cur-tea)
-           (tea-const-value cur-tea)]
+          [(tea-leaf? cur-tea)
+           (let ([value (unbox (tea-leaf-value cur-tea))])
+             (if value
+               value
+               (hash-ref! idx->var (hash-ref pos->idx cur-pos)
+                          (λ () (gensym "x")))))]
           [(tea-branch? cur-tea)
            (cons (tea-branch-op cur-tea)
              (for/list : (Listof symbolic-expression)
@@ -106,7 +115,7 @@
 (define (stem->tea stem)
   (cond
    [(stem-leaf? stem)
-    (tea-const (stem-leaf-value stem))]
+    (tea-leaf (box (stem-leaf-value stem)))]
    [(stem-branch? stem)
     (tea-branch (stem-branch-op stem)
                 (list->vector (map stem->tea (stem-branch-args stem)))
@@ -118,56 +127,31 @@
 (define (generalize-structure! tea-box stem)
   (let ([tea (unbox tea-box)])
     (cond
-     [(stem-leaf? stem)
-      (cond
-        [(tea-const? tea)
-         (if (= (tea-const-value tea) (stem-leaf-value stem))
-           (void)
-           (set-box! tea-box (tea-var)))]
-        [(tea-var? tea)
-         (void)]
-        [(tea-branch? tea)
-         (if (let ([branch-value (unbox (tea-branch-value tea))])
+      [(or (stem-leaf? stem) (tea-leaf? tea)
+           (not (eq? (stem-branch-op stem) (tea-branch-op tea))))
+       (let ([value (unbox (tea-value tea))])
+         (if (and value
+                  (= value (stem-value stem)))
+             (set-box! tea-box (tea-leaf (box (stem-value stem))))
+             (set-box! tea-box (tea-leaf (box #f)))))]
+      [else
+       (when (let ([branch-value
+                    (unbox (tea-branch-value tea))])
                (and branch-value
-                    (= branch-value (stem-leaf-value stem))))
-           (set-box! tea-box (tea-const (stem-leaf-value stem)))
-           (set-box! tea-box (tea-var)))])]
-     [(stem-branch? stem)
-      (cond
-        [(tea-const? tea)
-         (if (= (tea-const-value tea) (stem-branch-value stem))
-           (void)
-           (set-box! tea-box (tea-var)))]
-        [(tea-var? tea)
-         (void)]
-        [(tea-branch? tea)
-         (if (eq? (stem-branch-op stem) (tea-branch-op tea))
-           (begin
-             (when (let ([branch-value
-                          (unbox (tea-branch-value tea))])
-                     (and branch-value
-                          (not (= (stem-branch-value stem)
-                                  branch-value))))
-               (set-box! (tea-branch-value tea) #f))
-             (for ([i (in-range
-                       (vector-length (tea-branch-args tea)))])
-               (let ([arg-box (box (vector-ref
-                                    (tea-branch-args tea)
-                                    i))])
-                 (generalize-structure!
-                  arg-box 
-                  (list-ref (stem-branch-args stem) i))
-                 (vector-set! (tea-branch-args tea)
-                              i
-                              (unbox arg-box)))))
-           (let ([branch-value : (U Number False)
-                  (unbox (tea-branch-value tea))])
-             (if (and branch-value
-                      (= branch-value
-                         (stem-branch-value stem)))
-               (set-box! tea-box
-                         (tea-const (stem-branch-value stem)))
-               (set-box! tea-box (tea-var)))))])])))
+                    (not (= (stem-branch-value stem)
+                            branch-value))))
+         (set-box! (tea-branch-value tea) #f))
+       (for ([i (in-range
+                 (vector-length (tea-branch-args tea)))])
+         (let ([arg-box (box (vector-ref
+                              (tea-branch-args tea)
+                              i))])
+           (generalize-structure!
+            arg-box 
+            (list-ref (stem-branch-args stem) i))
+           (vector-set! (tea-branch-args tea)
+                        i
+                        (unbox arg-box))))])))
 
 ; O(n) where n is the number of entries in the node-map.
 (: get-groups (-> (HashTable hg-pos Integer) (Vectorof (Listof hg-pos))))
@@ -219,7 +203,7 @@
     (let recurse ([cur-tea : hg-tea tea] [cur-pos : hg-pos pos])
       (cond
         [(null? cur-pos) #t]
-        [(or (tea-var? cur-tea) (tea-const? cur-tea))
+        [(tea-leaf? cur-tea)
          #f]
         [(tea-branch? cur-tea)
          (and (>= (vector-length (tea-branch-args cur-tea)) (car cur-pos))
@@ -234,17 +218,9 @@
 (define (add-stem! tea-box stem)
   (generalize-structure! tea-box stem)
   (let ([tea (unbox tea-box)])
-    (cond
-      [(tea-var? tea)
-       (void)]
-      [(tea-const? tea)
-       (void)]
-      [(tea-branch? tea)
-       (when (stem-branch? stem)
-         (prune-map-to-structure! tea)
-         (merge-branch-node-map!
-          tea
-          stem))])))
+    (when (and (tea-branch? tea) (stem-branch? stem))
+      (prune-map-to-structure! tea)
+      (merge-branch-node-map! tea stem))))
 
 ; O(n) where n is the number of nodes in stem
 (: get-stem-equivs (-> hg-stem (HashTable hg-pos Integer)))
