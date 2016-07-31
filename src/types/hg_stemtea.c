@@ -89,7 +89,7 @@ void generalizeStructure(TeaNode* tea, StemNode* stem){
       tea->branch.op->op != stem->branch.op->op){
     if (tea->type == Node_Branch){
       VG_(free)(tea->branch.args);
-      VG_(HT_destruct)(tea->branch.node_map, VG_(free));
+      VG_(HT_destruct)(tea->branch.node_map, freeNodeMapEntry);
     }
     tea->type == Node_Leaf;
   } else {
@@ -190,16 +190,107 @@ void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
   VG_(HT_destruct)(stemMap);
 }
 void pruneMapToStructure(TeaNode* tea){
+  UInt numNodes;
+  NodeMapEntry** entries = VG_(HT_to_array)(tea->node_map, &numNodes);
+  for(UInt i = 0; i < numNodes; ++i){
+    NodePos position = entries[i]->position;
+    if (!positionValid(tea, position)){
+      VG_(HT_remove)(tea->node_map, position);
+    }
+  }
+  VG_(free)(entries);
 }
 XArray* getGroups(VgHashTable* node_map){
+  XArray* groups = VG_(newXA)(VG_(malloc), "groups",
+                              VG_(free), sizeof(XArray*));
+  VG_(HT_ResetIter)(node_map);
+  for(NodeMapEntry* entry = VG_(HT_Next)(node_map); entry != NULL;
+      entry = VG_(HT_Next)(node_map)){
+    while (entry->varidx >= VG_(sizeXA)(groups)){
+      VG_(addToXA)(groups, VG_(newXA)(VG_(malloc), "group",
+                                      VG_(free), sizeof(NodePos)));
+    }
+    VG_(addToXA)(VG_(indexXA)(groups, entry->varidx));
+  }
+  return groups;
 }
-int positionValid(TeaNode tea, NodePos node){
+Bool positionValid(TeaNode* tea, NodePos node){
+  if (node.len == 0){
+    return True;
+  } else if (tea->type == Node_Leaf){
+    return False;
+  } else if (tea->nargs < node.data[0]) {
+    return False;
+  } else {
+    return positionValid(tea->args[node.data[0]],
+                         (NodePos) {.data = node.data, .len = node.len - 1});
+  }
 }
 VgHashTable* getStemEquivs(StemNode* stem){
+  // NodePos -> VarIdx
+  VgHashTable* node_map = VG_(HT_construct)("node map");
+  // Float -> VarIdx
+  VgHashTable* val_map = VG_(HT_construct)("val map");
+  int next_idx = 0;
+  updateEquivMap(node_map, val_map, &next_idx, stem,
+                 (NodePos) {.data = NULL, .len = 0});
+  VG_(HT_destruct)(val_map, VG_(free));
+  return node_map;
 }
 void updateEquivMap(VgHashTable* node_map,
                     VgHashTable* val_map,
                     int* next_idx,
                     StemNode* stem,
                     NodePos curPos){
+  // Allocate a new node map entry for the current node.
+  NodeMapEntry* newNodeEntry;
+  ALLOC(newNodeEntry, "node map entry", 1, sizeof(NodeMapEntry));
+  newNodeEntry->position = curPos;
+
+  // Convert the value of the stem to a UWord key by literally
+  // reinterpreting the bytes. Not clear that this will do the right
+  // thing on 32-bit platforms, as it should pull the first 32-bits
+  // out of the double for matching. Might overmatch as a result.
+  UWord keyval = 0;
+  VG_(memcpy)(&keyval, &stem->value, sizeof(UWord));
+  ValMapEntry existing_entry = VG_(HT_lookup)(val_map, keyval);
+
+  // If we already have an entry for this value, map the current
+  // position to that.
+  if (existing_entry != NULL){
+    newNodeEntry->varidx = existing_entry->varidx;
+  } else {
+    // Otherwise, create a fresh index, map the current value to that
+    // (so that later nodes that share this value will also get
+    // mapped), and then map the current position to that.
+    int new_idx = (*next_idx)++;
+
+    ValMapEntry* newValEntry;
+    ALLOC(newValEntry, "val map entry", 1, sizeof(ValMapEntry));
+    newValEntry->key = keyval;
+    newValEntry->varidx = new_idx;
+    VG_(HT_add_node)(val_map, newValEntry);
+
+    newNodeEntry->varidx = new_idx;
+  }
+  VG_(HT_add_node)(node_map, newNodeEntry);
+
+  // Finally, if this is a branch recurse on the children.
+  if (stem->type == Node_Branch){
+    // To do that, we need to create a new position for each child
+    // based off the current position.
+    for (UInt argIdx = 0; argIdx < stem->nargs; ++argIdx){
+      StemNode argStem = stem->args[argIdx];
+      NodePos newPos;
+      newPos.len = curPos.len + 1;
+      ALLOC(newPos.data, "pos data", newPos.len, sizeof(UInt));
+      VG_(memcpy)(newPos.data, curPos.data + 1, curPos.len);
+      newPos[0] = argIdx;
+      updateEquivMap(node_map, val_map, next_idx, argStem, newPos);
+    }
+  }
+}
+void freeNodeMapEntry(NodeMapEntry* entry){
+  VG_(free)(entry->position.data);
+  VG_(free)(entry);
 }

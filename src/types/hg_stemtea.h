@@ -100,4 +100,5 @@ void updateEquivMap(VgHashTable* node_map,
                     int* next_idx,
                     StemNode* stem,
                     NodePos curPos);
+void freeNodeMapEntry(NodeMapEntry* entry);
 #endif
