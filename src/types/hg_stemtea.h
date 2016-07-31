@@ -87,6 +87,15 @@ typedef struct {
   SizeT len;
 } NodePos;
 
+// Initialize a new stem node. Pass zero for nargs if this is a leaf
+// node.
+void initStemNode(ShadowValue* val, Op_Info* opinfo,
+                  SizeT nargs, ShadowValue* args, ...);
+// Free up a stem.
+void cleanupStemNode(StemNode* stem);
+// Deep copy a stem.
+void copyStemNode(StemNode* src, StemNode** dest);
+
 // Brew a single-stem tea.
 TeaNode* stemToTea(StemNode* stem);
 // Add a new stem to a tea brew.

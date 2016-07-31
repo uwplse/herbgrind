@@ -302,3 +302,11 @@ void freeNodeMapEntry(NodeMapEntry* entry){
   VG_(free)(entry->position.data);
   VG_(free)(entry);
 }
+// Initialize a new stem node. Pass zero for nargs if this is a leaf
+// node.
+void initStemNode(ShadowValue* val, Op_Info* opinfo,
+                  SizeT nargs, ShadowValue* args, ...);
+// Free up a stem.
+void cleanupStemNode(StemNode* stem);
+// Deep copy a stem.
+void copyStemNode(StemNode* src, StemNode** dest);
