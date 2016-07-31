@@ -87,14 +87,30 @@ typedef struct {
   SizeT len;
 } NodePos;
 
+// Brew a single-stem tea.
 TeaNode* stemToTea(StemNode* stem);
+// Add a new stem to a tea brew.
 void addStem(TeaNode* tea, StemNode* stem);
+// Perform the proper brewing on the structure of a tea so that it
+// matches a given stem, besides for the node map.
 void generalizeStructure(TeaNode* tea, StemNode* stem);
+// Merge the node map of a stem into a tea, so that nodes are only in
+// the same equivalence class in the resulting tea if they were in the
+// same equivalence class in both the original tea and the stem.
 void mergeBranchNodeMap(TeaNode* tea, StemNode* stem);
+// Go through every entry in the node map, and remove those whose
+// positions are invalid in the current structure.
 void pruneMapToStructure(TeaNode* tea);
+// Turn a map from positions to variable indices to a list of groups,
+// where the group at each index cooresponds to the positions that map
+// to that variable index.
 XArray* getGroups(VgHashTable* node_map);
+// Check if a given position is valid in a particular tea structure.
 int positionValid(TeaNode tea, NodePos node);
+// Get a mapping from positions in the given stem to equivalence
+// class/variable indices.
 VgHashTable* getStemEquivs(StemNode* stem);
+
 void updateEquivMap(VgHashTable* node_map,
                     VgHashTable* val_map,
                     int* next_idx,

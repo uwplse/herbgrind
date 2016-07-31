@@ -189,6 +189,8 @@ void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
   VG_(deleteXA)(teaMapGroups);
   VG_(HT_destruct)(stemMap);
 }
+// Go through every entry in the node map, and remove those whose
+// positions are invalid in the current structure.
 void pruneMapToStructure(TeaNode* tea){
   UInt numNodes;
   NodeMapEntry** entries = VG_(HT_to_array)(tea->node_map, &numNodes);
@@ -200,6 +202,9 @@ void pruneMapToStructure(TeaNode* tea){
   }
   VG_(free)(entries);
 }
+// Turn a map from positions to variable indices to a list of groups,
+// where the group at each index cooresponds to the positions that map
+// to that variable index.
 XArray* getGroups(VgHashTable* node_map){
   XArray* groups = VG_(newXA)(VG_(malloc), "groups",
                               VG_(free), sizeof(XArray*));
@@ -214,6 +219,7 @@ XArray* getGroups(VgHashTable* node_map){
   }
   return groups;
 }
+// Check if a given position is valid in a particular tea structure.
 Bool positionValid(TeaNode* tea, NodePos node){
   if (node.len == 0){
     return True;
@@ -226,6 +232,8 @@ Bool positionValid(TeaNode* tea, NodePos node){
                          (NodePos) {.data = node.data, .len = node.len - 1});
   }
 }
+// Get a mapping from positions in the given stem to equivalence
+// class/variable indices.
 VgHashTable* getStemEquivs(StemNode* stem){
   // NodePos -> VarIdx
   VgHashTable* node_map = VG_(HT_construct)("node map");
