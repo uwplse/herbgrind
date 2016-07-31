@@ -257,8 +257,8 @@
 ; O(n) where n is the number of nodes in stem
 (: get-stem-equivs (-> hg-stem (HashTable hg-pos Integer)))
 (define (get-stem-equivs stem)
-  (let ([var-mapping : (HashTable hg-pos Integer) (make-hash)]
-        [val-mapping : (HashTable Number Integer) (make-hash)]
+  (let ([node-map : (HashTable hg-pos Integer) (make-hash)]
+        [val-map : (HashTable Number Integer) (make-hash)]
         [next-idx : Integer 0])
     (let recurse : Void ([cur-stem : hg-stem stem]
                          [cur-pos : (Listof Integer) '()])
