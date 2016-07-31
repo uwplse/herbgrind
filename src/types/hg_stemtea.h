@@ -1,15 +1,5 @@
-#ifndef _HG_STEMTEA
-#define _HG_STEMTEA
-
-#include "hg_opinfo.hh"
-#include "hg_shadowvals.hh"
-
-#include "pub_tool_hashtable.h"
-#include "pub_tool_xarray.h"
-
-
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie            hg_opinfo.c ---*/
+/*--- HerbGrind: a valgrind tool for Herbie            hg_stemtea.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -36,6 +26,16 @@
 
    The GNU General Public License is contained in the file COPYING.
 */
+
+#ifndef _HG_STEMTEA
+#define _HG_STEMTEA
+
+#include "hg_opinfo.hh"
+#include "hg_shadowvals.hh"
+
+#include "pub_tool_hashtable.h"
+#include "pub_tool_xarray.h"
+
 
 typedef struct _NodeMapEntry {
   struct _NodeMapEntry* next;

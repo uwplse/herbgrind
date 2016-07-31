@@ -1,6 +1,6 @@
 
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie            hg_opinfo.c ---*/
+/*--- HerbGrind: a valgrind tool for Herbie            hg_stemtea.c ---*/
 /*--------------------------------------------------------------------*/
 
 /*
