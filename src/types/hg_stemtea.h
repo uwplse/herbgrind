@@ -56,8 +56,8 @@ typedef struct _ValMapEntry {
 } ValMapEntry;
 
 typedef enum {
-  Stem_Leaf,
-  Stem_Branch
+  Node_Leaf,
+  Node_Branch
 } NodeType;
 
 typedef struct _StemNode {
@@ -70,14 +70,9 @@ typedef struct _StemNode {
   };
 } StemNode;
 
-typedef enum {
-  Const,
-  NonConst
-} ConstType;
-
 typedef struct _TeaNode {
   NodeType type;
-  ConstType hasConst;
+  Bool hasConst;
   double constValue;
   struct branch {
     OpInfo* op;
@@ -87,7 +82,10 @@ typedef struct _TeaNode {
   }; 
 } TeaNode;
 
-typedef int* NodePos;
+typedef struct {
+  UInt* data;
+  SizeT len;
+} NodePos;
 
 TeaNode* stemToTea(StemNode* stem);
 void addStem(TeaNode* tea, StemNode* stem);

@@ -40,7 +40,7 @@ TeaNode* stemToTea(StemNode* stem){
       TeaNode* tea;
       ALLOC(tea, "hg.tea", 1, sizeof(TeaNode));
       tea->type = Node_Leaf;
-      tea->hasConst = Const;
+      tea->hasConst = True;
       tea->constValue = stem->value;
       return tea;
     }
@@ -50,7 +50,7 @@ TeaNode* stemToTea(StemNode* stem){
       TeaNode* tea;
       ALLOC(tea, "hg.tea", 1, sizeof(TeaNode));
       tea->type = Node_Branch;
-      tea->hasConst = Const;
+      tea->hasConst = True;
       tea->constValue = stem->value;
       tea->branch.op = stem->branch.op;
       tea->branch.nargs = stem->branch.nargs;
@@ -78,7 +78,7 @@ void generalizeStructure(TeaNode* tea, StemNode* stem){
   // of the new stem, then it isn't constant across all stems, so mark
   // it as such.
   if (tea->constValue != stem->value){
-    tea->hasConst = NonConst;
+    tea->hasConst = False;
   }
   // Next, we'll need to figure out if this is a node that should
   // continue down, or be stopped right here. If either the current
