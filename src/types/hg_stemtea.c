@@ -305,8 +305,54 @@ void freeNodeMapEntry(NodeMapEntry* entry){
 // Initialize a new stem node. Pass zero for nargs if this is a leaf
 // node.
 void initStemNode(ShadowValue* val, Op_Info* opinfo,
-                  SizeT nargs, ShadowValue* args, ...);
+                  SizeT nargs, ShadowValue* firstarg, ...){
+  val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
+  if (nargs == 0){
+    val->stem->type = Node_Leaf;
+  } else {
+    val->stem->type = Node_Branch;
+    val->stem->branch.op = opinfo;
+    val->stem->branch.nargs = nargs;
+
+    ALLOC(val->stem->branch.args, "stem args",
+          nargs, sizeof(StemNode*));
+
+    va_list args;
+    va_start(args, firstarg);
+
+    val->stem->branch.args[0] = firstarg->stem;
+    addRef(firstarg);
+    for(SizeT i = 1; i < nargs; ++i){
+      ShadowValue* newRef = NULL;
+      copySV(va_arg(args, ShadowValue*), &newRef);
+      val->ast->args[i] = newRef->stem;
+    }
+    va_end(args)
+  }
+}
 // Free up a stem.
-void cleanupStemNode(StemNode* stem);
+void cleanupStemNode(StemNode* stem){
+  if (stem->type == Node_Branch){
+    for (int i = 0; i < stem->branch.nargs; ++i){
+      disownSV(stem->args[i]);
+    }
+    VG_(free)(stem->args);
+  }
+  VG_(free)(stem);
+}
 // Deep copy a stem.
-void copyStemNode(StemNode* src, StemNode** dest);
+void copyStemNode(StemNode* src, StemNode** dest){
+  ALLOC(*dest, "hg.val_ast", 1, sizeof(StemNode));
+  (*dest)->value = src->value;
+  (*dest)->type = src->type;
+  if (src->type == Node_Branch){
+    (*dest)->branch.op = src->op;
+    (*dest)->branch.nargs = src->nargs;
+    ALLOC((*dest)->branch.args, "stem args",
+          src->branch.nargs, sizeof(StemNode*));
+    for (SizeT i = 0; i < (*dest)->nargs; ++i){
+      (*dest)->branch.args[i] = src->branch.args[i];
+    addRef(src->ast->args[i]->val);
+    }
+  }
+}

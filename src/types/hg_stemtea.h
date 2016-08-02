@@ -64,7 +64,7 @@ typedef struct _StemNode {
   NodeType type;
   double value;
   struct branch {
-    OpInfo* op;
+    Op_Info* op;
     SizeT nargs;
     _StemNode** args;
   };
