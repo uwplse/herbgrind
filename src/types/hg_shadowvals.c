@@ -29,7 +29,7 @@
 */
 
 #include "hg_shadowvals.h"
-#include "hg_ast.h"
+#include "hg_stemtea.h"
 #include "../include/hg_macros.h"
 #include "../include/hg_options.h"
 

@@ -29,7 +29,7 @@
 */
 
 #include "hg_opinfo.h"
-#include "hg_ast.h"
+#include "hg_stemtea.h"
 #include "../include/hg_macros.h"
 #include "pub_tool_debuginfo.h"
 

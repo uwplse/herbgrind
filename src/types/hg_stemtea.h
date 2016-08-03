@@ -30,6 +30,7 @@
 #ifndef _HG_STEMTEA
 #define _HG_STEMTEA
 
+#include "hg_stemtea.hh"
 #include "hg_opinfo.hh"
 #include "hg_shadowvals.hh"
 

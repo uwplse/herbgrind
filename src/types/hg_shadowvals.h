@@ -33,7 +33,7 @@
 
 #include "hg_shadowvals.hh"
 #include "hg_opinfo.hh"
-#include "hg_ast.hh"
+#include "hg_stemtea.hh"
 
 // For mpfr_t
 #include "mpfr.h"
