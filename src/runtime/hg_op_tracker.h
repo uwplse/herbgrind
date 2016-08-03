@@ -49,7 +49,7 @@ void clearTrackedOp(Op_Info* opinfo);
 // first.
 Int cmp_debuginfo(const void* a, const void* b);
 // Removes all subexpressions of the given node from the tracker.
-void recursivelyClearChildren(OpASTNode* node);
+void recursivelyClearChildren(TeaNode* node);
 
 // Write out info about each tracked operation to the specified file.
 void writeReport(const char* filename);

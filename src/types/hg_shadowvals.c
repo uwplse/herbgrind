@@ -151,7 +151,7 @@ SizeT el_size(LocType bytestype){
 ShadowValue* mkShadowValue(void){
   ShadowValue* result;
   ALLOC(result, "hg.shadow_val", 1, sizeof(ShadowValue));
-  ALLOC(result->ast, "hg.shadow_ast", 1, sizeof(ValueASTNode));
+  ALLOC(result->stem, "hg.shadow_stem", 1, sizeof(StemNode));
   mpfr_init2(result->value, precision);
   result->ref_count = 1;
   if (print_moves)
@@ -175,7 +175,7 @@ void disownSV(ShadowValue* sv){
     if (print_moves)
       VG_(printf)("Cleaning up shadow value %p\n", sv);
     mpfr_clear(sv->value);
-    cleanupValueAST(sv);
+    cleanupStemNode(sv->stem);
     VG_(free)(sv);
   }
 }

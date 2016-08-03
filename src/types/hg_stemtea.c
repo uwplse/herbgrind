@@ -29,9 +29,28 @@
 */
 
 #include "hg_stemtea.h"
+#include "hg_shadowvals.h"
+#include "hg_opinfo.h"
+#include "../include/hg_macros.h"
+
+#include "pub_tool_libcprint.h"
+#include "pub_tool_libcbase.h"
+#include "pub_tool_mallocfree.h"
+
+#include <stdarg.h>
+
+#define MAX_AST_STR_LEN 256
 
 // This file was designed through several levels of code refinement
 // and an executable spec, found in psuedo/aggregateTraces-*.rkt.
+
+void updateTea(Op_Info* op, StemNode* stem){
+  if (op->tea == NULL){
+    op->tea = stemToTea(stem);
+  } else {
+    addStem(op->tea, stem);
+  }
+}
 
 TeaNode* stemToTea(StemNode* stem){
   switch(stem->type){

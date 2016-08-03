@@ -33,7 +33,7 @@
 
 #include "hg_opinfo.hh"
 #include "hg_shadowvals.hh"
-#include "hg_ast.hh"
+#include "hg_stemtea.hh"
 
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
@@ -109,9 +109,9 @@ struct _Op_Info {
   OpDebug_Info debuginfo;
   // Information about the evaluated behaviour of the operation
   Eval_Info evalinfo;
-  // An AST head representing the most specific expression general
+  // An tea head representing the most specific expression general
   // enough to capture all seen inputs to this op.
-  OpASTNode* ast;
+  TeaNode* tea;
   //This is the index into where we're putting the result.
   UWord dest_tmp;
   // This is the actual computed value of the result, for checking
@@ -130,11 +130,6 @@ struct _Op_Info {
   // locations, so we're going to store them as an array that's
   // malloc'd when we know how big they're going to be.
   UWord** arg_values;
-
-  // If the argument didn't come from the result of another operation,
-  // than we'll keep track of the "source" of that argument as a leaf
-  // operation here.
-  Op_Info** arg_srcs;
 };
 
 struct _Op_Infos_ptr {

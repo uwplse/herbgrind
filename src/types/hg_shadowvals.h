@@ -44,7 +44,7 @@
 // The shadow value for each logical floating point value
 struct _ShadowValue {
   mpfr_t value;
-  ValueASTNode* ast;
+  StemNode* stem;
   // Reference counter. This lets us free up shadow locations that
   // are no longer accessible.
   size_t ref_count;

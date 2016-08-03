@@ -35,7 +35,7 @@
 #include "hg_hiprec_ops.h"
 #include "hg_storage_runtime.h"
 #include "../include/hg_options.h"
-#include "../types/hg_ast.h"
+#include "../types/hg_stemtea.h"
 #include "hg_runtime.h"
 
 // Execute a shadow operation, storing the result of the high
@@ -200,8 +200,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       int i;
       for (i = 0; i < num_vals; ++i){
         arg = getShadowValue(argLocation, i,
-                             opInfo->arg_values[0],
-                             &(opInfo->arg_srcs[0]));
+                             opInfo->arg_values[0]);
         dest = mkShadowValue();
         destLocation->values[i] = dest;
         if (print_inputs){
@@ -209,9 +208,9 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
                       i, ((double*)opInfo->arg_values[0])[i]);
         }
         mpfr_func(dest->value, arg->value, MPFR_RNDN);
-        // Set up the ast record of this operation.
-        initValueBranchAST(destLocation->values[i], opInfo, 1,
-                           argLocation->values[i]);
+        // Set up the stem record of this operation.
+        initStemNode(destLocation->values[i], opInfo, 1,
+                     argLocation->values[i]);
         // Evaluate the computed value against the high precision
         // shadow result.
         evaluateOpError_helper(destLocation->values[i],
@@ -322,7 +321,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       break;
     }
     destLocation = mkShadowLocation(Lt_Double);
-    copyValueAST(argLocation->values[0], destLocation->values[0]);
+    copyStemNode(argLocation->values[0]->stem,
+                 &(destLocation->values[0]->stem));
 
     // Perform the mpfr rounding to int that matches the requested
     // rounding type.
@@ -385,11 +385,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
     arg2Location = getShadowLocation(opInfo->arg_tmps[1],
                                      Lt_Double);
     arg1 = getShadowValue(arg1Location, 0,
-                          opInfo->arg_values[0],
-                          &(opInfo->arg_srcs[0]));
+                          opInfo->arg_values[0]);
     arg2 = getShadowValue(arg2Location, 0,
-                          opInfo->arg_values[1],
-                          &(opInfo->arg_srcs[1]));
+                          opInfo->arg_values[1]);
 
     // Now we'll allocate memory for the shadowed result of this
     // operation.
@@ -423,11 +421,10 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       arg2Location = getShadowLocation(opInfo->arg_tmps[1],
                                        argType);
       arg2 = getShadowValue(arg2Location, 0,
-                            opInfo->arg_values[1],
-                            &(opInfo->arg_srcs[1]));
+                            opInfo->arg_values[1]);
       destLocation = mkShadowLocation_bare(argType);
       destLocation->values[0] = mkShadowValue();
-      copyValueAST(arg2, destLocation->values[0]);
+      copyStemNode(arg2->stem, &(destLocation->values[0]->stem));
       mpfr_round(destLocation->values[0]->value, arg2->value);
     }
     break;
@@ -441,8 +438,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
     arg2Location = getShadowLocation(opInfo->arg_tmps[1],
                                      Lt_Double);
     arg2 = getShadowValue(arg2Location, 0,
-                          opInfo->arg_values[1],
-                          &(opInfo->arg_srcs[1]));
+                          opInfo->arg_values[1]);
     destLocation = mkShadowLocation_bare(Lt_Float);
     copySV(arg2, &destLocation->values[0]);
     break;
@@ -551,8 +547,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
                           argType);
       for (int i = 0; i < num_values; ++i)
         getShadowValue(arg2Location, i,
-                       opInfo->arg_values[1],
-                       &(opInfo->arg_srcs[1]));
+                       opInfo->arg_values[1]);
       // Now we'll allocate memory for the shadowed result of this
       // operation.
       destLocation = mkShadowLocation_bare(argType);
@@ -575,9 +570,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         mpfr_func(destLocation->values[i]->value,
                   arg2Location->values[i]->value,
                   MPFR_RNDN);
-        // Set the ast record of this operation.
-        initValueBranchAST(destLocation->values[i], opInfo, 1,
-                           arg2Location->values[i]);
+        // Set the stem record of this operation.
+        initStemNode(destLocation->values[i], opInfo, 1,
+                     arg2Location->values[i]);
 
         // Now, we'll evaluate the shadow values against each
         // channel of the computed result.
@@ -708,11 +703,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
 
       for(int i = 0; i < num_values; ++i){
         getShadowValue(arg1Location, i,
-                       opInfo->arg_values[0],
-                       &(opInfo->arg_srcs[0]));
+                       opInfo->arg_values[0]);
         getShadowValue(arg2Location, i,
-                          opInfo->arg_values[1],
-                          &(opInfo->arg_srcs[1]));
+                          opInfo->arg_values[1]);
       }
   
       // Now we'll allocate memory for the shadowed result of this
@@ -740,8 +733,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         // it occurs.
         mpfr_func(destLocation->values[i]->value, arg1Location->values[i]->value,
                   arg2Location->values[i]->value, MPFR_RNDN);
-        // Set up the ast record of this operation.
-        initValueBranchAST(destLocation->values[i], opInfo, 2,
+        // Set up the stem record of this operation.
+        initStemNode(destLocation->values[i], opInfo, 2,
                            arg1Location->values[i],
                            arg2Location->values[i]);
         // Now, we'll evaluate the shadow value against the result
@@ -824,32 +817,28 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
             getShadowLocation(opInfo->arg_tmps[1],
                               Lt_Doublex2);
           arg1 = getShadowValue(arg1Location, 0,
-                              opInfo->arg_values[1],
-                              &(opInfo->arg_srcs[1]));
+                                opInfo->arg_values[1]);
           argType = Lt_Doublex2;
         } else if (*(opInfo->arg_values[1]) == 0x8000000000000000){
           arg1Location =
             getShadowLocation(opInfo->arg_tmps[0],
                               Lt_Doublex2);
           arg1 = getShadowValue(arg1Location, 0,
-                              opInfo->arg_values[0],
-                              &(opInfo->arg_srcs[0]));
+                                opInfo->arg_values[0]);
           argType = Lt_Doublex2;
         } else if (*(opInfo->arg_values[0]) == 0x2424242424242424){
           arg1Location =
             getShadowLocation(opInfo->arg_tmps[1],
                               Lt_Floatx4);
           arg1 = getShadowValue(arg1Location, 0,
-                              opInfo->arg_values[1],
-                              &(opInfo->arg_srcs[1]));
+                                opInfo->arg_values[1]);
           argType = Lt_Floatx4;
         } else if (*(opInfo->arg_values[1]) == 0x2424242424242424){
           arg1Location =
             getShadowLocation(opInfo->arg_tmps[0],
                               Lt_Floatx4);
           arg1 = getShadowValue(arg1Location, 0,
-                              opInfo->arg_values[0],
-                              &(opInfo->arg_srcs[0]));
+                                opInfo->arg_values[0]);
           argType = Lt_Floatx4;
         }
 
@@ -862,8 +851,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         // high-precision shadowing operation.
         mpfr_neg(destLocation->values[0]->value, arg1->value,
                  MPFR_RNDN);
-        // Set up the ast record of this operation.
-        initValueBranchAST(destLocation->values[0], opInfo, 1,
+        // Set up the stem record of this operation.
+        initStemNode(destLocation->values[0], opInfo, 1,
                            arg1);
         // Now, we'll evaluate the shadow value against the result
         // value.
@@ -1036,11 +1025,9 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
 
   for(int i = 0; i < num_vals; ++i){
     getShadowValue(arg2Location, i,
-                   opInfo->arg_values[1],
-                   &(opInfo->arg_srcs[1]));
+                   opInfo->arg_values[1]);
     getShadowValue(arg3Location, i,
-                   opInfo->arg_values[2],
-                   &(opInfo->arg_srcs[2]));
+                   opInfo->arg_values[2]);
   }
 
   // Now we'll allocate memory for the shadowed result of this
@@ -1066,8 +1053,8 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
     mpfr_func(destLocation->values[i]->value, arg2Location->values[i]->value,
               arg3Location->values[i]->value,
               roundmodeIRtoMPFR(*((IRRoundingMode*)opInfo->arg_values[0])));
-    // Set up the ast record of this operation.
-    initValueBranchAST(destLocation->values[i], opInfo, 2,
+    // Set up the stem record of this operation.
+    initStemNode(destLocation->values[i], opInfo, 2,
                        arg2Location->values[i],
                        arg3Location->values[i]);
     // Now let's compare the computed value to the high precision result.
@@ -1140,21 +1127,18 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
     getShadowLocation(opInfo->arg_tmps[1],
                       argType);
   arg2 = getShadowValue(arg2Location, 0,
-                        opInfo->arg_values[1],
-                        &(opInfo->arg_srcs[1]));
+                        opInfo->arg_values[1]);
   
   arg3Location =
     getShadowLocation(opInfo->arg_tmps[2],
                       argType);
   arg3 = getShadowValue(arg3Location, 0,
-                        opInfo->arg_values[2],
-                        &(opInfo->arg_srcs[2]));
+                        opInfo->arg_values[2]);
   arg4Location =
     getShadowLocation(opInfo->arg_tmps[3],
                       argType);
   arg4 = getShadowValue(arg4Location, 0,
-                        opInfo->arg_values[3],
-                        &(opInfo->arg_srcs[3]));
+                        opInfo->arg_values[3]);
 
   // Now we'll allocate memory for the shadowed result of this
   // operation.
@@ -1166,8 +1150,8 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
   mpfr_func(destLocation->values[0]->value, arg2->value,
             arg3->value, arg4->value,
             roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg_values[0])[0]));
-  // Set up the ast record of this operation.
-  initValueBranchAST(destLocation->values[0], opInfo, 3,
+  // Set up the stem record of this operation.
+  initStemNode(destLocation->values[0], opInfo, 3,
                      arg2, arg3, arg4);
 
   if (print_inputs){
@@ -1243,11 +1227,11 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type){
 // location, or creates a new one initialized to the appropriate value
 // in loc_bytes with src_loc as it's leaf node op src.
 ShadowValue* getShadowValue(ShadowLocation* loc, UWord index,
-                            UWord* loc_bytes, Op_Info** src_loc){
+                            UWord* loc_bytes){
   if (loc->values[index] != NULL) return loc->values[index];
-  // Create a new shadow value, and give it a leaf node ast.
+  // Create a new shadow value, and give it a leaf node stem.
   loc->values[index] = mkShadowValue();
-  initValueLeafAST(loc->values[index], src_loc);
+  initStemNode(loc->values[index], NULL, 0);
 
   // Initialize it's MPFR value with the current value of its float
   // bytes.

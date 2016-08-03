@@ -46,7 +46,7 @@
 #include "hg_runtime.h"
 #include "hg_storage_runtime.h"
 #include "../types/hg_opinfo.h"
-#include "../types/hg_ast.h"
+#include "../types/hg_stemtea.h"
 #include "../include/hg_macros.h"
 #include "../include/hg_mathreplace_funcs.h"
 
@@ -151,15 +151,8 @@ void performOp(OpType op, double* result, double* args){
     mpfr_init2(args_m[i], op_precision);
     // Get the actual value from the pointer they gave us.
     mpfr_set_d(args_m[i], args[i], MPFR_RNDN);
-    // Get the location of the arg source slot in the op structure.
-    Op_Info** src_loc_slot;
-    // Get the slot in the op info structure for the value source
-    // structure cooresponding to this argument.
-    src_loc_slot = &(entry->info->arg_srcs[i]);
-    // Lookup the address in our shadow hash table to get the shadow
-    // argument.
     arg_shadows[i] = getShadowValMem((uintptr_t)&(args[i]), args[i],
-                                     i, src_loc_slot);
+                                     i);
   }
   mpfr_init2(res,op_precision);
   res_shadow = mkShadowValue();
@@ -296,22 +289,22 @@ void performOp(OpType op, double* result, double* args){
   // (to keep it alive), and putting it in memory adds another.
   disownSV(res_shadow);
 
-  // Set up the ast record of this operation.
+  // Set up the stem record of this operation.
   switch(nargs){
   case 1:
-    initValueBranchAST(res_shadow, entry->info, nargs,
-                       arg_shadows[0]);
+    initStemNode(res_shadow, entry->info, nargs,
+                 arg_shadows[0]);
     break;
   case 2:
-    initValueBranchAST(res_shadow, entry->info, nargs,
-                       arg_shadows[0],
-                       arg_shadows[1]);
+    initStemNode(res_shadow, entry->info, nargs,
+                 arg_shadows[0],
+                 arg_shadows[1]);
     break;
   case 3:
-    initValueBranchAST(res_shadow, entry->info, nargs,
-                       arg_shadows[0],
-                       arg_shadows[1],
-                       arg_shadows[2]);
+    initStemNode(res_shadow, entry->info, nargs,
+                 arg_shadows[0],
+                 arg_shadows[1],
+                 arg_shadows[2]);
     break;
   }
   // And finally, evaluate the error of the operation.
@@ -336,7 +329,7 @@ void performOp(OpType op, double* result, double* args){
 }
 
 ShadowValue* getShadowValMem(Addr addr, double float_arg,
-                             Int argIndex, Op_Info** arg_src){
+                             Int argIndex){
   ShadowValue* val = getMem(addr);
   if (val != NULL) return val;
 
@@ -351,6 +344,6 @@ ShadowValue* getShadowValMem(Addr addr, double float_arg,
   setMem(addr, val);
 
   mpfr_set_d(val->value, float_arg, MPFR_RNDN);
-  initValueLeafAST(val, arg_src);
+  initStemNode(val, NULL, 0);
   return val;
 }

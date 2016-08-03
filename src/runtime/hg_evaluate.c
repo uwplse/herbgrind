@@ -30,7 +30,7 @@
 
 #include "hg_evaluate.h"
 #include "hg_runtime.h"
-#include "../types/hg_ast.h"
+#include "../types/hg_stemtea.h"
 #include "../include/hg_options.h"
 #include "hg_op_tracker.h"
 
@@ -66,11 +66,11 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   mpfr_clear(bitsErrorM);
 
   if (report_exprs){
-    // If the opfinfo doesn't have an AST assigned yet, give it a strict
-    // translation of the AST assigned to this shadow value. If it does,
-    // generalize the AST sufficiently to match the AST of the shadow
+    // If the opfinfo doesn't have an tea assigned yet, give it a strict
+    // translation of the tea assigned to this shadow value. If it does,
+    // generalize the tea sufficiently to match the tea of the shadow
     // val.
-    updateAST(opinfo, shadowVal->ast);
+    updateTea(opinfo, shadowVal->stem);
   }
 
   // Update the persistent op record

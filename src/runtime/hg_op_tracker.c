@@ -32,7 +32,7 @@
 
 #include "../include/hg_options.h"
 #include "../types/hg_opinfo.h"
-#include "../types/hg_ast.h"
+#include "../types/hg_stemtea.h"
 
 #include "pub_tool_vki.h"
 #include "pub_tool_libcfile.h"
@@ -65,13 +65,13 @@ void clearTrackedOp(Op_Info* opinfo){
     }
   }
 }
-void recursivelyClearChildren(OpASTNode* node){
-  if (node->tag != Node_Branch) return;
-  for(int i = 0; i < node->nd.Branch.nargs; ++i){
-    OpASTNode* child = node->nd.Branch.args[i];
+void recursivelyClearChildren(TeaNode* node){
+  if (node->type != Node_Branch) return;
+  for(int i = 0; i < node->branch.nargs; ++i){
+    TeaNode* child = node->branch.args[i];
     recursivelyClearChildren(child);
-    if (child->tag == Node_Branch)
-      clearTrackedOp(child->nd.Branch.op);
+    if (child->type == Node_Branch)
+      clearTrackedOp(child->branch.op);
   }
 }
 
@@ -106,7 +106,7 @@ void writeReport(const HChar* filename){
       Op_Info** entry = VG_(indexXA)(tracked_ops, i);
       Op_Info* opinfo = *entry;
       if (opinfo == NULL) continue;
-      recursivelyClearChildren(opinfo->ast);
+      recursivelyClearChildren(opinfo->tea);
     }
 
   // Sort the entries by maximum error.
@@ -121,7 +121,7 @@ void writeReport(const HChar* filename){
 
     UInt entry_len;
     if (report_exprs){
-      char* benchString = opASTtoBench(opinfo->ast);
+      char* benchString = teaToBenchString(opinfo->tea);
       if (human_readable){
         entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
                                   "%s\n"

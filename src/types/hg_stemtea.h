@@ -97,6 +97,8 @@ void cleanupStemNode(StemNode* stem);
 // Deep copy a stem.
 void copyStemNode(StemNode* src, StemNode** dest);
 
+// Update the tea with a new stem.
+void updateTea(Op_Info* op, StemNode* stem);
 // Brew a single-stem tea.
 TeaNode* stemToTea(StemNode* stem);
 // Add a new stem to a tea brew.
@@ -127,4 +129,5 @@ void updateEquivMap(VgHashTable* node_map,
                     StemNode* stem,
                     NodePos curPos);
 void freeNodeMapEntry(NodeMapEntry* entry);
+char* teaToBenchString(TeaNode* tea);
 #endif
