@@ -243,17 +243,18 @@ XArray* getGroups(VgHashTable* node_map){
                                     VG_(free), sizeof(NodePos));
       VG_(addToXA)(groups, &newGroup);
     }
-    VG_(addToXA)(VG_(indexXA)(groups, entry->groupIdx), &entry);
+    VG_(addToXA)(*(XArray**)VG_(indexXA)(groups, entry->groupIdx), &(entry->position));
   }
   return groups;
 }
+
 // Check if a given position is valid in a particular tea structure.
 Bool positionValid(TeaNode* tea, NodePos node){
   if (node.len == 0){
     return True;
   } else if (tea->type == Node_Leaf){
     return False;
-  } else if (tea->branch.nargs < node.data[0]) {
+  } else if (tea->branch.nargs <= node.data[0]) {
     return False;
   } else {
     return positionValid(tea->branch.args[node.data[0]],
