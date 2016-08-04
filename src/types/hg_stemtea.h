@@ -37,11 +37,15 @@
 #include "pub_tool_hashtable.h"
 #include "pub_tool_xarray.h"
 
+typedef struct {
+  UInt* data;
+  SizeT len;
+} NodePos;
 
 typedef struct _NodeMapEntry {
   struct _NodeMapEntry* next;
   NodePos position;
-  int varidx;
+  int groupIdx;
 } NodeMapEntry;
 
 typedef struct _SplitMapEntry {
@@ -50,10 +54,16 @@ typedef struct _SplitMapEntry {
   int newGroup;
 } SplitMapEntry;
 
+typedef struct _VarMapEntry {
+  struct _VarMapEntry* next;
+  int groupIdx;
+  int varIdx;
+} VarMapEntry;
+
 typedef struct _ValMapEntry {
   struct _ValMapEntry* next;
   UWord key;
-  int varidx;
+  int groupIdx;
 } ValMapEntry;
 
 typedef enum {
@@ -61,32 +71,32 @@ typedef enum {
   Node_Branch
 } NodeType;
 
-typedef struct _StemNode {
+typedef struct _StemNode StemNode;
+struct _StemNode {
+  ShadowValue* ref;
   NodeType type;
   double value;
-  struct branch {
+  struct {
     Op_Info* op;
     SizeT nargs;
-    _StemNode** args;
-  };
-} StemNode;
+    StemNode** args;
+  } branch;
+};
 
-typedef struct _TeaNode {
+typedef struct _TeaNode TeaNode;
+struct _TeaNode {
   NodeType type;
   Bool hasConst;
   double constValue;
-  struct branch {
-    OpInfo* op;
+  struct {
+    Op_Info* op;
     SizeT nargs;
-    _TeaNode** args;
+    TeaNode** args;
     VgHashTable* node_map;     
-  }; 
-} TeaNode;
+  } branch;
+};
 
-typedef struct {
-  UInt* data;
-  SizeT len;
-} NodePos;
+#define NULL_POS (NodePos){.len = 0, .data = NULL}
 
 // Initialize a new stem node. Pass zero for nargs if this is a leaf
 // node.
@@ -118,7 +128,7 @@ void pruneMapToStructure(TeaNode* tea);
 // to that variable index.
 XArray* getGroups(VgHashTable* node_map);
 // Check if a given position is valid in a particular tea structure.
-int positionValid(TeaNode tea, NodePos node);
+Bool positionValid(TeaNode* tea, NodePos node);
 // Get a mapping from positions in the given stem to equivalence
 // class/variable indices.
 VgHashTable* getStemEquivs(StemNode* stem);
@@ -128,6 +138,12 @@ void updateEquivMap(VgHashTable* node_map,
                     int* next_idx,
                     StemNode* stem,
                     NodePos curPos);
-void freeNodeMapEntry(NodeMapEntry* entry);
+void freeNodeMapEntry(void* entry);
+
+char* teaToString(TeaNode* tea, SizeT* numVars_out);
+char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
+                          VgHashTable* node_map,
+                          VgHashTable* var_map,
+                          int* nextvar);
 char* teaToBenchString(TeaNode* tea);
 #endif
