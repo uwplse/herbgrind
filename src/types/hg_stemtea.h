@@ -44,6 +44,7 @@ typedef struct {
 
 typedef struct _NodeMapEntry {
   struct _NodeMapEntry* next;
+  UWord positionHash;
   NodePos position;
   int groupIdx;
 } NodeMapEntry;
@@ -100,8 +101,9 @@ struct _TeaNode {
 
 // Initialize a new stem node. Pass zero for nargs if this is a leaf
 // node.
-void initStemNode(ShadowValue* val, Op_Info* opinfo,
-                  SizeT nargs, ShadowValue* args, ...);
+void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
+                        SizeT nargs, ShadowValue* args, ...);
+void initLeafStemNode(ShadowValue* val);
 // Free up a stem.
 void cleanupStemNode(StemNode* stem);
 // Deep copy a stem.
@@ -133,6 +135,9 @@ Bool positionValid(TeaNode* tea, NodePos node);
 // class/variable indices.
 VgHashTable* getStemEquivs(StemNode* stem);
 
+UWord hashPosition(NodePos node);
+Word cmp_position(const void* node1, const void* node2);
+
 void updateEquivMap(VgHashTable* node_map,
                     VgHashTable* val_map,
                     int* next_idx,
@@ -146,4 +151,12 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
                           VgHashTable* var_map,
                           int* nextvar);
 char* teaToBenchString(TeaNode* tea);
+
+#define lookupPosition(resultName, mapName, positionExpr) \
+  { \
+    NodePos nodePosition = positionExpr; \
+    NodeMapEntry key = {.position = nodePosition, \
+                        .positionHash = hashPosition(nodePosition)}; \
+    resultName = VG_(HT_gen_lookup)(mapName, &key, cmp_position); \
+  }
 #endif

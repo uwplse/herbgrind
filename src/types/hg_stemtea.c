@@ -143,8 +143,9 @@ void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
       // to in the stem map, and map it to the current group, so that
       // any position in this group currently that is also in the same
       // group in the stem map stays in this group.
-      NodeMapEntry* initialGroupEntry =
-        VG_(HT_lookup)(stemMap, *(NodePos*)VG_(indexXA)(positions, 0));
+      NodeMapEntry* initialGroupEntry;
+      lookupPosition(initialGroupEntry, stemMap,
+                     *(NodePos*)VG_(indexXA)(positions, 0));
       SplitMapEntry* initialSplitMapEntry;
       ALLOC(initialSplitMapEntry, "initial split map entry",
             1, sizeof(SplitMapEntry));
@@ -154,11 +155,12 @@ void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
       for (int posIdx = 0;
            posIdx < VG_(sizeXA)(positions);
            ++posIdx){
-        NodePos position = *(NodePos*)VG_(indexXA)(positions, posIdx);
         // Figure out which group this node belongs to in the stem
         // map.
-        NodeMapEntry* stemGroupEntry =
-          VG_(HT_lookup)(stemMap, position);
+        NodePos position = *(NodePos*)VG_(indexXA)(positions, posIdx);
+        NodeMapEntry* stemGroupEntry;
+        lookupPosition(stemGroupEntry, stemMap,
+                       position);
         // Check to see if this node already has an entry in the split
         // map, and what it is if so. If this node matches previous
         // nodes in the group, it should already have an entry,
@@ -175,6 +177,7 @@ void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
             ALLOC(newTeaGroupEntry, "tea node map entry",
                   1, sizeof(NodeMapEntry));
             newTeaGroupEntry->position = position;
+            newTeaGroupEntry->positionHash = hashPosition(position);
             newTeaGroupEntry->groupIdx = splitMapEntry->newGroup;
             VG_(HT_add_node)(tea->branch.node_map, newTeaGroupEntry);
           }
@@ -193,6 +196,7 @@ void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
           ALLOC(newTeaGroupEntry, "tea group entry",
                 1, sizeof(NodeMapEntry));
           newTeaGroupEntry->position = position;
+          newTeaGroupEntry->positionHash = hashPosition(position);
           newTeaGroupEntry->groupIdx = newIdx;
           VG_(HT_add_node)(tea->branch.node_map, newTeaGroupEntry);
         }
@@ -212,12 +216,15 @@ void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
 // positions are invalid in the current structure.
 void pruneMapToStructure(TeaNode* tea){
   UInt numNodes;
-  NodeMapEntry** entries = VG_(HT_to_array)(tea->branch.node_map,
-                                            &numNodes);
+  NodeMapEntry** entries =
+    (NodeMapEntry**)VG_(HT_to_array)(tea->branch.node_map,
+                                     &numNodes);
   for(UInt i = 0; i < numNodes; ++i){
     NodePos position = entries[i]->position;
     if (!positionValid(tea, position)){
-      VG_(HT_remove)(tea->branch.node_map, position);
+      NodeMapEntry key = {.position = position,
+                          .positionHash = hashPosition(position)};
+      VG_(HT_gen_remove)(tea->branch.node_map, &key, cmp_position);
     }
   }
   VG_(free)(entries);
@@ -232,8 +239,9 @@ XArray* getGroups(VgHashTable* node_map){
   for(NodeMapEntry* entry = VG_(HT_Next)(node_map); entry != NULL;
       entry = VG_(HT_Next)(node_map)){
     while (entry->groupIdx >= VG_(sizeXA)(groups)){
-      VG_(addToXA)(groups, &VG_(newXA)(VG_(malloc), "group",
-                                       VG_(free), sizeof(NodePos)));
+      XArray* newGroup = VG_(newXA)(VG_(malloc), "group",
+                                    VG_(free), sizeof(NodePos));
+      VG_(addToXA)(groups, &newGroup);
     }
     VG_(addToXA)(VG_(indexXA)(groups, entry->groupIdx), &entry);
   }
@@ -273,6 +281,7 @@ void updateEquivMap(VgHashTable* node_map,
   NodeMapEntry* newNodeEntry;
   ALLOC(newNodeEntry, "node map entry", 1, sizeof(NodeMapEntry));
   newNodeEntry->position = curPos;
+  newNodeEntry->positionHash = hashPosition(curPos);
 
   // Convert the value of the stem to a UWord key by literally
   // reinterpreting the bytes. Not clear that this will do the right
@@ -321,34 +330,34 @@ void freeNodeMapEntry(void* entry){
   VG_(free)(((NodeMapEntry*)entry)->position.data);
   VG_(free)(entry);
 }
-// Initialize a new stem node. Pass zero for nargs if this is a leaf
-// node.
-void initStemNode(ShadowValue* val, Op_Info* opinfo,
+// Initialize a new stem node.
+void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
                   SizeT nargs, ShadowValue* firstarg, ...){
   val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
   val->stem->ref = val;
-  if (nargs == 0){
-    val->stem->type = Node_Leaf;
-  } else {
-    val->stem->type = Node_Branch;
-    val->stem->branch.op = opinfo;
-    val->stem->branch.nargs = nargs;
+  val->stem->type = Node_Branch;
+  val->stem->branch.op = opinfo;
+  val->stem->branch.nargs = nargs;
 
-    ALLOC(val->stem->branch.args, "stem args",
-          nargs, sizeof(StemNode*));
+  ALLOC(val->stem->branch.args, "stem args",
+        nargs, sizeof(StemNode*));
 
-    va_list args;
-    va_start(args, firstarg);
+  va_list args;
+  va_start(args, firstarg);
 
-    val->stem->branch.args[0] = firstarg->stem;
-    addRef(firstarg);
-    for(SizeT i = 1; i < nargs; ++i){
-      ShadowValue* newRef = NULL;
-      copySV(va_arg(args, ShadowValue*), &newRef);
-      val->stem->branch.args[i] = newRef->stem;
-    }
-    va_end(args);
+  val->stem->branch.args[0] = firstarg->stem;
+  addRef(firstarg);
+  for(SizeT i = 1; i < nargs; ++i){
+    ShadowValue* newRef = NULL;
+    copySV(va_arg(args, ShadowValue*), &newRef);
+    val->stem->branch.args[i] = newRef->stem;
   }
+  va_end(args);
+}
+void initLeafStemNode(ShadowValue* val){
+  val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
+  val->stem->ref = val;
+  val->stem->type = Node_Leaf;
 }
 // Free up a stem.
 void cleanupStemNode(StemNode* stem){
@@ -373,7 +382,7 @@ void copyStemNode(StemNode* src, StemNode** dest){
           src->branch.nargs, sizeof(StemNode*));
     for (SizeT i = 0; i < (*dest)->branch.nargs; ++i){
       (*dest)->branch.args[i] = src->branch.args[i];
-    addRef(src->branch.args[i]->val);
+    addRef(src->branch.args[i]->ref);
     }
   }
 }
@@ -413,7 +422,8 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
       if (node_map == NULL){
         VG_(snprintf)(buf, 2, "%c", varNames[0]);
       } else {
-        NodeMapEntry* group_entry = VG_(HT_lookup)(node_map, curpos);
+        NodeMapEntry* group_entry;
+        lookupPosition(group_entry, node_map, curpos);
         VarMapEntry* var_entry =
           VG_(HT_lookup)(var_map, group_entry->groupIdx);
         if (var_entry == NULL){
@@ -479,4 +489,24 @@ char* teaToBenchString(TeaNode* tea){
   VG_(free)(binderString);
   VG_(free)(exprString);
   return benchString;
+}
+UWord hashPosition(NodePos node){
+  UWord hash = 0;
+  for (SizeT i = 0; i < node.len; ++i){
+    hash = 31 * hash + node.data[i];
+  }
+  return hash;
+}
+Word cmp_position(const void* node1, const void* node2){
+  const NodeMapEntry* entry1 = (const NodeMapEntry*)node1;
+  const NodeMapEntry* entry2 = (const NodeMapEntry*)node2;
+  if (entry1->position.len != entry2->position.len){
+    return 1;
+  }
+  for(SizeT i = 0; i < entry1->position.len; ++i){
+    if (entry1->position.data[i] != entry2->position.data[i]){
+      return 1;
+    }
+  }
+  return 0;
 }

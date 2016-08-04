@@ -292,16 +292,16 @@ void performOp(OpType op, double* result, double* args){
   // Set up the stem record of this operation.
   switch(nargs){
   case 1:
-    initStemNode(res_shadow, entry->info, nargs,
+    initBranchStemNode(res_shadow, entry->info, nargs,
                  arg_shadows[0]);
     break;
   case 2:
-    initStemNode(res_shadow, entry->info, nargs,
+    initBranchStemNode(res_shadow, entry->info, nargs,
                  arg_shadows[0],
                  arg_shadows[1]);
     break;
   case 3:
-    initStemNode(res_shadow, entry->info, nargs,
+    initBranchStemNode(res_shadow, entry->info, nargs,
                  arg_shadows[0],
                  arg_shadows[1],
                  arg_shadows[2]);
@@ -344,6 +344,6 @@ ShadowValue* getShadowValMem(Addr addr, double float_arg,
   setMem(addr, val);
 
   mpfr_set_d(val->value, float_arg, MPFR_RNDN);
-  initStemNode(val, NULL, 0);
+  initLeafStemNode(val);
   return val;
 }

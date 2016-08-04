@@ -209,8 +209,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
         }
         mpfr_func(dest->value, arg->value, MPFR_RNDN);
         // Set up the stem record of this operation.
-        initStemNode(destLocation->values[i], opInfo, 1,
-                     argLocation->values[i]);
+        initBranchStemNode(destLocation->values[i], opInfo, 1,
+                           argLocation->values[i]);
         // Evaluate the computed value against the high precision
         // shadow result.
         evaluateOpError_helper(destLocation->values[i],
@@ -571,7 +571,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
                   arg2Location->values[i]->value,
                   MPFR_RNDN);
         // Set the stem record of this operation.
-        initStemNode(destLocation->values[i], opInfo, 1,
+        initBranchStemNode(destLocation->values[i], opInfo, 1,
                      arg2Location->values[i]);
 
         // Now, we'll evaluate the shadow values against each
@@ -734,7 +734,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         mpfr_func(destLocation->values[i]->value, arg1Location->values[i]->value,
                   arg2Location->values[i]->value, MPFR_RNDN);
         // Set up the stem record of this operation.
-        initStemNode(destLocation->values[i], opInfo, 2,
+        initBranchStemNode(destLocation->values[i], opInfo, 2,
                            arg1Location->values[i],
                            arg2Location->values[i]);
         // Now, we'll evaluate the shadow value against the result
@@ -852,7 +852,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         mpfr_neg(destLocation->values[0]->value, arg1->value,
                  MPFR_RNDN);
         // Set up the stem record of this operation.
-        initStemNode(destLocation->values[0], opInfo, 1,
+        initBranchStemNode(destLocation->values[0], opInfo, 1,
                            arg1);
         // Now, we'll evaluate the shadow value against the result
         // value.
@@ -1054,7 +1054,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
               arg3Location->values[i]->value,
               roundmodeIRtoMPFR(*((IRRoundingMode*)opInfo->arg_values[0])));
     // Set up the stem record of this operation.
-    initStemNode(destLocation->values[i], opInfo, 2,
+    initBranchStemNode(destLocation->values[i], opInfo, 2,
                        arg2Location->values[i],
                        arg3Location->values[i]);
     // Now let's compare the computed value to the high precision result.
@@ -1151,7 +1151,7 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
             arg3->value, arg4->value,
             roundmodeIRtoMPFR(((IRRoundingMode*)opInfo->arg_values[0])[0]));
   // Set up the stem record of this operation.
-  initStemNode(destLocation->values[0], opInfo, 3,
+  initBranchStemNode(destLocation->values[0], opInfo, 3,
                      arg2, arg3, arg4);
 
   if (print_inputs){
@@ -1231,7 +1231,7 @@ ShadowValue* getShadowValue(ShadowLocation* loc, UWord index,
   if (loc->values[index] != NULL) return loc->values[index];
   // Create a new shadow value, and give it a leaf node stem.
   loc->values[index] = mkShadowValue();
-  initStemNode(loc->values[index], NULL, 0);
+  initLeafStemNode(loc->values[index]);
 
   // Initialize it's MPFR value with the current value of its float
   // bytes.

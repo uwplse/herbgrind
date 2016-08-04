@@ -51,7 +51,7 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type);
 // not have a shadow value, create one with the given type using the
 // given bytes to initialize the value.
 ShadowValue* getShadowValue(ShadowLocation* loc, UWord index,
-                            UWord* loc_bytes, Op_Info** src_loc);
+                            UWord* loc_bytes);
 // Convert IR rounding mode codes to MPFR rounding mode codes.
 mpfr_rnd_t roundmodeIRtoMPFR(IRRoundingMode round);
 #endif //_HG_SHADOWOP
