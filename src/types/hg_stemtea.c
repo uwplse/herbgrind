@@ -82,6 +82,8 @@ TeaNode* stemToTea(StemNode* stem){
     break;
   case Node_Branch:
     {
+      if (stem->branch.op->tea != NULL)
+        return stem->branch.op->tea;
       TeaNode* tea;
       ALLOC(tea, "hg.tea", 1, sizeof(TeaNode));
       tea->type = Node_Branch;
