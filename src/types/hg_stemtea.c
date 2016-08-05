@@ -226,7 +226,7 @@ void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
   // Finally, delete the group of groups, and the equivalence map we
   // got from the stem.
   VG_(deleteXA)(teaMapGroups);
-  VG_(HT_destruct)(stemMap, VG_(free));
+  VG_(HT_destruct)(stemMap, freeNodeMapEntry);
 }
 // Go through every entry in the node map, and remove those whose
 // positions are invalid in the current structure.
