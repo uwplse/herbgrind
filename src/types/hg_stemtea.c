@@ -169,6 +169,7 @@ void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
             1, sizeof(SplitMapEntry));
       initialSplitMapEntry->stemGroup = initialGroupEntry->groupIdx;
       initialSplitMapEntry->newGroup = groupIdx;
+      VG_(HT_add_node)(splitMap, initialSplitMapEntry);
       // Now, go through the rest of the entries in the group.
       for (int posIdx = 0;
            posIdx < VG_(sizeXA)(positions);
