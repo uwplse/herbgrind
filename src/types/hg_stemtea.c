@@ -32,6 +32,7 @@
 #include "hg_shadowvals.h"
 #include "hg_opinfo.h"
 #include "../include/hg_macros.h"
+#include "../include/hg_options.h"
 
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcbase.h"
@@ -47,8 +48,23 @@
 void updateTea(Op_Info* op, StemNode* stem){
   if (op->tea == NULL){
     op->tea = stemToTea(stem);
+    if (print_expr_updates){
+      char* teaString = teaToString(op->tea, NULL);
+      VG_(printf)("Creating new tea %s\n", teaString);
+      VG_(free)(teaString);
+    }
   } else {
+    char *origTeaString, *newTeaString;
+    if (print_expr_updates){
+      origTeaString = teaToString(op->tea, NULL);
+    }
     addStem(op->tea, stem);
+    if (print_expr_updates){
+      newTeaString = teaToString(op->tea, NULL);
+      VG_(printf)("Updating tea from %s to %s\n", origTeaString, newTeaString);
+      VG_(free)(origTeaString);
+      VG_(free)(newTeaString);
+    }
   }
 }
 
