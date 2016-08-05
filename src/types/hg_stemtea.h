@@ -46,25 +46,25 @@ typedef struct _NodeMapEntry {
   struct _NodeMapEntry* next;
   UWord positionHash;
   NodePos position;
-  int groupIdx;
+  UWord groupIdx;
 } NodeMapEntry;
 
 typedef struct _SplitMapEntry {
   struct _SplitNodeMapEntry* next;
-  int stemGroup;
-  int newGroup;
+  UWord stemGroup;
+  UWord newGroup;
 } SplitMapEntry;
 
 typedef struct _VarMapEntry {
   struct _VarMapEntry* next;
-  int groupIdx;
+  UWord groupIdx;
   int varIdx;
 } VarMapEntry;
 
 typedef struct _ValMapEntry {
   struct _ValMapEntry* next;
   UWord key;
-  int groupIdx;
+  UWord groupIdx;
 } ValMapEntry;
 
 typedef enum {
