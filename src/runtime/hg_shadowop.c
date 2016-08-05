@@ -1231,7 +1231,6 @@ ShadowValue* getShadowValue(ShadowLocation* loc, UWord index,
   if (loc->values[index] != NULL) return loc->values[index];
   // Create a new shadow value, and give it a leaf node stem.
   loc->values[index] = mkShadowValue();
-  initLeafStemNode(loc->values[index]);
 
   // Initialize it's MPFR value with the current value of its float
   // bytes.
@@ -1258,5 +1257,6 @@ ShadowValue* getShadowValue(ShadowLocation* loc, UWord index,
     VG_(printf)("Don't handle that type of shadow location (%d)!\n", loc->type);
     return NULL;
   }
+  initLeafStemNode(loc->values[index]);
   return loc->values[index];
 }
