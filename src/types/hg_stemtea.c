@@ -530,3 +530,20 @@ Word cmp_position(const void* node1, const void* node2){
   }
   return 0;
 }
+void printNodeMap(VgHashTable* node_map){
+  VG_(printf)("===============================\n");
+  VG_(HT_ResetIter)(node_map);
+  for(NodeMapEntry* entry = VG_(HT_Next)(node_map); entry != NULL;
+      entry = VG_(HT_Next)(node_map)){
+    printPosition(entry->position);
+    VG_(printf)("(%lu) ==> %lu\n", entry->positionHash, entry->groupIdx);
+  }
+  VG_(printf)("\n");
+}
+void printPosition(NodePos pos){
+  VG_(printf)("[");
+  for(SizeT i = 0; i < pos.len; ++i){
+    VG_(printf)("%u ", pos.data[i]);
+  }
+  VG_(printf)("]");
+}

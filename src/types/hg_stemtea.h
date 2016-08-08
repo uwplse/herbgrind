@@ -152,6 +152,9 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
                           int* nextvar);
 char* teaToBenchString(TeaNode* tea);
 
+void printNodeMap(VgHashTable* node_map);
+void printPosition(NodePos pos);
+
 #define lookupPosition(resultName, mapName, positionExpr) \
   { \
     NodePos nodePosition = positionExpr; \
