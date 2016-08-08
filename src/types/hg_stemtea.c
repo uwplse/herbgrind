@@ -39,6 +39,7 @@
 #include "pub_tool_mallocfree.h"
 
 #include <stdarg.h>
+#include <math.h>
 
 #define MAX_AST_STR_LEN 256
 
@@ -114,7 +115,9 @@ void generalizeStructure(TeaNode* tea, StemNode* stem){
   // If the value this node was initially assigned doesn't match that
   // of the new stem, then it isn't constant across all stems, so mark
   // it as such.
-  if (tea->constValue != stem->value){
+  if (tea->constValue != stem->value &&
+      tea->constValue == tea->constValue &&
+      stem->value == stem->value){
     tea->hasConst = False;
   }
   // Next, we'll need to figure out if this is a node that should
@@ -354,6 +357,10 @@ void freeNodeMapEntry(void* entry){
 void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
                   SizeT nargs, ShadowValue* firstarg, ...){
   val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
+  // Normalize NaN's
+  if (val->stem->value != val->stem->value){
+    val->stem->value = NAN;
+  }
   val->stem->ref = val;
   val->stem->type = Node_Branch;
   val->stem->branch.op = opinfo;
@@ -376,6 +383,10 @@ void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
 }
 void initLeafStemNode(ShadowValue* val){
   val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
+  // Normalize NaN's
+  if (val->stem->value != val->stem->value){
+    val->stem->value = NAN;
+  }
   val->stem->ref = val;
   val->stem->type = Node_Leaf;
 }
