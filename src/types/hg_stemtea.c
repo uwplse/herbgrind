@@ -437,7 +437,7 @@ static const char varNames[8] =
 char* teaToString(TeaNode* tea, SizeT* numVars_out){
   char* result;
   VgHashTable* var_map = VG_(HT_construct)("var map");
-  int nextvar;
+  int nextvar = 0;
   if (tea->type == Node_Branch){
     result = teaToStringWithMaps(tea, NULL_POS,
                                      tea->branch.node_map, var_map,
