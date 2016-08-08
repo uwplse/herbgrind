@@ -195,6 +195,13 @@ void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
           // move it in the tea map if that entry isn't the group it's
           // already in.
           if (splitMapEntry->newGroup != groupIdx){
+            // Remove the old entry
+            NodeMapEntry oldEntryPrototype;
+            oldEntryPrototype.position = position;
+            oldEntryPrototype.positionHash = hashPosition(position);
+            VG_(HT_gen_remove)(tea->branch.node_map, &oldEntryPrototype, cmp_position);
+
+            // Add the new entry.
             NodeMapEntry* newTeaGroupEntry;
             ALLOC(newTeaGroupEntry, "tea node map entry",
                   1, sizeof(NodeMapEntry));
@@ -214,6 +221,13 @@ void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
           splitMapEntry->newGroup = newIdx;
           VG_(HT_add_node)(splitMap, splitMapEntry);
 
+          // Remove the old tea map entry.
+          NodeMapEntry oldEntryPrototype;
+          oldEntryPrototype.position = position;
+          oldEntryPrototype.positionHash = hashPosition(position);
+          VG_(HT_gen_remove)(tea->branch.node_map, &oldEntryPrototype, cmp_position);
+
+          // Add the new tea map entry.
           NodeMapEntry* newTeaGroupEntry;
           ALLOC(newTeaGroupEntry, "tea group entry",
                 1, sizeof(NodeMapEntry));
