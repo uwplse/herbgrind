@@ -370,6 +370,7 @@ void freeNodeMapEntry(void* entry){
 // Initialize a new stem node.
 void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
                   SizeT nargs, ShadowValue* firstarg, ...){
+  if (!report_exprs) return;
   val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
   // Normalize NaN's
   if (val->stem->value != val->stem->value){
@@ -396,6 +397,7 @@ void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
   va_end(args);
 }
 void initLeafStemNode(ShadowValue* val){
+  if (!report_exprs) return;
   val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
   // Normalize NaN's
   if (val->stem->value != val->stem->value){

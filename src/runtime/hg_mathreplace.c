@@ -293,18 +293,18 @@ void performOp(OpType op, double* result, double* args){
   switch(nargs){
   case 1:
     initBranchStemNode(res_shadow, entry->info, nargs,
-                 arg_shadows[0]);
+                       arg_shadows[0]);
     break;
   case 2:
     initBranchStemNode(res_shadow, entry->info, nargs,
-                 arg_shadows[0],
-                 arg_shadows[1]);
+                       arg_shadows[0],
+                       arg_shadows[1]);
     break;
   case 3:
     initBranchStemNode(res_shadow, entry->info, nargs,
-                 arg_shadows[0],
-                 arg_shadows[1],
-                 arg_shadows[2]);
+                       arg_shadows[0],
+                       arg_shadows[1],
+                       arg_shadows[2]);
     break;
   }
   // And finally, evaluate the error of the operation.

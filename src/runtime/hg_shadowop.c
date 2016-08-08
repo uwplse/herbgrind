@@ -321,8 +321,10 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       break;
     }
     destLocation = mkShadowLocation(Lt_Double);
-    copyStemNode(argLocation->values[0]->stem,
-                 &(destLocation->values[0]->stem));
+    if (report_exprs){
+      copyStemNode(argLocation->values[0]->stem,
+                   &(destLocation->values[0]->stem));
+    }
 
     // Perform the mpfr rounding to int that matches the requested
     // rounding type.
@@ -424,7 +426,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
                             opInfo->arg_values[1]);
       destLocation = mkShadowLocation_bare(argType);
       destLocation->values[0] = mkShadowValue();
-      copyStemNode(arg2->stem, &(destLocation->values[0]->stem));
+      if (report_exprs){
+        copyStemNode(arg2->stem, &(destLocation->values[0]->stem));
+      }
       mpfr_round(destLocation->values[0]->value, arg2->value);
     }
     break;

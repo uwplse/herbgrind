@@ -175,7 +175,9 @@ void disownSV(ShadowValue* sv){
     if (print_moves)
       VG_(printf)("Cleaning up shadow value %p\n", sv);
     mpfr_clear(sv->value);
-    cleanupStemNode(sv->stem);
+    if (report_exprs){
+      cleanupStemNode(sv->stem);
+    }
     VG_(free)(sv);
   }
 }
