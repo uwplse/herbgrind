@@ -60,6 +60,7 @@ void freeSL(ShadowLocation* sl){
   for (int i = 0; i < capacity(sl->type); ++i)
     if (sl->values[i] != NULL)
       disownSV(sl->values[i]);
+  VG_(free)(sl->values);
   VG_(free)(sl);
 }
 

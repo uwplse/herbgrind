@@ -381,8 +381,12 @@ ShadowLocation* getLoc__(Addr index, ShadowValue* (*getter)(Addr index), LocType
     if (result->values[i] != NULL)
       allNull = False;
   }
-  if (allNull) return NULL;
-  else return result;
+  if (allNull){
+    freeSL(result);
+    return NULL;
+  } else {
+    return result;
+  }
 }
 
 void setSavedArg(Int index, ShadowValue* newValue){
