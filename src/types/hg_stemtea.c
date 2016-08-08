@@ -276,10 +276,10 @@ Bool positionValid(TeaNode* tea, NodePos node){
     return True;
   } else if (tea->type == Node_Leaf){
     return False;
-  } else if (tea->branch.nargs <= node.data[0]) {
+  } else if (tea->branch.nargs <= node.data[node.len - 1]) {
     return False;
   } else {
-    return positionValid(tea->branch.args[node.data[0]],
+    return positionValid(tea->branch.args[node.data[node.len - 1]],
                          (NodePos) {.data = node.data, .len = node.len - 1});
   }
 }
@@ -343,7 +343,7 @@ void updateEquivMap(VgHashTable* node_map,
       NodePos newPos;
       newPos.len = curPos.len + 1;
       ALLOC(newPos.data, "pos data", newPos.len, sizeof(UInt));
-      VG_(memcpy)(newPos.data, curPos.data + 1, curPos.len);
+      VG_(memcpy)(newPos.data + 1, curPos.data, curPos.len);
       newPos.data[0] = argIdx;
       updateEquivMap(node_map, val_map, next_idx, argStem, newPos);
     }
@@ -473,7 +473,7 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
       NodePos newPos;
       newPos.len = curpos.len + 1;
       ALLOC(newPos.data, "pos data", newPos.len, sizeof(UInt));
-      VG_(memcpy)(newPos.data, curpos.data + 1, curpos.len);
+      VG_(memcpy)(newPos.data + 1, curpos.data, curpos.len);
       newPos.data[0] = argIdx;
       char* subexpr = teaToStringWithMaps(tea->branch.args[argIdx],
                                           newPos, node_map, var_map,
@@ -524,7 +524,7 @@ char* teaToBenchString(TeaNode* tea){
 UWord hashPosition(NodePos node){
   UWord hash = 0;
   for (SizeT i = 0; i < node.len; ++i){
-    hash = 31 * hash + node.data[i];
+    hash = 31 * hash + node.data[i] + 1;
   }
   return hash;
 }
