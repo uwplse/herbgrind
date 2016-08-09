@@ -121,8 +121,9 @@ void writeReport(const HChar* filename){
 
     UInt entry_len;
     if (report_exprs){
-      char* benchString = teaToBenchString(opinfo->tea);
+      char* benchString;
       if (human_readable){
+        benchString = teaToBenchString(opinfo->tea, True);
         entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
                                   "%s\n"
                                   "%s in %s at %s:%u (address %lX)\n"
@@ -139,6 +140,7 @@ void writeReport(const HChar* filename){
                                   opinfo->evalinfo.max_error,
                                   opinfo->evalinfo.num_calls);
       } else {
+        benchString = teaToBenchString(opinfo->tea, False);
         entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
                                   "((bench %s) "
                                   "(plain-name \"%s\") "

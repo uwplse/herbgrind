@@ -150,7 +150,7 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
                           VgHashTable* node_map,
                           VgHashTable* var_map,
                           int* nextvar);
-char* teaToBenchString(TeaNode* tea);
+char* teaToBenchString(TeaNode* tea, Bool haveNewlines);
 
 void printNodeMap(VgHashTable* node_map);
 void printPosition(NodePos pos);
