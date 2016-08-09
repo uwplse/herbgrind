@@ -1,1 +1,1 @@
-((plain-name "subtraction") (function "main") (filename "diff-roots-simple.c") (line-num 12) (instr-addr 4009BF) (avg-error 43.129555) (max-error 43.129555) (num-calls 1))
+((bench (FPCore ()  :type binary64  (- (sqrt (+ 1.000000 10000000000000000.000000)) (sqrt 10000000000000000.000000)))) (plain-name "subtraction") (function "main") (filename "diff-roots-simple.c") (line-num 10) (instr-addr 4009AF) (avg-error 61.959049) (max-error 61.959049) (num-calls 1))
