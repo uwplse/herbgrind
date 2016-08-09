@@ -30,6 +30,13 @@
 # The GNU General Public License is contained in the file COPYING.
 #
 
+# check to see if we should use GNU sed on homebrew
+if hash gsed > /dev/null 2>&1 ; then
+  SED="gsed"
+else
+  SED="sed"
+fi
+
 # Comment out uses of malloc, realloc, free, and fprinf, in the
 # default memory functions for gmp. We'll be calling
 # mp_set_memory_functions to override the default memory functions in
@@ -38,13 +45,13 @@
 # provide a standard c library to it's tools, it will fail, killing
 # the build. So, we comment them out instead, and everything works
 # fine.
-sed -i \
-    -e 's/malloc.*(.*);/0;\/\/&/' \
-    -e 's/realloc.*(.*);/0;\/\/&/' \
-    -e 's/free.*(.*);/\/\/&/' \
-    -e 's/fprintf.*(.*);/;\/\/&/'\
-    -e 's/abort.*(.*);/;\/\/&/'\
-    ../deps/gmp-$1/memory.c \
-    ../deps/gmp-$1/assert.c \
-    ../deps/gmp-$1/errno.c \
-    ../deps/gmp-$1/mpz/realloc.c
+$SED -i \
+     -e 's/malloc.*(.*);/0;\/\/&/' \
+     -e 's/realloc.*(.*);/0;\/\/&/' \
+     -e 's/free.*(.*);/\/\/&/' \
+     -e 's/fprintf.*(.*);/;\/\/&/'\
+     -e 's/abort.*(.*);/;\/\/&/'\
+     ../deps/gmp-$1/memory.c \
+     ../deps/gmp-$1/assert.c \
+     ../deps/gmp-$1/errno.c \
+     ../deps/gmp-$1/mpz/realloc.c

@@ -362,8 +362,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
   ShadowLocation* arg1Location;
   ShadowLocation* arg2Location;
   ShadowLocation* destLocation;
-  ShadowValue* arg1;
-  ShadowValue* arg2;
+  ShadowValue* arg1 = NULL;
+  ShadowValue* arg2 = NULL;
 
   if (!running) return;
   switch(opInfo->op){
@@ -811,7 +811,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
   case Iop_XorV128:
     // Probably a negation
     {
-      LocType argType;
+      LocType argType = Lt_Float;
       if (*(opInfo->arg_values[0]) == 0x8000000000000000 ||
           *(opInfo->arg_values[1]) == 0x8000000000000000 ||
           *(opInfo->arg_values[0]) == 0x2424242424242424 ||
