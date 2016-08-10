@@ -62,7 +62,10 @@ void updateTea(Op_Info* op, StemNode* stem){
     addStem(op->tea, stem);
     if (print_expr_updates){
       newTeaString = teaToString(op->tea, NULL);
-      VG_(printf)("Updating tea from %s to %s\n", origTeaString, newTeaString);
+      if (VG_(strcmp)(origTeaString, newTeaString)){
+        VG_(printf)("Updating tea from %s to %s\n",
+                    origTeaString, newTeaString);
+      }
       VG_(free)(origTeaString);
       VG_(free)(newTeaString);
     }
@@ -442,11 +445,11 @@ char* teaToString(TeaNode* tea, SizeT* numVars_out){
   int nextvar = 0;
   if (tea->type == Node_Branch){
     result = teaToStringWithMaps(tea, NULL_POS,
-                                     tea->branch.node_map, var_map,
-                                     &nextvar);
+                                 tea->branch.node_map, var_map,
+                                 &nextvar);
   } else {
     result = teaToStringWithMaps(tea, NULL_POS, NULL, var_map,
-                                     &nextvar);
+                                 &nextvar);
   }
   if (numVars_out != NULL){
     *numVars_out = VG_(HT_count_nodes)(var_map);

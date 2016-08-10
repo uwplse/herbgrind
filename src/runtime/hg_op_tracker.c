@@ -118,7 +118,6 @@ void writeReport(const HChar* filename){
     Op_Info* opinfo = *(Op_Info**)VG_(indexXA)(tracked_ops, i);
 
     if (opinfo == NULL) continue;
-    if (opinfo->debuginfo.fnname == NULL) continue;
 
     UInt entry_len;
     if (report_exprs){
