@@ -72,7 +72,6 @@ typedef enum {
   Node_Branch
 } NodeType;
 
-typedef struct _StemNode StemNode;
 struct _StemNode {
   ShadowValue* ref;
   NodeType type;
@@ -84,7 +83,6 @@ struct _StemNode {
   } branch;
 };
 
-typedef struct _TeaNode TeaNode;
 struct _TeaNode {
   NodeType type;
   Bool hasConst;
