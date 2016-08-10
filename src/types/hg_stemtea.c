@@ -454,6 +454,32 @@ char* teaToString(TeaNode* tea, SizeT* numVars_out){
   VG_(HT_destruct)(var_map, VG_(free));
   return result;
 }
+
+char* teaToStructureString(TeaNode* tea){
+  char* buf;
+  SizeT bufpos = 0;
+  ALLOC(buf, "ast string", MAX_AST_STR_LEN, sizeof(char));
+
+  if (tea->type == Node_Leaf){
+    if (tea->hasConst){
+      VG_(snprintf)(buf, MAX_AST_STR_LEN, "%f", tea->constValue);
+    } else {
+      VG_(snprintf)(buf, 2, "%c", varNames[0]);
+    }
+  } else {
+    bufpos += VG_(snprintf)(buf, MAX_AST_STR_LEN, "(%s",
+                            tea->branch.op->debuginfo.symbol);
+    for (SizeT argIdx = 0; argIdx < tea->branch.nargs; ++argIdx){
+      char* subexpr = teaToStructureString(tea->branch.args[argIdx]);
+      bufpos += VG_(snprintf)(buf + bufpos, MAX_AST_STR_LEN - bufpos,
+                              " %s", subexpr);
+      VG_(free)(subexpr);
+    }
+    VG_(snprintf)(buf + bufpos, MAX_AST_STR_LEN - bufpos, ")");
+  }
+  return buf;
+}
+
 char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
                           VgHashTable* node_map,
                           VgHashTable* var_map,
