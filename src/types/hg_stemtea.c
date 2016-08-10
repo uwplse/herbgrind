@@ -357,7 +357,7 @@ void updateEquivMap(VgHashTable* node_map,
       NodePos newPos;
       newPos.len = curPos.len + 1;
       ALLOC(newPos.data, "pos data", newPos.len, sizeof(UInt));
-      VG_(memcpy)(newPos.data + 1, curPos.data, curPos.len);
+      VG_(memcpy)(newPos.data + 1, curPos.data, curPos.len * sizeof(UInt));
       newPos.data[0] = argIdx;
       updateEquivMap(node_map, val_map, next_idx, argStem, newPos);
     }
@@ -489,8 +489,9 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
       NodePos newPos;
       newPos.len = curpos.len + 1;
       ALLOC(newPos.data, "pos data", newPos.len, sizeof(UInt));
-      VG_(memcpy)(newPos.data + 1, curpos.data, curpos.len);
+      VG_(memcpy)(newPos.data + 1, curpos.data, curpos.len * sizeof(UInt));
       newPos.data[0] = argIdx;
+
       char* subexpr = teaToStringWithMaps(tea->branch.args[argIdx],
                                           newPos, node_map, var_map,
                                           nextvar);
