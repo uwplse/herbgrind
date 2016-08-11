@@ -40,6 +40,20 @@
 
 XArray* tracked_ops;
 
+
+Op_Info op_bare_negation = (Op_Info) {.nargs = 1, .op = Iop_NegF64,
+                                      .debuginfo =
+                                      {.plain_opname = "negation",
+                                       .symbol = "-"}};
+TeaNode teaX = (TeaNode){.type = Node_Leaf, .hasConst = False};
+
+TeaNode* teaNegXArgs[] = {&teaX};
+
+TeaNode teaNegX = (TeaNode){.type = Node_Branch, .hasConst = False,
+                            .branch = {.op = &op_bare_negation,
+                                       .nargs = 1,
+                                       .args = teaNegXArgs }};
+
 // How many characters are going to be allowed in each entry.
 #define ENTRY_BUFFER_SIZE 512
 
@@ -118,6 +132,7 @@ void writeReport(const HChar* filename){
     Op_Info* opinfo = *(Op_Info**)VG_(indexXA)(tracked_ops, i);
 
     if (opinfo == NULL) continue;
+    if (teaStructureMatches(opinfo->tea, &teaNegX)) continue;
 
     UInt entry_len;
     if (report_exprs){

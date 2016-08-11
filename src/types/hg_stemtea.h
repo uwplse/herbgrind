@@ -133,6 +133,8 @@ Bool positionValid(TeaNode* tea, NodePos node);
 // class/variable indices.
 VgHashTable* getStemEquivs(StemNode* stem);
 
+Bool teaStructureMatches(TeaNode* tea1, TeaNode* tea2);
+
 UWord hashPosition(NodePos node);
 Word cmp_position(const void* node1, const void* node2);
 

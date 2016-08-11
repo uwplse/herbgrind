@@ -625,3 +625,16 @@ void printPosition(NodePos pos){
   }
   VG_(printf)("]");
 }
+Bool teaStructureMatches(TeaNode* tea1, TeaNode* tea2){
+  if (tea1->type != tea2->type) return False;
+  if (tea1->type == Node_Leaf) return True;
+  if (VG_(strcmp)(tea1->branch.op->debuginfo.symbol,
+                  tea2->branch.op->debuginfo.symbol))
+    return False;
+  for (int i = 0; i < tea1->branch.nargs; ++i){
+    if (!teaStructureMatches(tea1->branch.args[i], tea2->branch.args[i])){
+      return False;
+    }
+  }
+  return True;
+}
