@@ -56,7 +56,6 @@ Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
   ALLOC(result, "hg.op_info.1", 1, sizeof(Op_Info));
   ALLOC(result->arg_tmps, "hg.op_tmps", arity, sizeof(UWord));
   ALLOC(result->arg_values, "hg.op_values", arity, sizeof(UWord*));
-  result->tag = Op_Branch;
   result->nargs = arity;
   result->op = op;
   getOpDebug_Info(opAddr, name, symbol, &(result->debuginfo));
@@ -75,13 +74,5 @@ Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
   // number will trigger a tracking.
   result->evalinfo.max_error = -1;
 
-  return result;
-}
-
-Op_Info* mkLeafOp_Info(ShadowValue* val){
-  Op_Info* result;
-  ALLOC(result, "leaf op", 1, sizeof(Op_Info));
-  result->tag = Op_Leaf;
-  result->tea = NULL;
   return result;
 }

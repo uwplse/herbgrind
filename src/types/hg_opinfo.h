@@ -92,13 +92,7 @@ struct _Eval_Info {
   SizeT num_calls;
 };
 
-typedef enum {
-  Op_Branch,
-  Op_Leaf,
-} OpInfoType;
-
 struct _Op_Info {
-  OpInfoType tag;
   // The arity of the operation. This determines which of the args
   // structures we are allowed to put in and pull out.
   SizeT nargs;
