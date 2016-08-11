@@ -108,37 +108,43 @@ TeaNode* stemToTea(StemNode* stem){
   return NULL;
 }
 void addStem(TeaNode* tea, StemNode* stem){
-  generalizeStructure(tea, stem);
+  generalizeStructure(&(tea), stem);
   if (tea->type == Node_Branch && stem->type == Node_Branch){
     pruneMapToStructure(tea);
     mergeBranchNodeMap(tea, stem);
   }
 }
-void generalizeStructure(TeaNode* tea, StemNode* stem){
+void generalizeStructure(TeaNode** tea, StemNode* stem){
+  // If the tea continues down, but the stem stops, or the stem stops
+  // matching, then we want to replace the tea with a branch. But we
+  // don't want to do it in place, because then other places that
+  // reference that operation will get the truncated tree even though
+  // the stem never passed through that op. So instead, allocate a new
+  // leaf and stick it in the reference location we got.
+  if ((*tea)->type == Node_Branch &&
+      (stem->type == Node_Leaf || (*tea)->branch.op->op != stem->branch.op->op)){
+    TeaNode* oldTea = (*tea);
+    ALLOC(*tea, "tea leaf", 1, sizeof(StemNode));
+    (*tea)->type = Node_Leaf;
+    (*tea)->hasConst = (oldTea->hasConst &&
+                        (oldTea->constValue == stem->value ||
+                         (oldTea->constValue != oldTea->constValue &&
+                          stem->value != stem->value))) ? True : False;
+    (*tea)->constValue = oldTea->constValue;
+  }
   // If the value this node was initially assigned doesn't match that
   // of the new stem, then it isn't constant across all stems, so mark
   // it as such.
-  if (tea->constValue != stem->value &&
-      tea->constValue == tea->constValue &&
+  if ((*tea)->constValue != stem->value &&
+      (*tea)->constValue == (*tea)->constValue &&
       stem->value == stem->value){
-    tea->hasConst = False;
+    (*tea)->hasConst = False;
   }
-  // Next, we'll need to figure out if this is a node that should
-  // continue down, or be stopped right here. If either the current
-  // tea, or the new stem stops here, the new tea should stop
-  // here. And if they both continue, but their ops don't match, also
-  // cut the new one off here.
-  if (stem->type == Node_Leaf || tea->type == Node_Leaf ||
-      tea->branch.op->op != stem->branch.op->op){
-    if (tea->type == Node_Branch){
-      VG_(free)(tea->branch.args);
-      VG_(HT_destruct)(tea->branch.node_map, freeNodeMapEntry);
-    }
-    tea->type = Node_Leaf;
-  } else {
+  // If the result is still a branch, recurse on the arguments.
+  if ((*tea)->type == Node_Branch){
     // Otherwise, we'll recurse on the descendents.
-    for (int i = 0; i < tea->branch.nargs; ++i){
-      generalizeStructure(tea->branch.args[i], stem->branch.args[i]);
+    for (int i = 0; i < (*tea)->branch.nargs; ++i){
+      generalizeStructure(&((*tea)->branch.args[i]), stem->branch.args[i]);
     }
   }
 }

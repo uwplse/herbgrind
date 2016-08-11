@@ -115,7 +115,7 @@ TeaNode* stemToTea(StemNode* stem);
 void addStem(TeaNode* tea, StemNode* stem);
 // Perform the proper brewing on the structure of a tea so that it
 // matches a given stem, besides for the node map.
-void generalizeStructure(TeaNode* tea, StemNode* stem);
+void generalizeStructure(TeaNode** tea, StemNode* stem);
 // Merge the node map of a stem into a tea, so that nodes are only in
 // the same equivalence class in the resulting tea if they were in the
 // same equivalence class in both the original tea and the stem.
