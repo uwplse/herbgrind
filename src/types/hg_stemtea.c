@@ -631,6 +631,8 @@ Bool teaStructureMatches(TeaNode* tea1, TeaNode* tea2){
   if (VG_(strcmp)(tea1->branch.op->debuginfo.symbol,
                   tea2->branch.op->debuginfo.symbol))
     return False;
+  if (tea1->branch.nargs != tea2->branch.nargs)
+    return False;
   for (int i = 0; i < tea1->branch.nargs; ++i){
     if (!teaStructureMatches(tea1->branch.args[i], tea2->branch.args[i])){
       return False;
