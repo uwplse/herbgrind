@@ -341,7 +341,7 @@ That doesn't seem flattened...\n");
                  &(cpinfo->dest_idx));
 
         copyShadowLocation =
-          unsafeIRDirty_0_N(3,
+          unsafeIRDirty_0_N(2,
                             "copyShadowTmptoMemG",
                             VG_(fnptr_to_fnentry)(&copyShadowTmptoMemG),
                             mkIRExprVec_2(st->Ist.StoreG.details->guard,
