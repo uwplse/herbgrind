@@ -327,7 +327,7 @@ That doesn't seem flattened...\n");
   case Ist_StoreG:
     // Same as above, but only assigns the value to memory if a
     // guard returns true.
-    expr = st->Ist.Store.data;
+    expr = st->Ist.StoreG.details->data;
     switch(expr->tag) {
     case Iex_RdTmp:
       if (isFloat(sbOut->tyenv, expr->Iex.RdTmp.tmp)){
@@ -339,7 +339,7 @@ That doesn't seem flattened...\n");
         addStore(sbOut,
                  st->Ist.StoreG.details->addr,
                  &(cpinfo->dest_idx));
-        
+
         copyShadowLocation =
           unsafeIRDirty_0_N(3,
                             "copyShadowTmptoMemG",
