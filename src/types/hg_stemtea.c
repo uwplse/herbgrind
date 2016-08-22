@@ -65,6 +65,8 @@ void updateTea(Op_Info* op, StemNode* stem){
       if (VG_(strcmp)(origTeaString, newTeaString)){
         VG_(printf)("Updating tea from %s to %s\n",
                     origTeaString, newTeaString);
+      } else {
+        VG_(printf)(".");
       }
       VG_(free)(origTeaString);
       VG_(free)(newTeaString);
