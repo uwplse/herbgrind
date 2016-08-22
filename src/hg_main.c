@@ -216,7 +216,6 @@ static void hg_fini(Int exitcode){
     outfile_path = filename;
   }
   writeReport(outfile_path);
-  VG_(printf)("Wrote report out to %s\n", outfile_path);
 }
 // This does any initialization that needs to be done after command
 // line processing.
