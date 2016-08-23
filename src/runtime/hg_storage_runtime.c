@@ -247,6 +247,13 @@ void setTemp(Addr index, ShadowLocation* newLocation){
       VG_(printf)("Overwriting temp at %lu\n", index);
     freeSL(localTemps[index]);
   }
+  if (newLocation != NULL){
+    for(int i = 0; i < capacity(newLocation->type); i++){
+      if (newLocation->values[i] != NULL){
+        addRef(newLocation->values[i]);
+      }
+    }
+  }
   localTemps[index] = newLocation;
 }
 
@@ -377,7 +384,7 @@ ShadowLocation* getLoc__(Addr index, ShadowValue* (*getter)(Addr index), LocType
   ShadowLocation* result = mkShadowLocation_bare(type);
   Bool allNull = True;
   for (SizeT i = 0; i < capacity(type); ++i){
-    copySV(getter(index + el_size(type) * i), &(result->values[i]));
+    result->values[i] = getter(index + el_size(type) * i);
     if (result->values[i] != NULL)
       allNull = False;
   }

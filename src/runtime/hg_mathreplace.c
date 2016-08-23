@@ -285,9 +285,6 @@ void performOp(OpType op, double* result, double* args){
   // were given to the result memory.
   *result = mpfr_get_d(res, MPFR_RNDN);
   setMem((uintptr_t)result, res_shadow);
-  // Disown a reference for this since it gets one when it starts up
-  // (to keep it alive), and putting it in memory adds another.
-  disownSV(res_shadow);
 
   // Set up the stem record of this operation.
   switch(nargs){
@@ -342,8 +339,6 @@ ShadowValue* getShadowValMem(Addr addr, double float_arg,
 
   val = mkShadowValue();
   setMem(addr, val);
-  // Kill the extra reference created by initializing
-  disownSV(val);
 
   mpfr_set_d(val->value, float_arg, MPFR_RNDN);
   initLeafStemNode(val);

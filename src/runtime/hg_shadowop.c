@@ -219,7 +219,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       }
       // Copy across the rest of the values from the argument
       for (;i < capacity(argType); ++i){
-        copySV(argLocation->values[i], &destLocation->values[i]);
+        destLocation->values[i] = argLocation->values[i];
       }
     }
     break;
@@ -301,7 +301,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       case Iop_F128LOtoF64:
       case Iop_64UtoV128:
       case Iop_SetV128lo64:
-        copySV(argLocation->values[0], &destLocation->values[0]);
+        destLocation->values[0] = argLocation->values[0];
         break;
       default:
         return;
@@ -397,8 +397,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
 
     // Finally, take the 64 bits of each argument, and put them in the
     // two halves of the result.
-    copySV(arg1, &destLocation->values[0]);
-    copySV(arg2, &destLocation->values[1]);
+    destLocation->values[0] = arg1;
+    destLocation->values[1] = arg2;
     return;
     break;
 
@@ -444,7 +444,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
     arg2 = getShadowValue(arg2Location, 0,
                           opInfo->arg_values[1]);
     destLocation = mkShadowLocation_bare(Lt_Float);
-    copySV(arg2, &destLocation->values[0]);
+    destLocation->values[0] = arg2;
     break;
 
     // Ops that have a rounding mode and a single floating point argument
@@ -749,7 +749,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       }
       // Copy across the rest of the values from the first argument
       for (;i < capacity(argType); ++i){
-        copySV(arg1Location->values[i], &destLocation->values[i]);
+        destLocation->values[i] = arg1Location->values[i];
       }
     }
     break;
@@ -794,12 +794,13 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       destLocation = mkShadowLocation_bare(type);
 
       // Copy the low order bits shadow value from the second argument.
-      copySV(arg2Location->values[0], &destLocation->values[0]);
+      destLocation->values[0] = arg2Location->values[0];
 
       // Copy across the higher order bits shadow value from the first
       // argument.
-      for (int i = 1; i < num_vals; ++i)
-        copySV(arg1Location->values[i], &destLocation->values[i]);
+      for (int i = 1; i < num_vals; ++i){
+        destLocation->values[i] = arg1Location->values[i];
+      }
 
       // This isn't really a "real" op in the math-y sense, so let's not
       // evaluate it's error.
@@ -1262,5 +1263,8 @@ ShadowValue* getShadowValue(ShadowLocation* loc, UWord index,
     return NULL;
   }
   initLeafStemNode(loc->values[index]);
+  // Add a reference since by adding this to a shadow location, we're
+  // putting it in a temp.
+  addRef(loc->values[index]);
   return loc->values[index];
 }

@@ -75,7 +75,7 @@ void copySL(ShadowLocation* src, ShadowLocation** dest){
     (*dest)->type = src->type;
     ALLOC((*dest)->values, "hg.shadow_values", capacity(src->type), sizeof(ShadowValue*));
     for (int i = 0; i < capacity(src->type); ++i){
-      copySV(src->values[i], &((*dest)->values[i]));
+      (*dest)->values[i] = src->values[i];
     }
   }
 }
@@ -152,9 +152,11 @@ SizeT el_size(LocType bytestype){
 ShadowValue* mkShadowValue(void){
   ShadowValue* result;
   ALLOC(result, "hg.shadow_val", 1, sizeof(ShadowValue));
-  ALLOC(result->stem, "hg.shadow_stem", 1, sizeof(StemNode));
+  if (report_exprs){
+    ALLOC(result->stem, "hg.shadow_stem", 1, sizeof(StemNode));
+  }
   mpfr_init2(result->value, precision);
-  result->ref_count = 1;
+  result->ref_count = 0;
   if (print_moves)
     VG_(printf)("Making shadow value %p\n", result);
   return result;
