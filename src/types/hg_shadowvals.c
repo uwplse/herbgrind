@@ -172,6 +172,9 @@ void copySV(ShadowValue* src, ShadowValue** dest){
 
 void disownSV(ShadowValue* sv){
   (sv->ref_count) --;
+  if (print_counts){
+    VG_(printf)("Decreasing count of %p to %lu\n", sv, sv->ref_count);
+  }
   if (sv->ref_count < 1){
     if (print_moves)
       VG_(printf)("Cleaning up shadow value %p\n", sv);
@@ -184,4 +187,7 @@ void disownSV(ShadowValue* sv){
 }
 void addRef(ShadowValue* val){
   (val->ref_count)++;
+  if (print_counts){
+    VG_(printf)("Increasing count of %p to %lu\n", val, val->ref_count);
+  }
 }

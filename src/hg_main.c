@@ -157,6 +157,7 @@ Bool print_inputs = False;
 Bool print_errors = False;
 Bool print_errors_long = False;
 Bool print_moves = False;
+Bool print_counts = False;
 Bool print_mallocs = False;
 Bool print_expr_updates = False;
 Bool report_exprs = True;
@@ -174,6 +175,7 @@ static Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-errors", print_errors, True) {}
   else if VG_XACT_CLO(arg, "--print-errors-long", print_errors_long, True) {}
   else if VG_XACT_CLO(arg, "--print-moves", print_moves, True) {}
+  else if VG_XACT_CLO(arg, "--print-counts", print_counts, True) {}
   else if VG_XACT_CLO(arg, "--print-mallocs", print_mallocs, True) {}
   else if VG_XACT_CLO(arg, "--start-off", running, False) {}
   else if VG_STR_CLO(arg, "--outfile", outfile_path) {}
