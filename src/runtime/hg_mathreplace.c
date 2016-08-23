@@ -338,10 +338,12 @@ ShadowValue* getShadowValMem(Addr addr, double float_arg,
   }
 
   if (print_moves)
-    VG_(printf)("Creating new shadow location at addr %p\n", (void*)(uintptr_t)addr);
+    VG_(printf)("Creating new shadow value at addr %p\n", (void*)(uintptr_t)addr);
 
   val = mkShadowValue();
   setMem(addr, val);
+  // Kill the extra reference created by initializing
+  disownSV(val);
 
   mpfr_set_d(val->value, float_arg, MPFR_RNDN);
   initLeafStemNode(val);
