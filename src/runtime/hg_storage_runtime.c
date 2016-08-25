@@ -86,7 +86,7 @@ VG_REGPARM(1) void copyShadowTmptoTmp(CpShadow_Info* info){
   if (!running && getTemp(info->src_idx) != NULL) return;
   return;
   if (info->dest_idx > maxTempUsed) maxTempUsed = info->dest_idx;
-  copySL(getTemp(info->src_idx), &localTemps[info->dest_idx]);
+  setTemp(info->dest_idx, getTemp(info->src_idx));
 
   if (getTemp(info->src_idx) != NULL &&
       print_moves){
@@ -165,7 +165,7 @@ VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
     }
   } else {
     if (!running && getTemp(info->alt_tmp) != NULL) return;
-    copySL(getTemp(info->alt_tmp), &localTemps[info->dest_tmp]);
+    setTemp(info->dest_tmp, getTemp(info->alt_tmp));
 
     if (getTemp(info->alt_tmp) != NULL && print_moves){
       VG_(printf)("Copying value ");
