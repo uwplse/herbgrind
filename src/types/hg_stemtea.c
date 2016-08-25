@@ -124,7 +124,10 @@ void generalizeStructure(TeaNode** tea, StemNode* stem){
   // the stem never passed through that op. So instead, allocate a new
   // leaf and stick it in the reference location we got.
   if ((*tea)->type == Node_Branch &&
-      (stem->type == Node_Leaf || (*tea)->branch.op->op != stem->branch.op->op)){
+      (stem->type == Node_Leaf ||
+       VG_(strcmp)((*tea)->branch.op->debuginfo.symbol,
+                   stem->branch.op->debuginfo.symbol) ||
+       (*tea)->branch.nargs != stem->branch.nargs)){
     TeaNode* oldTea = (*tea);
     ALLOC(*tea, "tea leaf", 1, sizeof(StemNode));
     (*tea)->type = Node_Leaf;
