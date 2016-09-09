@@ -34,12 +34,10 @@
 
 (define-type hg-stem (U stem-leaf stem-branch))
 
-(struct stem-leaf ([value : Number])
-        #:transparent)
+(struct stem-leaf ([value : Number]))
 (struct stem-branch ([value : Number]
                      [op : Symbol]
-                     [args : (Listof hg-stem)])
-        #:transparent)
+                     [args : (Listof hg-stem)]))
 
 (: stem-value (-> hg-stem Number))
 (define (stem-value stem)
