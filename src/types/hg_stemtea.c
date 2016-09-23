@@ -297,6 +297,17 @@ XArray* getGroups(VgHashTable* node_map){
   }
   return groups;
 }
+void printGroups(XArray* groups){
+  for (SizeT i = 0; i < VG_(sizeXA)(groups); i++){
+    XArray* group = *(XArray**)VG_(indexXA)(groups, i);
+    for (SizeT j = 0; j < VG_(sizeXA)(group); j++){
+      printPosition(*(NodePos*)VG_(indexXA)(group, j));
+      VG_(printf)(", ");
+    }
+    VG_(printf)("\n");
+  }
+  VG_(printf)("\n");
+}
 
 // Check if a given position is valid in a particular tea structure.
 Bool positionValid(TeaNode* tea, NodePos node){
