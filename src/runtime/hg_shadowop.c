@@ -381,7 +381,6 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       destLocation = NULL;
       break;
     }
-    return;
     arg1Location = getShadowLocation(opInfo->arg_tmps[0],
                                      Lt_Double);
     arg2Location = getShadowLocation(opInfo->arg_tmps[1],
@@ -399,7 +398,6 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
     // two halves of the result.
     destLocation->values[0] = arg1;
     destLocation->values[1] = arg2;
-    return;
     break;
 
   case Iop_RoundF64toInt:
