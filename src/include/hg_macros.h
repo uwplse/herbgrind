@@ -39,5 +39,6 @@
 #define ALLOC(dest, name, num_elems, elem_size)         \
   dest = VG_(calloc)(name, num_elems, elem_size);       \
                     if (print_mallocs) VG_(printf)("Allocing for %s at %p\n", name, dest);
+#define DEBUG(...) VG_(printf)(__VA_ARGS__)
 
 #endif
