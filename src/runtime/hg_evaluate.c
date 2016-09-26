@@ -47,6 +47,7 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   mpfr_t ulpsErrorM, bitsErrorM;
 
   if (!running) return;
+  return;
 
   shadowValD = mpfr_get_d(shadowVal->value, MPFR_RNDN);
 
