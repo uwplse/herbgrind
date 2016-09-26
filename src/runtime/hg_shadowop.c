@@ -363,7 +363,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
   // and destination respectively.
   ShadowLocation* arg1Location;
   ShadowLocation* arg2Location;
-  ShadowLocation* destLocation;
+  ShadowLocation* destLocation = NULL;
   ShadowValue* arg1 = NULL;
   ShadowValue* arg2 = NULL;
 
@@ -372,6 +372,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
 
   case Iop_64HLtoV128:
   case Iop_F64HLtoF128:
+    break;
     // Pull the shadow locations for the arguments. If we don't
     // already have a shadow location for one argument, but we do for
     // the other, we'll generate a fresh location from the runtime
@@ -402,6 +403,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
 
   case Iop_RoundF64toInt:
   case Iop_RoundF32toInt:
+    break;
     {
       LocType argType;
       if (getTemp(opInfo->arg_tmps[1]) == NULL){
@@ -431,6 +433,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
     }
     break;
   case Iop_F64toF32:
+    break;
     // For semantic conversions between floating point types we can
     // just copy across the values, if they're there.
     if (getTemp(opInfo->arg_tmps[1]) == NULL){
@@ -458,6 +461,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
   case Iop_2xm1F64:
   case Iop_SqrtF64:
   case Iop_SqrtF32:
+    break;
     {
       // We keep track of three attributes for each of these
       // instructions: what function it performs, what register
@@ -574,7 +578,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
                   MPFR_RNDN);
         // Set the stem record of this operation.
         initBranchStemNode(destLocation->values[i], opInfo, 1,
-                     arg2Location->values[i]);
+                           arg2Location->values[i]);
 
         // Now, we'll evaluate the shadow values against each
         // channel of the computed result.
@@ -707,7 +711,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         getShadowValue(arg1Location, i,
                        opInfo->arg_values[0]);
         getShadowValue(arg2Location, i,
-                          opInfo->arg_values[1]);
+                       opInfo->arg_values[1]);
       }
   
       // Now we'll allocate memory for the shadowed result of this
@@ -753,6 +757,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
     break;
   case Iop_SetV128lo32:
   case Iop_SetV128lo64:
+    break;
     {
       LocType type;
       size_t num_vals;
@@ -805,6 +810,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
     }
     break;
   case Iop_XorV128:
+    break;
     // Probably a negation
     {
       LocType argType = Lt_Float;
