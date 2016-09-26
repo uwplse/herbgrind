@@ -52,6 +52,9 @@ ShadowLocation* mkShadowLocation_bare(LocType type){
   ShadowLocation* location;
   ALLOC(location, "hg.shadow_location.1", 1, sizeof(ShadowLocation));
   ALLOC(location->values, "hg.shadow_values", capacity(type), sizeof(ShadowValue*));
+  for (SizeT i = 0; i < capacity(type); ++i){
+    location->values[i] = NULL;
+  }
   location->type = type;
   return location;
 }
