@@ -417,12 +417,11 @@ LocType IRTypetoLocType(IRType ty){
   case Ity_I64:
   case Ity_F64:
     return Lt_Double;
-  case Ity_D128:
-  case Ity_F128:
   case Ity_V128:
     return Lt_Doublex2;
+  case Ity_D128:
+  case Ity_F128:
   case Ity_V256:
-    return Lt_Doublex4;
   case Ity_INVALID:
   case Ity_I1:
   case Ity_I8:
