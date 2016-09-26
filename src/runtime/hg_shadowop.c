@@ -876,7 +876,6 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
     VG_(printf)(" in temp %lu.\n", opInfo->dest_tmp);
   }
   setTemp(opInfo->dest_tmp, destLocation);
-
 }
 VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
   // The shadowing locations for the arguments and the
@@ -1234,6 +1233,9 @@ ShadowValue* getShadowValue(ShadowLocation* loc, UWord index,
   if (loc->values[index] != NULL) return loc->values[index];
   // Create a new shadow value, and give it a leaf node stem.
   loc->values[index] = mkShadowValue();
+  // Add a reference since by adding this to a shadow location, we're
+  // putting it in a temp.
+  addRef(loc->values[index]);
 
   // Initialize it's MPFR value with the current value of its float
   // bytes.
@@ -1260,9 +1262,7 @@ ShadowValue* getShadowValue(ShadowLocation* loc, UWord index,
     VG_(printf)("Don't handle that type of shadow location (%d)!\n", loc->type);
     return NULL;
   }
+  // Initialize the stem node for it.
   initLeafStemNode(loc->values[index]);
-  // Add a reference since by adding this to a shadow location, we're
-  // putting it in a temp.
-  addRef(loc->values[index]);
   return loc->values[index];
 }
