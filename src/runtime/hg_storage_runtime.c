@@ -52,6 +52,9 @@
 // This header gets us the current running thread.
 #include "pub_tool_threadstate.h"
 
+// For asserts, mostly just for debugging.
+#include "pub_tool_libcassert.h"
+
 // Here are the data structures we set up to hold shadow values. They
 // take three forms:
 //
@@ -241,6 +244,7 @@ void cleanupStorage(void){
 }
 
 void setTemp(Addr index, ShadowLocation* newLocation){
+  tl_assert(index >= 0 && index < MAX_TEMPS);
   if (index > maxTempUsed) maxTempUsed = index;
   if (localTemps[index] != NULL){
     if (print_moves)
@@ -298,6 +302,8 @@ ShadowLocation* getLocMem(Addr index, LocType type){
 void setTS(Addr index, ShadowValue* val){
   if (threadRegisters[VG_(get_running_tid)()][index] != NULL && print_moves)
     VG_(printf)("Overwriting thread state at %lu\n", index);
+  tl_assert(VG_(get_running_tid)() > 0 && VG_(get_running_tid)() < MAX_THREADS &&
+            index > 0 && index < MAX_REGISTERS);
   copySV(val, &threadRegisters[VG_(get_running_tid)()][index]);
 }
 
