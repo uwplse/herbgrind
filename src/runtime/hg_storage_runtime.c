@@ -377,13 +377,23 @@ ShadowLocation* getLocTS(Addr index, LocType type){
 
 void setLoc__(Addr index, ShadowLocation* newLoc, LocType move_type,
               void (*setter)(Addr index, ShadowValue* val)){
-  for (SizeT i = 0; i < capacity(move_type); ++i){
-    ShadowValue* val;
-    if (newLoc != NULL)
+  // This potentially exposes a bug in herbgrind, where the move type
+  // and location type don't match.
+  /* tl_assert2(newLoc == NULL || capacity(move_type) <= capacity(newLoc->type), */
+  /*            "Type mismatch! Tried to move shadow location %p to thread state, " */
+  /*            "but the move had a type with capacity %lu, " */
+  /*            "and the location only has capacity %lu\n", */
+  /*            newLoc, capacity(move_type), capacity(newLoc->type)); */
+  if (newLoc == NULL){
+    for (SizeT i = 0; i < capacity(move_type); ++i){
+      setter(index + el_size(move_type) * i, NULL);
+    }
+  } else {
+    for (SizeT i = 0; i < capacity(newLoc->type); ++i){
+      ShadowValue* val;
       val = newLoc->values[i];
-    else
-      val = NULL;
-    setter(index + el_size(move_type) * i, val);
+      setter(index + el_size(newLoc->type) * i, val);
+    }
   }
 }
 ShadowLocation* getLoc__(Addr index, ShadowValue* (*getter)(Addr index), LocType type){
