@@ -59,8 +59,6 @@ VG_REGPARM(0) void cleanupBlock(void);
 void initStorage(void);
 void cleanupStorage(void);
 
-LocType IRTypetoLocType(IRType ty);
-
 // Getters and setters for temporaries, memory, and thread
 // state. Handles reference counting properly.
 void setTemp(Addr index, ShadowLocation* newLocation);

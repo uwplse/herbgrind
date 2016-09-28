@@ -73,4 +73,7 @@ int mpfr_isspace(int c);
 void* mpfr_memmove(void* dest, const void* src, size_t len);
 int mpfr_memcmp(const void* ptr1, const void* ptr2, size_t len);
 void* mpfr_memset(void* dest, int val, size_t size);
+
+LocType IRTypetoLocType(IRType ty);
+
 #endif
