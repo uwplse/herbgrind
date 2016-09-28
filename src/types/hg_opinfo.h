@@ -108,6 +108,8 @@ struct _Op_Info {
   TeaNode* tea;
   //This is the index into where we're putting the result.
   UWord dest_tmp;
+  // The type we expect this operation to have.
+  IRType expected_type;
   // This is the actual computed value of the result, for checking
   // accuracy.
   UWord* dest_value;

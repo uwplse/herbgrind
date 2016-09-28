@@ -51,6 +51,7 @@ VgHashTable* opinfo_store;
 void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
   IRDirty* executeShadowOp;
   SizeT arg_size, result_size;
+  IRType expected_type = typeOfIRTemp(sb->tyenv, offset);
   (void)executeShadowOp;
   (void)arg_size;
   (void)result_size;
@@ -189,6 +190,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
         // even if there's an existing entry.
         opInfo->arg_tmps[0] = getArgTmp(expr->Iex.Unop.arg, sb);
         opInfo->dest_tmp = offset;
+        opInfo->expected_type = expected_type;
 
         // Add statements to populate the values we don't know until
         // runtime.
@@ -331,6 +333,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
         opInfo->arg_tmps[1] =
           getArgTmp(expr->Iex.Binop.arg2, sb);
         opInfo->dest_tmp = offset;
+        opInfo->expected_type = expected_type;
 
         // Add statements to populate the values we don't know until
         // runtime.
@@ -465,6 +468,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
         opInfo->arg_tmps[2] =
           getArgTmp(expr->Iex.Triop.details->arg3, sb);
         opInfo->dest_tmp = offset;
+        opInfo->expected_type = expected_type;
 
         // Add statements to populate the values we don't know until
         // runtime.
@@ -536,6 +540,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
         opInfo->arg_tmps[3] =
           getArgTmp(expr->Iex.Qop.details->arg4, sb);
         opInfo->dest_tmp = offset;
+        opInfo->expected_type = expected_type;
 
         // Allocate the space for the values we won't know until
         // runtime, but know their size now.
