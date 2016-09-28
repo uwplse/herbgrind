@@ -22,25 +22,22 @@ else
 DEPS = deps/gmp-64/README deps/mpfr-64/README
 endif
 
-HEADERS=src/hg_instrument.h src/include/herbgrind.h		\
-src/include/hg_include.h src/include/hg_helper.h		\
-src/include/hg_macros.h src/include/hg_options.h		\
-src/include/mk_mathreplace.py src/types/hg_shadowvals.hh	\
-src/types/hg_shadowvals.h src/types/hg_opinfo.hh		\
-src/types/hg_opinfo.h src/types/hg_stemtea.hh			\
-src/types/hg_stemtea.h src/runtime/hg_runtime.h			\
-src/runtime/hg_evaluate.h src/runtime/hg_hiprec_ops.h	\
-src/runtime/hg_shadowop.h						\
-src/runtime/hg_storage_runtime.h					\
-src/runtime/hg_mathreplace.h src/runtime/hg_op_tracker.h
+HEADERS=src/hg_instrument.h src/include/herbgrind.h			\
+src/include/hg_include.h src/include/hg_helper.h			\
+src/include/hg_macros.h src/include/hg_options.h			\
+src/include/mk_mathreplace.py src/types/hg_shadowvals.hh		\
+src/types/hg_shadowvals.h src/types/hg_opinfo.hh			\
+src/types/hg_opinfo.h src/types/hg_stemtea.hh src/types/hg_stemtea.h	\
+src/runtime/hg_runtime.h src/runtime/hg_evaluate.h			\
+src/runtime/hg_hiprec_ops.h src/runtime/hg_shadowop.h			\
+src/runtime/hg_storage_runtime.h src/runtime/hg_mathreplace.h		\
+src/runtime/hg_op_tracker.h
 
-SOURCES=src/hg_main.c src/hg_instrument.c			\
-src/hg_instrumentOp.c src/hg_mathwrap.c			\
-src/types/hg_shadowvals.c src/types/hg_opinfo.c		\
-src/types/hg_stemtea.c src/runtime/hg_runtime.c			\
-src/runtime/hg_evaluate.c src/runtime/hg_hiprec_ops.c	\
-src/runtime/hg_shadowop.c						\
-src/runtime/hg_storage_runtime.c					\
+SOURCES=src/hg_main.c src/hg_instrument.c src/hg_instrumentOp.c		\
+src/hg_mathwrap.c src/pointer_runtime.c src/types/hg_shadowvals.c	\
+src/types/hg_opinfo.c src/types/hg_stemtea.c src/runtime/hg_runtime.c	\
+src/runtime/hg_evaluate.c src/runtime/hg_hiprec_ops.c			\
+src/runtime/hg_shadowop.c src/runtime/hg_storage_runtime.c		\
 src/runtime/hg_mathreplace.c src/runtime/hg_op_tracker.c
 
 all: compile
