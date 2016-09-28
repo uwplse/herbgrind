@@ -35,6 +35,7 @@
 #include "hg_hiprec_ops.h"
 #include "hg_storage_runtime.h"
 #include "../include/hg_options.h"
+#include "../include/hg_macros.h"
 #include "../types/hg_stemtea.h"
 #include "hg_runtime.h"
 
