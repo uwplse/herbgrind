@@ -823,33 +823,33 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         // have shadow values for these arguments, we'll generate fresh
         // ones from the runtime float values.
         if(*(opInfo->arg_values[0]) == 0x8000000000000000){
+          argType = opInfo->expected_type;
           arg1Location =
             getShadowLocation(opInfo->arg_tmps[1],
-                              Lt_Doublex2);
+                              argType);
           arg1 = getShadowValue(arg1Location, 0,
                                 opInfo->arg_values[1]);
-          argType = Lt_Doublex2;
         } else if (*(opInfo->arg_values[1]) == 0x8000000000000000){
+          argType = opInfo->expected_type;
           arg1Location =
             getShadowLocation(opInfo->arg_tmps[0],
-                              Lt_Doublex2);
+                              argType);
           arg1 = getShadowValue(arg1Location, 0,
                                 opInfo->arg_values[0]);
-          argType = Lt_Doublex2;
         } else if (*(opInfo->arg_values[0]) == 0x2424242424242424){
+          argType = opInfo->expected_type;
           arg1Location =
             getShadowLocation(opInfo->arg_tmps[1],
-                              Lt_Floatx4);
+                              argType);
           arg1 = getShadowValue(arg1Location, 0,
                                 opInfo->arg_values[1]);
-          argType = Lt_Floatx4;
         } else if (*(opInfo->arg_values[1]) == 0x2424242424242424){
+          argType = opInfo->expected_type;
           arg1Location =
             getShadowLocation(opInfo->arg_tmps[0],
-                              Lt_Floatx4);
+                              argType);
           arg1 = getShadowValue(arg1Location, 0,
                                 opInfo->arg_values[0]);
-          argType = Lt_Floatx4;
         }
 
         // Now we'll allocate memory for the shadowed result of this
