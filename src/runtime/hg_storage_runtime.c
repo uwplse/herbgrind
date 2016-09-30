@@ -87,7 +87,6 @@ static ShadowValue* savedArgs[MAX_LIBM_ARGS];
 // Copy a shadow value from a temporary to a temporary.
 VG_REGPARM(1) void copyShadowTmptoTmp(CpShadow_Info* info){
   if (!running && getTemp(info->src_idx) != NULL) return;
-  return;
   if (info->dest_idx > maxTempUsed) maxTempUsed = info->dest_idx;
   setTemp(info->dest_idx, getTemp(info->src_idx));
 
@@ -119,9 +118,9 @@ VG_REGPARM(1) void copyShadowTmptoTS(CpShadow_Info* info){
 // Copy a shadow value from somewhere in the thread state to a temporary.
 VG_REGPARM(1) void copyShadowTStoTmp(CpShadow_Info* info){
   ShadowLocation* loc;
-  if (!running && getTS(info->src_idx) != NULL) return;
-  if (info->dest_idx > maxTempUsed) maxTempUsed = info->dest_idx;
   loc = getLocTS(info->src_idx, IRTypetoLocType(info->type));
+  if (!running && loc != NULL) return;
+  if (info->dest_idx > maxTempUsed) maxTempUsed = info->dest_idx;
   setTemp(info->dest_idx, loc);
 
   if (loc != NULL &&
@@ -304,7 +303,7 @@ void setTS(Addr index, ShadowValue* val){
     VG_(printf)("Overwriting thread state at %lu\n", index);
   tl_assert(VG_(get_running_tid)() > 0 && VG_(get_running_tid)() < MAX_THREADS &&
             index > 0 && index < MAX_REGISTERS);
-  copySV(val, &threadRegisters[VG_(get_running_tid)()][index]);
+  copySV(val, &(threadRegisters[VG_(get_running_tid)()][index]));
 }
 
 ShadowValue* getTS(Addr index){
@@ -328,45 +327,45 @@ void setLocTS(Addr index, ShadowLocation* newLocation, LocType move_type, Addr i
   // shadow values. This all happens in this block. First, we match on
   // the thread state locations which arguments are passed in.
 
-  // Next, only save stuff that we're going to overwrite.
-  if (newLocation == NULL &&
-      // The indexes of the thread state that the first, second, and
-      // third arguments to a replaced libm function are passed
-      // in. This is a pretty horrible hack, but I'm working around a
-      // terrible limitation in valgrind. So, maybe that justfies
-      // it. This might not be cross platform either, but as my
-      // advisor says, we'll burn that bridge when we cross it.
-      (index == 224 || index == 256 || index == 288)){
-    int argIndex;
-    switch(index){
-    case 224:
-      argIndex = 0;
-      break;
-    case 256:
-      argIndex = 1;
-      break;
-    case 288:
-      argIndex = 2;
-      break;
-    default:
-      return;
-    }
+  /* // Next, only save stuff that we're going to overwrite. */
+  /* if (newLocation == NULL && */
+  /*     // The indexes of the thread state that the first, second, and */
+  /*     // third arguments to a replaced libm function are passed */
+  /*     // in. This is a pretty horrible hack, but I'm working around a */
+  /*     // terrible limitation in valgrind. So, maybe that justfies */
+  /*     // it. This might not be cross platform either, but as my */
+  /*     // advisor says, we'll burn that bridge when we cross it. */
+  /*     (index == 224 || index == 256 || index == 288)){ */
+  /*   int argIndex; */
+  /*   switch(index){ */
+  /*   case 224: */
+  /*     argIndex = 0; */
+  /*     break; */
+  /*   case 256: */
+  /*     argIndex = 1; */
+  /*     break; */
+  /*   case 288: */
+  /*     argIndex = 2; */
+  /*     break; */
+  /*   default: */
+  /*     return; */
+  /*   } */
 
-    const HChar* objname;
-    VG_(get_objname)(instr_addr, &objname);
-    if (!VG_(string_match)("?*ld-?*.so", objname)){
-      // If not, then it's in user code and is trying to actually
-      // overwrite the location because it's passing an argument
-      // that has not yet determined it's a floating point value, so
-      // doesn't have a shadow value.
-      setSavedArg(argIndex, NULL);
-    } else if (threadRegisters[VG_(get_running_tid)()][index] != NULL){
-      // If we are in the linker code, and the value that we're
-      // about to overwrite isn't null, then we want to save it in
-      // our saved arg register.
-      setSavedArg(argIndex, threadRegisters[VG_(get_running_tid)()][index]);
-    }
-  }
+  /*   const HChar* objname; */
+  /*   VG_(get_objname)(instr_addr, &objname); */
+  /*   if (!VG_(string_match)("?*ld-?*.so", objname)){ */
+  /*     // If not, then it's in user code and is trying to actually */
+  /*     // overwrite the location because it's passing an argument */
+  /*     // that has not yet determined it's a floating point value, so */
+  /*     // doesn't have a shadow value. */
+  /*     setSavedArg(argIndex, NULL); */
+  /*   } else if (threadRegisters[VG_(get_running_tid)()][index] != NULL){ */
+  /*     // If we are in the linker code, and the value that we're */
+  /*     // about to overwrite isn't null, then we want to save it in */
+  /*     // our saved arg register. */
+  /*     setSavedArg(argIndex, threadRegisters[VG_(get_running_tid)()][index]); */
+  /*   } */
+  /* } */
   // Finally, actually do the overwrite.
   setLoc__(index, newLocation, move_type, setTS);
 }
@@ -392,6 +391,7 @@ void setLoc__(Addr index, ShadowLocation* newLoc, LocType move_type,
     for (SizeT i = 0; i < capacity(newLoc->type); ++i){
       ShadowValue* val;
       val = newLoc->values[i];
+      CHECK_PTR(val);
       setter(index + el_size(newLoc->type) * i, val);
     }
   }
@@ -401,8 +401,10 @@ ShadowLocation* getLoc__(Addr index, ShadowValue* (*getter)(Addr index), LocType
   Bool allNull = True;
   for (SizeT i = 0; i < capacity(type); ++i){
     result->values[i] = getter(index + el_size(type) * i);
-    if (result->values[i] != NULL)
+    if (result->values[i] != NULL){
+      CHECK_PTR(result->values[i]);
       allNull = False;
+    }
   }
   if (allNull){
     freeSL(result);
@@ -413,7 +415,7 @@ ShadowLocation* getLoc__(Addr index, ShadowValue* (*getter)(Addr index), LocType
 }
 
 void setSavedArg(Int index, ShadowValue* newValue){
-  copySV(newValue, &savedArgs[index]);
+  copySV(newValue, &(savedArgs[index]));
 }
 
 ShadowValue* getSavedArg(Int index){

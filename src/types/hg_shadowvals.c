@@ -78,7 +78,7 @@ void copySL(ShadowLocation* src, ShadowLocation** dest){
     (*dest)->type = src->type;
     ALLOC((*dest)->values, "hg.shadow_values", capacity(src->type), sizeof(ShadowValue*));
     for (int i = 0; i < capacity(src->type); ++i){
-      (*dest)->values[i] = src->values[i];
+      copySV(src->values[i], &((*dest)->values[i]));
     }
   }
 }

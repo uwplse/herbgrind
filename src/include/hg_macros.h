@@ -43,10 +43,9 @@ extern intptr_t maxptr;
 
 #define ALLOC(dest, name, num_elems, elem_size)         \
   dest = VG_(calloc)(name, num_elems, elem_size);       \
-                    if (print_mallocs) VG_(printf)("Allocing for %s at %p\n", name, dest); /*\
-                                                                                             // Uncomment this to get pointer checking to work.
+                    if (print_mallocs) VG_(printf)("Allocing for %s at %p\n", name, dest); \
                     if ((intptr_t)dest < minptr) minptr = (intptr_t)dest; \
-                    if ((intptr_t)dest > maxptr) maxptr = (intptr_t)dest;*/
+                    if ((intptr_t)dest > maxptr) maxptr = (intptr_t)dest;
 #define DEBUG(...) VG_(printf)(__VA_ARGS__)
-#define CHECK_PTR(ptr) tl_assert2(ptr == NULL || (minptr <= (intptr_t)ptr && (intptr_t)ptr <= maxptr), "Bad pointer %p", ptr);
+#define CHECK_PTR(ptr) tl_assert2(ptr == NULL || (minptr <= (intptr_t)ptr && (intptr_t)ptr <= maxptr), "Bad pointer %p (range is [%p to %p])", ptr,minptr, maxptr);
 #endif
