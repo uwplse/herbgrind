@@ -38,8 +38,8 @@
 #include "hg_options.h"
 #include <stdint.h>
 
-extern intptr_t minptr;
-extern intptr_t maxptr;
+extern uintptr_t minptr;
+extern uintptr_t maxptr;
 
 #define ALLOC(dest, name, num_elems, elem_size)         \
   dest = VG_(calloc)(name, num_elems, elem_size);       \

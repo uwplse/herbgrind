@@ -30,5 +30,5 @@
 
 #include "include/hg_macros.h"
 
-intptr_t minptr;
-intptr_t maxptr;
+uintptr_t minptr = UINTPTR_MAX;
+uintptr_t maxptr = 0;
