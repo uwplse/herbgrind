@@ -1252,11 +1252,9 @@ ShadowValue* getShadowValue(ShadowLocation* loc, UWord index,
 
   // Initialize it's MPFR value with the current value of its float
   // bytes.
-  if (index >= capacity(loc->type)){
-    VG_(printf)("Invalid index %lu for location of type %d!\n",
-                index, loc->type);
-    return NULL;
-  }
+  tl_assert2(index < capacity(loc->type),
+             "Invalid index %lu for location of type %d!\n",
+             index, loc->type);
   switch(loc->type){
   case Lt_Doublex4:
   case Lt_Doublex2:
