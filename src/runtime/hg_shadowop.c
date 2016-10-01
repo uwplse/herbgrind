@@ -765,7 +765,6 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
     break;
     {
       LocType type;
-      size_t num_vals;
       // For operations like this, since it's not a math-y operation,
       // we're not going to track it unless it's already being
       // tracked.
@@ -777,11 +776,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       switch(opInfo->op){
       case Iop_SetV128lo32:
         type = Lt_Floatx4;
-        num_vals = 4;
         break;
       case Iop_SetV128lo64:
         type = Lt_Doublex2;
-        num_vals = 2;
         break;
       default:
         return;
@@ -806,7 +803,6 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
 
       // Copy across the higher order bits shadow value from the first
       // argument.
-      for (int i = 1; i < num_vals; ++i){
         copySV(arg2Location->values[i], &(destLocation->values[i]));
       }
 
