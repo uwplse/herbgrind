@@ -202,7 +202,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       int i;
       for (i = 0; i < num_vals; ++i){
         arg = getShadowValue(argLocation, i,
-                             opInfo->arg_values[0]);
+                             opInfo->arg_values[i]);
         dest = mkShadowValue();
         destLocation->values[i] = dest;
         if (print_inputs){
@@ -221,7 +221,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       }
       // Copy across the rest of the values from the argument
       for (;i < capacity(argType); ++i){
-        copySV(argLocation->values[i], &(destLocation->values[i]));
+        copySV(getShadowValue(argLocation, i, opInfo->arg_values[i]), &(destLocation->values[i]));
       }
     }
     break;
@@ -709,7 +709,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         getShadowLocation(opInfo->arg_tmps[1],
                           argType);
 
-      for(int i = 0; i < num_values; ++i){
+      for(int i = 0; i < capacity(argType); ++i){
         getShadowValue(arg1Location, i,
                        opInfo->arg_values[0]);
         getShadowValue(arg2Location, i,
@@ -803,7 +803,10 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
 
       // Copy across the higher order bits shadow value from the first
       // argument.
-        copySV(arg2Location->values[i], &(destLocation->values[i]));
+      for (int i = 1; i < capacity(type); ++i){
+        copySV(getShadowValue(arg1Location, i,
+                              opInfo->arg_values[0]),
+               &(destLocation->values[i]));
       }
 
       // This isn't really a "real" op in the math-y sense, so let's not
