@@ -739,21 +739,18 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         // Set the destination shadow values to the result of a
         // high-precision shadowing operation, for each channel in which
         // it occurs.
-        continue;
         mpfr_func(destLocation->values[i]->value, arg1Location->values[i]->value,
                   arg2Location->values[i]->value, MPFR_RNDN);
         // Set up the stem record of this operation.
         initBranchStemNode(destLocation->values[i], opInfo, 2,
                            arg1Location->values[i],
                            arg2Location->values[i]);
-        continue;
         // Now, we'll evaluate the shadow value against the result
         // value, for each of it's channels.
         evaluateOpError_helper(destLocation->values[i],
                                argType, i,
                                opInfo);
       }
-      break;
       // Copy across the rest of the values from the first argument
       for (;i < capacity(argType); ++i){
         copySV(arg1Location->values[i], &(destLocation->values[i]));
