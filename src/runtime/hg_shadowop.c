@@ -1223,7 +1223,7 @@ mpfr_rnd_t roundmodeIRtoMPFR(IRRoundingMode round){
 ShadowLocation* getShadowLocation(UWord tmp_num, LocType type){
   // If we already have a shadow location here, just return it.
   ShadowLocation* location = getTemp(tmp_num);
-  if (location != NULL) return location;
+  if (location != NULL && location->type == type) return location;
 
   if (print_moves)
     VG_(printf)("Creating new shadow location in temp %lu\n", tmp_num);
