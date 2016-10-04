@@ -95,6 +95,7 @@ Int cmp_debuginfo(const void* a, const void* b){
 }
 
 void writeReport(const HChar* filename){
+  VG_(printf)("Writing report...\n");
   HChar buf[ENTRY_BUFFER_SIZE];
   // Try to open the filename they gave us.
   SysRes file_result = VG_(open)(filename,

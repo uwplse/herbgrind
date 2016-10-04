@@ -205,7 +205,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
                             "executeUnaryShadowOp",
                             VG_(fnptr_to_fnentry)(&executeUnaryShadowOp),
                             mkIRExprVec_1(mkU64((uintptr_t)opInfo)));
-        // addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+        addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
         break;
       default:
         break;
@@ -487,7 +487,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
                             "executeTernaryShadowOp",
                             VG_(fnptr_to_fnentry)(&executeTernaryShadowOp),
                             mkIRExprVec_1(mkU64((uintptr_t)opInfo)));
-        // addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+        addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
         break;
       default:
         break;
@@ -574,7 +574,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
                             "executeQuadnaryShadowOp",
                             VG_(fnptr_to_fnentry)(&executeQuadnaryShadowOp),
                             mkIRExprVec_1(mkU64((uintptr_t)opInfo)));
-        // addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
+        addStmtToIRSB(sb, IRStmt_Dirty(executeShadowOp));
         break;
       default:
         break;

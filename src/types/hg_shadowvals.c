@@ -52,9 +52,6 @@ ShadowLocation* mkShadowLocation_bare(LocType type){
   ShadowLocation* location;
   ALLOC(location, "hg.shadow_location.1", 1, sizeof(ShadowLocation));
   ALLOC(location->values, "hg.shadow_values", capacity(type), sizeof(ShadowValue*));
-  for (SizeT i = 0; i < capacity(type); ++i){
-    location->values[i] = NULL;
-  }
   location->type = type;
   return location;
 }
@@ -114,6 +111,7 @@ void printMPFRVal(mpfr_t val){
 }
 
 SizeT capacity(LocType bytestype){
+  tl_assert2(bytestype >= 0 && bytestype <= 8, "Bad location type %u", bytestype);
   switch(bytestype){
   case Lt_Float:
   case Lt_Double:
@@ -129,7 +127,7 @@ SizeT capacity(LocType bytestype){
   case Lt_Floatx8:
     return 8;
   default:
-    VG_(dmsg)("Bad loc type.\n");
+    tl_assert(0);
     return 0;
   }
 }
@@ -180,11 +178,13 @@ void disownSV(ShadowValue* sv){
   if (print_counts){
     VG_(printf)("Decreasing count of %p to %lu\n", sv, sv->ref_count);
   }
+  tl_assert(sv->ref_count >= 0);
   if (sv->ref_count < 1){
     if (print_moves)
       VG_(printf)("Cleaning up shadow value %p\n", sv);
     mpfr_clear(sv->value);
     if (report_exprs){
+      tl_assert(sv == sv->stem->ref);
       cleanupStemNode(sv->stem);
     }
     VG_(free)(sv);

@@ -87,7 +87,6 @@ static ShadowValue* savedArgs[MAX_LIBM_ARGS];
 // Copy a shadow value from a temporary to a temporary.
 VG_REGPARM(1) void copyShadowTmptoTmp(CpShadow_Info* info){
   if (!running && getTemp(info->src_idx) != NULL) return;
-  if (info->dest_idx > maxTempUsed) maxTempUsed = info->dest_idx;
   setTemp(info->dest_idx, getTemp(info->src_idx));
 
   if (getTemp(info->src_idx) != NULL &&
@@ -120,7 +119,6 @@ VG_REGPARM(1) void copyShadowTStoTmp(CpShadow_Info* info){
   ShadowLocation* loc;
   loc = getLocTS(info->src_idx, IRTypetoLocType(info->type));
   if (!running && loc != NULL) return;
-  if (info->dest_idx > maxTempUsed) maxTempUsed = info->dest_idx;
   setTemp(info->dest_idx, loc);
 
   if (loc != NULL &&
@@ -136,7 +134,6 @@ VG_REGPARM(1) void copyShadowTStoTmp(CpShadow_Info* info){
 VG_REGPARM(1) void copyShadowMemtoTmp(CpShadow_Info* info){
   ShadowLocation* loc;
   if (!running && getMem(info->src_idx) != NULL) return;
-  if (info->dest_idx > maxTempUsed) maxTempUsed = info->dest_idx;
   loc = getLocMem(info->src_idx, IRTypetoLocType(info->type));
   setTemp(info->dest_idx, loc);
 
@@ -152,7 +149,6 @@ VG_REGPARM(1) void copyShadowMemtoTmp(CpShadow_Info* info){
 // evaluates to true. Otherwise, copy the shadow value from another
 // temporary, "alt_tmp".
 VG_REGPARM(1) void copyShadowMemtoTmpIf(LoadG_Info* info){
-  if (info->dest_tmp > maxTempUsed) maxTempUsed = info->dest_tmp;
   if (info->cond) {
     if (!running && getMem(info->src_mem) != NULL) return;
     ShadowLocation* loc;
@@ -218,6 +214,7 @@ VG_REGPARM(0) void cleanupBlock(void){
   // maxTempsUsed variable.
   for(size_t i = 0; i <= maxTempUsed; ++i){
     if (localTemps[i] != NULL){
+      CHECK_PTR(localTemps[i]);
       freeSL(localTemps[i]);
       localTemps[i] = NULL;
     }
@@ -383,7 +380,7 @@ void setLoc__(Addr index, ShadowLocation* newLoc, LocType move_type,
   /*            "but the move had a type with capacity %lu, " */
   /*            "and the location only has capacity %lu\n", */
   /*            newLoc, capacity(move_type), capacity(newLoc->type)); */
-  if (newLoc == NULL){
+  if (newLoc == NULL || move_type != newLoc->type){
     for (SizeT i = 0; i < capacity(move_type); ++i){
       setter(index + el_size(move_type) * i, NULL);
     }

@@ -44,6 +44,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo);
 VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo);
 VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo);
 
+ShadowValue* tryGetValue(UWord tmp_num, UWord index, LocType type);
+ShadowValue* fullGetValue(UWord tmp_num, UWord index,
+                          UWord* loc_bytes, LocType type);
 // Get's the current shadow location in the given temporary, or makes
 // a new bare one with the given type if it doesn't exist.
 ShadowLocation* getShadowLocation(UWord tmp_num, LocType type);

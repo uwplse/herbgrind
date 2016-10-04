@@ -47,6 +47,7 @@
 // and an executable spec, found in psuedo/aggregateTraces-*.rkt.
 
 void updateTea(Op_Info* op, StemNode* stem){
+  return;
   if (op->tea == NULL){
     op->tea = stemToTea(stem);
     if (print_expr_updates){
@@ -394,7 +395,7 @@ void freeNodeMapEntry(void* entry){
 }
 // Initialize a new stem node.
 void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
-                  SizeT nargs, ShadowValue* firstarg, ...){
+                        SizeT nargs, ShadowValue* firstarg, ...){
   if (!report_exprs) return;
   val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
   // Normalize NaN's
@@ -413,12 +414,14 @@ void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
   va_start(args, firstarg);
 
   val->stem->branch.args[0] = firstarg->stem;
-  addRef(firstarg);
-  for(SizeT i = 1; i < nargs; ++i){
-    ShadowValue* newRef = NULL;
-    copySV(va_arg(args, ShadowValue*), &newRef);
-    val->stem->branch.args[i] = newRef->stem;
-  }
+  tl_assert(nargs > 0);
+  addRef(val->stem->branch.args[0]->ref);
+  addRef(val->stem->branch.args[0]->ref);
+  /* for(SizeT i = 1; i < nargs; ++i){ */
+  /*   ShadowValue* newRef = NULL; */
+  /*   copySV(va_arg(args, ShadowValue*), &newRef); */
+  /*   val->stem->branch.args[i] = newRef->stem; */
+  /* } */
   va_end(args);
 }
 void initLeafStemNode(ShadowValue* val){
@@ -434,9 +437,12 @@ void initLeafStemNode(ShadowValue* val){
 // Free up a stem.
 void cleanupStemNode(StemNode* stem){
   if (stem->type == Node_Branch){
-    for (int i = 0; i < stem->branch.nargs; ++i){
-      disownSV(stem->branch.args[i]->ref);
-    }
+    CHECK_PTR(stem->branch.args[0]);
+    CHECK_PTR(stem->branch.args[0]->ref);
+    disownSV(stem->branch.args[0]->ref);
+  /*   for (int i = 0; i < stem->branch.nargs; ++i){ */
+  /*     disownSV(stem->branch.args[i]->ref); */
+  /*   } */
     VG_(free)(stem->branch.args);
   }
   VG_(free)(stem);
