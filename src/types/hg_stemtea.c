@@ -416,7 +416,7 @@ void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
   val->stem->branch.args[0] = firstarg->stem;
   tl_assert(nargs > 0);
   addRef(val->stem->branch.args[0]->ref);
-  addRef(val->stem->branch.args[0]->ref);
+  // addRef(val->stem->branch.args[0]->ref);
   /* for(SizeT i = 1; i < nargs; ++i){ */
   /*   ShadowValue* newRef = NULL; */
   /*   copySV(va_arg(args, ShadowValue*), &newRef); */
