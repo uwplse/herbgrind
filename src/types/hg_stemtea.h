@@ -100,7 +100,7 @@ struct _TeaNode {
 // Initialize a new stem node. Pass zero for nargs if this is a leaf
 // node.
 void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
-                        SizeT nargs, ShadowValue* args, ...);
+                        SizeT nargs, ...);
 void initLeafStemNode(ShadowValue* val);
 // Free up a stem.
 void cleanupStemNode(StemNode* stem);
