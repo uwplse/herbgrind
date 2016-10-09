@@ -246,17 +246,17 @@ void cleanupStorage(void){
 void setTemp(Addr index, ShadowLocation* newLocation){
   tl_assert(index >= 0 && index < MAX_TEMPS);
   if (index > maxTempUsed) maxTempUsed = index;
-  if (localTemps[index] != NULL){
-    if (print_moves)
-      VG_(printf)("Overwriting temp at %lu\n", index);
-    freeSL(localTemps[index]);
-  }
   if (newLocation != NULL){
     for(int i = 0; i < capacity(newLocation->type); i++){
       if (newLocation->values[i] != NULL){
         addRef(newLocation->values[i]);
       }
     }
+  }
+  if (localTemps[index] != NULL){
+    if (print_moves)
+      VG_(printf)("Overwriting temp at %lu\n", index);
+    freeSL(localTemps[index]);
   }
   localTemps[index] = newLocation;
 }
