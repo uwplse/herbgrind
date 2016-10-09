@@ -86,12 +86,16 @@ static ShadowValue* savedArgs[MAX_LIBM_ARGS];
 
 // Copy a shadow value from a temporary to a temporary.
 VG_REGPARM(1) void copyShadowTmptoTmp(CpShadow_Info* info){
-  if (!running && getTemp(info->src_idx) != NULL) return;
-  setTemp(info->dest_idx, getTemp(info->src_idx));
+  ShadowLocation* loc = getTemp(info->src_idx);
+  if (!running && loc != NULL) return;
 
-  if (getTemp(info->src_idx) != NULL &&
+  ShadowLocation* newLoc = NULL;
+  copySL(loc, &newLoc);
+  setTemp(info->dest_idx, newLoc);
+
+  if (loc != NULL &&
       print_moves){
-    VG_(printf)("Copying value ");
+    VG_(printf)("Copied location ");
     printShadowLoc(getTemp(info->src_idx));
     VG_(printf)(" from temp %lu to temp %lu\n",
                 info->src_idx, info->dest_idx);
