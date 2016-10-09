@@ -34,6 +34,8 @@
 #include "../include/hg_options.h"
 #include "hg_op_tracker.h"
 
+#include "pub_tool_libcassert.h"
+
 void evaluateOpError(ShadowValue* shadowVal, double actualVal,
                      Op_Info* opinfo){
   // We're going to do the log in mpfr since that way we don't have to
@@ -134,6 +136,7 @@ void evaluateOpError_helper(ShadowValue* shadowVal, LocType bytestype, int el_in
     break;
   default:
     VG_(dmsg)("Hey, those are some big floats! We can't handle those floats!");
+    tl_assert(0);
     break;
   }
 }
