@@ -1226,8 +1226,16 @@ ShadowValue* fullGetValue(UWord tmp_num, UWord index,
 ShadowLocation* getShadowLocation(UWord tmp_num, LocType type){
   // If we already have a shadow location here, just return it.
   ShadowLocation* location = getTemp(tmp_num);
-  if (location != NULL && location->type == type) return location;
-
+  if (location != NULL){
+    if (location->type == type){
+      if (print_moves)
+        VG_(printf)("Got non-null shadow location at %lu\n", tmp_num);
+      return location;
+    } else {
+      VG_(printf)("Bad location type found!!!\n");
+    }
+  }
+ 
   if (print_moves)
     VG_(printf)("Creating new shadow location in temp %lu\n", tmp_num);
 
