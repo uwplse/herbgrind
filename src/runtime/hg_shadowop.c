@@ -220,7 +220,10 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       }
       // Copy across the rest of the values from the argument
       for (;i < capacity(argType); ++i){
-        copySV(getShadowValue(argLocation, i, opInfo->arg_values[0]), &(destLocation->values[i]));
+        ShadowValue* argValue = getShadowValue(argLocation, i, opInfo->arg_values[0]);
+        // This kind of assignment is safe, because we're going to add
+        // a reference to it when we actually put it in the temp.
+        destLocation->values[i] = argValue;
       }
     }
     break;
@@ -235,7 +238,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
         break;
       }
       destLocation = mkShadowLocation_bare(Lt_Double);
-      copySV(argVal, &(destLocation->values[0]));
+      destLocation->values[0] = argVal;
     }
     break;
     // These next three we'll treat as no-ops, since we're shadowing
@@ -299,7 +302,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
         break;
       }
       destLocation = mkShadowLocation_bare(resultType);
-      copySV(argValue, &(destLocation->values[0]));
+      destLocation->values[0] = argValue;
 
     }
     break;
@@ -393,8 +396,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
 
     // Finally, take the 64 bits of each argument, and put them in the
     // two halves of the result.
-    copySV(arg1, &(destLocation->values[0]));
-    copySV(arg2, &(destLocation->values[1]));
+    destLocation->values[0] = arg1;
+    destLocation->values[1] = arg2;
     break;
 
   case Iop_RoundF64toInt:
@@ -434,7 +437,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       break;
     }
     destLocation = mkShadowLocation_bare(Lt_Float);
-    copySV(arg2, &(destLocation->values[0]));
+    destLocation->values[0] = arg2;
     break;
 
     // Ops that have a rounding mode and a single floating point argument
@@ -735,7 +738,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       // Copy across the rest of the values from the first argument
       for (;i < capacity(argType); ++i){
         ShadowValue* arg1val = getShadowValue(arg1Location, i, opInfo->arg_values[0]);
-        copySV(arg1val, &(destLocation->values[i]));
+        destLocation->values[i] = arg1val;
       }
     }
     break;
@@ -777,14 +780,14 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       destLocation = mkShadowLocation_bare(type);
 
       // Copy the low order bits shadow value from the second argument.
-      copySV(arg2Location->values[0], &(destLocation->values[0]));
+      destLocation->values[0] = arg2Location->values[0];
 
       // Copy across the higher order bits shadow value from the first
       // argument.
       for (int i = 1; i < capacity(type); ++i){
-        copySV(getShadowValue(arg1Location, i,
-                              opInfo->arg_values[0]),
-               &(destLocation->values[i]));
+        destLocation->values[i] =
+          getShadowValue(arg1Location, i,
+                         opInfo->arg_values[0]);
       }
 
       // This isn't really a "real" op in the math-y sense, so let's not
