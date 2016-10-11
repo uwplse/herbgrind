@@ -85,6 +85,6 @@ ShadowValue* getSavedArg(Int index);
 // and copyShadowTStoTmp.
 void copyShadow___toTmp(UWord src_idx, IRType dest_type, UWord dest_tmp, ShadowLocation* (*get)(Addr idx));
 
-#define CHECK_LOC(loc) for (SizeT k = 0; k < capacity(loc->type); ++k){ CHECK_PTR(loc->values[k]); }
+#define CHECK_LOC(loc) for (SizeT k = 0; k < capacity(loc->type); ++k){ CHECK_PTR(loc->values[k]); CHECK_SV(loc->values[k]); }
 
 #endif

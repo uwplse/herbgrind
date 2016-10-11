@@ -48,6 +48,7 @@ struct _ShadowValue {
   // Reference counter. This lets us free up shadow locations that
   // are no longer accessible.
   size_t ref_count;
+  UWord freeCanary;
 };
 
 struct _ShadowValue_ptr {
@@ -121,5 +122,7 @@ void printShadowLoc(ShadowLocation* sl);
 void printShadowVal(ShadowValue* sv);
 // Print out an MPFR value, not padded with newlines or spaces.
 void printMPFRVal(mpfr_t val);
+
+#define CHECK_SV(sv) tl_assert(sv == NULL || (sv)->freeCanary == 0xDEADBEEF);
 
 #endif

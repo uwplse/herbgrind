@@ -38,6 +38,7 @@
 #include "pub_tool_debuginfo.h"
 #include "pub_tool_stacktrace.h"
 #include "pub_tool_threadstate.h"
+#include "pub_tool_libcassert.h"
 
 #include "mpfr.h"
 
@@ -91,6 +92,8 @@ Addr getCallAddr(void){
 }
 
 void performOp(OpType op, double* result, double* args){
+  tl_assert(0);
+  return;
   SizeT nargs;
   SizeT op_precision;
   const HChar* plain_opname;

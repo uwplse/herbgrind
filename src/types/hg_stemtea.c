@@ -396,6 +396,9 @@ void freeNodeMapEntry(void* entry){
 // Initialize a new stem node.
 void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
                         SizeT nargs, ...){
+  CHECK_PTR(val);
+  CHECK_SV(val);
+  CHECK_PTR(opinfo);
   if (!report_exprs) return;
   val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
   // Normalize NaN's
@@ -414,12 +417,18 @@ void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
   va_start(args, nargs);
   for(SizeT i = 0; i < nargs; ++i){
     ShadowValue* argVal = va_arg(args, ShadowValue*);
+    CHECK_PTR(argVal);
+    CHECK_SV(argVal);
+    CHECK_PTR(argVal->stem);
+    tl_assert(argVal->stem->ref == argVal);
     val->stem->branch.args[i] = argVal->stem;
+    // VG_(printf)("Adding stem reference to %p\n", val->stem->branch.args[i]->ref);
     addRef(val->stem->branch.args[i]->ref);
   }
   va_end(args);
 }
 void initLeafStemNode(ShadowValue* val){
+  CHECK_SV(val);
   if (!report_exprs) return;
   val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
   // Normalize NaN's
@@ -431,11 +440,13 @@ void initLeafStemNode(ShadowValue* val){
 }
 // Free up a stem.
 void cleanupStemNode(StemNode* stem){
+  CHECK_SV(stem->ref);
   if (stem->type == Node_Branch){
-    CHECK_PTR(stem->branch.args[0]);
-    CHECK_PTR(stem->branch.args[0]->ref);
     for (int i = 0; i < stem->branch.nargs; ++i){
+      CHECK_PTR(stem->branch.args[i]);
       ShadowValue* child = stem->branch.args[i]->ref;
+      CHECK_PTR(child);
+      CHECK_SV(child);
       disownSV(stem->branch.args[i]->ref);
     }
     VG_(free)(stem->branch.args);
@@ -455,7 +466,7 @@ void copyStemNode(StemNode* src, StemNode** dest){
           src->branch.nargs, sizeof(StemNode*));
     for (SizeT i = 0; i < (*dest)->branch.nargs; ++i){
       (*dest)->branch.args[i] = src->branch.args[i];
-    addRef(src->branch.args[i]->ref);
+      addRef(src->branch.args[i]->ref);
     }
   }
 }

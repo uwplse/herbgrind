@@ -45,6 +45,7 @@ ShadowLocation* mkShadowLocation(LocType type){
   ShadowLocation* location = mkShadowLocation_bare(type);
   for (SizeT i = 0; i < capacity(type); ++i){
     location->values[i] = mkShadowValue();
+    CHECK_SV(location->values[i]);
   }
   return location;
 }
@@ -57,13 +58,21 @@ ShadowLocation* mkShadowLocation_bare(LocType type){
 }
 
 void freeSL(ShadowLocation* sl){
+  CHECK_PTR(sl);
+  CHECK_PTR(sl->values);
   for (int i = 0; i < capacity(sl->type); ++i)
-    if (sl->values[i] != NULL)
+    if (sl->values[i] != NULL){
+      CHECK_PTR(sl->values[i]);
+      CHECK_SV(sl->values[i]);
       disownSV(sl->values[i]);
+    }
   VG_(free)(sl->values);
   VG_(free)(sl);
 }
 
+// WARNING: Does not count new references to contained shadow
+// values. You must do this yourself, or use setTemp to assign to the
+// desired location, which will set up the references.
 void copySL(ShadowLocation* src, ShadowLocation** dest){
   if (src == (*dest)) return;
   if ((*dest) != NULL){
@@ -74,7 +83,7 @@ void copySL(ShadowLocation* src, ShadowLocation** dest){
   } else {
     (*dest) = mkShadowLocation_bare(src->type);
     for (int i = 0; i < capacity(src->type); ++i){
-      copySV(src->values[i], &((*dest)->values[i]));
+      (*dest)->values[i] = src->values[i];
     }
   }
 }
@@ -146,12 +155,14 @@ SizeT el_size(LocType bytestype){
   case Lt_DoubleDoubleDouble:
     return sizeof(double) * 4;
   }
+  tl_assert(0);
   return 0;
 }
 
 ShadowValue* mkShadowValue(void){
   ShadowValue* result;
   ALLOC(result, "hg.shadow_val", 1, sizeof(ShadowValue));
+  result->freeCanary = 0xDEADBEEF;
   if (report_exprs){
     ALLOC(result->stem, "hg.shadow_stem", 1, sizeof(StemNode));
   }
@@ -163,6 +174,10 @@ ShadowValue* mkShadowValue(void){
 }
 
 void copySV(ShadowValue* src, ShadowValue** dest){
+  CHECK_PTR(src);
+  CHECK_PTR(*dest);
+  CHECK_SV(src);
+  CHECK_SV(*dest);
   if (src != NULL){
     addRef(src);
   }
@@ -173,7 +188,9 @@ void copySV(ShadowValue* src, ShadowValue** dest){
 }
 
 void disownSV(ShadowValue* sv){
+  CHECK_SV(sv);
   (sv->ref_count) --;
+  CHECK_PTR(sv);
   if (print_counts){
     VG_(printf)("Decreasing count of %p to %lu\n", sv, sv->ref_count);
   }
@@ -186,10 +203,13 @@ void disownSV(ShadowValue* sv){
       tl_assert(sv == sv->stem->ref);
       cleanupStemNode(sv->stem);
     }
+    sv->freeCanary = 0xB00B5;
     VG_(free)(sv);
   }
 }
 void addRef(ShadowValue* val){
+  CHECK_PTR(val);
+  CHECK_SV(val);
   (val->ref_count)++;
   if (print_counts){
     VG_(printf)("Increasing count of %p to %lu\n", val, val->ref_count);
