@@ -1250,7 +1250,7 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type){
         VG_(printf)("Got non-null shadow location at %lu\n", tmp_num);
       return location;
     } else {
-      VG_(printf)("Bad location type found!!!\n");
+      VG_(printf)("Bad location type found (when getting arguments of operation)!!!\n");
     }
   }
  
