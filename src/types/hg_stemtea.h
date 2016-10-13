@@ -102,8 +102,6 @@ struct _TeaNode {
 void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
                         SizeT nargs, ...);
 void initLeafStemNode(ShadowValue* val);
-// Free up a stem.
-void cleanupStemNode(StemNode* stem);
 // Deep copy a stem.
 void copyStemNode(StemNode* src, StemNode** dest);
 

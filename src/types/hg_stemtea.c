@@ -438,21 +438,6 @@ void initLeafStemNode(ShadowValue* val){
   val->stem->ref = val;
   val->stem->type = Node_Leaf;
 }
-// Free up a stem.
-void cleanupStemNode(StemNode* stem){
-  CHECK_SV(stem->ref);
-  if (stem->type == Node_Branch){
-    for (int i = 0; i < stem->branch.nargs; ++i){
-      CHECK_PTR(stem->branch.args[i]);
-      ShadowValue* child = stem->branch.args[i]->ref;
-      CHECK_PTR(child);
-      CHECK_SV(child);
-      disownSV(stem->branch.args[i]->ref);
-    }
-    VG_(free)(stem->branch.args);
-  }
-  VG_(free)(stem);
-}
 // Deep copy a stem.
 void copyStemNode(StemNode* src, StemNode** dest){
   ALLOC(*dest, "hg.val_ast", 1, sizeof(StemNode));
