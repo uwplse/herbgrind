@@ -64,7 +64,7 @@
 // This macro is defined in include/hg_mathreplace_funcs.h, and
 // invokes the above macro for each unary operation that needs to be
 // wrapped.
-/* WRAP_UNARY_OPS */
+WRAP_UNARY_OPS
 
 /*----------------------------
 ====== Binary Ops ============
@@ -84,7 +84,7 @@
 // This macro is defined in include/hg_mathreplace_funcs.h, and
 // invokes the above macro for each binary operation that needs to be
 // wrapped.
-/* WRAP_BINARY_OPS */
+WRAP_BINARY_OPS
 
 /*----------------------------
 ====== Ternary Ops ===========
@@ -105,4 +105,4 @@
 // This macro is defined in include/hg_mathreplace_funcs.h, and
 // invokes the above macro for each ternary operation that needs to be
 // wrapped.
-/* WRAP_TERNARY_OPS */
+WRAP_TERNARY_OPS

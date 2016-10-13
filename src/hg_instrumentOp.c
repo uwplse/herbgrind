@@ -52,9 +52,6 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
   IRDirty* executeShadowOp;
   SizeT arg_size, result_size;
   IRType expected_type = typeOfIRTemp(sb->tyenv, offset);
-  (void)executeShadowOp;
-  (void)arg_size;
-  (void)result_size;
 
   // So, I recently learned that valgrind doesn't like passing more
   // than three arguments to a c function called by client code. I
@@ -68,7 +65,6 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
   // array.
   switch (expr->tag){
   case Iex_Unop:
-    break;
     {
       Op_Info* opInfo;
       // Determine the argument sizes of each operation we might
@@ -325,7 +321,6 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
       case Iop_SetV128lo64:
       case Iop_XorV128:
       case Iop_Sub64F0x2:
-        break;
       case Iop_Add64F0x2:
         opInfo = populateOpInfo(opAddr, opNum, 2, arg_size, result_size, expr->Iex.Binop.op);
 
@@ -360,7 +355,6 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
     }
     break;
   case Iex_Triop:
-    break;
     {
       Op_Info* opInfo;
 
@@ -498,7 +492,6 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
     }
     break;
   case Iex_Qop:
-    break;
     {
       Op_Info* opInfo;
 

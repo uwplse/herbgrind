@@ -92,8 +92,6 @@ Addr getCallAddr(void){
 }
 
 void performOp(OpType op, double* result, double* args){
-  tl_assert(0);
-  return;
   SizeT nargs;
   SizeT op_precision;
   const HChar* plain_opname;

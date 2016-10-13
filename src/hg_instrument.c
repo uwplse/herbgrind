@@ -91,7 +91,6 @@ That doesn't seem flattened...\n");
     }
     break;
   case Ist_PutI:
-    break;
     // This will look a lot like above, but we have to deal with not
     // knowing at compile time which piece of thread state we're
     // putting into. This will probably involve putting more burden
@@ -155,7 +154,6 @@ That doesn't seem flattened...\n");
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
     case Iex_GetI:
-      break;
       // See comments above on PutI to make sense of this thing.
       ALLOC(cpinfo, "hg.copyShadowTStoTmpInfo.1", 1, sizeof(CpShadow_Info));
       cpinfo->instr_addr = stAddr;
@@ -182,7 +180,6 @@ That doesn't seem flattened...\n");
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
     case Iex_RdTmp:
-      break;
       ALLOC(cpinfo, "hg.copyShadowTmptoTmpInfo.1", 1, sizeof(CpShadow_Info));
       cpinfo->instr_addr = stAddr;
       cpinfo->type = typeOfIRTemp(sbOut->tyenv, expr->Iex.RdTmp.tmp);
@@ -196,7 +193,6 @@ That doesn't seem flattened...\n");
       addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowLocation));
       break;
     case Iex_ITE:
-      break;
       {
         // When we have an ITE, we want to transfer across the shadow
         // value for one temp if the cond is true, and the other if
@@ -259,7 +255,6 @@ That doesn't seem flattened...\n");
       }
       break;
     case Iex_Load:
-      break;
       if (isFloatType(expr->Iex.Load.ty)){
         ALLOC(cpinfo, "hg.copyShadowMemtoTmpInfo.1", 1, sizeof(CpShadow_Info));
         cpinfo->instr_addr = stAddr;
@@ -296,7 +291,6 @@ That doesn't seem flattened...\n");
     }
     break;
   case Ist_Store:
-    break;
     // Here we'll instrument moving Shadow values into memory,
     // unconditionally.
     expr = st->Ist.Store.data;
@@ -331,7 +325,6 @@ That doesn't seem flattened...\n");
     }
     break;
   case Ist_StoreG:
-    break;
     // Same as above, but only assigns the value to memory if a
     // guard returns true.
     expr = st->Ist.StoreG.details->data;
@@ -367,7 +360,6 @@ That doesn't seem flattened...\n");
     }
     break;
   case Ist_LoadG:
-    break;
     // Guarded load. This will load a value from memory, and write
     // it to a temp, but only if a condition returns true.
     if (isFloat(sbOut->tyenv, st->Ist.LoadG.details->dst)){

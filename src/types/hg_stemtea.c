@@ -45,7 +45,6 @@
 // and an executable spec, found in psuedo/aggregateTraces-*.rkt.
 
 void updateTea(Op_Info* op, StemNode* stem){
-  return;
   if (op->tea == NULL){
     op->tea = stemToTea(stem);
     if (print_expr_updates){
