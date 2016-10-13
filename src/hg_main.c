@@ -149,6 +149,8 @@ mpfr_prec_t precision = 1000;
 double error_threshold = 1.0;
 Bool human_readable = True;
 const HChar* outfile_path = NULL;
+SizeT max_print_depth = 10;
+SizeT max_expr_string_size = 256;
 
 SizeT longprint_len = 15;
 Bool print_in_blocks = False;
@@ -168,6 +170,8 @@ static Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_DBL_CLO(arg, "--error-threshold", error_threshold) {}
   else if VG_XACT_CLO(arg, "--human", human_readable, True) {}
   else if VG_XACT_CLO(arg, "--machine", human_readable, False) {}
+  else if VG_INT_CLO(arg, "--max-print-depth", max_print_depth) {}
+  else if VG_INT_CLO(arg, "--max-expr-string-size", max_expr_string_size) {}
   else if VG_INT_CLO(arg, "--long-print-len", longprint_len) {}
   else if VG_XACT_CLO(arg, "--print-in-blocks", print_in_blocks, True) {}
   else if VG_XACT_CLO(arg, "--print-out-blocks", print_out_blocks, True) {}
@@ -192,7 +196,9 @@ static void hg_print_usage(void){
               " --machine output in machine-readable form\n"
               " --start-off turn off instrumentation until HERBGRIND_BEGIN() is called\n"
               " --outfile=<filepath> the output file path.\n"
-              " --report-ops report individual operations instead of expressions"
+              " --report-ops report individual operations instead of expressions\n"
+              " --max-print-depth the maximum depth at which to print floating point expressions extracted from the binary [10]\n"
+              " --max-expr-string-size the maximum size of an expression string. Expressions that need a string longer than this will be truncated [256]"
               );
 }
 static void hg_print_debug_usage(void){

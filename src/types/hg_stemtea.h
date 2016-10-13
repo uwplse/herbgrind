@@ -147,7 +147,8 @@ char* teaToString(TeaNode* tea, SizeT* numVars_out);
 char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
                           VgHashTable* node_map,
                           VgHashTable* var_map,
-                          int* nextvar);
+                          int* nextvar,
+                          SizeT max_depth);
 char* teaToBenchString(TeaNode* tea, Bool haveNewlines);
 char* teaToStructureString(TeaNode* tea);
 

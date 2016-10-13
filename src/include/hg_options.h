@@ -36,6 +36,8 @@
 extern mpfr_prec_t precision;
 extern double error_threshold;
 extern Bool human_readable;
+extern SizeT max_print_depth;
+extern SizeT max_expr_string_size;
 
 extern SizeT longprint_len;
 extern Bool print_in_blocks;

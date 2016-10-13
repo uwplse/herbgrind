@@ -41,8 +41,6 @@
 #include <stdarg.h>
 #include <math.h>
 
-#define MAX_AST_STR_LEN 256
-
 // This file was designed through several levels of code refinement
 // and an executable spec, found in psuedo/aggregateTraces-*.rkt.
 
@@ -465,10 +463,12 @@ char* teaToString(TeaNode* tea, SizeT* numVars_out){
   if (tea->type == Node_Branch){
     result = teaToStringWithMaps(tea, NULL_POS,
                                  tea->branch.node_map, var_map,
-                                 &nextvar);
+                                 &nextvar,
+                                 max_print_depth);
   } else {
     result = teaToStringWithMaps(tea, NULL_POS, NULL, var_map,
-                                 &nextvar);
+                                 &nextvar,
+                                 max_print_depth);
   }
   if (numVars_out != NULL){
     *numVars_out = VG_(HT_count_nodes)(var_map);
@@ -480,24 +480,24 @@ char* teaToString(TeaNode* tea, SizeT* numVars_out){
 char* teaToStructureString(TeaNode* tea){
   char* buf;
   SizeT bufpos = 0;
-  ALLOC(buf, "ast string", MAX_AST_STR_LEN, sizeof(char));
+  ALLOC(buf, "ast string", max_expr_string_size, sizeof(char));
 
   if (tea->type == Node_Leaf){
     if (tea->hasConst){
-      VG_(snprintf)(buf, MAX_AST_STR_LEN, "%f", tea->constValue);
+      VG_(snprintf)(buf, max_expr_string_size, "%f", tea->constValue);
     } else {
       VG_(snprintf)(buf, 2, "%c", varNames[0]);
     }
   } else {
-    bufpos += VG_(snprintf)(buf, MAX_AST_STR_LEN, "(%s",
+    bufpos += VG_(snprintf)(buf, max_expr_string_size, "(%s",
                             tea->branch.op->debuginfo.symbol);
     for (SizeT argIdx = 0; argIdx < tea->branch.nargs; ++argIdx){
       char* subexpr = teaToStructureString(tea->branch.args[argIdx]);
-      bufpos += VG_(snprintf)(buf + bufpos, MAX_AST_STR_LEN - bufpos,
+      bufpos += VG_(snprintf)(buf + bufpos, max_expr_string_size - bufpos,
                               " %s", subexpr);
       VG_(free)(subexpr);
     }
-    VG_(snprintf)(buf + bufpos, MAX_AST_STR_LEN - bufpos, ")");
+    VG_(snprintf)(buf + bufpos, max_expr_string_size - bufpos, ")");
   }
   return buf;
 }
@@ -505,16 +505,19 @@ char* teaToStructureString(TeaNode* tea){
 char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
                           VgHashTable* node_map,
                           VgHashTable* var_map,
-                          int* nextvar){
+                          int* nextvar,
+                          SizeT max_depth){
   char* buf;
   SizeT bufpos = 0;
-  ALLOC(buf, "ast string", MAX_AST_STR_LEN, sizeof(char));
+  ALLOC(buf, "ast string", max_expr_string_size, sizeof(char));
 
   if (tea->type == Node_Leaf){
     if (tea->hasConst){
-      VG_(snprintf)(buf, MAX_AST_STR_LEN, "%f", tea->constValue);
+      VG_(snprintf)(buf, max_expr_string_size, "%f", tea->constValue);
     } else {
-      if (node_map == NULL){
+      if (max_depth < 1){
+        VG_(snprintf)(buf, 4, "...");
+      } else if (node_map == NULL){
         VG_(snprintf)(buf, 2, "%c", varNames[0]);
       } else {
         NodeMapEntry* group_entry;
@@ -531,7 +534,7 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
       }
     }
   } else {
-    bufpos += VG_(snprintf)(buf, MAX_AST_STR_LEN, "(%s",
+    bufpos += VG_(snprintf)(buf, max_expr_string_size, "(%s",
                             tea->branch.op->debuginfo.symbol);
     for (SizeT argIdx = 0; argIdx < tea->branch.nargs; ++argIdx){
       NodePos newPos;
@@ -542,13 +545,14 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
 
       char* subexpr = teaToStringWithMaps(tea->branch.args[argIdx],
                                           newPos, node_map, var_map,
-                                          nextvar);
+                                          nextvar,
+                                          max_depth - 1);
       VG_(free)(newPos.data);
-      bufpos += VG_(snprintf)(buf + bufpos, MAX_AST_STR_LEN - bufpos,
+      bufpos += VG_(snprintf)(buf + bufpos, max_expr_string_size - bufpos,
                               " %s", subexpr);
       VG_(free)(subexpr);
     }
-    VG_(snprintf)(buf + bufpos, MAX_AST_STR_LEN - bufpos, ")");
+    VG_(snprintf)(buf + bufpos, max_expr_string_size - bufpos, ")");
   }
   return buf;
 }
