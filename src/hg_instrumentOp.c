@@ -613,11 +613,9 @@ Op_Info* populateOpInfo(Addr opAddr, int opNum, int nargs, SizeT arg_size, SizeT
     ALLOC(opInfo->dest_value,
           "hg.arg_alloc", 1, result_size);
     VG_(addToXA)(entry->infos, &opInfo);
-    tl_assert(opInfo->arg_tmps != NULL);
     return opInfo;
   } else {
     Op_Info* opInfo = *(Op_Info**)(VG_(indexXA)(entry->infos, opNum));
-    tl_assert(opInfo->arg_tmps != NULL);
     return opInfo;
   }
 }

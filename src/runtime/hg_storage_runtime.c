@@ -105,12 +105,7 @@ VG_REGPARM(1) void copyShadowTmptoTmp(CpShadow_Info* info){
 // Copy a shadow value from a temporary to somewhere in the current
 // threads state.
 VG_REGPARM(1) void copyShadowTmptoTS(CpShadow_Info* info){
-  CHECK_PTR(info);
   ShadowLocation* loc = getTemp(info->src_idx);
-  CHECK_PTR(loc);
-  if (loc != NULL){
-    CHECK_LOC(loc);
-  }
   if (!running && loc != NULL) return;
   setLocTS(info->dest_idx, loc,
            IRTypetoLocType(info->type), info->instr_addr);
@@ -128,7 +123,6 @@ VG_REGPARM(1) void copyShadowTmptoTS(CpShadow_Info* info){
 VG_REGPARM(1) void copyShadowTStoTmp(CpShadow_Info* info){
   ShadowLocation* loc;
   loc = getLocTS(info->src_idx, IRTypetoLocType(info->type));
-  CHECK_PTR(loc);
   if (!running && loc != NULL) return;
   setTemp(info->dest_idx, loc);
 
@@ -146,9 +140,6 @@ VG_REGPARM(1) void copyShadowMemtoTmp(CpShadow_Info* info){
   ShadowLocation* loc;
   if (!running && getMem(info->src_idx) != NULL) return;
   loc = getLocMem(info->src_idx, IRTypetoLocType(info->type));
-  if (loc != NULL){
-    CHECK_LOC(loc);
-  }
   setTemp(info->dest_idx, loc);
 
   if (loc != NULL && print_moves){
@@ -228,8 +219,6 @@ VG_REGPARM(0) void cleanupBlock(void){
   // maxTempsUsed variable.
   for(size_t i = 0; i <= maxTempUsed; ++i){
     if (localTemps[i] != NULL){
-      CHECK_PTR(localTemps[i]);
-      CHECK_LOC(localTemps[i]);
       freeSL(localTemps[i]);
       localTemps[i] = NULL;
     }
@@ -241,8 +230,6 @@ void cleanupStorage(void){
   for (int i = 0; i < MAX_THREADS; ++i)
     for (int j = 0; j < MAX_REGISTERS; ++j)
       if (threadRegisters[i][j] != NULL){
-        CHECK_PTR(threadRegisters[i][j]);
-        CHECK_SV(threadRegisters[i][j]);
         disownSV(threadRegisters[i][j]);
         threadRegisters[i][j] = NULL;
       }
@@ -257,15 +244,10 @@ void cleanupStorage(void){
 }
 
 void setTemp(Addr index, ShadowLocation* newLocation){
-  if (newLocation != NULL){
-    CHECK_LOC(newLocation);
-  }
-  tl_assert(index >= 0 && index < MAX_TEMPS);
   if (index > maxTempUsed) maxTempUsed = index;
   if (newLocation != NULL){
     for(int i = 0; i < capacity(newLocation->type); i++){
       if (newLocation->values[i] != NULL){
-        CHECK_PTR(newLocation->values[i]);
         addRef(newLocation->values[i]);
         if (print_moves)
           VG_(printf)("Adding temp ref to %p\n", newLocation);
@@ -275,24 +257,12 @@ void setTemp(Addr index, ShadowLocation* newLocation){
   if (localTemps[index] != NULL){
     if (print_moves)
       VG_(printf)("Overwriting temp at %lu\n", index);
-    CHECK_PTR(localTemps[index]);
     freeSL(localTemps[index]);
   }
-  CHECK_PTR(newLocation);
   localTemps[index] = newLocation;
-  tl_assert(localTemps[index] == NULL ||
-            (localTemps[index]->type >= 0 &&
-             localTemps[index]->type <= 8));
 }
 
 ShadowLocation* getTemp(Addr index){
-  if (localTemps[index] != NULL){
-    tl_assert2(localTemps[index]->type >= 0 &&
-               localTemps[index]->type <= 8,
-               "Bad location type %u at index %lu",
-               localTemps[index]->type, index);
-    CHECK_LOC(localTemps[index]);
-  }
   return localTemps[index];
 }
 
@@ -333,16 +303,11 @@ ShadowLocation* getLocMem(Addr index, LocType type){
 void setTS(Addr index, ShadowValue* val){
   if (threadRegisters[VG_(get_running_tid)()][index] != NULL && print_moves)
     VG_(printf)("Overwriting thread state at %lu\n", index);
-  tl_assert(VG_(get_running_tid)() > 0 && VG_(get_running_tid)() < MAX_THREADS &&
-            index > 0 && index < MAX_REGISTERS);
-  CHECK_PTR(val);
-  CHECK_SV(val);
   copySV(val, &(threadRegisters[VG_(get_running_tid)()][index]));
 }
 
 ShadowValue* getTS(Addr index){
   if (!running) return NULL;
-  CHECK_SV(threadRegisters[VG_(get_running_tid)()][index]);
   return threadRegisters[VG_(get_running_tid)()][index];
 }
 
@@ -420,17 +385,13 @@ void setLoc__(Addr index, ShadowLocation* newLoc, LocType move_type,
   /*            newLoc, capacity(move_type), capacity(newLoc->type)); */
   if (newLoc != NULL && capacity(move_type) <= capacity(newLoc->type))
     VG_(printf)("Bad location type found (when moving from temp to memory/thread state)!!\n");
-  CHECK_PTR(newLoc);
   if (newLoc == NULL || move_type != newLoc->type){
     for (SizeT i = 0; i < capacity(move_type); ++i){
       setter(index + el_size(move_type) * i, NULL);
     }
   } else {
-    CHECK_LOC(newLoc);
     for (SizeT i = 0; i < capacity(newLoc->type); ++i){
       ShadowValue* val = newLoc->values[i];
-      CHECK_PTR(val);
-      CHECK_SV(val);
       setter(index + el_size(newLoc->type) * i, val);
     }
   }
@@ -441,8 +402,6 @@ ShadowLocation* getLoc__(Addr index, ShadowValue* (*getter)(Addr index), LocType
   for (SizeT i = 0; i < capacity(type); ++i){
     result->values[i] = getter(index + el_size(type) * i);
     if (result->values[i] != NULL){
-      CHECK_PTR(result->values[i]);
-      CHECK_SV(result->values[i]);
       allNull = False;
     }
   }

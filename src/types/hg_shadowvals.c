@@ -46,7 +46,6 @@ ShadowLocation* mkShadowLocation(LocType type){
   ShadowLocation* location = mkShadowLocation_bare(type);
   for (SizeT i = 0; i < capacity(type); ++i){
     location->values[i] = mkShadowValue();
-    CHECK_SV(location->values[i]);
   }
   return location;
 }
@@ -59,12 +58,8 @@ ShadowLocation* mkShadowLocation_bare(LocType type){
 }
 
 void freeSL(ShadowLocation* sl){
-  CHECK_PTR(sl);
-  CHECK_PTR(sl->values);
   for (int i = 0; i < capacity(sl->type); ++i)
     if (sl->values[i] != NULL){
-      CHECK_PTR(sl->values[i]);
-      CHECK_SV(sl->values[i]);
       disownSV(sl->values[i]);
     }
   VG_(free)(sl->values);
@@ -175,10 +170,6 @@ ShadowValue* mkShadowValue(void){
 }
 
 void copySV(ShadowValue* src, ShadowValue** dest){
-  CHECK_PTR(src);
-  CHECK_PTR(*dest);
-  CHECK_SV(src);
-  CHECK_SV(*dest);
   if (src != NULL){
     addRef(src);
   }
@@ -190,8 +181,6 @@ void copySV(ShadowValue* src, ShadowValue** dest){
 
 void disownSV(ShadowValue* val){
   tl_assert(val != NULL);
-  CHECK_PTR(val);
-  CHECK_SV(val);
   Queue* disownQueue = mkQueue();
   queue_push(disownQueue, val);
   while (!queue_empty(disownQueue)){
@@ -208,7 +197,6 @@ void disownSV(ShadowValue* val){
       mpfr_clear(sv->value);
       // If report exprs is off, then we don't have any stem node.
       if (report_exprs){
-        tl_assert(sv == sv->stem->ref);
         // We used to just call cleanupStemNode here and preserve the
         // abstraction boundry between the shadowvals module and the
         // stem node module, but unfortunately the stem nodes can get
@@ -231,8 +219,6 @@ void disownSV(ShadowValue* val){
   }
 }
 void addRef(ShadowValue* val){
-  CHECK_PTR(val);
-  CHECK_SV(val);
   (val->ref_count)++;
   if (print_counts){
     VG_(printf)("Increasing count of %p to %lu\n", val, val->ref_count);

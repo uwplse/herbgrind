@@ -393,9 +393,6 @@ void freeNodeMapEntry(void* entry){
 // Initialize a new stem node.
 void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
                         SizeT nargs, ...){
-  CHECK_PTR(val);
-  CHECK_SV(val);
-  CHECK_PTR(opinfo);
   if (!report_exprs) return;
   val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
   // Normalize NaN's
@@ -414,18 +411,12 @@ void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
   va_start(args, nargs);
   for(SizeT i = 0; i < nargs; ++i){
     ShadowValue* argVal = va_arg(args, ShadowValue*);
-    CHECK_PTR(argVal);
-    CHECK_SV(argVal);
-    CHECK_PTR(argVal->stem);
-    tl_assert(argVal->stem->ref == argVal);
     val->stem->branch.args[i] = argVal->stem;
-    // VG_(printf)("Adding stem reference to %p\n", val->stem->branch.args[i]->ref);
     addRef(val->stem->branch.args[i]->ref);
   }
   va_end(args);
 }
 void initLeafStemNode(ShadowValue* val){
-  CHECK_SV(val);
   if (!report_exprs) return;
   val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
   // Normalize NaN's

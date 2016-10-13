@@ -696,14 +696,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         getShadowLocation(opInfo->arg_tmps[1],
                           argType);
 
-      CHECK_PTR(arg1Location);
-      CHECK_PTR(arg2Location);
-  
       // Now we'll allocate memory for the shadowed result of this
       // operation.
       destLocation = mkShadowLocation_bare(argType);
-
-      CHECK_PTR(destLocation);
 
       if (print_inputs){
         VG_(printf)("Shadow first arg: ");
@@ -720,42 +715,21 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
                       i, ((double*)opInfo->arg_values[0])[i],
                       i, ((double*)opInfo->arg_values[1])[i]);
         }
-        CHECK_PTR(destLocation->values[i]);
         ShadowValue* arg1val = getShadowValue(arg1Location, i,
                                               opInfo->arg_values[0]);
         ShadowValue* arg2val = getShadowValue(arg2Location, i,
                                               opInfo->arg_values[1]);
         destLocation->values[i] = mkShadowValue();
-        CHECK_PTR(arg1val);
-        CHECK_SV(arg1val);
-        CHECK_PTR(arg2val);
-        CHECK_SV(arg2val);
-        tl_assert(arg1val->ref_count > 0);
-        tl_assert(arg1val->ref_count > 0);
         // Set the destination shadow values to the result of a
         // high-precision shadowing operation, for each channel in which
         // it occurs.
         mpfr_func(destLocation->values[i]->value, arg1val->value,
                   arg2val->value, MPFR_RNDN);
 
-        size_t count1 = arg1val->ref_count;
-        size_t count2 = arg2val->ref_count;
         // Set up the stem record of this operation.
         initBranchStemNode(destLocation->values[i], opInfo, 2,
                            arg1val,
                            arg2val);
-        tl_assert2(arg1val->ref_count == count1 + 1 ||
-                   (arg1val == arg2val && arg1val->ref_count == count1 + 2),
-                   "Ref count for %p hasn't increased by one! "
-                   "Count was %u, now it's %u\n",
-                   arg1val,
-                   count1, arg1val->ref_count);
-        tl_assert2(arg2val->ref_count == count2 + 1 ||
-                   (arg1val == arg2val && arg2val->ref_count == count2 + 2),
-                   "Ref count for %p hasn't increased by one! "
-                   "Count was %u, now it's %u\n",
-                   arg2val,
-                   count2, arg2val->ref_count);
         // Now, we'll evaluate the shadow value against the result
         // value, for each of it's channels.
         evaluateOpError_helper(destLocation->values[i],
@@ -1268,8 +1242,6 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type){
   // Put the new shadow location in the temporary where we expected to
   // find it.
   setTemp(tmp_num, location);
-  tl_assert2(getTemp(tmp_num) != NULL && getTemp(tmp_num)->type == type,
-             "Failed to set gotten location!\n");
   return location;
 }
 
@@ -1279,13 +1251,10 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type){
 ShadowValue* getShadowValue(ShadowLocation* loc, UWord index,
                             UWord* loc_bytes){
   if (loc->values[index] != NULL){
-    CHECK_PTR(loc->values[index]);
-    CHECK_SV(loc->values[index]);
     return loc->values[index];
   }
   // Create a new shadow value, and give it a leaf node stem.
   loc->values[index] = mkShadowValue();
-  CHECK_SV(loc->values[index]);
   // Add a reference since by adding this to a shadow location, we're
   // putting it in a temp.
   addRef(loc->values[index]);
