@@ -215,6 +215,9 @@ static void hg_print_debug_usage(void){
 
 // This is called after the program exits, for cleanup and such.
 static void hg_fini(Int exitcode){
+  if (print_moves){
+    VG_(printf)("Cleaning up runtime...\n");
+  }
   cleanup_runtime();
 
   // Write out the report
