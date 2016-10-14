@@ -175,5 +175,5 @@ clean-deps:
 clear-preload:
 	rm valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/vgpreload_herbgrind*
 
-test: compile bench/%.out
+test: compile
 	python bench/test.py
