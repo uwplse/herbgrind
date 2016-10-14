@@ -467,7 +467,10 @@ void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
   if (val->stem->value != val->stem->value){
     val->stem->value = NAN;
   }
-  val->stem->ref = val;
+  if (print_moves){
+    VG_(printf)("Making stem node %p\n", val->stem);
+  }
+  val->stem->ref_count = 1;
   val->stem->type = Node_Branch;
   val->stem->branch.op = opinfo;
   val->stem->branch.nargs = nargs;
@@ -480,7 +483,12 @@ void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
   for(SizeT i = 0; i < nargs; ++i){
     ShadowValue* argVal = va_arg(args, ShadowValue*);
     val->stem->branch.args[i] = argVal->stem;
-    addRef(val->stem->branch.args[i]->ref);
+    (argVal->stem->ref_count)++;
+    if (print_counts){
+      VG_(printf)("Increasing count of stem %p to %lu\n",
+                  argVal->stem,
+                  argVal->stem->ref_count);
+    }
   }
   va_end(args);
 }
@@ -491,23 +499,53 @@ void initLeafStemNode(ShadowValue* val){
   if (val->stem->value != val->stem->value){
     val->stem->value = NAN;
   }
-  val->stem->ref = val;
+  if (print_moves){
+    VG_(printf)("Making stem node %p\n", val->stem);
+  }
+  val->stem->ref_count = 1;
   val->stem->type = Node_Leaf;
 }
-// Deep copy a stem.
+// copy a stem.
 void copyStemNode(StemNode* src, StemNode** dest){
-  ALLOC(*dest, "hg.val_ast", 1, sizeof(StemNode));
-  (*dest)->ref = src->ref;
-  (*dest)->value = src->value;
-  (*dest)->type = src->type;
-  if (src->type == Node_Branch){
-    (*dest)->branch.op = src->branch.op;
-    (*dest)->branch.nargs = src->branch.nargs;
-    ALLOC((*dest)->branch.args, "stem args",
-          src->branch.nargs, sizeof(StemNode*));
-    for (SizeT i = 0; i < (*dest)->branch.nargs; ++i){
-      (*dest)->branch.args[i] = src->branch.args[i];
-      addRef(src->branch.args[i]->ref);
+  (*dest) = src;
+  (src->ref_count)++;
+  if (print_counts){
+    VG_(printf)("Increasing count of stem %p to %lu\n",
+                src, src->ref_count);
+  }
+}
+void disownStemNode(StemNode* stem){
+  // We used to use potentiall recursive calls to cascade frees for
+  // chained stem nodes, but unfortunately the stem nodes can get
+  // quite big, big enough that cascading frees of children using the
+  // call stack can overflow it. So instead we're using this explicit
+  // queue system to keep track of cascading frees, and we're going to
+  // reach into the stem data that should be encapsulated to disown
+  // references to children.
+  tl_assert(stem != NULL);
+
+  Queue* disownQueue = mkQueue();
+  queue_push(disownQueue, stem);
+
+  while (!queue_empty(disownQueue)){
+    StemNode* curStem = queue_pop(disownQueue);
+    (curStem->ref_count) --;
+    if (print_counts){
+      VG_(printf)("Decreasing count of stem %p to %lu\n",
+                  curStem, curStem->ref_count);
+    }
+    if (curStem->ref_count < 1){
+      if (print_moves){
+        VG_(printf)("Cleaning up stem node %p\n", curStem);
+      }
+      if (curStem->type == Node_Branch){
+        for (int i = 0; i < curStem->branch.nargs; ++i){
+          queue_push(disownQueue,
+                     curStem->branch.args[i]);
+        }
+        VG_(free)(curStem->branch.args);
+      }
+      VG_(free)(curStem);
     }
   }
 }

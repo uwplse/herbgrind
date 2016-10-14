@@ -73,7 +73,7 @@ typedef enum {
 } NodeType;
 
 struct _StemNode {
-  ShadowValue* ref;
+  SizeT ref_count;
   NodeType type;
   double value;
   struct {
@@ -104,6 +104,7 @@ void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
 void initLeafStemNode(ShadowValue* val);
 // Deep copy a stem.
 void copyStemNode(StemNode* src, StemNode** dest);
+void disownStemNode(StemNode* stem);
 
 // Update the tea with a new stem.
 void updateTea(Op_Info* op, StemNode* stem);

@@ -179,43 +179,21 @@ void copySV(ShadowValue* src, ShadowValue** dest){
   (*dest) = src;
 }
 
-void disownSV(ShadowValue* val){
-  tl_assert(val != NULL);
-  Queue* disownQueue = mkQueue();
-  queue_push(disownQueue, val);
-  while (!queue_empty(disownQueue)){
-    ShadowValue* sv = queue_pop(disownQueue);
-    if (print_counts){
-      VG_(printf)("Decreasing count of %p to %lu\n", sv, sv->ref_count);
+void disownSV(ShadowValue* sv){
+  (sv->ref_count) --;
+  if (print_counts){
+    VG_(printf)("Decreasing count of %p to %lu\n", sv, sv->ref_count);
+  }
+  if (sv->ref_count < 1){
+    if (print_moves){
+      VG_(printf)("Cleaning up shadow value %p\n", sv);
     }
-    (sv->ref_count) --;
-    tl_assert(sv->ref_count >= 0);
-    if (sv->ref_count < 1){
-      if (print_moves){
-        VG_(printf)("Cleaning up shadow value %p\n", sv);
-      }
-      mpfr_clear(sv->value);
-      // If report exprs is off, then we don't have any stem node.
-      if (report_exprs){
-        // We used to just call cleanupStemNode here and preserve the
-        // abstraction boundry between the shadowvals module and the
-        // stem node module, but unfortunately the stem nodes can get
-        // quite big, big enough that cascading frees of children
-        // using the call stack can overflow it. So instead we're
-        // using this explicit queue system to keep track of cascading
-        // frees, and we're going to reach into the stem data that
-        // should be encapsulated to disown references to children.
-        if (sv->stem->type == Node_Branch){
-          for (int i = 0; i < sv->stem->branch.nargs; ++i){
-            queue_push(disownQueue,
-                       sv->stem->branch.args[i]->ref);
-          }
-        }
-        VG_(free)(sv->stem);
-      }
-      sv->freeCanary = 0xB00B5;
-      VG_(free)(sv);
+    mpfr_clear(sv->value);
+    // If report expers is off, then we don't have a stem node.
+    if (report_exprs){
+      disownStemNode(sv->stem);
     }
+    VG_(free)(sv);
   }
 }
 void addRef(ShadowValue* val){
