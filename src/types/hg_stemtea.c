@@ -535,12 +535,19 @@ char* teaToString(TeaNode* tea, SizeT* numVars_out){
   return result;
 }
 
-char* teaToStructureString(TeaNode* tea){
+// Instead of replacing recursive calls with explicit queue's in the
+// printing methods, we're just going to limit their depth, since they
+// won't handle very large expressions anyway since they allocate a
+// fixed string buffer.
+
+char* teaToStructureString(TeaNode* tea, SizeT max_depth){
   char* buf;
   SizeT bufpos = 0;
   ALLOC(buf, "ast string", max_expr_string_size, sizeof(char));
 
-  if (tea->type == Node_Leaf){
+  if (max_depth == 0){
+    VG_(snprintf)(buf, 4, "...");
+  } else if (tea->type == Node_Leaf){
     if (tea->hasConst){
       VG_(snprintf)(buf, max_expr_string_size, "%f", tea->constValue);
     } else {
@@ -550,7 +557,7 @@ char* teaToStructureString(TeaNode* tea){
     bufpos += VG_(snprintf)(buf, max_expr_string_size, "(%s",
                             tea->branch.op->debuginfo.symbol);
     for (SizeT argIdx = 0; argIdx < tea->branch.nargs; ++argIdx){
-      char* subexpr = teaToStructureString(tea->branch.args[argIdx]);
+      char* subexpr = teaToStructureString(tea->branch.args[argIdx], max_depth - 1);
       bufpos += VG_(snprintf)(buf + bufpos, max_expr_string_size - bufpos,
                               " %s", subexpr);
       VG_(free)(subexpr);
@@ -700,6 +707,18 @@ void printPosition(NodePos pos){
   }
   VG_(printf)("]");
 }
+
+// WARNING: Do not use this function to compare two runtime stems
+// unless you think very carefully about it!
+
+// This function uses recursive function calls to traverse the
+// structure of the stems it's matching on. Now, normally this would
+// be problematic because stems can get big enough that traversing
+// them through recursive calls overflows the stack. In this case
+// however, it's currently okay because we only compare a runtime stem
+// to a predefined one of a fixed, small size. Since this will stop
+// after fully traversing the smaller of the trees, this means we're
+// safe from overflow.
 Bool teaStructureMatches(TeaNode* tea1, TeaNode* tea2){
   if (tea1->type != tea2->type) return False;
   if (tea1->type == Node_Leaf) return True;

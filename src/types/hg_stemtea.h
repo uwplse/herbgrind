@@ -150,7 +150,7 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
                           int* nextvar,
                           SizeT max_depth);
 char* teaToBenchString(TeaNode* tea, Bool haveNewlines);
-char* teaToStructureString(TeaNode* tea);
+char* teaToStructureString(TeaNode* tea, SizeT max_depth);
 
 void printGroups(XArray* groups);
 void printNodeMap(VgHashTable* node_map);
