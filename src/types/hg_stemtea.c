@@ -33,6 +33,7 @@
 #include "hg_opinfo.h"
 #include "../include/hg_macros.h"
 #include "../include/hg_options.h"
+#include "../types/hg_queue.h"
 
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcbase.h"
@@ -114,41 +115,78 @@ void addStem(TeaNode* tea, StemNode* stem){
     mergeBranchNodeMap(tea, stem);
   }
 }
-void generalizeStructure(TeaNode** tea, StemNode* stem){
-  // If the tea continues down, but the stem stops, or the stem stops
-  // matching, then we want to replace the tea with a branch. But we
-  // don't want to do it in place, because then other places that
-  // reference that operation will get the truncated tree even though
-  // the stem never passed through that op. So instead, allocate a new
-  // leaf and stick it in the reference location we got.
-  if ((*tea)->type == Node_Branch &&
-      (stem->type == Node_Leaf ||
-       VG_(strcmp)((*tea)->branch.op->debuginfo.symbol,
-                   stem->branch.op->debuginfo.symbol) ||
-       (*tea)->branch.nargs != stem->branch.nargs)){
-    TeaNode* oldTea = (*tea);
-    ALLOC(*tea, "tea leaf", 1, sizeof(StemNode));
-    (*tea)->type = Node_Leaf;
-    (*tea)->hasConst = (oldTea->hasConst &&
-                        (oldTea->constValue == stem->value ||
-                         (oldTea->constValue != oldTea->constValue &&
-                          stem->value != stem->value))) ? True : False;
-    (*tea)->constValue = oldTea->constValue;
-  }
-  // If the value this node was initially assigned doesn't match that
-  // of the new stem, then it isn't constant across all stems, so mark
-  // it as such.
-  if ((*tea)->constValue != stem->value &&
-      (*tea)->constValue == (*tea)->constValue &&
-      stem->value == stem->value){
-    (*tea)->hasConst = False;
-  }
-  // If the result is still a branch, recurse on the arguments.
-  if ((*tea)->type == Node_Branch){
-    // Otherwise, we'll recurse on the descendents.
-    for (int i = 0; i < (*tea)->branch.nargs; ++i){
-      generalizeStructure(&((*tea)->branch.args[i]), stem->branch.args[i]);
+typedef struct _gEntry {
+  TeaNode** tea;
+  StemNode* stem;
+} gEntry;
+gEntry* mkGEntry(TeaNode** tea, StemNode* stem);
+gEntry* mkGEntry(TeaNode** tea, StemNode* stem){
+  gEntry* entry;
+  ALLOC(entry, "generalizeStructure argument entry",
+        1, sizeof(gEntry));
+  entry->tea = tea;
+  entry->stem = stem;
+  return entry;
+}
+void generalizeStructure(TeaNode** _tea, StemNode* _stem){
+  // We can't use recursive calls to traverse stems, because they can
+  // get really large and the call stack isn't meant to handle that
+  // much data. Instead, we use an explicit queue data structure.
+
+  // In case you're wondering why we use a queue and not a stack, it
+  // really doesn't matter much, but I expect highly unbalanced trees
+  // that are basically just a linked list with a few nodes hanging
+  // off the side to be a lot more common than highly balanced trees,
+  // since the former could result from a loop or repeated mutation of
+  // a single accumulator, while the latter requires a complex
+  // expression built of many parts. And a Queue is going to use a bit
+  // less memory in this case, which might matter as stem tree sizes
+  // get very large. Of course, when we start really supporting loops
+  // it might not matter...
+  Queue* generalizeQueue = mkQueue();
+
+  queue_push(generalizeQueue, mkGEntry(_tea, _stem));
+
+  while (! queue_empty(generalizeQueue)){
+    gEntry* entry = queue_pop(generalizeQueue);
+    TeaNode** tea = entry->tea;
+    StemNode* stem = entry->stem;
+
+    // If the tea continues down, but the stem stops, or the stem stops
+    // matching, then we want to replace the tea with a branch. But we
+    // don't want to do it in place, because then other places that
+    // reference that operation will get the truncated tree even though
+    // the stem never passed through that op. So instead, allocate a new
+    // leaf and stick it in the reference location we got.
+    if ((*tea)->type == Node_Branch &&
+        (stem->type == Node_Leaf ||
+         VG_(strcmp)((*tea)->branch.op->debuginfo.symbol,
+                     stem->branch.op->debuginfo.symbol) ||
+         (*tea)->branch.nargs != stem->branch.nargs)){
+      TeaNode* oldTea = (*tea);
+      ALLOC(*tea, "tea leaf", 1, sizeof(StemNode));
+      (*tea)->type = Node_Leaf;
+      (*tea)->hasConst = (oldTea->hasConst &&
+                          (oldTea->constValue == stem->value ||
+                           (oldTea->constValue != oldTea->constValue &&
+                            stem->value != stem->value))) ? True : False;
+      (*tea)->constValue = oldTea->constValue;
     }
+    // If the value this node was initially assigned doesn't match that
+    // of the new stem, then it isn't constant across all stems, so mark
+    // it as such.
+    if ((*tea)->constValue != stem->value &&
+        (*tea)->constValue == (*tea)->constValue &&
+        stem->value == stem->value){
+      (*tea)->hasConst = False;
+    }
+    // If the result is still a branch, generalize the children
+    if ((*tea)->type == Node_Branch){
+      for (int i = 0; i < (*tea)->branch.nargs; ++i){
+        queue_push(generalizeQueue, mkGEntry(&((*tea)->branch.args[i]), stem->branch.args[i]));
+      }
+    }
+    VG_(free)(entry);
   }
 }
 void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
@@ -308,17 +346,17 @@ void printGroups(XArray* groups){
 }
 
 // Check if a given position is valid in a particular tea structure.
-Bool positionValid(TeaNode* tea, NodePos node){
-  if (node.len == 0){
-    return True;
-  } else if (tea->type == Node_Leaf){
-    return False;
-  } else if (tea->branch.nargs <= node.data[node.len - 1]) {
-    return False;
-  } else {
-    return positionValid(tea->branch.args[node.data[node.len - 1]],
-                         (NodePos) {.data = node.data, .len = node.len - 1});
+Bool positionValid(TeaNode* tea, NodePos pos){
+  TeaNode* curTea = tea;
+  for (int i = pos.len - 1; i >= 0; --i){
+    if (curTea->type == Node_Leaf){
+      return False;
+    } else if (curTea->branch.nargs <= pos.data[i]){
+      return False;
+    }
+    curTea = curTea->branch.args[pos.data[i]];
   }
+  return True;
 }
 // Get a mapping from positions in the given stem to equivalence
 // class/variable indices.
@@ -332,58 +370,88 @@ VgHashTable* getStemEquivs(StemNode* stem){
   VG_(HT_destruct)(val_map, VG_(free));
   return node_map;
 }
+
+typedef struct _uemEntry {
+  StemNode* stem;
+  NodePos curPos;
+} uemEntry;
+uemEntry* mkUemEntry(StemNode* stem, NodePos curPos);
+uemEntry* mkUemEntry(StemNode* stem, NodePos curPos) {
+  uemEntry* entry;
+  ALLOC(entry, "update equivalence map entry",
+        1, sizeof(uemEntry));
+  entry->stem = stem;
+  entry->curPos = curPos;
+  return entry;
+}
+
 void updateEquivMap(VgHashTable* node_map,
                     VgHashTable* val_map,
                     int* next_idx,
-                    StemNode* stem,
-                    NodePos curPos){
-  // Allocate a new node map entry for the current node.
-  NodeMapEntry* newNodeEntry;
-  ALLOC(newNodeEntry, "node map entry", 1, sizeof(NodeMapEntry));
-  newNodeEntry->position = curPos;
-  newNodeEntry->positionHash = hashPosition(curPos);
+                    StemNode* _stem,
+                    NodePos _curPos){
+  // We can't use recursive calls to traverse stems, because they can
+  // get really large and the call stack isn't meant to handle that
+  // much data. Instead, we use an explicit queue data structure.
 
-  // Convert the value of the stem to a UWord key by literally
-  // reinterpreting the bytes. Not clear that this will do the right
-  // thing on 32-bit platforms, as it should pull the first 32-bits
-  // out of the double for matching. Might overmatch as a result.
-  UWord keyval = 0;
-  VG_(memcpy)(&keyval, &stem->value, sizeof(UWord));
-  ValMapEntry* existing_entry = VG_(HT_lookup)(val_map, keyval);
+  Queue* updateEquivMapQueue = mkQueue();
 
-  // If we already have an entry for this value, map the current
-  // position to that.
-  if (existing_entry != NULL){
-    newNodeEntry->groupIdx = existing_entry->groupIdx;
-  } else {
-    // Otherwise, create a fresh index, map the current value to that
-    // (so that later nodes that share this value will also get
-    // mapped), and then map the current position to that.
-    int new_idx = (*next_idx)++;
+  queue_push(updateEquivMapQueue, mkUemEntry(_stem, _curPos));
 
-    ValMapEntry* newValEntry;
-    ALLOC(newValEntry, "val map entry", 1, sizeof(ValMapEntry));
-    newValEntry->key = keyval;
-    newValEntry->groupIdx = new_idx;
-    VG_(HT_add_node)(val_map, newValEntry);
+  while (! queue_empty(updateEquivMapQueue)){
+    uemEntry* entry = queue_pop(updateEquivMapQueue);
+    StemNode* stem = entry->stem;
+    NodePos curPos = entry->curPos;
 
-    newNodeEntry->groupIdx = new_idx;
-  }
-  VG_(HT_add_node)(node_map, newNodeEntry);
+    // Allocate a new node map entry for the current node.
+    NodeMapEntry* newNodeEntry;
+    ALLOC(newNodeEntry, "node map entry", 1, sizeof(NodeMapEntry));
+    newNodeEntry->position = curPos;
+    newNodeEntry->positionHash = hashPosition(curPos);
 
-  // Finally, if this is a branch recurse on the children.
-  if (stem->type == Node_Branch){
-    // To do that, we need to create a new position for each child
-    // based off the current position.
-    for (UInt argIdx = 0; argIdx < stem->branch.nargs; ++argIdx){
-      StemNode* argStem = stem->branch.args[argIdx];
-      NodePos newPos;
-      newPos.len = curPos.len + 1;
-      ALLOC(newPos.data, "pos data", newPos.len, sizeof(UInt));
-      VG_(memcpy)(newPos.data + 1, curPos.data, curPos.len * sizeof(UInt));
-      newPos.data[0] = argIdx;
-      updateEquivMap(node_map, val_map, next_idx, argStem, newPos);
+    // Convert the value of the stem to a UWord key by literally
+    // reinterpreting the bytes. Not clear that this will do the right
+    // thing on 32-bit platforms, as it should pull the first 32-bits
+    // out of the double for matching. Might overmatch as a result.
+    UWord keyval = 0;
+    VG_(memcpy)(&keyval, &stem->value, sizeof(UWord));
+    ValMapEntry* existing_entry = VG_(HT_lookup)(val_map, keyval);
+
+    // If we already have an entry for this value, map the current
+    // position to that.
+    if (existing_entry != NULL){
+      newNodeEntry->groupIdx = existing_entry->groupIdx;
+    } else {
+      // Otherwise, create a fresh index, map the current value to that
+      // (so that later nodes that share this value will also get
+      // mapped), and then map the current position to that.
+      int new_idx = (*next_idx)++;
+
+      ValMapEntry* newValEntry;
+      ALLOC(newValEntry, "val map entry", 1, sizeof(ValMapEntry));
+      newValEntry->key = keyval;
+      newValEntry->groupIdx = new_idx;
+      VG_(HT_add_node)(val_map, newValEntry);
+
+      newNodeEntry->groupIdx = new_idx;
     }
+    VG_(HT_add_node)(node_map, newNodeEntry);
+
+    // Finally, if this is a branch, run on the children.
+    if (stem->type == Node_Branch){
+      // To do that, we need to create a new position for each child
+      // based off the current position.
+      for (UInt argIdx = 0; argIdx < stem->branch.nargs; ++argIdx){
+        StemNode* argStem = stem->branch.args[argIdx];
+        NodePos newPos;
+        newPos.len = curPos.len + 1;
+        ALLOC(newPos.data, "pos data", newPos.len, sizeof(UInt));
+        VG_(memcpy)(newPos.data + 1, curPos.data, curPos.len * sizeof(UInt));
+        newPos.data[0] = argIdx;
+        queue_push(updateEquivMapQueue, mkUemEntry(argStem, newPos));
+      }
+    }
+    VG_(free)(entry);
   }
 }
 void freeNodeMapEntry(void* entry){
