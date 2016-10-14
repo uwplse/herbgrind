@@ -249,8 +249,6 @@ void setTemp(Addr index, ShadowLocation* newLocation){
     for(int i = 0; i < capacity(newLocation->type); i++){
       if (newLocation->values[i] != NULL){
         addRef(newLocation->values[i]);
-        if (print_moves)
-          VG_(printf)("Adding temp ref to %p\n", newLocation);
       }
     }
   }
