@@ -33,6 +33,7 @@
 #include "../include/hg_options.h"
 #include "../types/hg_opinfo.h"
 #include "../types/hg_stemtea.h"
+#include "../types/hg_queue.h"
 
 #include "pub_tool_vki.h"
 #include "pub_tool_libcfile.h"
@@ -79,13 +80,18 @@ void clearTrackedOp(Op_Info* opinfo){
     }
   }
 }
-void recursivelyClearChildren(TeaNode* node){
-  if (node->type != Node_Branch) return;
-  for(int i = 0; i < node->branch.nargs; ++i){
-    TeaNode* child = node->branch.args[i];
-    recursivelyClearChildren(child);
-    if (child->type == Node_Branch)
-      clearTrackedOp(child->branch.op);
+void recursivelyClearChildren(TeaNode* _node){
+  Queue* clearQueue = mkQueue();
+  queue_push(clearQueue, _node);
+  while (! queue_empty(clearQueue)){
+    TeaNode* node = queue_pop(clearQueue);
+    if (node->type != Node_Branch) return;
+    for(int i = 0; i < node->branch.nargs; ++i){
+      TeaNode* child = node->branch.args[i];
+      queue_push(clearQueue, child);
+      if (child->type == Node_Branch)
+        clearTrackedOp(child->branch.op);
+    }
   }
 }
 
