@@ -81,31 +81,31 @@ endif
 # vgpreload_herbgrind-<platform>.so
 #----------------------------------------------------------------------------
 
-# noinst_PROGRAMS += vgpreload_herbgrind-@VGCONF_ARCH_PRI@-@VGCONF_OS@.so
-# if VGCONF_HAVE_PLATFORM_SEC
-# noinst_PROGRAMS += vgpreload_herbgrind-@VGCONF_ARCH_SEC@-@VGCONF_OS@.so
-# endif
+noinst_PROGRAMS += vgpreload_herbgrind-@VGCONF_ARCH_PRI@-@VGCONF_OS@.so
+if VGCONF_HAVE_PLATFORM_SEC
+noinst_PROGRAMS += vgpreload_herbgrind-@VGCONF_ARCH_SEC@-@VGCONF_OS@.so
+endif
 
-# VGPRELOAD_HERBGRIND_SOURCES_COMMON = hg_mathwrap.c
+VGPRELOAD_HERBGRIND_SOURCES_COMMON = hg_mathwrap.c
 
-# vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_SOURCES      = \
-# 	$(VGPRELOAD_HERBGRIND_SOURCES_COMMON)
-# vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_CPPFLAGS     = \
-# 	$(AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
-# vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_CFLAGS       = \
-# 	$(AM_CFLAGS_PSO_@VGCONF_PLATFORM_PRI_CAPS@)
-# vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_DEPENDENCIES =
-# vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_LDFLAGS      = \
-# 	$(PRELOAD_LDFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
+vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_SOURCES      = \
+	$(VGPRELOAD_HERBGRIND_SOURCES_COMMON)
+vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_CPPFLAGS     = \
+	$(AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
+vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_CFLAGS       = \
+	$(AM_CFLAGS_PSO_@VGCONF_PLATFORM_PRI_CAPS@)
+vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_DEPENDENCIES =
+vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_LDFLAGS      = \
+	$(PRELOAD_LDFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
 
-# if VGCONF_HAVE_PLATFORM_SEC
-# vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_SOURCES      = \
-# 	$(VGPRELOAD_HERBGRIND_SOURCES_COMMON)
-# vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_CPPFLAGS     = \
-# 	$(AM_CPPFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
-# vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_CFLAGS       = \
-# 	$(AM_CFLAGS_PSO_@VGCONF_PLATFORM_SEC_CAPS@)
-# vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_DEPENDENCIES =
-# vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_LDFLAGS      = \
-# 	$(PRELOAD_LDFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
-# endif
+if VGCONF_HAVE_PLATFORM_SEC
+vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_SOURCES      = \
+	$(VGPRELOAD_HERBGRIND_SOURCES_COMMON)
+vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_CPPFLAGS     = \
+	$(AM_CPPFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
+vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_CFLAGS       = \
+	$(AM_CFLAGS_PSO_@VGCONF_PLATFORM_SEC_CAPS@)
+vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_DEPENDENCIES =
+vgpreload_herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_so_LDFLAGS      = \
+	$(PRELOAD_LDFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
+endif
