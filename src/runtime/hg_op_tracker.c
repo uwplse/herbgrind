@@ -139,10 +139,10 @@ void writeReport(const HChar* filename){
     Op_Info* opinfo = *(Op_Info**)VG_(indexXA)(tracked_ops, i);
 
     if (opinfo == NULL) continue;
-    if (teaStructureMatches(opinfo->tea, &teaNegX)) continue;
 
     UInt entry_len;
     if (report_exprs){
+      if (teaStructureMatches(opinfo->tea, &teaNegX)) continue;
       char* benchString;
       if (human_readable){
         benchString = teaToBenchString(opinfo->tea, True);
