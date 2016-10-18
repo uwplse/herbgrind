@@ -150,7 +150,8 @@ double error_threshold = 1.0;
 Bool human_readable = True;
 const HChar* outfile_path = NULL;
 SizeT max_print_depth = 10;
-SizeT max_expr_string_size = 256;
+SizeT max_expr_string_size = 1024;
+SizeT max_tea_track_depth = 10;
 
 SizeT longprint_len = 15;
 Bool print_in_blocks = False;
@@ -168,6 +169,7 @@ Bool report_exprs = True;
 static Bool hg_process_cmd_line_option(const HChar* arg){
   if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX) {}
   else if VG_DBL_CLO(arg, "--error-threshold", error_threshold) {}
+  else if VG_INT_CLO(arg, "--max-tea-track-depth", max_tea_track_depth) {}
   else if VG_XACT_CLO(arg, "--human", human_readable, True) {}
   else if VG_XACT_CLO(arg, "--machine", human_readable, False) {}
   else if VG_INT_CLO(arg, "--max-print-depth", max_print_depth) {}
@@ -192,6 +194,7 @@ static Bool hg_process_cmd_line_option(const HChar* arg){
 static void hg_print_usage(void){
   VG_(printf)(" --precision=<number> the precision of the shadow vales [1000]\n"
               " --error-threshold=<number> the threshold over which to report an erroneous operation (bits) [1]\n"
+              " --max-tea-track-depth=<number> the depth at which to track teas. Subtrees farther than this depth will be truncated with variables.\n"
               " --human output in human-readable form (default)\n"
               " --machine output in machine-readable form\n"
               " --start-off turn off instrumentation until HERBGRIND_BEGIN() is called\n"

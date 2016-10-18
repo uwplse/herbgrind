@@ -47,7 +47,7 @@
 
 void updateTea(Op_Info* op, StemNode* stem){
   if (op->tea == NULL){
-    op->tea = stemToTea(stem);
+    op->tea = stemToTea(stem, 0);
     if (print_expr_updates){
       char* teaString = teaToString(op->tea, NULL);
       VG_(printf)("Creating new tea %s\n", teaString);
@@ -73,7 +73,10 @@ void updateTea(Op_Info* op, StemNode* stem){
   }
 }
 
-TeaNode* stemToTea(StemNode* stem){
+TeaNode* stemToTea(StemNode* stem, SizeT curDepth){
+  if (curDepth == max_tea_track_depth){
+    return NULL;
+  }
   switch(stem->type){
   case Node_Leaf:
     {
@@ -99,7 +102,7 @@ TeaNode* stemToTea(StemNode* stem){
       ALLOC(tea->branch.args, "hg.tea args",
             tea->branch.nargs, sizeof(TeaNode*));
       for(int i = 0; i < tea->branch.nargs; ++i){
-        tea->branch.args[i] = stemToTea(stem->branch.args[i]);
+        tea->branch.args[i] = stemToTea(stem->branch.args[i], curDepth + 1);
       }
       tea->branch.node_map = getStemEquivs(stem);
       return tea;
@@ -118,9 +121,10 @@ void addStem(TeaNode* tea, StemNode* stem){
 typedef struct _gEntry {
   TeaNode** tea;
   StemNode* stem;
+  SizeT depth;
 } gEntry;
-gEntry* mkGEntry(TeaNode** tea, StemNode* stem);
-gEntry* mkGEntry(TeaNode** tea, StemNode* stem){
+gEntry* mkGEntry(TeaNode** tea, StemNode* stem, SizeT depth);
+gEntry* mkGEntry(TeaNode** tea, StemNode* stem, SizeT depth){
   gEntry* entry;
   ALLOC(entry, "generalizeStructure argument entry",
         1, sizeof(gEntry));
@@ -145,7 +149,7 @@ void generalizeStructure(TeaNode** _tea, StemNode* _stem){
   // it might not matter...
   Queue* generalizeQueue = mkQueue();
 
-  queue_push(generalizeQueue, mkGEntry(_tea, _stem));
+  queue_push(generalizeQueue, mkGEntry(_tea, _stem, 0));
 
   while (! queue_empty(generalizeQueue)){
     gEntry* entry = queue_pop(generalizeQueue);
@@ -181,9 +185,11 @@ void generalizeStructure(TeaNode** _tea, StemNode* _stem){
       (*tea)->hasConst = False;
     }
     // If the result is still a branch, generalize the children
-    if ((*tea)->type == Node_Branch){
+    if ((*tea)->type == Node_Branch && entry->depth < max_tea_track_depth){
       for (int i = 0; i < (*tea)->branch.nargs; ++i){
-        queue_push(generalizeQueue, mkGEntry(&((*tea)->branch.args[i]), stem->branch.args[i]));
+        queue_push(generalizeQueue, mkGEntry(&((*tea)->branch.args[i]),
+                                             stem->branch.args[i],
+                                             entry->depth + 1));
       }
     }
     VG_(free)(entry);
@@ -347,6 +353,9 @@ void printGroups(XArray* groups){
 
 // Check if a given position is valid in a particular tea structure.
 Bool positionValid(TeaNode* tea, NodePos pos){
+  if (pos.len > max_tea_track_depth){
+    return False;
+  }
   TeaNode* curTea = tea;
   for (int i = pos.len - 1; i >= 0; --i){
     if (curTea->type == Node_Leaf){
@@ -438,7 +447,7 @@ void updateEquivMap(VgHashTable* node_map,
     VG_(HT_add_node)(node_map, newNodeEntry);
 
     // Finally, if this is a branch, run on the children.
-    if (stem->type == Node_Branch){
+    if (stem->type == Node_Branch && curPos.len < max_tea_track_depth){
       // To do that, we need to create a new position for each child
       // based off the current position.
       for (UInt argIdx = 0; argIdx < stem->branch.nargs; ++argIdx){
@@ -560,11 +569,13 @@ char* teaToString(TeaNode* tea, SizeT* numVars_out){
     result = teaToStringWithMaps(tea, NULL_POS,
                                  tea->branch.node_map, var_map,
                                  &nextvar,
-                                 max_print_depth);
+                                 max_tea_track_depth > max_print_depth ?
+                                 max_print_depth : max_tea_track_depth);
   } else {
     result = teaToStringWithMaps(tea, NULL_POS, NULL, var_map,
                                  &nextvar,
-                                 max_print_depth);
+                                 max_tea_track_depth > max_print_depth ?
+                                 max_print_depth : max_tea_track_depth);
   }
   if (numVars_out != NULL){
     *numVars_out = VG_(HT_count_nodes)(var_map);
@@ -614,13 +625,11 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
   SizeT bufpos = 0;
   ALLOC(buf, "ast string", max_expr_string_size, sizeof(char));
 
-  if (tea->type == Node_Leaf){
+  if (tea->type == Node_Leaf || max_depth == 0){
     if (tea->hasConst){
       VG_(snprintf)(buf, max_expr_string_size, "%f", tea->constValue);
     } else {
-      if (max_depth < 1){
-        VG_(snprintf)(buf, 4, "...");
-      } else if (node_map == NULL){
+      if (node_map == NULL){
         VG_(snprintf)(buf, 2, "%c", varNames[0]);
       } else {
         NodeMapEntry* group_entry;

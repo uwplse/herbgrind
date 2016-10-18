@@ -109,7 +109,7 @@ void disownStemNode(StemNode* stem);
 // Update the tea with a new stem.
 void updateTea(Op_Info* op, StemNode* stem);
 // Brew a single-stem tea.
-TeaNode* stemToTea(StemNode* stem);
+TeaNode* stemToTea(StemNode* stem, SizeT max_depth);
 // Add a new stem to a tea brew.
 void addStem(TeaNode* tea, StemNode* stem);
 // Perform the proper brewing on the structure of a tea so that it
