@@ -33,6 +33,7 @@
 #include "../types/hg_stemtea.h"
 #include "../include/hg_options.h"
 #include "hg_op_tracker.h"
+#include <math.h>
 
 #include "pub_tool_libcassert.h"
 

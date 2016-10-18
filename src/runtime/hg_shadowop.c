@@ -222,8 +222,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
         evaluateOpError_helper(destLocation->values[i],
                                argType, i,
                                opInfo, mpfr_get_d(localResult, MPFR_RNDN));
-        updateRegimes(opInfo->evalinfo.regimes_data, 1,
-                      mpfr_get_d(arg->value, MPFR_RNDN));
+        /* updateRegimes(opInfo->evalinfo.regimes_data, 1, */
+        /*               mpfr_get_d(arg->value, MPFR_RNDN)); */
         mpfr_clears(localArg, localResult, NULL);
       }
       // Copy across the rest of the values from the argument
@@ -587,9 +587,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         evaluateOpError_helper(destLocation->values[i],
                                argType, i,
                                opInfo, mpfr_get_d(localResult, MPFR_RNDN));
-        updateRegimes(opInfo->evalinfo.regimes_data, 1,
-                      mpfr_get_d(arg2Location->values[i]->value,
-                                 MPFR_RNDN));
+        /* updateRegimes(opInfo->evalinfo.regimes_data, 1, */
+        /*               mpfr_get_d(arg2Location->values[i]->value, */
+        /*                          MPFR_RNDN)); */
         mpfr_clears(localArg, localResult, NULL);
       }
     }
@@ -757,8 +757,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
                                argType, i,
                                opInfo,
                                mpfr_get_d(localResult, MPFR_RNDN));
-        updateRegimes(opInfo->evalinfo.regimes_data, 2,
-                      mpfr_get_d(arg1val->value, MPFR_RNDN));
+        /* updateRegimes(opInfo->evalinfo.regimes_data, 2, */
+        /*               mpfr_get_d(arg1val->value, MPFR_RNDN)); */
         mpfr_clears(localArg1, localArg2, localResult, NULL);
       }
       // Copy across the rest of the values from the first argument
@@ -883,8 +883,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
                                argType, 0,
                                opInfo,
                                mpfr_get_d(localResult, MPFR_RNDN));
-        updateRegimes(opInfo->evalinfo.regimes_data, 1,
-                      mpfr_get_d(arg1->value, MPFR_RNDN));
+        /* updateRegimes(opInfo->evalinfo.regimes_data, 1, */
+        /*               mpfr_get_d(arg1->value, MPFR_RNDN)); */
         mpfr_clears(localArg, localResult, NULL);
       } else
         destLocation = NULL;
@@ -1093,9 +1093,9 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
                            type, i,
                            opInfo,
                            mpfr_get_d(localResult, MPFR_RNDN));
-    updateRegimes(opInfo->evalinfo.regimes_data, 2,
-                  mpfr_get_d(arg2Location->values[i]->value, MPFR_RNDN),
-                  mpfr_get_d(arg3Location->values[i]->value, MPFR_RNDN));
+    /* updateRegimes(opInfo->evalinfo.regimes_data, 2, */
+    /*               mpfr_get_d(arg2Location->values[i]->value, MPFR_RNDN), */
+    /*               mpfr_get_d(arg3Location->values[i]->value, MPFR_RNDN)); */
     mpfr_clears(localArg2, localArg2, localResult, NULL);
   }
 
@@ -1216,10 +1216,10 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
                          argType, 0,
                          opInfo,
                          mpfr_get_d(localResult, MPFR_RNDN));
-  updateRegimes(opInfo->evalinfo.regimes_data, 3,
-                mpfr_get_d(arg2->value, MPFR_RNDN),
-                mpfr_get_d(arg3->value, MPFR_RNDN),
-                mpfr_get_d(arg4->value, MPFR_RNDN));
+  /* updateRegimes(opInfo->evalinfo.regimes_data, 3, */
+  /*               mpfr_get_d(arg2->value, MPFR_RNDN), */
+  /*               mpfr_get_d(arg3->value, MPFR_RNDN), */
+  /*               mpfr_get_d(arg4->value, MPFR_RNDN)); */
   mpfr_clears(localArg2, localArg3, localArg4, localResult, NULL);
 
   // Put the resulting location in the space for the dest temp.

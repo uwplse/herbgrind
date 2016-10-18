@@ -31,6 +31,7 @@
 #include "hg_op_tracker.h"
 
 #include "../include/hg_options.h"
+#include "../include/hg_macros.h"
 #include "../types/hg_opinfo.h"
 #include "../types/hg_stemtea.h"
 #include "../types/hg_queue.h"
@@ -215,3 +216,11 @@ void writeReport(const HChar* filename){
   VG_(close)(file_d);
   VG_(printf)("Wrote report out to %s\n", filename);
 }
+
+/* char* getCondition(double** regimes_data, SizeT arity){ */
+/*   char* buf = NULL; */
+/*   ALLOC(buf, "condition buffer", */
+/*         arity * (max_num_regimes + 1) * 15, */
+/*         sizeof(char)); */
+/*   unsigned bufpos; */
+/* } */
