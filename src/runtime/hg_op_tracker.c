@@ -56,7 +56,7 @@ TeaNode teaNegX = (TeaNode){.type = Node_Branch, .hasConst = False,
                                        .args = teaNegXArgs }};
 
 // How many characters are going to be allowed in each entry.
-#define ENTRY_BUFFER_SIZE 512
+#define ENTRY_BUFFER_SIZE 2048
 
 void startTrackingOp(Op_Info* opinfo){
   if (tracked_ops == NULL){
