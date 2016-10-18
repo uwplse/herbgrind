@@ -141,21 +141,25 @@ void performOp(OpType op, double* result, double* args){
   // in MPFR instead of natively because we can't call the math
   // library here, and where we can it's being wrapped so doing so
   // would result in an infinite loop.
-  mpfr_t *args_m, res;
+  mpfr_t *args_m, *localArgs, res, localResult;
   ShadowValue **arg_shadows, *res_shadow;
 
   // Initialize our 64-bit mpfr arg and shadow, and get the result
   // shadow set up.
   args_m = VG_(malloc)("wrapped-args", nargs * sizeof(mpfr_t));
+  localArgs = VG_(malloc)("local-args", nargs * sizeof(mpfr_t));
   arg_shadows = VG_(malloc)("wrapped-shadow", nargs * sizeof(ShadowValue*));
   for (SizeT i = 0; i < nargs; ++i){
     mpfr_init2(args_m[i], op_precision);
+    mpfr_init2(localArgs[i], op_precision);
     // Get the actual value from the pointer they gave us.
     mpfr_set_d(args_m[i], args[i], MPFR_RNDN);
     arg_shadows[i] = getShadowValMem((uintptr_t)&(args[i]), args[i],
                                      i);
+    mpfr_set(localArgs[i], arg_shadows[i]->value, MPFR_RNDN);
   }
   mpfr_init2(res,op_precision);
+  mpfr_init2(localResult, op_precision);
   res_shadow = mkShadowValue();
 
   switch(op){
@@ -179,6 +183,7 @@ void performOp(OpType op, double* result, double* args){
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0], MPFR_RNDN);
       mpfr_func(res_shadow->value, arg_shadows[0]->value, MPFR_RNDN);
+      mpfr_func(localResult, localArgs[0], MPFR_RNDN);
     }
     break;
     // This expands to a bunch of cases for the ops which take one
@@ -204,6 +209,7 @@ void performOp(OpType op, double* result, double* args){
       // Perform the operation on both regular and shadow values.
       mpfr_func(res, args_m[0]);
       mpfr_func(res_shadow->value, arg_shadows[0]->value);
+      mpfr_func(localResult, localArgs[0]);
     }
     break;
     // This expands to a bunch of cases for operations which take two
@@ -236,6 +242,9 @@ void performOp(OpType op, double* result, double* args){
       mpfr_func(res_shadow->value,
                 arg_shadows[0]->value,
                 arg_shadows[1]->value, MPFR_RNDN);
+      mpfr_func(localResult,
+                localArgs[0], localArgs[1],
+                MPFR_RNDN);
     }
     break;
     // This expands to a bunch of cases for operations which take two
@@ -278,6 +287,9 @@ void performOp(OpType op, double* result, double* args){
                 arg_shadows[1]->value,
                 arg_shadows[2]->value,
                 MPFR_RNDN);
+      mpfr_func(localResult,
+                localArgs[0], localArgs[1], localArgs[2],
+                MPFR_RNDN);
     }
     break;
   }
@@ -306,7 +318,7 @@ void performOp(OpType op, double* result, double* args){
     break;
   }
   // And finally, evaluate the error of the operation.
-  evaluateOpError(res_shadow, *result, entry->info);
+  evaluateOpError(res_shadow, *result, entry->info, mpfr_get_d(localResult, MPFR_RNDN));
 
   // If we're printing debug info about where values are flowing, let
   // the user know that we're putting the result of this operation in
@@ -320,10 +332,12 @@ void performOp(OpType op, double* result, double* args){
   // And free up the arrays we malloc for variable number of args.
   for (int i = 0; i < nargs; ++i){
     mpfr_clear(args_m[i]);
+    mpfr_clear(localArgs[i]);
   }
-  mpfr_clear(res);
+  mpfr_clears(res, localResult, NULL);
   VG_(free)(args_m);
   VG_(free)(arg_shadows);
+  VG_(free)(localArgs);
 }
 
 ShadowValue* getShadowValMem(Addr addr, double float_arg,

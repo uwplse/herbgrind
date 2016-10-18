@@ -37,47 +37,52 @@
 #include "pub_tool_libcassert.h"
 
 void evaluateOpError(ShadowValue* shadowVal, double actualVal,
-                     Op_Info* opinfo){
+                     Op_Info* opinfo, double localResult){
   // We're going to do the log in mpfr since that way we don't have to
   // worry about pulling in the normal math library, which is
   // non-trivial in a valgrind tool. But, we can't get ulps from an
   // mpfr value, so we have to first bring both values into doubles,
   // get their ulps, move the ulps into MPFR, get the +1log (which is
   // the number of bits), then finally convert that to double.
-  unsigned long long ulpsError;
-  double bitsError, shadowValD;
-  mpfr_t ulpsErrorM, bitsErrorM;
+  unsigned long long ulpsError, ulpsLocal;
+  double bitsError, bitsLocal, shadowValD;
+  mpfr_t ulpsErrorM, bitsErrorM, ulpsLocalM, bitsLocalM;
 
   if (!running) return;
 
   shadowValD = mpfr_get_d(shadowVal->value, MPFR_RNDN);
 
   ulpsError = ulpd(shadowValD, actualVal);
+  ulpsLocal = ulpd(shadowValD, localResult);
   // To calculate bits error, we take the log2 of the ulps error +
   // 1. This means that 0 ulps (same value) has log2(1) = 0 bits of
   // error, 1 ulp (values that are as close as they can be but still
   // different) has log2(2) = 1 bit of error, and we scale
   // logarithmically from there.
-  mpfr_init2(ulpsErrorM, precision);
+  mpfr_inits2(precision, ulpsErrorM, ulpsLocalM, NULL);
   mpfr_set_ui(ulpsErrorM, (unsigned long int)(ulpsError + 1), MPFR_RNDN);
-  mpfr_init2(bitsErrorM, 64);
+  mpfr_set_ui(ulpsLocalM, (unsigned long int)(ulpsLocal + 1), MPFR_RNDN);
+  mpfr_inits2(64, bitsErrorM, bitsLocalM, NULL);
   mpfr_log2(bitsErrorM, ulpsErrorM, MPFR_RNDN);
+  mpfr_log2(bitsLocalM, ulpsLocalM, MPFR_RNDN);
   bitsError = mpfr_get_d(bitsErrorM, MPFR_RNDN);
+  bitsLocal = mpfr_get_d(bitsLocalM, MPFR_RNDN);
 
-  mpfr_clear(ulpsErrorM);
-  mpfr_clear(bitsErrorM);
+  mpfr_clears(ulpsErrorM, bitsErrorM, ulpsLocalM, bitsLocalM, NULL);
 
   // Update the persistent op record
   if (bitsError > opinfo->evalinfo.max_error){
-    // This tests whether we didnt want to track it before, but do
-    // now. If that's the case, we'll start tracking it.
-    if (opinfo->evalinfo.max_error < error_threshold &&
-        bitsError >= error_threshold){
-      startTrackingOp(opinfo);
-    }
     // Update the max error, since the error of this operation
     // instance was greater than any error this operation has seen before.
     opinfo->evalinfo.max_error = bitsError;
+  }
+  if (bitsLocal > opinfo->evalinfo.max_local){
+    // This tests whether we didnt want to track it before, but do
+    // now. If that's the case, we'll start tracking it.
+    if (opinfo->evalinfo.max_local < error_threshold &&
+        bitsLocal >= error_threshold){
+      startTrackingOp(opinfo);
+    }
     if (report_exprs){
       // If the opfinfo doesn't have an tea assigned yet, give it a strict
       // translation of the tea assigned to this shadow value. If it does,
@@ -85,9 +90,10 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
       // val.
       updateTea(opinfo, shadowVal->stem);
     }
-
+    opinfo->evalinfo.max_local = bitsLocal;
   }
   opinfo->evalinfo.total_error += bitsError;
+  opinfo->evalinfo.total_local += bitsLocal;
   opinfo->evalinfo.num_calls++;
 
   // For printing
@@ -120,18 +126,18 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   }
 }
 
-void evaluateOpError_helper(ShadowValue* shadowVal, LocType bytestype, int el_index, Op_Info* opinfo){
+void evaluateOpError_helper(ShadowValue* shadowVal, LocType bytestype, int el_index, Op_Info* opinfo, double localResult){
   switch(bytestype){
   case Lt_Float:
   case Lt_Floatx2:
   case Lt_Floatx4:
   case Lt_Floatx8:
-    evaluateOpError(shadowVal, ((float*)(opinfo->dest_value))[el_index], opinfo);
+    evaluateOpError(shadowVal, ((float*)(opinfo->dest_value))[el_index], opinfo, localResult);
     break;
   case Lt_Double:
   case Lt_Doublex2:
   case Lt_Doublex4:
-    evaluateOpError(shadowVal, ((double*)(opinfo->dest_value))[el_index], opinfo);
+    evaluateOpError(shadowVal, ((double*)(opinfo->dest_value))[el_index], opinfo, localResult);
     break;
   default:
     VG_(dmsg)("Hey, those are some big floats! We can't handle those floats!");

@@ -86,8 +86,10 @@ void getOpDebug_Info(Addr op_addr,
 struct _Eval_Info {
   // The most error the output of this operation has ever had.
   double max_error;
+  double max_local;
   // All the bits of error this operation has had, added together
   double total_error;
+  double total_local;
   // The number of times we've evaluated the error of this operation.
   SizeT num_calls;
 };

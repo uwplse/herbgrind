@@ -164,8 +164,10 @@ void generalizeStructure(TeaNode** _tea, StemNode* _stem){
     // leaf and stick it in the reference location we got.
     if ((*tea)->type == Node_Branch &&
         (stem->type == Node_Leaf ||
+         ((*tea)->type == Node_Branch &&
+          stem->type == Node_Branch &&
          VG_(strcmp)((*tea)->branch.op->debuginfo.symbol,
-                     stem->branch.op->debuginfo.symbol) ||
+                     stem->branch.op->debuginfo.symbol)) ||
          (*tea)->branch.nargs != stem->branch.nargs)){
       TeaNode* oldTea = (*tea);
       ALLOC(*tea, "tea leaf", 1, sizeof(StemNode));
@@ -187,9 +189,13 @@ void generalizeStructure(TeaNode** _tea, StemNode* _stem){
     // If the result is still a branch, generalize the children
     if ((*tea)->type == Node_Branch && entry->depth < max_tea_track_depth){
       for (int i = 0; i < (*tea)->branch.nargs; ++i){
-        queue_push(generalizeQueue, mkGEntry(&((*tea)->branch.args[i]),
-                                             stem->branch.args[i],
-                                             entry->depth + 1));
+        if ((*tea)->branch.args[i] == NULL){
+          (*tea)->branch.args[i] = stemToTea(stem->branch.args[i], max_tea_track_depth - 1);
+        } else {
+          queue_push(generalizeQueue, mkGEntry(&((*tea)->branch.args[i]),
+                                               stem->branch.args[i],
+                                               entry->depth + 1));
+        }
       }
     }
     VG_(free)(entry);

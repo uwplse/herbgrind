@@ -73,6 +73,7 @@ Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
   // instead, set it to -1, so that any update of it to a non-negative
   // number will trigger a tracking.
   result->evalinfo.max_error = -1;
+  result->evalinfo.max_local = -1;
 
   return result;
 }

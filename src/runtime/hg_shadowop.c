@@ -212,11 +212,17 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
         // Set up the stem record of this operation.
         initBranchStemNode(destLocation->values[i], opInfo, 1,
                            argLocation->values[i]);
+        // Do a local error computation.
+        mpfr_t localArg, localResult;
+        mpfr_inits2(8 * el_size(argType), localArg, localResult, NULL);
+        mpfr_set(localArg, arg->value, MPFR_RNDN);
+        mpfr_func(localResult, localArg, MPFR_RNDN);
         // Evaluate the computed value against the high precision
         // shadow result.
         evaluateOpError_helper(destLocation->values[i],
                                argType, i,
-                               opInfo);
+                               opInfo, mpfr_get_d(localResult, MPFR_RNDN));
+        mpfr_clears(localArg, localResult, NULL);
       }
       // Copy across the rest of the values from the argument
       for (;i < capacity(argType); ++i){
@@ -570,11 +576,16 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         initBranchStemNode(destLocation->values[i], opInfo, 1,
                            arg2Location->values[i]);
 
+        mpfr_t localArg, localResult;
+        mpfr_inits2(8 * el_size(argType), localArg, localResult, NULL);
+        mpfr_set(localArg, arg2Location->values[i]->value, MPFR_RNDN);
+        mpfr_func(localResult, localArg, MPFR_RNDN);
         // Now, we'll evaluate the shadow values against each
         // channel of the computed result.
         evaluateOpError_helper(destLocation->values[i],
                                argType, i,
-                               opInfo);
+                               opInfo, mpfr_get_d(localResult, MPFR_RNDN));
+        mpfr_clears(localArg, localResult, NULL);
       }
     }
     break;
@@ -730,11 +741,18 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         initBranchStemNode(destLocation->values[i], opInfo, 2,
                            arg1val,
                            arg2val);
+        mpfr_t localArg1, localArg2, localResult;
+        mpfr_inits2(8 * el_size(argType), localArg1, localArg2, localResult, NULL);
+        mpfr_set(localArg1, arg1val->value, MPFR_RNDN);
+        mpfr_set(localArg2, arg2val->value, MPFR_RNDN);
+        mpfr_func(localResult, localArg1, localArg2, MPFR_RNDN);
         // Now, we'll evaluate the shadow value against the result
         // value, for each of it's channels.
         evaluateOpError_helper(destLocation->values[i],
                                argType, i,
-                               opInfo);
+                               opInfo,
+                               mpfr_get_d(localResult, MPFR_RNDN));
+        mpfr_clears(localArg1, localArg2, localResult, NULL);
       }
       // Copy across the rest of the values from the first argument
       for (;i < capacity(argType); ++i){
@@ -848,11 +866,17 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         // Set up the stem record of this operation.
         initBranchStemNode(destLocation->values[0], opInfo, 1,
                            arg1);
+        mpfr_t localArg, localResult;
+        mpfr_inits2(8 * el_size(argType), localArg, localResult, NULL);
+        mpfr_set(localArg, arg1->value, MPFR_RNDN);
+        mpfr_neg(localResult, localArg, MPFR_RNDN);
         // Now, we'll evaluate the shadow value against the result
         // value.
         evaluateOpError_helper(destLocation->values[0],
                                argType, 0,
-                               opInfo);
+                               opInfo,
+                               mpfr_get_d(localResult, MPFR_RNDN));
+        mpfr_clears(localArg, localResult, NULL);
       } else
         destLocation = NULL;
     }
@@ -1050,10 +1074,16 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
     initBranchStemNode(destLocation->values[i], opInfo, 2,
                        arg2Location->values[i],
                        arg3Location->values[i]);
+    mpfr_t localArg2, localArg3, localResult;
+    mpfr_inits2(8 * el_size(type), localArg2, localArg3, localResult, NULL);
+    mpfr_set(localArg2, arg2Location->values[i]->value, MPFR_RNDN);
+    mpfr_set(localArg3, arg3Location->values[i]->value, MPFR_RNDN);
+    mpfr_func(localResult, localArg2, localArg3, MPFR_RNDN);
     // Now let's compare the computed value to the high precision result.
     evaluateOpError_helper(destLocation->values[i],
                            type, i,
-                           opInfo);
+                           opInfo,
+                           mpfr_get_d(localResult, MPFR_RNDN));
   }
 
   // Put the resulting location in the space for the dest temp.
@@ -1162,10 +1192,18 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
                 ((double*)opInfo->arg_values[2])[0],
                 ((double*)opInfo->arg_values[3])[0]);
   }
+  mpfr_t localArg2, localArg3, localArg4, localResult;
+  mpfr_inits2(8 * el_size(argType), localArg2, localArg3, localArg4, localResult, NULL);
+  mpfr_set(localArg2, arg2->value, MPFR_RNDN);
+  mpfr_set(localArg3, arg3->value, MPFR_RNDN);
+  mpfr_set(localArg4, arg4->value, MPFR_RNDN);
+  mpfr_func(localResult, localArg2, localArg3, localArg4, MPFR_RNDN);
   // Now, we'll evaluate the shadow value against the result value.
   evaluateOpError_helper(destLocation->values[0],
                          argType, 0,
-                         opInfo);
+                         opInfo,
+                         mpfr_get_d(localResult, MPFR_RNDN));
+  mpfr_clears(localArg2, localArg3, localArg4, localResult, NULL);
 
   // Put the resulting location in the space for the dest temp.
   if (print_moves && destLocation != NULL){
