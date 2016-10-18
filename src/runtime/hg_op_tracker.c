@@ -121,6 +121,17 @@ void writeReport(const HChar* filename){
     return;
   }
 
+  if (report_exprs)
+    // For each expression, counting from the back where the bigger
+    // expressions should be, eliminate subexpressions from the list
+    // for reporting.
+    for(int i = VG_(sizeXA)(tracked_ops) - 1; i >= 0; --i){
+      Op_Info** entry = VG_(indexXA)(tracked_ops, i);
+      Op_Info* opinfo = *entry;
+      if (opinfo == NULL) continue;
+      recursivelyClearChildren(opinfo->tea);
+    }
+
   // Sort the entries by maximum error.
   VG_(sortXA)(tracked_ops);
 
