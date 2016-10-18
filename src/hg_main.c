@@ -152,6 +152,7 @@ const HChar* outfile_path = NULL;
 SizeT max_print_depth = 10;
 SizeT max_expr_string_size = 1024;
 SizeT max_tea_track_depth = 10;
+SizeT max_num_regimes = 64;
 
 SizeT longprint_len = 15;
 Bool print_in_blocks = False;
@@ -169,6 +170,7 @@ Bool report_exprs = True;
 static Bool hg_process_cmd_line_option(const HChar* arg){
   if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX) {}
   else if VG_DBL_CLO(arg, "--error-threshold", error_threshold) {}
+  else if VG_INT_CLO(arg, "--region-granularity", max_num_regimes) {}
   else if VG_INT_CLO(arg, "--max-tea-track-depth", max_tea_track_depth) {}
   else if VG_XACT_CLO(arg, "--human", human_readable, True) {}
   else if VG_XACT_CLO(arg, "--machine", human_readable, False) {}

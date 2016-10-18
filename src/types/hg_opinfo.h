@@ -92,6 +92,7 @@ struct _Eval_Info {
   double total_local;
   // The number of times we've evaluated the error of this operation.
   SizeT num_calls;
+  double** regimes_data;
 };
 
 struct _Op_Info {

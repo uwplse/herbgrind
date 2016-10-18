@@ -162,3 +162,23 @@ unsigned long long ulpd(double x, double y) {
 
   return xx >= yy ? xx - yy : yy - xx;
 }
+
+void updateRegimes(double** regimes_data, SizeT arity, ...){
+  va_list args;
+  va_start(args, arity);
+  for (int i = 0; i < arity; ++i){
+    double coord = va_arg(args, double);
+    if (coord != coord || coord == INFINITY || coord == -INFINITY){
+      continue;
+    }
+    unsigned long long bucket_size = (ULLONG_MAX - 1) / max_num_regimes;
+    int bucket = (*((long long*) &coord)) / bucket_size;
+    if (regimes_data[i][bucket] != regimes_data[i][bucket]){
+      regimes_data[i][bucket] = coord;
+    }
+    if (regimes_data[i][bucket + 1] != regimes_data[i][bucket + 1]){
+      regimes_data[i][bucket + 1] = coord;
+    }
+  }
+  va_end(args);
+}

@@ -32,6 +32,7 @@
 #include "hg_stemtea.h"
 #include "../include/hg_macros.h"
 #include "pub_tool_debuginfo.h"
+#include <math.h>
 
 void getOpDebug_Info(Addr op_addr,
                      const HChar* plain_opname,
@@ -59,6 +60,14 @@ Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
   result->nargs = arity;
   result->op = op;
   getOpDebug_Info(opAddr, name, symbol, &(result->debuginfo));
+
+  ALLOC(result->evalinfo.regimes_data, "regimes data", arity, sizeof(double*));
+  for(int i = 0; i < arity; ++i){
+    ALLOC(result->evalinfo.regimes_data, "regimes data", max_num_regimes + 1, sizeof(double));
+    for(int j = 0; j < max_num_regimes + 1; ++j){
+      result->evalinfo.regimes_data[i][j] = NAN;
+    }
+  }
 
   // Set the evalinfo up.
 

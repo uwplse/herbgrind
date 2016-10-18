@@ -41,6 +41,7 @@ extern SizeT max_tea_track_depth;
 extern Bool human_readable;
 extern SizeT max_print_depth;
 extern SizeT max_expr_string_size;
+extern SizeT max_num_regimes;
 
 extern SizeT longprint_len;
 extern Bool print_in_blocks;
