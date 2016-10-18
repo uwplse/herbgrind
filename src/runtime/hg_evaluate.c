@@ -67,14 +67,6 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   mpfr_clear(ulpsErrorM);
   mpfr_clear(bitsErrorM);
 
-  if (report_exprs){
-    // If the opfinfo doesn't have an tea assigned yet, give it a strict
-    // translation of the tea assigned to this shadow value. If it does,
-    // generalize the tea sufficiently to match the tea of the shadow
-    // val.
-    updateTea(opinfo, shadowVal->stem);
-  }
-
   // Update the persistent op record
   if (bitsError > opinfo->evalinfo.max_error){
     // This tests whether we didnt want to track it before, but do
@@ -86,6 +78,14 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
     // Update the max error, since the error of this operation
     // instance was greater than any error this operation has seen before.
     opinfo->evalinfo.max_error = bitsError;
+    if (report_exprs){
+      // If the opfinfo doesn't have an tea assigned yet, give it a strict
+      // translation of the tea assigned to this shadow value. If it does,
+      // generalize the tea sufficiently to match the tea of the shadow
+      // val.
+      updateTea(opinfo, shadowVal->stem);
+    }
+
   }
   opinfo->evalinfo.total_error += bitsError;
   opinfo->evalinfo.num_calls++;
