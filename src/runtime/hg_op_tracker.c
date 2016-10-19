@@ -63,7 +63,6 @@ void startTrackingOp(Op_Info* opinfo){
   if (tracked_ops == NULL){
     tracked_ops = VG_(newXA)(VG_(malloc), "op tracker",
                              VG_(free), sizeof(Op_Info*));
-    VG_(setCmpFnXA)(tracked_ops, cmp_debuginfo);
   }
   VG_(addToXA)(tracked_ops, &opinfo);
 }
@@ -96,9 +95,21 @@ void recursivelyClearChildren(TeaNode* _node){
   }
 }
 
-Int cmp_debuginfo(const void* a, const void* b){
-  return ((const Op_Info*)b)->evalinfo.max_error -
-    ((const Op_Info*)a)->evalinfo.max_error;
+Word cmp_debuginfo(const Op_Info** a, const Op_Info** b){
+  if (*a == NULL){
+    return 1;
+  } else if (*b == NULL){
+    return -1;
+  }
+  double aMax = (*a)->evalinfo.max_error;
+  double bMax = (*b)->evalinfo.max_error;
+  if (aMax > bMax){
+    return -1;
+  } else if (aMax < bMax){
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 void writeReport(const HChar* filename){
@@ -132,6 +143,7 @@ void writeReport(const HChar* filename){
       recursivelyClearChildren(opinfo->tea);
     }
 
+  VG_(setCmpFnXA)(tracked_ops, (XACmpFn_t)cmp_debuginfo);
   // Sort the entries by maximum error.
   VG_(sortXA)(tracked_ops);
 

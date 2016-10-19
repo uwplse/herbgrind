@@ -47,7 +47,7 @@ void startTrackingOp(Op_Info* opinfo);
 void clearTrackedOp(Op_Info* opinfo);
 // A compare function which sorts Op_Info's in order of most max error
 // first.
-Int cmp_debuginfo(const void* a, const void* b);
+Word cmp_debuginfo(const Op_Info** a, const Op_Info** b);
 // Removes all subexpressions of the given node from the tracker.
 void recursivelyClearChildren(TeaNode* node);
 
