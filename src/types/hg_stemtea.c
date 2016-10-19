@@ -682,14 +682,19 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
                             ")");
     if (verbose_linenums &&
         tea->branch.op->debuginfo.src_filename != NULL &&
-        parent_filename != NULL &&
-        (VG_(strcmp)(tea->branch.op->debuginfo.src_filename, parent_filename) ||
-         tea->branch.op->debuginfo.src_line != parent_linenum)){
-      bufpos += VG_(snprintf)(buf + bufpos,
-                              max_expr_string_size - bufpos,
-                              ":[%s:%u]",
-                              tea->branch.op->debuginfo.src_filename,
-                              tea->branch.op->debuginfo.src_line);
+        parent_filename != NULL){
+      if (VG_(strcmp)(tea->branch.op->debuginfo.src_filename, parent_filename)){
+        bufpos += VG_(snprintf)(buf + bufpos,
+                                max_expr_string_size - bufpos,
+                                ":[%s:%u]",
+                                tea->branch.op->debuginfo.src_filename,
+                                tea->branch.op->debuginfo.src_line);
+      } else if (tea->branch.op->debuginfo.src_line != parent_linenum){
+        bufpos += VG_(snprintf)(buf + bufpos,
+                                max_expr_string_size - bufpos,
+                                ":[:%u]",
+                                tea->branch.op->debuginfo.src_line);
+      }
     }
   }
   return buf;
