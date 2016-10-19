@@ -1096,7 +1096,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
     /* updateRegimes(opInfo->evalinfo.regimes_data, 2, */
     /*               mpfr_get_d(arg2Location->values[i]->value, MPFR_RNDN), */
     /*               mpfr_get_d(arg3Location->values[i]->value, MPFR_RNDN)); */
-    mpfr_clears(localArg2, localArg2, localResult, NULL);
+    mpfr_clears(localArg2, localArg3, localResult, NULL);
   }
 
   // Put the resulting location in the space for the dest temp.
