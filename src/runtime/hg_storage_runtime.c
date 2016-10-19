@@ -381,8 +381,10 @@ void setLoc__(Addr index, ShadowLocation* newLoc, LocType move_type,
   /*            "but the move had a type with capacity %lu, " */
   /*            "and the location only has capacity %lu\n", */
   /*            newLoc, capacity(move_type), capacity(newLoc->type)); */
-  if (newLoc != NULL && capacity(move_type) > capacity(newLoc->type))
+  if (newLoc != NULL && capacity(move_type) > capacity(newLoc->type)){
     VG_(printf)("Bad location type found (when moving from temp to memory/thread state)!!\n");
+    tl_assert(0);
+  }
   if (newLoc == NULL || move_type != newLoc->type){
     for (SizeT i = 0; i < capacity(move_type); ++i){
       setter(index + el_size(move_type) * i, NULL);

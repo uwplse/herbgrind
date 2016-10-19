@@ -1278,8 +1278,16 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type){
       if (print_moves)
         VG_(printf)("Got non-null shadow location at %lu\n", tmp_num);
       return location;
+    } else if ((location->type == Lt_Double &&
+           type == Lt_Doublex2) ||
+          (location->type == Lt_Float &&
+           type == Lt_Floatx4)){
+      ShadowLocation* newLocation = mkShadowLocation_bare(type);
+      newLocation->values[0] = location->values[0];
+      setTemp(tmp_num, newLocation);
+      return newLocation;
     } else {
-      VG_(printf)("Bad location type found (when getting arguments of operation)!!!\n");
+        VG_(printf)("Bad location type found (when getting arguments of operation)!!!\n");
     }
   }
  
