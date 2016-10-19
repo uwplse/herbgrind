@@ -172,8 +172,18 @@ wc:
 clean-deps:
 	rm -rf valgrind/ deps/
 
+clean:
+	rm vgcore*
+
 clear-preload:
 	rm valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/vgpreload_herbgrind*
 
+.PHONY: test backup-logs
+
 test: compile
 	python bench/test.py
+
+backup-logs:
+	tar czf logs.tar.gz logs
+	rsync logs.tar.gz uwplse.org:/var/www/herbie/herbgrind/$(shell hostname)_logs.tar.gz
+	rm logs.tar.gz
