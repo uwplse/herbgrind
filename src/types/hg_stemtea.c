@@ -35,6 +35,7 @@
 #include "../include/hg_options.h"
 #include "../types/hg_queue.h"
 
+#include "pub_tool_debuginfo.h"
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcbase.h"
 #include "pub_tool_mallocfree.h"
@@ -576,12 +577,14 @@ char* teaToString(TeaNode* tea, SizeT* numVars_out){
                                  tea->branch.node_map, var_map,
                                  &nextvar,
                                  max_tea_track_depth > max_print_depth ?
-                                 max_print_depth : max_tea_track_depth);
+                                 max_print_depth : max_tea_track_depth,
+                                 NULL, 0);
   } else {
     result = teaToStringWithMaps(tea, NULL_POS, NULL, var_map,
                                  &nextvar,
                                  max_tea_track_depth > max_print_depth ?
-                                 max_print_depth : max_tea_track_depth);
+                                 max_print_depth : max_tea_track_depth,
+                                 NULL, 0);
   }
   if (numVars_out != NULL){
     *numVars_out = VG_(HT_count_nodes)(var_map);
@@ -626,7 +629,9 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
                           VgHashTable* node_map,
                           VgHashTable* var_map,
                           int* nextvar,
-                          SizeT max_depth){
+                          SizeT max_depth,
+                          const char* parent_filename,
+                          int parent_linenum){
   char* buf;
   SizeT bufpos = 0;
   ALLOC(buf, "ast string", max_expr_string_size, sizeof(char));
@@ -664,13 +669,28 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
       char* subexpr = teaToStringWithMaps(tea->branch.args[argIdx],
                                           newPos, node_map, var_map,
                                           nextvar,
-                                          max_depth - 1);
+                                          max_depth - 1,
+                                          tea->branch.op->debuginfo.src_filename,
+                                          tea->branch.op->debuginfo.src_line);
       VG_(free)(newPos.data);
       bufpos += VG_(snprintf)(buf + bufpos, max_expr_string_size - bufpos,
                               " %s", subexpr);
       VG_(free)(subexpr);
     }
-    VG_(snprintf)(buf + bufpos, max_expr_string_size - bufpos, ")");
+    bufpos += VG_(snprintf)(buf + bufpos,
+                            max_expr_string_size - bufpos,
+                            ")");
+    if (verbose_linenums &&
+        tea->branch.op->debuginfo.src_filename != NULL &&
+        parent_filename != NULL &&
+        (VG_(strcmp)(tea->branch.op->debuginfo.src_filename, parent_filename) ||
+         tea->branch.op->debuginfo.src_line != parent_linenum)){
+      bufpos += VG_(snprintf)(buf + bufpos,
+                              max_expr_string_size - bufpos,
+                              ":[%s:%u]",
+                              tea->branch.op->debuginfo.src_filename,
+                              tea->branch.op->debuginfo.src_line);
+    }
   }
   return buf;
 }
