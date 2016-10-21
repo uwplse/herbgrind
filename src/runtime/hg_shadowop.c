@@ -1284,7 +1284,7 @@ ShadowLocation* getShadowLocation(UWord tmp_num, LocType type){
                  location->type == Lt_Floatx2) &&
                 type == Lt_Floatx4) ||
                (location->type == Lt_Float &&
-                type == Lt_Floatx2){
+                type == Lt_Floatx2)){
       ShadowLocation* newLocation = mkShadowLocation_bare(type);
       newLocation->values[0] = location->values[0];
       setTemp(tmp_num, newLocation);
