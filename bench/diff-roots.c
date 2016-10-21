@@ -15,8 +15,8 @@ double rand_double() {
 int main(int argc, char** argv){
   double x,y;
   for (int i = 0; i < 1000; i++){
-    HERBGRIND_BEGIN();
     x = rand_double();
+    HERBGRIND_BEGIN();
     y = sqrt(x + 1) - sqrt(x);
     HERBGRIND_END();
     printf("%e\n", y);
