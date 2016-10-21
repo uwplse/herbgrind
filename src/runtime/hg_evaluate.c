@@ -107,8 +107,6 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
 
       VG_(printf)("The shadowed val is %se%ld, and the actual (computed) val is %f.\n",
                   shadowValstr, shadowValexpt, actualVal);
-      VG_(printf)("The shadowed val is %se%ld, and the actual (computed) val is %f.\n",
-                  shadowValstr, shadowValexpt, actualVal);
       mpfr_free_str(shadowValstr);
     }
     else if (print_errors){
