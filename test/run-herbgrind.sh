@@ -9,8 +9,12 @@ fi
 
 $HERBGRIND_DIR/valgrind/herbgrind-install/bin/valgrind --tool=herbgrind --outfile=output.gh $*
 mkdir -p $HERBGRIND_DIR/logs
-FILENAME=$HERBGRIND_DIR/logs/`/usr/bin/date -Iseconds`-`git rev-parse HEAD`.gh
-echo $* > $FILENAME
-echo "=============================" >> $FILENAME
-echo >> $FILENAME
-cat output.gh >> $FILENAME
+FILENAME=`/usr/bin/env date -Iseconds`-`git -C $HERBGRIND_DIR rev-parse HEAD`.gh
+FILEPATH=$HERBGRIND_DIR/logs/$FILENAME
+echo $* > $FILEPATH
+echo "=============================" >> $FILEPATH
+echo >> $FILEPATH
+cat output.gh >> $FILEPATH
+cd $HERBGRIND_DIR/logs
+rm most-recent.gh
+ln -s $FILENAME most-recent.gh
