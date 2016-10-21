@@ -261,6 +261,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
   case Iop_V128to32:
   case Iop_64UtoV128:
   case Iop_SetV128lo64:
+  case Iop_32Uto64:
+  case Iop_64to32:
     {
       LocType resultType;
       LocType argType;
@@ -297,6 +299,14 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
       case Iop_SetV128lo64:
         argType = Lt_Double;
         resultType = Lt_Doublex2;
+        break;
+      case Iop_32Uto64:
+        argType = Lt_Float;
+        resultType = Lt_Floatx2;
+        break;
+      case Iop_64to32:
+        argType = Lt_Floatx2;
+        resultType = Lt_Float;
         break;
       default:
         return;
