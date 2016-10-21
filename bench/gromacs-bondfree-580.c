@@ -1,9 +1,14 @@
 #include <math.h>
-
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include "herbgrind.h"
-
+ 
+static inline float iprod(float* a,float* b)
+{
+  return (a[0]*b[0]+a[1]*b[1]+a[2]*b[2]);
+}
+ 
 double rand_double() {
         long long c0 = rand()&0xffff;
         long long c1 = rand()&0xffff;
@@ -22,15 +27,13 @@ float rand_legit_positive_float() {
 }
  
 int main(int argc, char** argv){
-  double a, b;
-  double nrkj;
-  for (int i = 0; i < 3; i++){
-    a = rand_legit_positive_float();
-    b = rand_legit_positive_float();
-    HERBGRIND_BEGIN();
-    nrkj = sqrt(a + b);
-    HERBGRIND_END();
-    printf("%e\n", nrkj);
-  }
+  float x, y;
+  float z;
+  x = rand_legit_positive_float();
+  y = rand_legit_positive_float();
+  HERBGRIND_BEGIN();
+  z = sqrt(x + y);
+  HERBGRIND_END();
+  printf("%e\n", z);
   return 0;
 }
