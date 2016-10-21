@@ -27,13 +27,17 @@ float rand_legit_positive_float() {
 }
  
 int main(int argc, char** argv){
-  float x, y;
-  float z;
-  x = rand_legit_positive_float();
-  y = rand_legit_positive_float();
-  HERBGRIND_BEGIN();
-  z = sqrt(x + y);
-  HERBGRIND_END();
-  printf("%e\n", z);
+  float r_kj[3];
+  float nrkj2, nrkj;
+  for (int i = 0; i < 10; i++){
+    r_kj[0] = rand_legit_positive_float();
+    r_kj[1] = rand_legit_positive_float();
+    r_kj[2] = rand_legit_positive_float();
+    HERBGRIND_BEGIN();
+    nrkj2 = iprod(r_kj, r_kj);
+    nrkj = sqrt(nrkj2);
+    HERBGRIND_END();
+    printf("%e\n", nrkj);
+  }
   return 0;
 }
