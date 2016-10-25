@@ -1363,3 +1363,35 @@ ShadowValue* getShadowValue(ShadowLocation* loc, UWord index,
   initLeafStemNode(loc->values[index]);
   return loc->values[index];
 }
+
+void replaceWithExactValue(double* valueAddr){
+  ShadowValue* shadowVal = getMem((Addr)valueAddr);
+  if (shadowVal == NULL){
+    VG_(printf)("Couldn't find shadow value at %p\n", valueAddr);
+    return;
+  }
+  *valueAddr = mpfr_get_d(shadowVal->value, MPFR_RNDN);
+}
+void replaceWithExactValueF(float* valueAddr){
+  ShadowValue* shadowVal = getMem((Addr)valueAddr);
+  if (shadowVal == NULL) return;
+  *valueAddr = mpfr_get_flt(shadowVal->value, MPFR_RNDN);
+}
+void forceEvaluateValue(Addr valueAddr){
+  ShadowValue* shadowVal = getMem(valueAddr);
+  if (shadowVal->stem->type == Node_Leaf){
+    VG_(printf)("Cannot evaluate the error of a leaf node!!!\n");
+    return;
+  }
+  evaluateOpError(shadowVal, *(double*)valueAddr, shadowVal->stem->branch.op,
+                  *(double*)valueAddr, True);
+}
+void forceEvaluateValueF(Addr valueAddr){
+  ShadowValue* shadowVal = getMem(valueAddr);
+  if (shadowVal->stem->type == Node_Leaf){
+    VG_(printf)("Cannot evaluate the error of a leaf node!!!\n");
+    return;
+  }
+  evaluateOpError(shadowVal, *(float*)valueAddr, shadowVal->stem->branch.op,
+                  *(float*)valueAddr, True);
+}

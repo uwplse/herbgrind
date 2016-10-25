@@ -138,6 +138,18 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
   case VG_USERREQ__PERFORM_OP:
     performOp((OpType)arg[1], (double*)arg[2], (double*)arg[3]);
     break;
+  case VG_USERREQ__GET_EXACT:
+    replaceWithExactValue((double*)arg[1]);
+    break;
+  case VG_USERREQ__GET_EXACTF:
+    replaceWithExactValueF((float*)arg[1]);
+    break;
+  case VG_USERREQ__FORCE_EVALUATE:
+    forceEvaluateValue((Addr)arg[1]);
+    break;
+  case VG_USERREQ__FORCE_EVALUATEF:
+    forceEvaluateValueF((Addr)arg[1]);
+    break;
   default:
     return False;
   }

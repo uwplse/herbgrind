@@ -43,23 +43,27 @@ typedef enum {
   VG_USERREQ__PRINT,
   VG_USERREQ__PRINTNUM,
 
-  VG_USERREQ__PERFORM_OP
+  VG_USERREQ__PERFORM_OP,
+  VG_USERREQ__GET_EXACT,
+  VG_USERREQ__GET_EXACTF,
+  VG_USERREQ__FORCE_EVALUATE,
+  VG_USERREQ__FORCE_EVALUATEF,
 } Vg_HerbGrindClientRequests;
 
-#define HERBGRIND_BEGIN() \
-  (__extension__({unsigned long _qzz_res; \
+#define HERBGRIND_BEGIN()                                               \
+  (__extension__({unsigned long _qzz_res;                               \
       VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0 /* default return (What does that mean?) */, \
-                                 VG_USERREQ__BEGIN, \
-                                 0, 0, 0, 0, 0); \
-      _qzz_res; \
+                                 VG_USERREQ__BEGIN,                     \
+                                 0, 0, 0, 0, 0);                        \
+      _qzz_res;                                                         \
     }))
 
-#define HERBGRIND_END() \
-  (__extension__({unsigned long _qzz_res; \
-      VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0, \
+#define HERBGRIND_END()                           \
+  (__extension__({unsigned long _qzz_res;         \
+      VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,     \
                                  VG_USERREQ__END, \
-                                 0, 0, 0, 0, 0); \
-      _qzz_res; \
+                                 0, 0, 0, 0, 0);  \
+      _qzz_res;                                   \
     }))
 
 #define HERBGRIND_PRINT(_qzz_mesg) \
@@ -79,11 +83,43 @@ typedef enum {
     }))
 
 #define HERBGRIND_PERFORM_OP(_qzz_op, _qzz_result_addr, _qzz_args)      \
-  (__extension__({unsigned long _qzz_res; \
-      VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0, \
+  (__extension__({unsigned long _qzz_res;                               \
+      VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,                           \
                                  VG_USERREQ__PERFORM_OP, \
                                  _qzz_op, _qzz_result_addr, _qzz_args, 0, 0); \
       _qzz_res; \
+    }))
+
+#define HERBGRIND_GET_EXACT(_qzz_varaddr)                               \
+  (__extension__({unsigned long _qzz_res;                               \
+      VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,                           \
+                                 VG_USERREQ__GET_EXACT,                 \
+                                 _qzz_varaddr, 0, 0, 0, 0);             \
+      _qzz_res;                                                         \
+    }))
+
+#define HERBGRIND_GET_EXACTF(_qzz_varaddr)                              \
+  (__extension__({unsigned long _qzz_res;                               \
+      VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,                           \
+                                 VG_USERREQ__GET_EXACT,                 \
+                                 _qzz_varaddr, 0, 0, 0, 0);             \
+      _qzz_res;                                                         \
+    }))
+
+#define HERBGRIND_FORCE_EVALUATE(_qzz_varaddr)                  \
+  (__extension__({unsigned long _qzz_res;                       \
+      VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,                   \
+                                 VG_USERREQ__FORCE_EVALUATE,    \
+                                 _qzz_varaddr, 0, 0, 0, 0);     \
+      _qzz_res;                                                 \
+    }))
+
+#define HERBGRIND_FORCE_EVALUATEF(_qzz_varaddr)                 \
+  (__extension__({unsigned long _qzz_res;                       \
+      VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,                   \
+                                 VG_USERREQ__FORCE_EVALUATE,    \
+                                 _qzz_varaddr, 0, 0, 0, 0);     \
+      _qzz_res;                                                 \
     }))
 
 #endif

@@ -318,7 +318,7 @@ void performOp(OpType op, double* result, double* args){
     break;
   }
   // And finally, evaluate the error of the operation.
-  evaluateOpError(res_shadow, *result, entry->info, mpfr_get_d(localResult, MPFR_RNDN));
+  evaluateOpError(res_shadow, *result, entry->info, mpfr_get_d(localResult, MPFR_RNDN), False);
 
   // If we're printing debug info about where values are flowing, let
   // the user know that we're putting the result of this operation in

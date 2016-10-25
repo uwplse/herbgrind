@@ -38,7 +38,8 @@
 #include "pub_tool_libcassert.h"
 
 void evaluateOpError(ShadowValue* shadowVal, double actualVal,
-                     Op_Info* opinfo, double localResult){
+                     Op_Info* opinfo, double localResult,
+                     Bool force){
   // We're going to do the log in mpfr since that way we don't have to
   // worry about pulling in the normal math library, which is
   // non-trivial in a valgrind tool. But, we can't get ulps from an
@@ -85,8 +86,10 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
       startTrackingOp(opinfo);
     }
     opinfo->evalinfo.max_local = bitsLocal;
+  } else if (force && !isTrackingOp(opinfo)){
+    startTrackingOp(opinfo);
   }
-  if (report_exprs && bitsLocal >= error_threshold){
+  if (report_exprs && (bitsLocal >= error_threshold || force)){
     // If the opfinfo doesn't have an tea assigned yet, give it a strict
     // translation of the tea assigned to this shadow value. If it does,
     // generalize the tea sufficiently to match the tea of the shadow
@@ -131,12 +134,12 @@ void evaluateOpError_helper(ShadowValue* shadowVal, LocType bytestype, int el_in
   case Lt_Floatx2:
   case Lt_Floatx4:
   case Lt_Floatx8:
-    evaluateOpError(shadowVal, ((float*)(opinfo->dest_value))[el_index], opinfo, localResult);
+    evaluateOpError(shadowVal, ((float*)(opinfo->dest_value))[el_index], opinfo, localResult, False);
     break;
   case Lt_Double:
   case Lt_Doublex2:
   case Lt_Doublex4:
-    evaluateOpError(shadowVal, ((double*)(opinfo->dest_value))[el_index], opinfo, localResult);
+    evaluateOpError(shadowVal, ((double*)(opinfo->dest_value))[el_index], opinfo, localResult, False);
     break;
   default:
     VG_(dmsg)("Hey, those are some big floats! We can't handle those floats!");

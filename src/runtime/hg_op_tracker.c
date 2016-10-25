@@ -66,6 +66,18 @@ void startTrackingOp(Op_Info* opinfo){
   }
   VG_(addToXA)(tracked_ops, &opinfo);
 }
+Bool isTrackingOp(Op_Info* opinfo){
+  if (tracked_ops == NULL){
+    return False;
+  }
+  for(int i = 0; i < VG_(sizeXA)(tracked_ops); ++i){
+    Op_Info** entry = VG_(indexXA)(tracked_ops, i);
+    if (*entry == opinfo){
+      return True;
+    }
+  }
+  return False;
+}
 
 // Assumes no duplicates. Will result in NULL's in the tracked ops
 // list, does not actually remove from the list, just sets matching op

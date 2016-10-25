@@ -53,6 +53,7 @@ void recursivelyClearChildren(TeaNode* node);
 
 // Write out info about each tracked operation to the specified file.
 void writeReport(const char* filename);
+Bool isTrackingOp(Op_Info* opinfo);
 
 char* getCondition(double** regimes_data, SizeT arity);
 

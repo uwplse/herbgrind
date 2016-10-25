@@ -57,4 +57,9 @@ ShadowValue* getShadowValue(ShadowLocation* loc, UWord index,
                             UWord* loc_bytes);
 // Convert IR rounding mode codes to MPFR rounding mode codes.
 mpfr_rnd_t roundmodeIRtoMPFR(IRRoundingMode round);
+
+void replaceWithExactValue(double* valueAddr);
+void replaceWithExactValueF(float* valueAddr);
+void forceEvaluateValue(Addr valueAddr);
+void forceEvaluateValueF(Addr valueAddr);
 #endif //_HG_SHADOWOP
