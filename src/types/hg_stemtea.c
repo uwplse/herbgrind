@@ -75,7 +75,7 @@ void updateTea(Op_Info* op, StemNode* stem){
 }
 
 TeaNode* stemToTea(StemNode* stem, SizeT curDepth){
-  if (curDepth == max_tea_track_depth){
+  if (curDepth >= max_tea_track_depth){
     return NULL;
   }
   switch(stem->type){
