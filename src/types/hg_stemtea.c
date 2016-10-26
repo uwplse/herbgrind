@@ -192,7 +192,7 @@ void generalizeStructure(TeaNode** _tea, StemNode* _stem){
     if ((*tea)->type == Node_Branch && entry->depth < max_tea_track_depth){
       for (int i = 0; i < (*tea)->branch.nargs; ++i){
         if ((*tea)->branch.args[i] == NULL){
-          (*tea)->branch.args[i] = stemToTea(stem->branch.args[i], entry->depth - 1);
+          (*tea)->branch.args[i] = stemToTea(stem->branch.args[i], entry->depth);
         } else {
           queue_push(generalizeQueue, mkGEntry(&((*tea)->branch.args[i]),
                                                stem->branch.args[i],
