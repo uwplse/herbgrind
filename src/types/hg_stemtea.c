@@ -131,6 +131,7 @@ gEntry* mkGEntry(TeaNode** tea, StemNode* stem, SizeT depth){
         1, sizeof(gEntry));
   entry->tea = tea;
   entry->stem = stem;
+  entry->depth = depth;
   return entry;
 }
 void generalizeStructure(TeaNode** _tea, StemNode* _stem){
