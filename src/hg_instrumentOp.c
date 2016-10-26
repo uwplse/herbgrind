@@ -36,15 +36,6 @@
 
 VgHashTable* opinfo_store;
 
-// TODO: It looks like there's a problem here where we might
-// instrument a superblock multiple times. If we do, we end up
-// creating multiple opinfo data structures for it, and we split up
-// it's traces into multiple aggregates. To fix this, we should store
-// initialized opinfo structures in a hash table structure describing
-// where they are. This is made a little tricky by the fact that there
-// can be multiple operations per instruction in some cases, so we
-// can't use addresses as the key.
-
 // Add instrumenting expressions to sb for an operation, storing the
 // result in the temporary at offset. opNum is a zero-based index of
 // which op this is in the current instruction translation.
@@ -613,27 +604,33 @@ Op_Info* populateOpInfo(Addr opAddr, int opNum, int nargs, SizeT arg_size, SizeT
                               VG_(free), sizeof(Op_Info*));
     VG_(HT_add_node)(opinfo_store, entry);
   }
-  if (VG_(sizeXA)(entry->infos) <= opNum){
-    // Allocate and partially setup the argument structure
-    Op_Info* opInfo = mkOp_Info(nargs, op,
-                                opAddr,
-                                getPlainOpname(op),
-                                getOpSymbol(op));
-
-    // Allocate the space for the values we won't know until
-    // runtime, but know their size now.
-    for (int i = 0; i < nargs; ++i){
-      ALLOC(opInfo->arg_values[i],
-            "hg.arg_alloc", 1, arg_size);
-    }
-    ALLOC(opInfo->dest_value,
-          "hg.arg_alloc", 1, result_size);
-    VG_(addToXA)(entry->infos, &opInfo);
-    return opInfo;
-  } else {
-    Op_Info* opInfo = *(Op_Info**)(VG_(indexXA)(entry->infos, opNum));
-    return opInfo;
+  Op_Info* opInfo;
+  // Check to see if we already made an opinfo for this instruction
+  // with this op code.
+  for(int i = 0; i < VG_(sizeXA)(entry->infos); ++i){
+    opInfo = *(Op_Info**)(VG_(indexXA)(entry->infos, i));
+    if (opInfo->op == op)
+      return opInfo;
   }
+  // If we got through all the entries for this instruction, and we
+  // still haven't found a matching op, create one.
+
+  // Allocate and partially setup the argument structure
+  opInfo = mkOp_Info(nargs, op,
+                     opAddr,
+                     getPlainOpname(op),
+                     getOpSymbol(op));
+  
+  // Allocate the space for the values we won't know until
+  // runtime, but know their size now.
+  for (int i = 0; i < nargs; ++i){
+    ALLOC(opInfo->arg_values[i],
+          "hg.arg_alloc", 1, arg_size);
+  }
+  ALLOC(opInfo->dest_value,
+        "hg.arg_alloc", 1, result_size);
+  VG_(addToXA)(entry->infos, &opInfo);
+  return opInfo;
 }
 
 // WARNING: This potentially mutates sbOut, don't reorder. Or do, it
@@ -776,6 +773,8 @@ const HChar* getPlainOpname(IROp op){
   case Iop_Yl2xF64:
   case Iop_Yl2xp1F64:
   case Iop_ScaleF64:
+  case Iop_64to32:
+  case Iop_32Uto64:
   default:
     return "";
 
@@ -906,6 +905,8 @@ const HChar* getOpSymbol(IROp op){
   case Iop_RSqrtStep32Fx4:
   case Iop_RSqrtStep32Fx2:
   case Iop_RSqrtStep64Fx2:
+  case Iop_64to32:
+  case Iop_32Uto64:
   default:
     return "";
   }
