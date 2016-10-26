@@ -636,7 +636,7 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
   SizeT bufpos = 0;
   ALLOC(buf, "ast string", max_expr_string_size, sizeof(char));
 
-  if (tea->type == Node_Leaf || max_depth == 0){
+  if (tea->type == Node_Leaf || max_depth <= 1){
     if (tea->hasConst){
       VG_(snprintf)(buf, max_expr_string_size, "%f", tea->constValue);
     } else {
