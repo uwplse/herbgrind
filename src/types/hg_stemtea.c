@@ -40,8 +40,15 @@
 #include "pub_tool_libcbase.h"
 #include "pub_tool_mallocfree.h"
 
+#include "../runtime/performance_analysis.h"
+
 #include <stdarg.h>
 #include <math.h>
+
+long long unsigned int num_stems;
+long long unsigned int num_stem_bytes;
+long long unsigned int num_teas;
+long long unsigned int num_tea_bytes;
 
 // This file was designed through several levels of code refinement
 // and an executable spec, found in psuedo/aggregateTraces-*.rkt.
@@ -83,6 +90,9 @@ TeaNode* stemToTea(StemNode* stem, SizeT curDepth){
     {
       TeaNode* tea;
       ALLOC(tea, "hg.tea", 1, sizeof(TeaNode));
+      num_teas += 1;
+      num_tea_bytes += sizeof(TeaNode);
+
       tea->type = Node_Leaf;
       tea->hasConst = True;
       tea->constValue = stem->value;
@@ -95,6 +105,9 @@ TeaNode* stemToTea(StemNode* stem, SizeT curDepth){
         return stem->branch.op->tea;
       TeaNode* tea;
       ALLOC(tea, "hg.tea", 1, sizeof(TeaNode));
+      num_teas += 1;
+      num_tea_bytes += sizeof(TeaNode);
+
       tea->type = Node_Branch;
       tea->hasConst = True;
       tea->constValue = stem->value;
@@ -102,6 +115,8 @@ TeaNode* stemToTea(StemNode* stem, SizeT curDepth){
       tea->branch.nargs = stem->branch.nargs;
       ALLOC(tea->branch.args, "hg.tea args",
             tea->branch.nargs, sizeof(TeaNode*));
+      num_tea_bytes += tea->branch.nargs * sizeof(TeaNode*);
+
       for(int i = 0; i < tea->branch.nargs; ++i){
         tea->branch.args[i] = stemToTea(stem->branch.args[i], curDepth + 1);
       }
@@ -479,6 +494,10 @@ void freeNodeMapEntry(void* entry){
 void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
                         SizeT nargs, ...){
   if (!report_exprs) return;
+  ALLOC(val->stem, "hg.stem_branch", 1, sizeof(StemNode));
+  num_stems += 1;
+  num_stem_bytes += sizeof(StemNode);
+
   val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
   // Normalize NaN's
   if (val->stem->value != val->stem->value){
@@ -494,6 +513,7 @@ void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
 
   ALLOC(val->stem->branch.args, "stem args",
         nargs, sizeof(StemNode*));
+  num_stem_bytes += nargs * sizeof(StemNode*);
 
   va_list args;
   va_start(args, nargs);
@@ -511,6 +531,10 @@ void initBranchStemNode(ShadowValue* val, Op_Info* opinfo,
 }
 void initLeafStemNode(ShadowValue* val){
   if (!report_exprs) return;
+  ALLOC(val->stem, "hg.stem_leaf", 1, sizeof(StemNode));
+  num_stems += 1;
+  num_stem_bytes += sizeof(StemNode);
+
   val->stem->value = mpfr_get_d(val->value, MPFR_RNDN);
   // Normalize NaN's
   if (val->stem->value != val->stem->value){
@@ -561,8 +585,11 @@ void disownStemNode(StemNode* stem){
                      curStem->branch.args[i]);
         }
         VG_(free)(curStem->branch.args);
+        num_stem_bytes -= curStem->branch.nargs * sizeof(StemNode*);
       }
       VG_(free)(curStem);
+      num_stems -= 1;
+      num_stem_bytes -= sizeof(StemNode);
     }
   }
 }

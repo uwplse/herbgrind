@@ -34,6 +34,8 @@
 #include "../include/hg_options.h"
 #include "../types/hg_queue.h"
 
+#include "../runtime/performance_analysis.h"
+
 // Some basic valgrind stuff
 #include "pub_tool_tooliface.h"
 #include "pub_tool_mallocfree.h"
@@ -41,6 +43,9 @@
 // Pull in this header file so that we can call the valgrind version
 // of printf and dmsg.
 #include "pub_tool_libcprint.h"
+
+long long unsigned int num_svals;
+long long unsigned int num_sval_bytes;
 
 ShadowLocation* mkShadowLocation(LocType type){
   ShadowLocation* location = mkShadowLocation_bare(type);
@@ -159,13 +164,13 @@ ShadowValue* mkShadowValue(void){
   ShadowValue* result;
   ALLOC(result, "hg.shadow_val", 1, sizeof(ShadowValue));
   result->freeCanary = 0xDEADBEEF;
-  if (report_exprs){
-    ALLOC(result->stem, "hg.shadow_stem", 1, sizeof(StemNode));
-  }
   mpfr_init2(result->value, precision);
   result->ref_count = 0;
   if (print_moves)
     VG_(printf)("Making shadow value %p\n", result);
+
+  num_svals += 1;
+  num_sval_bytes += sizeof(ShadowValue);
   return result;
 }
 
@@ -189,6 +194,8 @@ void disownSV(ShadowValue* sv){
       VG_(printf)("Cleaning up shadow value %p\n", sv);
     }
     mpfr_clear(sv->value);
+    num_svals -= 1;
+    num_sval_bytes -= sizeof(ShadowValue);
     // If report expers is off, then we don't have a stem node.
     if (report_exprs){
       disownStemNode(sv->stem);

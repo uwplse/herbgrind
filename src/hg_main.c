@@ -51,6 +51,8 @@
 #include "pub_tool_libcbase.h"
 #include "mpfr.h"
 
+#include "runtime/performance_analysis.h"
+
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
 static
@@ -177,6 +179,7 @@ Bool print_counts = False;
 Bool print_mallocs = False;
 Bool print_expr_updates = False;
 Bool report_exprs = True;
+Bool print_mem_usage = False;
 Bool verbose_linenums = False;
 
 // Called to process each command line option.
@@ -203,6 +206,7 @@ static Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_STR_CLO(arg, "--outfile", outfile_path) {}
   else if VG_XACT_CLO(arg, "--print-expr-updates", print_expr_updates, True) {}
   else if VG_XACT_CLO(arg, "--report-ops", report_exprs, False) {}
+  else if VG_XACT_CLO(arg, "--print-mem-usage", print_mem_usage, True) {}
   else return False;
   return True;
 }
@@ -216,8 +220,10 @@ static void hg_print_usage(void){
               " --start-off turn off instrumentation until HERBGRIND_BEGIN() is called\n"
               " --outfile=<filepath> the output file path.\n"
               " --report-ops report individual operations instead of expressions\n"
-              " --max-print-depth the maximum depth at which to print floating point expressions extracted from the binary [10]\n"
-              " --max-expr-string-size the maximum size of an expression string. Expressions that need a string longer than this will be truncated [256]"
+              " --max-print-depth the maximum depth at which to print floating point expressions"
+              " extracted from the binary [10]\n"
+              " --max-expr-string-size the maximum size of an expression string."
+              " Expressions that need a string longer than this will be truncated [256]\n"
               );
 }
 static void hg_print_debug_usage(void){
@@ -229,15 +235,32 @@ static void hg_print_debug_usage(void){
               " --print-errors-long print the errors of the operations as they're executed, in long form. This means that we'll print the shadow values to <longprint-len> decimal digits, instead of rounding them\n"
               " --print-moves print every move of a shadow value/location\n"
               " --print-mallocs print every memory allocation\n"
+              " --print-mem-usage before writing the report, print memory usage\n"
               );
 }
 
 // This is called after the program exits, for cleanup and such.
 static void hg_fini(Int exitcode){
+  if (print_mem_usage){
+    VG_(printf)("%llu shadow ops executed.\n", num_shadow_ops);
+    VG_(printf)("%llu shadow vals in existence (%llu bytes).\n",
+                num_svals, num_sval_bytes);
+    VG_(printf)("%llu stems in existence (%llu bytes).\n",
+                num_stems, num_stem_bytes);
+    VG_(printf)("%llu teas in existence (%llu bytes).\n",
+                num_teas, num_tea_bytes);
+  }
   if (print_moves){
     VG_(printf)("Cleaning up runtime...\n");
   }
   cleanup_runtime();
+  if (print_mem_usage){
+    VG_(printf)("After runtime cleanup:\n");
+    VG_(printf)("%llu shadow vals (%llu bytes).\n",
+                num_svals, num_sval_bytes);
+    VG_(printf)("%llu stems (%llu bytes).\n",
+                num_stems, num_stem_bytes);
+  }
 
   // Write out the report
   HChar filename[100];

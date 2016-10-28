@@ -39,6 +39,10 @@
 #include "../types/hg_stemtea.h"
 #include "hg_runtime.h"
 
+#include "performance_analysis.h"
+
+long long unsigned int num_shadow_ops;
+
 // Execute a shadow operation, storing the result of the high
 // precision operation applied to the shadow value at the arg_tmp
 // offset, into the shadow value at the dest_tmp offset. Depending on
@@ -51,6 +55,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
   ShadowValue* dest;
 
   if (!running) return;
+  num_shadow_ops++;
 
   switch(opInfo->op){
     // All the math-y operations
@@ -387,6 +392,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
   ShadowValue* arg2 = NULL;
 
   if (!running) return;
+  num_shadow_ops++;
   switch(opInfo->op){
 
   case Iop_64HLtoV128:
@@ -934,6 +940,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
   LocType type;
   int num_vals;
   if (!running) return;
+  num_shadow_ops++;
 
   // Figure out the underlying math function of the
   // operation. Some are not in the mpfr library directly, but are

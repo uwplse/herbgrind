@@ -1,6 +1,5 @@
-
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie           hg_options.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie          hg_shadowop.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -28,32 +27,10 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _OPTIONS
-#define _OPTIONS
-
-#include "mpfr.h"
-
-extern mpfr_prec_t precision;
-extern double error_threshold;
-extern Bool report_exprs;
-extern SizeT max_tea_track_depth;
-
-extern Bool human_readable;
-extern SizeT max_print_depth;
-extern SizeT max_expr_string_size;
-extern SizeT max_num_regimes;
-
-extern SizeT longprint_len;
-extern Bool print_in_blocks;
-extern Bool print_out_blocks;
-extern Bool print_inputs;
-extern Bool print_errors;
-extern Bool print_errors_long;
-extern Bool print_moves;
-extern Bool print_counts;
-extern Bool print_mallocs;
-extern Bool print_expr_updates;
-extern Bool print_mem_usage;
-extern Bool verbose_linenums;
-
-#endif
+extern long long unsigned int num_shadow_ops;
+extern long long unsigned int num_svals;
+extern long long unsigned int num_sval_bytes;
+extern long long unsigned int num_stems;
+extern long long unsigned int num_stem_bytes;
+extern long long unsigned int num_teas;
+extern long long unsigned int num_tea_bytes;
