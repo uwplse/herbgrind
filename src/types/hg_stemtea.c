@@ -112,6 +112,7 @@ TeaNode* stemToTea(StemNode* stem, SizeT curDepth){
       tea->hasConst = True;
       tea->constValue = stem->value;
       tea->branch.op = stem->branch.op;
+      tea->branch.op->tea = tea;
       tea->branch.nargs = stem->branch.nargs;
       ALLOC(tea->branch.args, "hg.tea args",
             tea->branch.nargs, sizeof(TeaNode*));
