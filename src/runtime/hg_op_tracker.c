@@ -108,7 +108,9 @@ void recursivelyClearChildren(TeaNode* _node){
 }
 
 Word cmp_debuginfo(const Op_Info** a, const Op_Info** b){
-  if (*a == NULL){
+  if (*a == NULL && *b == NULL){
+    return 0;
+  } else if (*a == NULL){
     return 1;
   } else if (*b == NULL){
     return -1;
