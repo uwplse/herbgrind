@@ -282,7 +282,7 @@ void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
             NodeMapEntry oldEntryPrototype;
             oldEntryPrototype.position = position;
             oldEntryPrototype.positionHash = hashPosition(position);
-            VG_(HT_gen_remove)(tea->branch.node_map, &oldEntryPrototype, cmp_position);
+            VG_(free)(VG_(HT_gen_remove)(tea->branch.node_map, &oldEntryPrototype, cmp_position));
 
             // Add the new entry.
             NodeMapEntry* newTeaGroupEntry;
@@ -308,7 +308,7 @@ void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
           NodeMapEntry oldEntryPrototype;
           oldEntryPrototype.position = position;
           oldEntryPrototype.positionHash = hashPosition(position);
-          VG_(HT_gen_remove)(tea->branch.node_map, &oldEntryPrototype, cmp_position);
+          VG_(free)(VG_(HT_gen_remove)(tea->branch.node_map, &oldEntryPrototype, cmp_position));
 
           // Add the new tea map entry.
           NodeMapEntry* newTeaGroupEntry;
@@ -343,7 +343,8 @@ void pruneMapToStructure(TeaNode* tea){
     if (!positionValid(tea, position)){
       NodeMapEntry key = {.position = position,
                           .positionHash = hashPosition(position)};
-      VG_(HT_gen_remove)(tea->branch.node_map, &key, cmp_position);
+      NodeMapEntry* entry = VG_(HT_gen_remove)(tea->branch.node_map, &key, cmp_position);
+      VG_(free)(entry);
     }
   }
   VG_(free)(entries);
