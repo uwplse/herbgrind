@@ -670,6 +670,7 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
   char* buf;
   SizeT bufpos = 0;
   ALLOC(buf, "ast string", max_expr_string_size, sizeof(char));
+  tl_assert2(tea != NULL, "Passed a null tea!\n");
 
   if (tea->type == Node_Leaf || max_depth <= 1){
     if (tea->hasConst){
@@ -680,6 +681,7 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
       } else {
         NodeMapEntry* group_entry;
         lookupPosition(group_entry, node_map, curpos);
+        tl_assert2(group_entry != NULL, "Couldn't find a group entry for node!\n");
         VarMapEntry* var_entry =
           VG_(HT_lookup)(var_map, group_entry->groupIdx);
         if (var_entry == NULL){
@@ -700,6 +702,7 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
       ALLOC(newPos.data, "pos data", newPos.len, sizeof(UInt));
       VG_(memcpy)(newPos.data + 1, curpos.data, curpos.len * sizeof(UInt));
       newPos.data[0] = argIdx;
+      tl_assert2(tea->branch.args[argIdx] != NULL, "Argument is null with max_depth %lu\n", max_depth);
 
       char* subexpr = teaToStringWithMaps(tea->branch.args[argIdx],
                                           newPos, node_map, var_map,
