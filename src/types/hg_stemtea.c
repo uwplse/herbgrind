@@ -195,6 +195,8 @@ void generalizeStructure(TeaNode** _tea, StemNode* _stem){
                            (oldTea->constValue != oldTea->constValue &&
                             stem->value != stem->value))) ? True : False;
       (*tea)->constValue = oldTea->constValue;
+      num_teas += 1;
+      num_tea_bytes += sizeof(TeaNode);
     }
     // If the value this node was initially assigned doesn't match that
     // of the new stem, then it isn't constant across all stems, so mark
