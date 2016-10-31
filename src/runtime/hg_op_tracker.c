@@ -105,6 +105,7 @@ void recursivelyClearChildren(TeaNode* _node){
         clearTrackedOp(child->branch.op);
     }
   }
+  freeQueue(clearQueue);
 }
 
 Word cmp_debuginfo(const Op_Info** a, const Op_Info** b){

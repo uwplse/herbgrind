@@ -218,6 +218,7 @@ void generalizeStructure(TeaNode** _tea, StemNode* _stem){
     }
     VG_(free)(entry);
   }
+  freeQueue(generalizeQueue);
 }
 void mergeBranchNodeMap(TeaNode* tea, StemNode* stem){
   // Take the current node map, from the tea, which maps positions of
@@ -486,6 +487,7 @@ void updateEquivMap(VgHashTable* node_map,
     }
     VG_(free)(entry);
   }
+  freeQueue(updateEquivMapQueue);
 }
 void freeNodeMapEntry(void* entry){
   VG_(free)(((NodeMapEntry*)entry)->position.data);
@@ -593,6 +595,7 @@ void disownStemNode(StemNode* stem){
       num_stem_bytes -= sizeof(StemNode);
     }
   }
+  freeQueue(disownQueue);
 }
 static const char varNames[8] =
   {'x', 'y', 'z', 'w', 'a', 'b', 'c', 'd'};
