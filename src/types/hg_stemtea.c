@@ -207,10 +207,10 @@ void generalizeStructure(TeaNode** _tea, StemNode* _stem){
       (*tea)->hasConst = False;
     }
     // If the result is still a branch, generalize the children
-    if ((*tea)->type == Node_Branch && entry->depth < max_tea_track_depth){
+    if ((*tea)->type == Node_Branch && entry->depth + 1 < max_tea_track_depth){
       for (int i = 0; i < (*tea)->branch.nargs; ++i){
         if ((*tea)->branch.args[i] == NULL){
-          (*tea)->branch.args[i] = stemToTea(stem->branch.args[i], entry->depth);
+          (*tea)->branch.args[i] = stemToTea(stem->branch.args[i], entry->depth + 1);
         } else {
           queue_push(generalizeQueue, mkGEntry(&((*tea)->branch.args[i]),
                                                stem->branch.args[i],
@@ -381,7 +381,7 @@ void printGroups(XArray* groups){
 
 // Check if a given position is valid in a particular tea structure.
 Bool positionValid(TeaNode* tea, NodePos pos){
-  if (pos.len > max_tea_track_depth){
+  if (pos.len >= max_tea_track_depth){
     return False;
   }
   TeaNode* curTea = tea;
@@ -475,7 +475,7 @@ void updateEquivMap(VgHashTable* node_map,
     VG_(HT_add_node)(node_map, newNodeEntry);
 
     // Finally, if this is a branch, run on the children.
-    if (stem->type == Node_Branch && curPos.len < max_tea_track_depth){
+    if (stem->type == Node_Branch && curPos.len + 1 < max_tea_track_depth){
       // To do that, we need to create a new position for each child
       // based off the current position.
       for (UInt argIdx = 0; argIdx < stem->branch.nargs; ++argIdx){
@@ -607,18 +607,19 @@ char* teaToString(TeaNode* tea, SizeT* numVars_out){
   char* result;
   VgHashTable* var_map = VG_(HT_construct)("var map");
   int nextvar = 0;
+  SizeT max_depth =
+    max_tea_track_depth > max_print_depth ?
+    max_print_depth : max_tea_track_depth;
   if (tea->type == Node_Branch){
     result = teaToStringWithMaps(tea, NULL_POS,
                                  tea->branch.node_map, var_map,
                                  &nextvar,
-                                 max_tea_track_depth > max_print_depth ?
-                                 max_print_depth : max_tea_track_depth,
+                                 max_depth,
                                  NULL, 0);
   } else {
     result = teaToStringWithMaps(tea, NULL_POS, NULL, var_map,
                                  &nextvar,
-                                 max_tea_track_depth > max_print_depth ?
-                                 max_print_depth : max_tea_track_depth,
+                                 max_depth,
                                  NULL, 0);
   }
   if (numVars_out != NULL){
@@ -671,8 +672,9 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
   SizeT bufpos = 0;
   ALLOC(buf, "ast string", max_expr_string_size, sizeof(char));
   tl_assert2(tea != NULL, "Passed a null tea!\n");
-
-  if (tea->type == Node_Leaf || max_depth <= 1){
+  if (tea == NULL){
+    VG_(snprintf)(buf, max_expr_string_size, "...");
+  } else if (tea->type == Node_Leaf || max_depth <= 1){
     if (tea->hasConst){
       VG_(snprintf)(buf, max_expr_string_size, "%f", tea->constValue);
     } else {
