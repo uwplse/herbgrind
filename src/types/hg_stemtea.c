@@ -606,8 +606,8 @@ void disownStemNode(StemNode* stem){
   }
   freeQueue(disownQueue);
 }
-static const char varNames[8] =
-  {'x', 'y', 'z', 'w', 'a', 'b', 'c', 'd'};
+static const char varNames[] =
+  {'x', 'y', 'z', 'w', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p'};
 
 char* teaToString(TeaNode* tea, SizeT* numVars_out){
   char* result;
