@@ -56,6 +56,7 @@ long long unsigned int num_tea_bytes;
 void updateTea(Op_Info* op, StemNode* stem){
   if (op->tea == NULL){
     op->tea = stemToTea(stem, 0);
+    op->tea->branch.node_map = getStemEquivs(stem);
     if (print_expr_updates){
       char* teaString = teaToString(op->tea, NULL);
       VG_(printf)("Creating new tea %s\n", teaString);
@@ -101,35 +102,38 @@ TeaNode* stemToTea(StemNode* stem, SizeT curDepth){
     break;
   case Node_Branch:
     {
-      if (stem->branch.op->tea != NULL)
-        return stem->branch.op->tea;
-      TeaNode* tea;
-      ALLOC(tea, "hg.tea", 1, sizeof(TeaNode));
-      num_teas += 1;
-      num_tea_bytes += sizeof(TeaNode);
+      TeaNode* tea = stem->branch.op->tea;
+      if (tea == NULL){
+        ALLOC(tea, "hg.tea", 1, sizeof(TeaNode));
+        num_teas += 1;
+        num_tea_bytes += sizeof(TeaNode);
 
-      tea->type = Node_Branch;
-      tea->hasConst = True;
-      tea->constValue = stem->value;
-      tea->branch.op = stem->branch.op;
-      tea->branch.op->tea = tea;
-      tea->branch.nargs = stem->branch.nargs;
-      ALLOC(tea->branch.args, "hg.tea args",
-            tea->branch.nargs, sizeof(TeaNode*));
-      num_tea_bytes += tea->branch.nargs * sizeof(TeaNode*);
-
-      for(int i = 0; i < tea->branch.nargs; ++i){
-        tea->branch.args[i] = stemToTea(stem->branch.args[i], curDepth + 1);
+        tea->type = Node_Branch;
+        tea->hasConst = True;
+        tea->constValue = stem->value;
+        tea->branch.op = stem->branch.op;
+        tea->branch.nargs = stem->branch.nargs;
+        ALLOC(tea->branch.args, "hg.tea args",
+              tea->branch.nargs, sizeof(TeaNode*));
+        num_tea_bytes += tea->branch.nargs * sizeof(TeaNode*);
+        tea->branch.op->tea = tea;
+        for(int i = 0; i < tea->branch.nargs; ++i){
+          tea->branch.args[i] =
+            stemToTea(stem->branch.args[i],
+                      curDepth + 1);
+        }
+      } else {
+        generalizeStructure(&(tea), stem, curDepth);
       }
-      tea->branch.node_map = getStemEquivs(stem);
       return tea;
     }
     break;
   }
+  tl_assert(0);
   return NULL;
 }
 void addStem(TeaNode* tea, StemNode* stem){
-  generalizeStructure(&(tea), stem);
+  generalizeStructure(&(tea), stem, 0);
   if (tea->type == Node_Branch && stem->type == Node_Branch){
     pruneMapToStructure(tea);
     mergeBranchNodeMap(tea, stem);
@@ -150,7 +154,7 @@ gEntry* mkGEntry(TeaNode** tea, StemNode* stem, SizeT depth){
   entry->depth = depth;
   return entry;
 }
-void generalizeStructure(TeaNode** _tea, StemNode* _stem){
+void generalizeStructure(TeaNode** _tea, StemNode* _stem, SizeT depth){
   // We can't use recursive calls to traverse stems, because they can
   // get really large and the call stack isn't meant to handle that
   // much data. Instead, we use an explicit queue data structure.
@@ -167,7 +171,7 @@ void generalizeStructure(TeaNode** _tea, StemNode* _stem){
   // it might not matter...
   Queue* generalizeQueue = mkQueue();
 
-  queue_push(generalizeQueue, mkGEntry(_tea, _stem, 0));
+  queue_push(generalizeQueue, mkGEntry(_tea, _stem, depth));
 
   while (! queue_empty(generalizeQueue)){
     gEntry* entry = queue_pop(generalizeQueue);
@@ -210,7 +214,8 @@ void generalizeStructure(TeaNode** _tea, StemNode* _stem){
     if ((*tea)->type == Node_Branch && entry->depth + 1 < max_tea_track_depth){
       for (int i = 0; i < (*tea)->branch.nargs; ++i){
         if ((*tea)->branch.args[i] == NULL){
-          (*tea)->branch.args[i] = stemToTea(stem->branch.args[i], entry->depth + 1);
+          (*tea)->branch.args[i] =
+            stemToTea(stem->branch.args[i], entry->depth + 1);
         } else {
           queue_push(generalizeQueue, mkGEntry(&((*tea)->branch.args[i]),
                                                stem->branch.args[i],
@@ -386,6 +391,7 @@ Bool positionValid(TeaNode* tea, NodePos pos){
   }
   TeaNode* curTea = tea;
   for (int i = pos.len - 1; i >= 0; --i){
+    tl_assert2(curTea != NULL, "Tea arg is null when checking for validity of position!\n");
     if (curTea->type == Node_Leaf){
       return False;
     } else if (curTea->branch.nargs <= pos.data[i]){
@@ -671,7 +677,6 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
   char* buf;
   SizeT bufpos = 0;
   ALLOC(buf, "ast string", max_expr_string_size, sizeof(char));
-  tl_assert2(tea != NULL, "Passed a null tea!\n");
   if (tea == NULL){
     VG_(snprintf)(buf, max_expr_string_size, "...");
   } else if (tea->type == Node_Leaf || max_depth <= 1){
