@@ -92,18 +92,35 @@ void clearTrackedOp(Op_Info* opinfo){
     }
   }
 }
+typedef struct _cEntry {
+  TeaNode* node;
+  SizeT depth;
+} cEntry;
+cEntry* mkCEntry(TeaNode* node, SizeT depth);
+cEntry* mkCEntry(TeaNode* node, SizeT depth){
+  cEntry* entry;
+  ALLOC(entry, "clear argument entry",
+        1, sizeof(cEntry));
+  entry->node = node;
+  entry->depth = depth;
+  return entry;
+}
 void recursivelyClearChildren(TeaNode* _node){
   Queue* clearQueue = mkQueue();
-  queue_push(clearQueue, _node);
+  queue_push(clearQueue, mkCEntry(_node, 0));
   while (! queue_empty(clearQueue)){
-    TeaNode* node = queue_pop(clearQueue);
-    if (node->type != Node_Branch) return;
-    for(int i = 0; i < node->branch.nargs; ++i){
-      TeaNode* child = node->branch.args[i];
-      queue_push(clearQueue, child);
-      if (child->type == Node_Branch)
-        clearTrackedOp(child->branch.op);
+    cEntry* entry = queue_pop(clearQueue);
+    TeaNode* node = entry->node;
+    if (node->type == Node_Branch && entry->depth < max_tea_track_depth){
+      for(int i = 0; i < node->branch.nargs; ++i){
+        TeaNode* child = node->branch.args[i];
+        if (child != NULL && child->type == Node_Branch){
+          queue_push(clearQueue, mkCEntry(child, entry->depth + 1));
+          clearTrackedOp(child->branch.op);
+        }
+      }
     }
+    VG_(free)(entry);
   }
   freeQueue(clearQueue);
 }
