@@ -71,8 +71,8 @@ void updateTea(Op_Info* op, StemNode* stem){
     if (print_expr_updates){
       newTeaString = teaToString(op->tea, NULL);
       if (VG_(strcmp)(origTeaString, newTeaString)){
-        VG_(printf)("Updating tea from %s to %s\n",
-                    origTeaString, newTeaString);
+        VG_(printf)("Updating tea %p from %s to %s\n",
+                    op->tea, origTeaString, newTeaString);
       } else {
         VG_(printf)(".");
       }
@@ -688,7 +688,15 @@ char* teaToStringWithMaps(TeaNode* tea, NodePos curpos,
       } else {
         NodeMapEntry* group_entry;
         lookupPosition(group_entry, node_map, curpos);
-        tl_assert2(group_entry != NULL, "Couldn't find a group entry for node!\n");
+        if (group_entry == NULL){
+          VG_(printf)("Couldn't find a group entry for node %p at position ",
+                      tea);
+          printPosition(curpos);
+          VG_(printf)("\n");
+        }
+        tl_assert2(group_entry != NULL,
+                   "Couldn't find a group entry for node with max_depth %lu!\n",
+                   max_depth);
         VarMapEntry* var_entry =
           VG_(HT_lookup)(var_map, group_entry->groupIdx);
         if (var_entry == NULL){
