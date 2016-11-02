@@ -79,6 +79,7 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
     opinfo->evalinfo.max_error = bitsError;
   }
   if (bitsLocal > opinfo->evalinfo.max_local){
+    updateTea(opinfo, shadowVal->stem);
     // This tests whether we didnt want to track it before, but do
     // now. If that's the case, we'll start tracking it.
     if (opinfo->evalinfo.max_local < error_threshold &&
@@ -86,15 +87,12 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
       startTrackingOp(opinfo);
     }
     opinfo->evalinfo.max_local = bitsLocal;
-  } else if (force && !isTrackingOp(opinfo)){
-    startTrackingOp(opinfo);
-  }
-  if (report_exprs && (bitsLocal >= error_threshold || force)){
-    // If the opfinfo doesn't have an tea assigned yet, give it a strict
-    // translation of the tea assigned to this shadow value. If it does,
-    // generalize the tea sufficiently to match the tea of the shadow
-    // val.
-    updateTea(opinfo, shadowVal->stem);
+  } else if (force){
+    if (!isTrackingOp(opinfo)){
+      startTrackingOp(opinfo);
+    }
+    if (report_exprs)
+      updateTea(opinfo, shadowVal->stem);
   }
   opinfo->evalinfo.total_error += bitsError;
   opinfo->evalinfo.total_local += bitsLocal;
