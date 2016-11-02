@@ -79,7 +79,9 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
     opinfo->evalinfo.max_error = bitsError;
   }
   if (bitsLocal > opinfo->evalinfo.max_local){
-    updateTea(opinfo, shadowVal->stem);
+    if (report_exprs){
+      updateTea(opinfo, shadowVal->stem);
+    }
     // This tests whether we didnt want to track it before, but do
     // now. If that's the case, we'll start tracking it.
     if (opinfo->evalinfo.max_local < error_threshold &&
