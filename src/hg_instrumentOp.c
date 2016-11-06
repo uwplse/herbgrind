@@ -281,6 +281,7 @@ void instrumentOp(IRSB* sb, Int offset, IRExpr* expr, Addr opAddr, int opNum){
       case Iop_Div32F0x4:
         arg_size = sizeof(float) * 4;
         result_size = sizeof(float) * 4;
+        break;
       case Iop_Sqrt64Fx4:
       case Iop_XorV128:
         arg_size = sizeof(double) * 4;
