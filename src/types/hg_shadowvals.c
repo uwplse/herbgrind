@@ -160,6 +160,18 @@ SizeT el_size(LocType bytestype){
   return 0;
 }
 
+SizeT num_mantissa_bits(LocType bytestype){
+  switch(el_size(bytestype)){
+  case 4:
+    return 24;
+  case 8:
+    return 53;
+  default:
+    tl_assert(0);
+    return 0;
+  }
+}
+
 ShadowValue* mkShadowValue(void){
   ShadowValue* result;
   ALLOC(result, "hg.shadow_val", 1, sizeof(ShadowValue));
