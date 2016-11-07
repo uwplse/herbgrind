@@ -215,6 +215,7 @@ void disownSV(ShadowValue* sv){
     if (report_exprs){
       disownStemNode(sv->stem);
     }
+    VG_(deleteXA)(sv->tracked_influences);
     VG_(free)(sv);
   }
 }
