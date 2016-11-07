@@ -67,6 +67,9 @@ void updateTea(Op_Info* op, StemNode* stem){
     if (print_expr_updates){
       origTeaString = teaToString(op->tea, NULL);
     }
+    if (op->tea->branch.node_map == NULL){
+      op->tea->branch.node_map = getStemEquivs(stem);
+    }
     addStem(op->tea, stem);
     if (print_expr_updates){
       newTeaString = teaToString(op->tea, NULL);
