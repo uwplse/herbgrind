@@ -146,11 +146,14 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
   case VG_USERREQ__GET_EXACTF:
     replaceWithExactValueF((float*)arg[1]);
     break;
-  case VG_USERREQ__FORCE_EVALUATE:
+  case VG_USERREQ__FORCE_TRACK:
     forceEvaluateValue((Addr)arg[1]);
     break;
-  case VG_USERREQ__FORCE_EVALUATEF:
+  case VG_USERREQ__FORCE_TRACKF:
     forceEvaluateValueF((Addr)arg[1]);
+    break;
+  case VG_USERREQ__MARK_IMPORTANT:
+    markValueImportant((Addr)arg[1]);
     break;
   default:
     return False;

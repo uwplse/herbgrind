@@ -775,12 +775,12 @@ char* teaToBenchString(TeaNode* tea, Bool haveNewlines){
   if (haveNewlines){
     benchStringSize =
       9 /* "(FPCore (" */ + binderStringSize - 1 /* This one includes a null char which we don't need */ +
-      23 /* ")\n  :type binary64\n  " */ + exprStringSize +
+      31 /* ")\n      :type binary64\n      " */ + exprStringSize +
       2 /* ")\0" */;
   } else {
     benchStringSize =
       9 /* "(FPCore (" */ + binderStringSize - 1 /* This one includes a null char which we don't need */ +
-      21 /* ")  :type binary64  " */ + exprStringSize +
+      29 /* ")      :type binary64      " */ + exprStringSize +
       2 /* ")\0" */;
   }
   
@@ -788,12 +788,12 @@ char* teaToBenchString(TeaNode* tea, Bool haveNewlines){
   ALLOC(benchString, "hg.bench_string", benchStringSize, sizeof(char));
   if (haveNewlines){
     VG_(snprintf)(benchString, benchStringSize,
-                  "(FPCore (%s)\n  :type binary64\n  %s)",
+                  "(FPCore (%s)\n      :type binary64\n      %s)",
                   binderString,
                   exprString);
   } else {
     VG_(snprintf)(benchString, benchStringSize,
-                  "(FPCore (%s)  :type binary64  %s)",
+                  "(FPCore (%s)      :type binary64      %s)",
                   binderString,
                   exprString);
   }

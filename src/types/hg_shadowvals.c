@@ -180,6 +180,9 @@ ShadowValue* mkShadowValue(void){
   result->ref_count = 0;
   if (print_moves)
     VG_(printf)("Making shadow value %p\n", result);
+  result->tracked_influences =
+    VG_(newXA)(VG_(malloc), "influences array",
+               VG_(free), sizeof(Op_Info*));
 
   num_svals += 1;
   num_sval_bytes += sizeof(ShadowValue);

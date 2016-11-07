@@ -32,10 +32,11 @@
 #include "hg_runtime.h"
 #include "../types/hg_stemtea.h"
 #include "../include/hg_options.h"
-#include "hg_op_tracker.h"
-#include <math.h>
+#include "hg_output.h"
 
 #include "pub_tool_libcassert.h"
+
+#include <math.h>
 
 void evaluateOpError(ShadowValue* shadowVal, double actualVal,
                      Op_Info* opinfo, double localResult,
@@ -78,21 +79,19 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
     // instance was greater than any error this operation has seen before.
     opinfo->evalinfo.max_error = bitsError;
   }
+  if (bitsLocal >= error_threshold && report_exprs){
+    updateTea(opinfo, shadowVal->stem);
+  }
   if (bitsLocal > opinfo->evalinfo.max_local){
-    if (report_exprs){
-      updateTea(opinfo, shadowVal->stem);
-    }
     // This tests whether we didnt want to track it before, but do
     // now. If that's the case, we'll start tracking it.
     if (opinfo->evalinfo.max_local < error_threshold &&
         bitsLocal >= error_threshold){
-      startTrackingOp(opinfo);
+      trackValueExpr(shadowVal);
     }
     opinfo->evalinfo.max_local = bitsLocal;
   } else if (force){
-    if (!isTrackingOp(opinfo)){
-      startTrackingOp(opinfo);
-    }
+    trackValueExpr(shadowVal);
     if (report_exprs)
       updateTea(opinfo, shadowVal->stem);
   }

@@ -38,6 +38,7 @@
 #include "../include/hg_macros.h"
 #include "../types/hg_stemtea.h"
 #include "hg_runtime.h"
+#include "hg_output.h"
 
 #include "performance_analysis.h"
 
@@ -217,6 +218,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
         // Set up the stem record of this operation.
         initBranchStemNode(destLocation->values[i], opInfo, 1,
                            argLocation->values[i]);
+        propagateInfluences(destLocation->values[i], 1,
+                            argLocation->values[i]);
         // Do a local error computation.
         mpfr_t localArg, localResult;
         mpfr_inits2(num_mantissa_bits(argType),
@@ -349,7 +352,7 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
         copyStemNode(argVal->stem,
                      &(destLocation->values[0]->stem));
       }
-
+      propagateInfluences(destLocation->values[0], 1, argVal);
       // Perform the mpfr rounding to int that matches the requested
       // rounding type.
       switch(opInfo->op){
@@ -450,6 +453,7 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
       if (report_exprs){
         copyStemNode(arg2->stem, &(destLocation->values[0]->stem));
       }
+      propagateInfluences(destLocation->values[0], 1, arg2);
       mpfr_round(destLocation->values[0]->value, arg2->value);
     }
     break;
@@ -594,6 +598,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         // Set the stem record of this operation.
         initBranchStemNode(destLocation->values[i], opInfo, 1,
                            arg2Location->values[i]);
+        propagateInfluences(destLocation->values[i], 1,
+                            arg2Location->values[i]);
 
         mpfr_t localArg, localResult;
         mpfr_inits2(num_mantissa_bits(argType),
@@ -764,6 +770,9 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         initBranchStemNode(destLocation->values[i], opInfo, 2,
                            arg1val,
                            arg2val);
+        propagateInfluences(destLocation->values[i], 2,
+                            arg1val,
+                            arg2val);
         mpfr_t localArg1, localArg2, localResult;
         mpfr_inits2(num_mantissa_bits(argType),
                     localArg1, localArg2, localResult, NULL);
@@ -892,6 +901,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         // Set up the stem record of this operation.
         initBranchStemNode(destLocation->values[0], opInfo, 1,
                            arg1);
+        propagateInfluences(destLocation->values[0], 1,
+                            arg1);
         mpfr_t localArg, localResult;
         mpfr_inits2(num_mantissa_bits(argType),
                     localArg, localResult, NULL);
@@ -1104,8 +1115,11 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
     initBranchStemNode(destLocation->values[i], opInfo, 2,
                        arg2Location->values[i],
                        arg3Location->values[i]);
+    propagateInfluences(destLocation->values[i], 2,
+                        arg2Location->values[i],
+                        arg3Location->values[i]);
     mpfr_t localArg2, localArg3, localResult;
-    mpfr_inits2(num_mantissa_bits(argType),
+    mpfr_inits2(num_mantissa_bits(type),
                 localArg2, localArg3, localResult, NULL);
     mpfr_set(localArg2, arg2Location->values[i]->value, MPFR_RNDN);
     mpfr_set(localArg3, arg3Location->values[i]->value, MPFR_RNDN);
@@ -1211,6 +1225,8 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
   // Set up the stem record of this operation.
   initBranchStemNode(destLocation->values[0], opInfo, 3,
                      arg2, arg3, arg4);
+  propagateInfluences(destLocation->values[0], 3,
+                      arg2, arg3, arg4);
 
   if (print_inputs){
     VG_(printf)("Shadow first arg: ");
@@ -1392,7 +1408,7 @@ void replaceWithExactValueF(float* valueAddr){
 }
 void forceEvaluateValue(Addr valueAddr){
   ShadowValue* shadowVal = getMem(valueAddr);
-  if (shadowVal->stem->type == Node_Leaf){
+  if (shadowVal == NULL || shadowVal->stem->type == Node_Leaf){
     VG_(printf)("Cannot evaluate the error of a leaf node!!!\n");
     return;
   }
@@ -1401,7 +1417,7 @@ void forceEvaluateValue(Addr valueAddr){
 }
 void forceEvaluateValueF(Addr valueAddr){
   ShadowValue* shadowVal = getMem(valueAddr);
-  if (shadowVal->stem->type == Node_Leaf){
+  if (shadowVal == NULL || shadowVal->stem->type == Node_Leaf){
     VG_(printf)("Cannot evaluate the error of a leaf node!!!\n");
     return;
   }

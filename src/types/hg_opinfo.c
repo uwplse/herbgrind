@@ -61,6 +61,9 @@ Op_Info* mkOp_Info(SizeT arity, IROp op, Addr opAddr,
   result->op = op;
   getOpDebug_Info(opAddr, name, symbol, &(result->debuginfo));
 
+  result->influences = VG_(newXA)(VG_(malloc), "op tracker",
+                                  VG_(free), sizeof(Op_Info*));
+
   /* ALLOC(result->evalinfo.regimes_data, "regimes data", arity, sizeof(double*)); */
   /* for(int i = 0; i < arity; ++i){ */
   /*   ALLOC(result->evalinfo.regimes_data, "regimes data", max_num_regimes + 1, sizeof(double)); */

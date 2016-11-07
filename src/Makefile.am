@@ -27,7 +27,7 @@ types/hg_opinfo.c types/hg_stemtea.c types/hg_queue.c		\
 runtime/hg_runtime.c runtime/hg_evaluate.c			\
 runtime/hg_storage_runtime.c runtime/hg_shadowop.c		\
 runtime/hg_hiprec_ops.c runtime/hg_mathreplace.c		\
-runtime/hg_op_tracker.c
+runtime/hg_output.c
 
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_SOURCES      = \
 	$(HERBGRIND_SOURCES_COMMON)

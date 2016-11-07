@@ -41,6 +41,8 @@
 // Some basic valgrind tool stuff
 #include "pub_tool_basics.h"
 
+#include "pub_tool_xarray.h"
+
 // The shadow value for each logical floating point value
 struct _ShadowValue {
   mpfr_t value;
@@ -48,6 +50,7 @@ struct _ShadowValue {
   // Reference counter. This lets us free up shadow locations that
   // are no longer accessible.
   size_t ref_count;
+  XArray* tracked_influences;
   UWord freeCanary;
 };
 
@@ -90,6 +93,7 @@ typedef enum {
 // How many values the loc holds
 SizeT capacity(LocType bytestype);
 SizeT el_size(LocType bytestype);
+SizeT num_mantissa_bits(LocType bytestype);
 
 // The value we're tracking for each floating point storage location
 // in the program.
