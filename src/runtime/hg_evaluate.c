@@ -108,16 +108,24 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
 
       shadowValstr = mpfr_get_str(NULL, &shadowValexpt, 10, longprint_len, shadowVal->value, MPFR_RNDN);
 
-      VG_(printf)("The shadowed val is %se%ld, and the actual (computed) val is %f.\n",
-                  shadowValstr, shadowValexpt, actualVal);
+      VG_(printf)("The shadowed val is %se%ld, "
+                  "and the actual (computed) val is %f.\n"
+                  "The locally approximate value is %f.\n",
+                  shadowValstr, shadowValexpt, actualVal,
+                  localResult);
       mpfr_free_str(shadowValstr);
     }
     else if (print_errors){
-      VG_(printf)("The shadowed val is %f, and the actual (computed) val is %f.\n",
-                  shadowValD, actualVal);
+      VG_(printf)("The shadowed val is %f, "
+                  "and the actual (computed) val is %f.\n"
+                  "The locally approximate value is %f.\n",
+                  shadowValD, actualVal, localResult);
     }
   
-    VG_(printf)("The bits error of that operation was: %f (%llu ulps).\n", bitsError, ulpsError);
+    VG_(printf)("The bits error of that operation was: %f (%llu ulps).\n",
+                bitsError, ulpsError);
+    VG_(printf)("Local error was: %f (%llu ulps).\n",
+                bitsLocal, ulpsLocal);
     VG_(printf)("(Operation at %lX)\n", opinfo->debuginfo.op_addr);
     if (opinfo->debuginfo.src_filename != NULL)
       VG_(printf)("%s at %s:%u in %s\n",
