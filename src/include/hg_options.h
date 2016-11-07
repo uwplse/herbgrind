@@ -55,5 +55,7 @@ extern Bool print_mallocs;
 extern Bool print_expr_updates;
 extern Bool print_mem_usage;
 extern Bool verbose_linenums;
+extern Bool localize;
+extern Bool report_all;
 
 #endif

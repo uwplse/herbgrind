@@ -78,17 +78,28 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
     // Update the max error, since the error of this operation
     // instance was greater than any error this operation has seen before.
     opinfo->evalinfo.max_error = bitsError;
+    // This tests whether we didnt want to track it before, but do
+    // now. If that's the case, we'll start tracking it.
+    if (opinfo->evalinfo.max_error < error_threshold &&
+        bitsError >= error_threshold && !localize){
+      trackValueExpr(shadowVal);
+    }
   }
-  if (bitsLocal >= error_threshold && report_exprs){
+  if (report_exprs &&
+      ((bitsLocal >= error_threshold && localize) ||
+       (bitsError >= error_threshold && !localize))){
     updateTea(opinfo, shadowVal->stem);
   }
   if (bitsLocal > opinfo->evalinfo.max_local){
     // This tests whether we didnt want to track it before, but do
     // now. If that's the case, we'll start tracking it.
     if (opinfo->evalinfo.max_local < error_threshold &&
-        bitsLocal >= error_threshold){
+        bitsLocal >= error_threshold && localize){
       trackValueExpr(shadowVal);
     }
+    // Update the max local error, since the local error of this
+    // operation instance was greater than any local error this
+    // operation has seen before.
     opinfo->evalinfo.max_local = bitsLocal;
   } else if (force){
     trackValueExpr(shadowVal);

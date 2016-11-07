@@ -52,6 +52,7 @@
 #include "mpfr.h"
 
 #include "runtime/performance_analysis.h"
+#include "types/hg_stemtea.h"
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
@@ -153,7 +154,14 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
     forceEvaluateValueF((Addr)arg[1]);
     break;
   case VG_USERREQ__MARK_IMPORTANT:
-    markValueImportant((Addr)arg[1]);
+    if (!report_all){
+      ShadowValue* shadowVal = getMem((Addr)arg[1]);
+      if (shadowVal == NULL || shadowVal->stem->type == Node_Leaf){
+        VG_(dmsg)("Can't mark a computation with no children!\n");
+        break;
+      }
+      markValueImportant(shadowVal);
+    }
     break;
   default:
     return False;
@@ -184,6 +192,8 @@ Bool print_expr_updates = False;
 Bool report_exprs = True;
 Bool print_mem_usage = False;
 Bool verbose_linenums = False;
+Bool localize = True;
+Bool report_all = False;
 
 // Called to process each command line option.
 static Bool hg_process_cmd_line_option(const HChar* arg){
@@ -210,6 +220,8 @@ static Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-expr-updates", print_expr_updates, True) {}
   else if VG_XACT_CLO(arg, "--report-ops", report_exprs, False) {}
   else if VG_XACT_CLO(arg, "--print-mem-usage", print_mem_usage, True) {}
+  else if VG_XACT_CLO(arg, "--no-localize", localize, False) {}
+  else if VG_XACT_CLO(arg, "--report-all", report_all, True) {}
   else return False;
   return True;
 }
