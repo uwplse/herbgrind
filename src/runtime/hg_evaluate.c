@@ -87,7 +87,8 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
   }
   if (report_exprs &&
       ((bitsLocal >= error_threshold && localize) ||
-       (bitsError >= error_threshold && !localize))){
+       (bitsError >= error_threshold && !localize) ||
+       force)){
     updateTea(opinfo, shadowVal->stem);
   }
   if (bitsLocal > opinfo->evalinfo.max_local){
@@ -103,8 +104,6 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
     opinfo->evalinfo.max_local = bitsLocal;
   } else if (force){
     trackValueExpr(shadowVal);
-    if (report_exprs)
-      updateTea(opinfo, shadowVal->stem);
   }
   opinfo->evalinfo.total_error += bitsError;
   opinfo->evalinfo.total_local += bitsLocal;
