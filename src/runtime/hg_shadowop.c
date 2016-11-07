@@ -219,7 +219,8 @@ VG_REGPARM(1) void executeUnaryShadowOp(Op_Info* opInfo){
                            argLocation->values[i]);
         // Do a local error computation.
         mpfr_t localArg, localResult;
-        mpfr_inits2(8 * el_size(argType), localArg, localResult, NULL);
+        mpfr_inits2(8 * el_size(argType) - 11,
+                    localArg, localResult, NULL);
         mpfr_set(localArg, arg->value, MPFR_RNDN);
         mpfr_func(localResult, localArg, MPFR_RNDN);
         // Evaluate the computed value against the high precision
@@ -595,7 +596,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
                            arg2Location->values[i]);
 
         mpfr_t localArg, localResult;
-        mpfr_inits2(8 * el_size(argType), localArg, localResult, NULL);
+        mpfr_inits2(8 * el_size(argType) - 11,
+                    localArg, localResult, NULL);
         mpfr_set(localArg, arg2Location->values[i]->value, MPFR_RNDN);
         mpfr_func(localResult, localArg, MPFR_RNDN);
         // Now, we'll evaluate the shadow values against each
@@ -763,7 +765,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
                            arg1val,
                            arg2val);
         mpfr_t localArg1, localArg2, localResult;
-        mpfr_inits2(8 * el_size(argType), localArg1, localArg2, localResult, NULL);
+        mpfr_inits2(8 * el_size(argType) - 11,
+                    localArg1, localArg2, localResult, NULL);
         mpfr_set(localArg1, arg1val->value, MPFR_RNDN);
         mpfr_set(localArg2, arg2val->value, MPFR_RNDN);
         mpfr_func(localResult, localArg1, localArg2, MPFR_RNDN);
@@ -890,7 +893,8 @@ VG_REGPARM(1) void executeBinaryShadowOp(Op_Info* opInfo){
         initBranchStemNode(destLocation->values[0], opInfo, 1,
                            arg1);
         mpfr_t localArg, localResult;
-        mpfr_inits2(8 * el_size(argType), localArg, localResult, NULL);
+        mpfr_inits2(8 * el_size(argType) - 11,
+                    localArg, localResult, NULL);
         mpfr_set(localArg, arg1->value, MPFR_RNDN);
         mpfr_neg(localResult, localArg, MPFR_RNDN);
         // Now, we'll evaluate the shadow value against the result
@@ -1101,7 +1105,8 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
                        arg2Location->values[i],
                        arg3Location->values[i]);
     mpfr_t localArg2, localArg3, localResult;
-    mpfr_inits2(8 * el_size(type), localArg2, localArg3, localResult, NULL);
+    mpfr_inits2(8 * el_size(type) - 11,
+                localArg2, localArg3, localResult, NULL);
     mpfr_set(localArg2, arg2Location->values[i]->value, MPFR_RNDN);
     mpfr_set(localArg3, arg3Location->values[i]->value, MPFR_RNDN);
     mpfr_func(localResult, localArg2, localArg3, MPFR_RNDN);
@@ -1223,7 +1228,8 @@ VG_REGPARM(1) void executeQuadnaryShadowOp(Op_Info* opInfo){
                 ((double*)opInfo->arg_values[3])[0]);
   }
   mpfr_t localArg2, localArg3, localArg4, localResult;
-  mpfr_inits2(8 * el_size(argType), localArg2, localArg3, localArg4, localResult, NULL);
+  mpfr_inits2(8 * el_size(argType) - 11,
+              localArg2, localArg3, localArg4, localResult, NULL);
   mpfr_set(localArg2, arg2->value, MPFR_RNDN);
   mpfr_set(localArg3, arg3->value, MPFR_RNDN);
   mpfr_set(localArg4, arg4->value, MPFR_RNDN);

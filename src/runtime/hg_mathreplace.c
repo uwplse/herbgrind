@@ -150,16 +150,16 @@ void performOp(OpType op, double* result, double* args){
   localArgs = VG_(malloc)("local-args", nargs * sizeof(mpfr_t));
   arg_shadows = VG_(malloc)("wrapped-shadow", nargs * sizeof(ShadowValue*));
   for (SizeT i = 0; i < nargs; ++i){
-    mpfr_init2(args_m[i], op_precision);
-    mpfr_init2(localArgs[i], op_precision);
+    mpfr_init2(args_m[i], op_precision - 11);
+    mpfr_init2(localArgs[i], op_precision - 11);
     // Get the actual value from the pointer they gave us.
     mpfr_set_d(args_m[i], args[i], MPFR_RNDN);
     arg_shadows[i] = getShadowValMem((uintptr_t)&(args[i]), args[i],
                                      i);
     mpfr_set(localArgs[i], arg_shadows[i]->value, MPFR_RNDN);
   }
-  mpfr_init2(res,op_precision);
-  mpfr_init2(localResult, op_precision);
+  mpfr_init2(res,op_precision - 11);
+  mpfr_init2(localResult, op_precision - 11);
   res_shadow = mkShadowValue();
 
   switch(op){
