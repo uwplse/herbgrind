@@ -116,8 +116,22 @@ void propagateInfluences(ShadowValue* dest, int nargs, ...){
   for(SizeT i = 0; i < nargs; ++i){
     ShadowValue* argVal = va_arg(args, ShadowValue*);
     for (SizeT j = 0; j < VG_(sizeXA)(argVal->tracked_influences); ++j){
-      VG_(addToXA)(dest->tracked_influences,
-                   VG_(indexXA)(argVal->tracked_influences, j));
+      Op_Info* new_influence =
+        *(Op_Info**)VG_(indexXA)(argVal->tracked_influences, j);
+      Bool already_have_influence = False;
+      for (SizeT k = 0;
+           k < VG_(sizeXA)(dest->tracked_influences);
+           ++k){
+        if ((*(Op_Info**)VG_(indexXA)(dest->tracked_influences, k))
+            == new_influence){
+          already_have_influence = True;
+          break;
+        }
+      }
+      if (!already_have_influence){
+        VG_(addToXA)(dest->tracked_influences,
+                     VG_(indexXA)(argVal->tracked_influences, j));
+      }
     }
   }
   va_end(args);
