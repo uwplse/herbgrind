@@ -149,7 +149,7 @@ void performOp(OpType op, double* result, double* args){
   args_m = VG_(malloc)("wrapped-args", nargs * sizeof(mpfr_t));
   localArgs = VG_(malloc)("local-args", nargs * sizeof(mpfr_t));
   arg_shadows = VG_(malloc)("wrapped-shadow", nargs * sizeof(ShadowValue*));
-  SizeT num_mantissa_bits = op_precision == 32 : 8 ? 11;
+  SizeT num_mantissa_bits = op_precision == 32 ? 8 : 11;
   for (SizeT i = 0; i < nargs; ++i){
     mpfr_init2(args_m[i], num_mantissa_bits);
     mpfr_init2(localArgs[i], num_mantissa_bits);

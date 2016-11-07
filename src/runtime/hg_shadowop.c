@@ -1105,7 +1105,7 @@ VG_REGPARM(1) void executeTernaryShadowOp(Op_Info* opInfo){
                        arg2Location->values[i],
                        arg3Location->values[i]);
     mpfr_t localArg2, localArg3, localResult;
-    mpfr_inits2(num_mantissa_bits(argType),
+    mpfr_inits2(num_mantissa_bits(type),
                 localArg2, localArg3, localResult, NULL);
     mpfr_set(localArg2, arg2Location->values[i]->value, MPFR_RNDN);
     mpfr_set(localArg3, arg3Location->values[i]->value, MPFR_RNDN);

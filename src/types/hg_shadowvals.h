@@ -90,6 +90,7 @@ typedef enum {
 // How many values the loc holds
 SizeT capacity(LocType bytestype);
 SizeT el_size(LocType bytestype);
+SizeT num_mantissa_bits(LocType bytestype);
 
 // The value we're tracking for each floating point storage location
 // in the program.
