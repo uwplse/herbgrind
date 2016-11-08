@@ -198,6 +198,9 @@ void writeReport(const char* filename){
     return;
   }
 
+  XArray* influencesPrinted = VG_(newXA)(VG_(malloc), "already_printed_influences",
+                                         VG_(free), sizeof(Op_Info*));
+
   for(int i = 0; i < VG_(sizeXA)(marks); ++i){
     OutputMark* mark = *(OutputMark**)VG_(indexXA)(marks, i);
 
@@ -258,6 +261,20 @@ void writeReport(const char* filename){
     for (int j = 0; j < VG_(sizeXA)(influences); ++j){
       Op_Info* influence = *(Op_Info**)VG_(indexXA)(influences, j);
       if (influence == NULL) continue;
+
+      if (report_all){
+        // Remove duplicates
+        Bool alreadyPrinted = False;
+        for(int k = 0; k < VG_(sizeXA)(influencesPrinted); ++k){
+          if (influence == *(Op_Info**)VG_(indexXA)(influencesPrinted, k)){
+            alreadyPrinted = True;
+            break;
+          }
+        }
+        if (alreadyPrinted){
+          continue;
+        }
+      }
 
       if (report_exprs){
         char* benchString = teaToBenchString(influence->tea, True);
@@ -343,11 +360,15 @@ void writeReport(const char* filename){
         }
       }
       VG_(write)(file_d, buf, entry_len);
+      if (report_all){
+        VG_(addToXA)(influencesPrinted, &influence);
+      }
     }
     if (!human_readable){
       VG_(write)(file_d, "  ))\n", 5);
     }
   }
+  VG_(deleteXA)(influencesPrinted);
   VG_(close)(file_d);
   VG_(printf)("Wrote report out to %s\n", filename);
 }
