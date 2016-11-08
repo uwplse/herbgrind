@@ -43,10 +43,10 @@ typedef struct _OutputMark {
 
 OutputMark* mkMark(Op_Info* op, Addr curAddr);
 
+void dedupAdd(XArray* array, void* item);
+
 void markValueImportant(ShadowValue* shadowVal);
-
 void propagateInfluences(ShadowValue* dest, int nargs, ...);
-
 void trackValueExpr(ShadowValue* val);
 
 void clearInfluence(Op_Info* opinfo, XArray* influences);

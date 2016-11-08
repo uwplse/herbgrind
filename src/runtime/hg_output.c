@@ -88,24 +88,14 @@ void markValueImportant(ShadowValue* shadowVal){
 
   for (int i = 0; i < VG_(sizeXA)(shadowVal->tracked_influences); ++i){
     Op_Info* new_influence =
-      VG_(indexXA)(shadowVal->tracked_influences, i);
-    Bool already_have_influence = False;
-    for (int j = 0; j < VG_(sizeXA)(curMark->op->influences); ++j){
-      if (((Op_Info*)VG_(indexXA)(curMark->op->influences, j)) ==
-          new_influence){
-        already_have_influence = True;
-        break;
-      }
-    }
-    if (!already_have_influence){
-      VG_(addToXA)(curMark->op->influences, new_influence);
-    }
+      *(Op_Info**)VG_(indexXA)(shadowVal->tracked_influences, i);
+    dedupAdd(curMark->op->influences, new_influence);
   }
 }
 void trackValueExpr(ShadowValue* val){
   tl_assert2(val->stem->type == Node_Branch,
              "Tried to track a leaf value!");
-  VG_(addToXA)(val->tracked_influences, &(val->stem->branch.op));
+  dedupAdd(val->tracked_influences, val->stem->branch.op);
   if (report_all){
     markValueImportant(val);
   }
@@ -118,20 +108,7 @@ void propagateInfluences(ShadowValue* dest, int nargs, ...){
     for (SizeT j = 0; j < VG_(sizeXA)(argVal->tracked_influences); ++j){
       Op_Info* new_influence =
         *(Op_Info**)VG_(indexXA)(argVal->tracked_influences, j);
-      Bool already_have_influence = False;
-      for (SizeT k = 0;
-           k < VG_(sizeXA)(dest->tracked_influences);
-           ++k){
-        if ((*(Op_Info**)VG_(indexXA)(dest->tracked_influences, k))
-            == new_influence){
-          already_have_influence = True;
-          break;
-        }
-      }
-      if (!already_have_influence){
-        VG_(addToXA)(dest->tracked_influences,
-                     VG_(indexXA)(argVal->tracked_influences, j));
-      }
+      dedupAdd(dest->tracked_influences, new_influence);
     }
   }
   va_end(args);
@@ -227,42 +204,44 @@ void writeReport(const char* filename){
     HChar buf[ENTRY_BUFFER_SIZE];
     UInt entry_len;
 
-    if (human_readable){
-      entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                                "Result in %s at %s:%u (address %lX)\n"
-                                "%f bits average error\n"
-                                "%f bits max error\n"
-                                "Aggregated over %lu instances\n"
-                                "Influenced by erroneous expressions:\n\n",
-                                mark->fnname,
-                                mark->src_filename,
-                                mark->src_line,
-                                mark->addr, 
-                                mark->op->evalinfo.total_error /
-                                mark->op->evalinfo.num_calls,
-                                mark->op->evalinfo.max_error,
-                                mark->op->evalinfo.num_calls);
-    } else {
-      entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                                "(output\n"
-                                "  (function \"%s\")\n"
-                                "  (filename \"%s\")\n"
-                                "  (line-num %u)\n"
-                                "  (instr-addr %lX)\n"
-                                "  (avg-error %f)\n"
-                                "  (max-error %f)\n"
-                                "  (num-calls %lu)\n"
-                                "  (influences\n",
-                                mark->fnname,
-                                mark->src_filename,
-                                mark->src_line,
-                                mark->addr,
-                                mark->op->evalinfo.total_error /
-                                mark->op->evalinfo.num_calls,
-                                mark->op->evalinfo.max_error,
-                                mark->op->evalinfo.num_calls);
+    if (!report_all){
+      if (human_readable){
+        entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
+                                  "Result in %s at %s:%u (address %lX)\n"
+                                  "%f bits average error\n"
+                                  "%f bits max error\n"
+                                  "Aggregated over %lu instances\n"
+                                  "Influenced by erroneous expressions:\n\n",
+                                  mark->fnname,
+                                  mark->src_filename,
+                                  mark->src_line,
+                                  mark->addr,
+                                  mark->op->evalinfo.total_error /
+                                  mark->op->evalinfo.num_calls,
+                                  mark->op->evalinfo.max_error,
+                                  mark->op->evalinfo.num_calls);
+      } else {
+        entry_len = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
+                                  "(output\n"
+                                  "  (function \"%s\")\n"
+                                  "  (filename \"%s\")\n"
+                                  "  (line-num %u)\n"
+                                  "  (instr-addr %lX)\n"
+                                  "  (avg-error %f)\n"
+                                  "  (max-error %f)\n"
+                                  "  (num-calls %lu)\n"
+                                  "  (influences\n",
+                                  mark->fnname,
+                                  mark->src_filename,
+                                  mark->src_line,
+                                  mark->addr,
+                                  mark->op->evalinfo.total_error /
+                                  mark->op->evalinfo.num_calls,
+                                  mark->op->evalinfo.max_error,
+                                  mark->op->evalinfo.num_calls);
+      }
+      VG_(write)(file_d, buf, entry_len);
     }
-    VG_(write)(file_d, buf, entry_len);
 
     XArray* influences = mark->op->influences;
     if (report_exprs){
@@ -367,4 +346,17 @@ void writeReport(const char* filename){
   }
   VG_(close)(file_d);
   VG_(printf)("Wrote report out to %s\n", filename);
+}
+
+void dedupAdd(XArray* array, void* item){
+  Bool already_have = False;
+  for (SizeT k = 0; k < VG_(sizeXA)(array); ++k){
+    if (*(void**)VG_(indexXA)(array, k) == item){
+      already_have = True;
+      break;
+    }
+  }
+  if (!already_have){
+    VG_(addToXA)(array, &item);
+  }
 }
