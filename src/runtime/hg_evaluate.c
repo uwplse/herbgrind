@@ -73,6 +73,12 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
 
   mpfr_clears(ulpsErrorM, bitsErrorM, ulpsLocalM, bitsLocalM, NULL);
 
+  if (report_exprs &&
+      ((bitsLocal >= error_threshold && bitsLocal > opinfo->evalinfo.max_local && localize) ||
+       (bitsError >= error_threshold && bitsError > opinfo->evalinfo.max_error && !localize) ||
+       force)){
+    updateTea(opinfo, shadowVal->stem);
+  }
   // Update the persistent op record
   if (bitsError > opinfo->evalinfo.max_error){
     // Update the max error, since the error of this operation
@@ -84,12 +90,6 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
         bitsError >= error_threshold && !localize){
       trackValueExpr(shadowVal);
     }
-  }
-  if (report_exprs &&
-      ((bitsLocal >= error_threshold && localize) ||
-       (bitsError >= error_threshold && !localize) ||
-       force)){
-    updateTea(opinfo, shadowVal->stem);
   }
   if (bitsLocal > opinfo->evalinfo.max_local){
     // This tests whether we didnt want to track it before, but do
