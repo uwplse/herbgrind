@@ -41,6 +41,8 @@
 // Some basic valgrind tool stuff
 #include "pub_tool_basics.h"
 
+#include "pub_tool_xarray.h"
+
 // The shadow value for each logical floating point value
 struct _ShadowValue {
   mpfr_t value;
@@ -48,6 +50,7 @@ struct _ShadowValue {
   // Reference counter. This lets us free up shadow locations that
   // are no longer accessible.
   size_t ref_count;
+  XArray* tracked_influences;
   UWord freeCanary;
 };
 

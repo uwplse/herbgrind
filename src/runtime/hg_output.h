@@ -1,6 +1,5 @@
-
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie           hg_options.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie            herbgrind.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -28,34 +27,31 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _OPTIONS
-#define _OPTIONS
+#ifndef _HG_OUTPUT_H
+#define _HG_OUTPUT_H
 
-#include "mpfr.h"
+#include "pub_tool_basics.h"
+#include "../types/hg_shadowvals.h"
 
-extern mpfr_prec_t precision;
-extern double error_threshold;
-extern Bool report_exprs;
-extern SizeT max_tea_track_depth;
+typedef struct _OutputMark {
+  Op_Info* op;
+  Addr addr;
+  UInt src_line;
+  const HChar* src_filename;
+  const HChar* fnname;
+} OutputMark;
 
-extern Bool human_readable;
-extern SizeT max_print_depth;
-extern SizeT max_expr_string_size;
-extern SizeT max_num_regimes;
+OutputMark* mkMark(Op_Info* op, Addr curAddr);
 
-extern SizeT longprint_len;
-extern Bool print_in_blocks;
-extern Bool print_out_blocks;
-extern Bool print_inputs;
-extern Bool print_errors;
-extern Bool print_errors_long;
-extern Bool print_moves;
-extern Bool print_counts;
-extern Bool print_mallocs;
-extern Bool print_expr_updates;
-extern Bool print_mem_usage;
-extern Bool verbose_linenums;
-extern Bool localize;
-extern Bool report_all;
+void dedupAdd(XArray* array, void* item);
+
+void markValueImportant(ShadowValue* shadowVal);
+void propagateInfluences(ShadowValue* dest, int nargs, ...);
+void trackValueExpr(ShadowValue* val);
+
+void clearInfluence(Op_Info* opinfo, XArray* influences);
+void recursivelyClearChildren(TeaNode* _node, XArray* influences);
+Word cmp_debuginfo(const Op_Info** a, const Op_Info** b);
+void writeReport(const char* filename);
 
 #endif

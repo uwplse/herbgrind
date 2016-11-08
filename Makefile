@@ -31,7 +31,7 @@ src/types/hg_opinfo.h src/types/hg_stemtea.hh src/types/hg_stemtea.h	\
 src/types/hg_queue.h src/runtime/hg_runtime.h				\
 src/runtime/hg_evaluate.h src/runtime/hg_hiprec_ops.h			\
 src/runtime/hg_shadowop.h src/runtime/hg_storage_runtime.h		\
-src/runtime/hg_mathreplace.h src/runtime/hg_op_tracker.h
+src/runtime/hg_mathreplace.h src/runtime/hg_output.h
 
 SOURCES=src/hg_main.c src/hg_instrument.c src/hg_instrumentOp.c		\
 src/hg_mathwrap.c src/pointer_runtime.c src/types/hg_shadowvals.c	\
@@ -39,7 +39,7 @@ src/types/hg_opinfo.c src/types/hg_stemtea.c src/types/hg_queue.c	\
 src/runtime/hg_runtime.c src/runtime/hg_evaluate.c			\
 src/runtime/hg_hiprec_ops.c src/runtime/hg_shadowop.c			\
 src/runtime/hg_storage_runtime.c src/runtime/hg_mathreplace.c		\
-src/runtime/hg_op_tracker.c
+src/runtime/hg_output.c
 
 all: compile
 

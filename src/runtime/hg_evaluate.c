@@ -32,10 +32,11 @@
 #include "hg_runtime.h"
 #include "../types/hg_stemtea.h"
 #include "../include/hg_options.h"
-#include "hg_op_tracker.h"
-#include <math.h>
+#include "hg_output.h"
 
 #include "pub_tool_libcassert.h"
+
+#include <math.h>
 
 void evaluateOpError(ShadowValue* shadowVal, double actualVal,
                      Op_Info* opinfo, double localResult,
@@ -72,29 +73,37 @@ void evaluateOpError(ShadowValue* shadowVal, double actualVal,
 
   mpfr_clears(ulpsErrorM, bitsErrorM, ulpsLocalM, bitsLocalM, NULL);
 
+  if (report_exprs &&
+      ((bitsLocal >= error_threshold && bitsLocal > opinfo->evalinfo.max_local && localize) ||
+       (bitsError >= error_threshold && bitsError > opinfo->evalinfo.max_error && !localize) ||
+       force)){
+    updateTea(opinfo, shadowVal->stem);
+  }
   // Update the persistent op record
   if (bitsError > opinfo->evalinfo.max_error){
     // Update the max error, since the error of this operation
     // instance was greater than any error this operation has seen before.
     opinfo->evalinfo.max_error = bitsError;
+    // This tests whether we didnt want to track it before, but do
+    // now. If that's the case, we'll start tracking it.
+    if (opinfo->evalinfo.max_error < error_threshold &&
+        bitsError >= error_threshold && !localize){
+      trackValueExpr(shadowVal);
+    }
   }
   if (bitsLocal > opinfo->evalinfo.max_local){
-    if (report_exprs){
-      updateTea(opinfo, shadowVal->stem);
-    }
     // This tests whether we didnt want to track it before, but do
     // now. If that's the case, we'll start tracking it.
     if (opinfo->evalinfo.max_local < error_threshold &&
-        bitsLocal >= error_threshold){
-      startTrackingOp(opinfo);
+        bitsLocal >= error_threshold && localize){
+      trackValueExpr(shadowVal);
     }
+    // Update the max local error, since the local error of this
+    // operation instance was greater than any local error this
+    // operation has seen before.
     opinfo->evalinfo.max_local = bitsLocal;
   } else if (force){
-    if (!isTrackingOp(opinfo)){
-      startTrackingOp(opinfo);
-    }
-    if (report_exprs)
-      updateTea(opinfo, shadowVal->stem);
+    trackValueExpr(shadowVal);
   }
   opinfo->evalinfo.total_error += bitsError;
   opinfo->evalinfo.total_local += bitsLocal;

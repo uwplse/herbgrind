@@ -129,6 +129,8 @@ struct _Op_Info {
   // locations, so we're going to store them as an array that's
   // malloc'd when we know how big they're going to be.
   UWord** arg_values;
+
+  XArray* influences;
 };
 
 struct _Op_Infos_ptr {

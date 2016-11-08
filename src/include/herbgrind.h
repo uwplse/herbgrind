@@ -46,8 +46,9 @@ typedef enum {
   VG_USERREQ__PERFORM_OP,
   VG_USERREQ__GET_EXACT,
   VG_USERREQ__GET_EXACTF,
-  VG_USERREQ__FORCE_EVALUATE,
-  VG_USERREQ__FORCE_EVALUATEF,
+  VG_USERREQ__FORCE_TRACK,
+  VG_USERREQ__FORCE_TRACKF,
+  VG_USERREQ__MARK_IMPORTANT,
 } Vg_HerbGrindClientRequests;
 
 #define HERBGRIND_BEGIN()                                               \
@@ -106,20 +107,27 @@ typedef enum {
       _qzz_res;                                                         \
     }))
 
-#define HERBGRIND_FORCE_EVALUATE(_qzz_varaddr)                  \
+#define HERBGRIND_FORCE_TRACK(_qzz_varaddr)                  \
   (__extension__({unsigned long _qzz_res;                       \
       VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,                   \
-                                 VG_USERREQ__FORCE_EVALUATE,    \
+                                 VG_USERREQ__FORCE_TRACK,    \
                                  _qzz_varaddr, 0, 0, 0, 0);     \
       _qzz_res;                                                 \
     }))
 
-#define HERBGRIND_FORCE_EVALUATEF(_qzz_varaddr)                 \
+#define HERBGRIND_FORCE_TRACKF(_qzz_varaddr)                 \
   (__extension__({unsigned long _qzz_res;                       \
       VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,                   \
-                                 VG_USERREQ__FORCE_EVALUATE,    \
+                                 VG_USERREQ__FORCE_TRACK,    \
                                  _qzz_varaddr, 0, 0, 0, 0);     \
       _qzz_res;                                                 \
     }))
 
+#define HERBGRIND_MARK_IMPORTANT(_qzz_var)                  \
+  (__extension__({unsigned long _qzz_res;                       \
+      VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,                   \
+                                 VG_USERREQ__MARK_IMPORTANT,    \
+                                 &_qzz_var, 0, 0, 0, 0);     \
+      _qzz_res;                                                 \
+    }))
 #endif
