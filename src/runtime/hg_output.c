@@ -268,6 +268,7 @@ void writeReport(const char* filename){
                           "    in %s at %s:%u (address %lX)\n"
                           "    %f bits average error\n"
                           "    %f bits max error\n"
+                          "    %f bits max local error\n"
                           "    Aggregated over %lu instances\n\n",
                           benchString,
                           influence->debuginfo.fnname,
@@ -277,6 +278,7 @@ void writeReport(const char* filename){
                           influence->evalinfo.total_error /
                           influence->evalinfo.num_calls,
                           influence->evalinfo.max_error,
+                          influence->evalinfo.max_local,
                           influence->evalinfo.num_calls);
         } else {
           entry_len =
@@ -288,6 +290,7 @@ void writeReport(const char* filename){
                           "     (instr-addr %lX)\n"
                           "     (avg-error %f)\n"
                           "     (max-error %f)\n"
+                          "     (max-local %f)\n"
                           "     (num-calls %lu))\n",
                           benchString,
                           influence->debuginfo.fnname,
@@ -297,6 +300,7 @@ void writeReport(const char* filename){
                           influence->evalinfo.total_error /
                           influence->evalinfo.num_calls,
                           influence->evalinfo.max_error,
+                          influence->evalinfo.max_local,
                           influence->evalinfo.num_calls);
         }
       } else {
