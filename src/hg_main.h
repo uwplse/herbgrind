@@ -28,14 +28,13 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _HG_INCLUDE
-#define _HG_INCLUDE
+#ifndef _HG_MAIN_H
+#define _HG_MAIN_H
 
 // For handling client requests. Those are those macros that you can
 // put in your code to be instrumented, which will allow you to talk
 // to the tool. For instance, HERBGRIND_BEGIN() and HERBGRIND_END()
 // will turn the tool on an off for certain sections.
-#include "herbgrind.h"
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
 

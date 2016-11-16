@@ -21,21 +21,14 @@ if VGCONF_HAVE_PLATFORM_SEC
 noinst_PROGRAMS += herbgrind-@VGCONF_ARCH_SEC@-@VGCONF_OS@
 endif
 
-HERBGRIND_SOURCES_COMMON = hg_main.c hg_instrument.c		\
-hg_instrumentOp.c pointer_runtime.c types/hg_shadowvals.c	\
-types/hg_opinfo.c types/hg_stemtea.c types/hg_queue.c		\
-runtime/hg_runtime.c runtime/hg_evaluate.c			\
-runtime/hg_storage_runtime.c runtime/hg_shadowop.c		\
-runtime/hg_hiprec_ops.c runtime/hg_mathreplace.c		\
-runtime/hg_output.c
-
+HERBGRIND_SOURCES_COMMON = hg_main.c helper/mpfr_valgrind_glue.c
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_SOURCES      = \
 	$(HERBGRIND_SOURCES_COMMON)
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CPPFLAGS     = \
 	$(AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CFLAGS       = \
 	$(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
-	-g -O0 -Werror -Wall \
+	-g -Werror -Wall \
 	-I$(top_srcdir)/../deps/gmp-64/$(HG_LOCAL_INSTALL_NAME)/include/ \
 	-I$(top_srcdir)/../deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME)/include/
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_DEPENDENCIES = \
@@ -60,7 +53,7 @@ herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_CPPFLAGS     = \
 	$(AM_CPPFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
 herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_CFLAGS       = \
 	$(AM_CFLAGS_@VGCONF_PLATFORM_SEC_CAPS@) \
-	-g -O0 -Werror -Wall -Wpedantic\
+	-g -Werror -Wall\
 	-I$(top_srcdir)/../deps/gmp-32/$(HG_LOCAL_INSTALL_NAME)/include/ \
 	-I$(top_srcdir)/../deps/mpfr-32/$(HG_LOCAL_INSTALL_NAME)/include/
 herbgrind_@VGCONF_ARCH_SEC@_@VGCONF_OS@_DEPENDENCIES = \

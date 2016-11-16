@@ -1,4 +1,3 @@
-
 /*--------------------------------------------------------------------*/
 /*--- HerbGrind: a valgrind tool for Herbie           hg_runtime.c ---*/
 /*--------------------------------------------------------------------*/
@@ -28,24 +27,15 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#include "hg_runtime.h"
+#include  "mpfr_valgrind_glue.h"
 
-#include "hg_mathreplace.h"
-#include "../include/hg_options.h"
-
+// Pull in this header file so that we can pass memory allocation
+// functions to gmp and mpfr.
+#include "pub_tool_mallocfree.h"
 // Pull in this header file so that we can set the strlen, strcpy,
 // memmove, memcmp, and memset functions of mpfr to their valgrind
 // library equivalents.
 #include "pub_tool_libcbase.h"
-
-// Whether or not the tool is currently "turned on".
-Bool running = True;
-
-// This disables the instrumentation of this tool.
-void stopHerbGrind(void){ running = False; }
-
-// This enables the instrumentation of this tool.
-void startHerbGrind(void){ running = True; }
 
 // Some memory allocation functions for gmp support
 void* gmp_alloc(size_t t){ return VG_(malloc)("hg.gmp_alloc.1", t); }
@@ -63,16 +53,3 @@ int mpfr_isspace(int c){ return VG_(isspace)(c); }
 void* mpfr_memmove(void* dest, const void* src, size_t len){ return VG_(memmove)(dest, src, len); }
 int mpfr_memcmp(const void* ptr1, const void* ptr2, size_t len){ return VG_(memcmp)(ptr1, ptr2, len); }
 void* mpfr_memset(void* dest, int val, size_t size){ return VG_(memset)(dest, val, size); }
-
-void init_runtime(void){
-  mpfr_set_default_prec(precision);
-  // Set up the shadow memory, thread state, and temporaries.
-  initStorage();
-  // Set up the wrapping function table
-  callToOpInfoMap = VG_(HT_construct)("callToOpInfoMap");
-}
-void cleanup_runtime(void){
-  // Clean up the mpfr cache
-  mpfr_free_cache();
-  cleanupStorage();
-}

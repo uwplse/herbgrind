@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie          hg_shadowop.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie           hg_runtime.c ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,10 +27,16 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-extern long long unsigned int num_shadow_ops;
-extern long long unsigned int num_svals;
-extern long long unsigned int num_sval_bytes;
-extern long long unsigned int num_stems;
-extern long long unsigned int num_stem_bytes;
-extern long long unsigned int num_teas;
-extern long long unsigned int num_tea_bytes;
+#include <stddef.h>
+
+void* gmp_alloc(size_t t);
+void* gmp_realloc(void* p, size_t t1, size_t t2);
+void gmp_free(void* p, size_t t);
+
+size_t mpfr_strlen(const char* str);
+long int mpfr_strtol(const char* str, char** endptr, int _base);
+
+int mpfr_isspace(int c);
+void* mpfr_memmove(void* dest, const void* src, size_t len);
+int mpfr_memcmp(const void* ptr1, const void* ptr2, size_t len);
+void* mpfr_memset(void* dest, int val, size_t size);
