@@ -30,11 +30,7 @@
 
 #include "hg_main.h"
 #include "include/herbgrind.h"
-#include "helper/mpfr_valgrind_glue.h"
 
-#include "pub_tool_options.h"
-
-#include "pub_tool_clientstate.h"
 // Pull in this header file so that we can call the valgrind version
 // of printf.
 #include "pub_tool_libcprint.h"
@@ -43,6 +39,7 @@
 // memmove, memcmp, and memset functions of mpfr to their valgrind
 // library equivalents.
 #include "pub_tool_libcbase.h"
+#include "helper/mpfr_valgrind_glue.h"
 #include "mpfr.h"
 
 // This is where the magic happens. This function gets called to

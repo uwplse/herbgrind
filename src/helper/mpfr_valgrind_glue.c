@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie           hg_runtime.c ---*/
+/*--- HerbGrind: a valgrind tool for Herbie   mpfr_valgrind_glue.c ---*/
 /*--------------------------------------------------------------------*/
 
 /*
