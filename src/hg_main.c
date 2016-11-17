@@ -30,6 +30,7 @@
 
 #include "hg_main.h"
 #include "include/herbgrind.h"
+#include "hg_options.h"
 
 // Pull in this header file so that we can call the valgrind version
 // of printf.
@@ -52,10 +53,18 @@ IRSB* hg_instrument ( VgCallbackClosure* closure,
                       const VexArchInfo* archinfo_host,
                       IRType gWordTy, IRType hWordTy )
 {
-  if (False){
+  if (print_in_blocks){
     printSuperBlock(bb);
   }
-  return bb;
+  IRSB* sbOut = deepCopyIRSBExceptStmts(bb);
+  for(int i = 0; i < bb->stmts_used; ++i){
+    IRStmt* st = bb->stmts[i];
+    addStmtToIRSB(sbOut, st);
+  }
+  if (print_out_blocks){
+    printSuperBlock(sbOut);
+  }
+  return sbOut;
 }
 
 // This handles client requests, the macros that client programs stick
@@ -70,16 +79,6 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
   }
   *ret = 0;
   return True;
-}
-
-// Called to process each command line option.
-static Bool hg_process_cmd_line_option(const HChar* arg){
-  return False;
-}
-
-static void hg_print_usage(void){
-}
-static void hg_print_debug_usage(void){
 }
 
 // This is called after the program exits, for cleanup and such.
