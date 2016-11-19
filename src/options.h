@@ -27,14 +27,20 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
+#ifndef _OPTIONS_H
+#define _OPTIONS_H
+
+#include "pub_tool_basics.h"
+
 // Options for printing the VEX blocks that pass through
 // Herbgrind. print_in_blocks prints the VEX super blocks that
 // Herbgrind receives, and print_out_blocks prints the VEX blocks that
 // Herbgrind passes back to Valgrind for execution.
-Bool print_in_blocks = False;
-Bool print_out_blocks = False;
+extern Bool print_in_blocks;
+extern Bool print_out_blocks;
 
-static Bool hg_process_cmd_line_option(const HChar* arg);
+Bool hg_process_cmd_line_option(const HChar* arg);
 
-static void hg_print_usage(void);
-static void hg_print_debug_usage(void);
+void hg_print_usage(void);
+void hg_print_debug_usage(void);
+#endif

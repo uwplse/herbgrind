@@ -22,10 +22,12 @@ else
 DEPS = deps/gmp-64/README deps/mpfr-64/README
 endif
 
-HEADERS=src/include/herbgrind.h src/include/hg_mathreplace_funcs.h	\
-src/helper/mpfr_valgrind_glue.h
-SOURCES=src/hg_main.c src/hg_mathwrap.c src/include/mk_mathreplace.py	\
-src/helper/mpfr_valgrind_glue.c
+HEADERS=src/include/herbgrind.h src/helper/mpfr-valgrind-glue.h		\
+src/options.h src/runtime/shadowval.h src/runtime/value-shadowstate.h	\
+src/runtime/exprs.h src/runtime/exprs.hh
+SOURCES=src/hg_main.c src/mathwrap.c src/include/mk-mathreplace.py	\
+src/helper/mpfr-valgrind-glue.c src/options.c src/runtime/shadowval.c	\
+src/runtime/value-shadowstate.c
 
 all: compile
 
@@ -72,8 +74,8 @@ valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURC
 	$(MAKE) setup
 # Then, let's run the python script to generate the mathreplace header
 # in src/
-	rm -rf src/include/hg_mathreplace_funcs.h
-	cd src/include/ && python mk_mathreplace.py
+	rm -rf src/include/mathreplace-funcs.h
+	cd src/include/ && python mk-mathreplace.py
 # Copy over the herbgrind sources again, because why the hell not.
 	cp -r src/* valgrind/herbgrind
 # Run make install to build the binaries and put them in the right

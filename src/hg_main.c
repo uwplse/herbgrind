@@ -30,18 +30,13 @@
 
 #include "hg_main.h"
 #include "include/herbgrind.h"
-#include "hg_options.h"
+#include "options.h"
 
 // Pull in this header file so that we can call the valgrind version
 // of printf.
 #include "pub_tool_libcprint.h"
 
-// Pull in this header file so that we can set the strlen, strcpy,
-// memmove, memcmp, and memset functions of mpfr to their valgrind
-// library equivalents.
-#include "pub_tool_libcbase.h"
-#include "helper/mpfr_valgrind_glue.h"
-#include "mpfr.h"
+#include "helper/mpfr-valgrind-glue.h"
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
@@ -108,17 +103,7 @@ static void hg_pre_clo_init(void)
    VG_(needs_command_line_options)(hg_process_cmd_line_option,
                                    hg_print_usage,
                                    hg_print_debug_usage);
-
-   // Tell the gmp stuff to use valgrind c library instead of the
-   // standard one for memory allocation and the like.
-   mp_set_memory_functions(gmp_alloc, gmp_realloc, gmp_free);
-   mpfr_set_strlen_function(mpfr_strlen);
-   mpfr_set_strcpy_function(VG_(strcpy));
-   mpfr_set_strtol_function(mpfr_strtol);
-   mpfr_set_isspace_function(mpfr_isspace);
-   mpfr_set_memmove_function(mpfr_memmove);
-   mpfr_set_memcmp_function(mpfr_memcmp);
-   mpfr_set_memset_function(mpfr_memset);
+   setup_mpfr_valgrind_glue();
 }
 
 static void printSuperBlock(IRSB* superblock){

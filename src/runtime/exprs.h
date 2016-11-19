@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie              options.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie                exprs.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,30 +27,45 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#include "options.h"
+#ifndef _EXPRS_H
+#define _EXPRS_H
 
-#include "pub_tool_options.h"
-#include "pub_tool_libcbase.h"
-#include "pub_tool_libcprint.h"
+#include "exprs.hh"
 
-Bool print_in_blocks = False;
-Bool print_out_blocks = False;
+#include "pub_tool_basics.h"
+#include "pub_tool_hashtable.h"
 
-// Called to process each command line option.
-Bool hg_process_cmd_line_option(const HChar* arg){
-  if VG_XACT_CLO(arg, "--print-in-blocks", print_in_blocks, True) {}
-  else if VG_XACT_CLO(arg, "--print-out-blocks", print_out_blocks, True) {}
-  else return False;
-  return True;
-}
+typedef enum {
+  Node_Branch,
+  Node_Leaf
+} NodeType;
 
-void hg_print_usage(void){
-}
-void hg_print_debug_usage(void){
-  VG_(printf)(" --print-in-blocks "
-              "Prints the VEX superblocks that Herbgrind receives "
-              "from Valgrind.\n"
-              " --print-out-blocks "
-              "Prints the instrumented VEX superblocks that Herbgrind "
-              "returns to Valgrind.\n");
-}
+struct _ConcExpr {
+  int ref_count;
+  NodeType type;
+  double value;
+  struct {
+    ShadowOp* op;
+    int nargs;
+    ConcExpr** args;
+  } branch;
+};
+
+struct _SymbExpr {
+  NodeType type;
+  double constVal;
+  Bool isConst;
+  struct {
+    ShadowOp* op;
+    int nargs;
+    SymbExpr** args;
+    VgHashTable* equiv_map;
+  } branch;
+};
+
+typedef struct {
+  int* data;
+  int len;
+} NodePos;
+
+#endif

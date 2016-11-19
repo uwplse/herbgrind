@@ -300,4 +300,4 @@ addOp("remainder", "remainder", 2)
 
 addOp("fma", "fused multiply-add", 3)
 
-write_mathreplace_funcs(ops, "hg_mathreplace_funcs.h")
+write_mathreplace_funcs(ops, "mathreplace-funcs.h")

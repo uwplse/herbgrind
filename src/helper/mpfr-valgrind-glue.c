@@ -27,7 +27,7 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#include  "mpfr_valgrind_glue.h"
+#include  "mpfr-valgrind-glue.h"
 
 // Pull in this header file so that we can pass memory allocation
 // functions to gmp and mpfr.
@@ -36,6 +36,7 @@
 // memmove, memcmp, and memset functions of mpfr to their valgrind
 // library equivalents.
 #include "pub_tool_libcbase.h"
+#include "mpfr.h"
 
 // Some memory allocation functions for gmp support
 void* gmp_alloc(size_t t){ return VG_(malloc)("hg.gmp_alloc.1", t); }
@@ -53,3 +54,16 @@ int mpfr_isspace(int c){ return VG_(isspace)(c); }
 void* mpfr_memmove(void* dest, const void* src, size_t len){ return VG_(memmove)(dest, src, len); }
 int mpfr_memcmp(const void* ptr1, const void* ptr2, size_t len){ return VG_(memcmp)(ptr1, ptr2, len); }
 void* mpfr_memset(void* dest, int val, size_t size){ return VG_(memset)(dest, val, size); }
+
+void setup_mpfr_valgrind_glue(void){
+   // Tell the gmp stuff to use valgrind c library instead of the
+   // standard one for memory allocation and the like.
+   mp_set_memory_functions(gmp_alloc, gmp_realloc, gmp_free);
+   mpfr_set_strlen_function(mpfr_strlen);
+   mpfr_set_strcpy_function(VG_(strcpy));
+   mpfr_set_strtol_function(mpfr_strtol);
+   mpfr_set_isspace_function(mpfr_isspace);
+   mpfr_set_memmove_function(mpfr_memmove);
+   mpfr_set_memcmp_function(mpfr_memcmp);
+   mpfr_set_memset_function(mpfr_memset);
+}

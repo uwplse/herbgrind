@@ -32,7 +32,7 @@
 #include "pub_tool_redir.h"
 
 #include "include/herbgrind.h"
-#include "include/hg_mathreplace_funcs.h"
+#include "include/mathreplace-funcs.h"
 
 #define LIBM libmZdsoZa
 

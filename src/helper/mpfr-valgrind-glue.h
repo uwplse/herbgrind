@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie              options.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie   mpfr_valgrind_glue.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,30 +27,22 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#include "options.h"
+#ifndef _MPFR_VALGRIND_GLUE_H
+#define _MPFR_VALGRIND_GLUE_H
 
-#include "pub_tool_options.h"
-#include "pub_tool_libcbase.h"
-#include "pub_tool_libcprint.h"
+#include <stddef.h>
 
-Bool print_in_blocks = False;
-Bool print_out_blocks = False;
+void* gmp_alloc(size_t t);
+void* gmp_realloc(void* p, size_t t1, size_t t2);
+void gmp_free(void* p, size_t t);
 
-// Called to process each command line option.
-Bool hg_process_cmd_line_option(const HChar* arg){
-  if VG_XACT_CLO(arg, "--print-in-blocks", print_in_blocks, True) {}
-  else if VG_XACT_CLO(arg, "--print-out-blocks", print_out_blocks, True) {}
-  else return False;
-  return True;
-}
+size_t mpfr_strlen(const char* str);
+long int mpfr_strtol(const char* str, char** endptr, int _base);
 
-void hg_print_usage(void){
-}
-void hg_print_debug_usage(void){
-  VG_(printf)(" --print-in-blocks "
-              "Prints the VEX superblocks that Herbgrind receives "
-              "from Valgrind.\n"
-              " --print-out-blocks "
-              "Prints the instrumented VEX superblocks that Herbgrind "
-              "returns to Valgrind.\n");
-}
+int mpfr_isspace(int c);
+void* mpfr_memmove(void* dest, const void* src, size_t len);
+int mpfr_memcmp(const void* ptr1, const void* ptr2, size_t len);
+void* mpfr_memset(void* dest, int val, size_t size);
+
+void setup_mpfr_valgrind_glue(void);
+#endif
