@@ -1,4 +1,3 @@
-
 /*--------------------------------------------------------------------*/
 /*--- HerbGrind: a valgrind tool for Herbie              hg_main.c ---*/
 /*--------------------------------------------------------------------*/
@@ -30,37 +29,9 @@
 
 #include "hg_main.h"
 #include "include/herbgrind.h"
-#include "options.h"
-
-// Pull in this header file so that we can call the valgrind version
-// of printf.
-#include "pub_tool_libcprint.h"
+#include "instrument/instrument.c"
 
 #include "helper/mpfr-valgrind-glue.h"
-
-// This is where the magic happens. This function gets called to
-// instrument every superblock.
-static
-IRSB* hg_instrument ( VgCallbackClosure* closure,
-                      IRSB* bb,
-                      const VexGuestLayout* layout, 
-                      const VexGuestExtents* vge,
-                      const VexArchInfo* archinfo_host,
-                      IRType gWordTy, IRType hWordTy )
-{
-  if (print_in_blocks){
-    printSuperBlock(bb);
-  }
-  IRSB* sbOut = deepCopyIRSBExceptStmts(bb);
-  for(int i = 0; i < bb->stmts_used; ++i){
-    IRStmt* st = bb->stmts[i];
-    addStmtToIRSB(sbOut, st);
-  }
-  if (print_out_blocks){
-    printSuperBlock(sbOut);
-  }
-  return sbOut;
-}
 
 // This handles client requests, the macros that client programs stick
 // in to send messages to the tool.
@@ -78,10 +49,12 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
 
 // This is called after the program exits, for cleanup and such.
 static void hg_fini(Int exitcode){
+  finish_instrumentation();
 }
 // This does any initialization that needs to be done after command
 // line processing.
 static void hg_post_clo_init(void){
+  init_instrumentation();
 }
 
 // This is where we initialize everything
@@ -104,15 +77,6 @@ static void hg_pre_clo_init(void)
                                    hg_print_usage,
                                    hg_print_debug_usage);
    setup_mpfr_valgrind_glue();
-}
-
-static void printSuperBlock(IRSB* superblock){
-  for(int i = 0; i < superblock->stmts_used; i++){
-    IRStmt* st = superblock->stmts[i];
-    ppIRStmt(st);
-    VG_(printf)("\n");
-  }
-  VG_(printf)("\n");
 }
 
 VG_DETERMINE_INTERFACE_VERSION(hg_pre_clo_init)
