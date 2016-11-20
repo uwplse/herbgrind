@@ -53,7 +53,6 @@
 #define MAX_REGISTERS 1000
 #define MAX_THREADS 16
 
-extern int num_temps_used;
 extern ShadowTemp* shadowTemps[MAX_TEMPS];
 extern ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
 #endif

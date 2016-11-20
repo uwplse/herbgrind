@@ -29,7 +29,8 @@
 
 #include "hg_main.h"
 #include "include/herbgrind.h"
-#include "instrument/instrument.c"
+#include "options.h"
+#include "instrument/instrument.h"
 
 #include "helper/mpfr-valgrind-glue.h"
 

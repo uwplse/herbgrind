@@ -27,15 +27,19 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-IRSB* hg_instrument (VgCallbackClosure* closure,
-                     IRSB* sbIn,
-                     const VexGuestLayout* layout,
-                     const VexGuestExtents* vge,
-                     const VexArchInfo* archinfo_host,
-                     IRType gWordTy, IRType hWordTy);
+#include "pub_tool_tooliface.h"
+
+IRSB* hg_instrument(VgCallbackClosure* closure,
+                    IRSB* sbIn,
+                    const VexGuestLayout* layout,
+                    const VexGuestExtents* vge,
+                    const VexArchInfo* archinfo_host,
+                    IRType gWordTy, IRType hWordTy);
 
 void init_instrumentation(void);
 
 void finish_instrumentation(void);
+
+void instrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr);
 
 void printSuperBlock(IRSB* superblock);

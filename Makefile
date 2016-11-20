@@ -24,10 +24,12 @@ endif
 
 HEADERS=src/include/herbgrind.h src/helper/mpfr-valgrind-glue.h		\
 src/options.h src/runtime/shadowval.h src/runtime/value-shadowstate.h	\
-src/runtime/exprs.h src/runtime/exprs.hh
+src/runtime/exprs.h src/runtime/exprs.hh src/instrument/instrument.h	\
+src/instrument/instrument-op.h src/instrument/instrument-storage.h
 SOURCES=src/hg_main.c src/mathwrap.c src/include/mk-mathreplace.py	\
 src/helper/mpfr-valgrind-glue.c src/options.c src/runtime/shadowval.c	\
-src/runtime/value-shadowstate.c
+src/runtime/value-shadowstate.c src/instrument/instrument.c		\
+src/instrument/instrument-op.c src/instrument/instrument-storage.c
 
 all: compile
 

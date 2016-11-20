@@ -31,7 +31,6 @@
 
 #include "pub_tool_hashtable.h"
 
-int num_temps_used = 0;
 ShadowTemp* shadowTemps[MAX_TEMPS];
 ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
 VgHashTable* shadowMemory = NULL;
