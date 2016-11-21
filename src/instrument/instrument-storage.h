@@ -58,5 +58,7 @@ void instrumentStoreG(IRSB* sbOut, IRExpr* addr,
                       IRExpr* guard, IRExpr* data);
 void instrumentCAS(IRSB* sbOut,
                    IRCAS* details);
-
+int isFloat(IRTypeEnv* env, IRTemp temp);
+int isFloatType(IRType type);
+void addDisownShadowTempCall(IRSB* sbOut, IRTemp shadowTemp);
 #endif

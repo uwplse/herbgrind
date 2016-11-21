@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie                exprs.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie                exprs.c ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,45 +27,12 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _EXPRS_H
-#define _EXPRS_H
+#include "exprs.h"
+#include "pub_tool_mallocfree.h"
 
-#include "exprs.hh"
-
-#include "pub_tool_basics.h"
-#include "pub_tool_hashtable.h"
-
-typedef enum {
-  Node_Branch,
-  Node_Leaf
-} NodeType;
-
-struct _ConcExpr {
-  int ref_count;
-  NodeType type;
-  double value;
-  struct {
-    ShadowOp* op;
-    int nargs;
-    ConcExpr** args;
-  } branch;
-};
-
-struct _SymbExpr {
-  NodeType type;
-  double constVal;
-  Bool isConst;
-  struct {
-    ShadowOp* op;
-    int nargs;
-    SymbExpr** args;
-    VgHashTable* equiv_map;
-  } branch;
-};
-
-typedef struct {
-  int* data;
-  int len;
-} NodePos;
-
-#endif
+void freeExpr(ConcExpr* expr){
+  if (expr->type == Node_Branch){
+    VG_(free)(expr->branch.args);
+  }
+  VG_(free)(expr);
+}

@@ -48,6 +48,8 @@
 #define _VALUE_SHADOWSTATE_H
 
 #include "shadowval.h"
+#include "exprs.h"
+#include "pub_tool_tooliface.h"
 
 #define MAX_TEMPS 1000
 #define MAX_REGISTERS 1000
@@ -55,4 +57,11 @@
 
 extern ShadowTemp* shadowTemps[MAX_TEMPS];
 extern ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
+
+VG_REGPARM(1) void disownShadowTemp(ShadowTemp* index);
+VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp);
+void disownShadowValue(ShadowValue* val);
+void ownShadowValue(ShadowValue* val);
+void disownExpr(ConcExpr* expr);
+void ownExpr(ConcExpr* expr);
 #endif

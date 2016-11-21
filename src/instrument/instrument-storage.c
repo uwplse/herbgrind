@@ -28,11 +28,56 @@
 */
 
 #include "instrument-storage.h"
+#include "../runtime/value-shadowstate/value-shadowstate.h"
+#include "helpers.h"
+
+#include "pub_tool_libcprint.h"
+#include "pub_tool_machine.h"
+#include "pub_tool_libcassert.h"
 
 void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src){
+  tl_assert2(typeOfIRTemp(sbOut->tyenv, dest) ==
+             typeOfIRTemp(sbOut->tyenv, src),
+             "Source of temp move doesn't match dest!");
+  if (!isFloat(sbOut->tyenv, dest)) return;
+  // Load both the temps into memory.
+  IRTemp newShadowTemp = newIRTemp(sbOut->tyenv, Ity_I64);
+  addLoad64C(sbOut, newShadowTemp, &(shadowTemps[src]));
+  IRTemp oldShadowTemp = newIRTemp(sbOut->tyenv, Ity_I64);
+  addLoad64C(sbOut, oldShadowTemp, &(shadowTemps[dest]));
+
+  // Disown the old temp
+  addDisownShadowTempCall(sbOut, oldShadowTemp);
+
+  // Copy across the new temp and increment it's ref count.
+  // Increment the ref count of the new temp
+  IRTemp newTempNonNull = newIRTemp(sbOut->tyenv, Ity_I1);
+  addNonZeroCheck64(sbOut, newTempNonNull, newShadowTemp);
+
+  IRTemp newShadowTempCopy = newIRTemp(sbOut->tyenv, Ity_I64);
+  IRDirty* copyShadowTempDirty =
+    unsafeIRDirty_1_N(newShadowTempCopy,
+                      1, "copyShadowTemp",
+                      VG_(fnptr_to_fnentry)(&copyShadowTemp),
+                      mkIRExprVec_1(IRExpr_RdTmp(newShadowTemp)));
+  copyShadowTempDirty->mFx = Ifx_Read;
+  copyShadowTempDirty->mAddr = IRExpr_RdTmp(newShadowTemp);
+  copyShadowTempDirty->mSize = sizeof(ShadowTemp);
+  copyShadowTempDirty->guard = IRExpr_RdTmp(newTempNonNull);
+  addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowTempDirty));
+
+  addStoreGC(sbOut, newShadowTempCopy,
+             &(shadowTemps[dest]), newTempNonNull);
 }
 void instrumentWriteConst(IRSB* sbOut, IRTemp dest,
                           IRConst* con){
+  if (!isFloat(sbOut->tyenv, dest)) return;
+  
+  IRTemp oldShadowTemp = newIRTemp(sbOut->tyenv, Ity_I64);
+  addLoad64C(sbOut, oldShadowTemp, &(shadowTemps[dest]));
+
+  // Disown the old temp
+  addDisownShadowTempCall(sbOut, oldShadowTemp);
 }
 void instrumentITE(IRSB* sbOut, IRTemp dest,
                    IRExpr* trueExpr, IRExpr* falseExpr){
@@ -66,4 +111,36 @@ void instrumentStoreG(IRSB* sbOut, IRExpr* addr,
 }
 void instrumentCAS(IRSB* sbOut,
                    IRCAS* details){
+}
+int isFloat(IRTypeEnv* env, IRTemp temp){
+  IRType type = typeOfIRTemp(env, temp);
+  return isFloatType(type);
+}
+int isFloatType(IRType type){
+  return type == Ity_F32 || type == Ity_F64
+    || type == Ity_V128;
+}
+
+void addDisownShadowTempCall(IRSB* sbOut, IRTemp shadowTemp){
+  IRTemp tempNonNull = newIRTemp(sbOut->tyenv, Ity_I1);
+  addNonZeroCheck64(sbOut, tempNonNull, shadowTemp);
+
+  IRDirty* disownShadowTempDirty =
+    unsafeIRDirty_0_N(1, "disownShadowTemp",
+                      VG_(fnptr_to_fnentry)(&disownShadowTemp),
+                      mkIRExprVec_1(IRExpr_RdTmp(shadowTemp)));
+
+  // This could potentially be a little dubious, because we don't just
+  // modify the shadow temp, we also potentially modify any shadow
+  // values it contains (by freeing them), and any expr values those
+  // contain, and any expr values those exprs reference. As long as we
+  // don't ever have inline VEX touch values or exprs, and are very
+  // careful, we can probably get away with this. Worst case, we might
+  // end up sticking in a memory fence or something.
+  disownShadowTempDirty->mFx = Ifx_Modify;
+  disownShadowTempDirty->mAddr = IRExpr_RdTmp(shadowTemp);
+  disownShadowTempDirty->mSize = sizeof(ShadowTemp);
+  disownShadowTempDirty->guard = IRExpr_RdTmp(tempNonNull);
+
+  addStmtToIRSB(sbOut, IRStmt_Dirty(disownShadowTempDirty));
 }

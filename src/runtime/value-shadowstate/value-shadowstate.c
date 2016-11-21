@@ -30,7 +30,54 @@
 #include "value-shadowstate.h"
 
 #include "pub_tool_hashtable.h"
+#include "pub_tool_libcprint.h"
+#include "pub_tool_libcassert.h"
 
 ShadowTemp* shadowTemps[MAX_TEMPS];
 ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
 VgHashTable* shadowMemory = NULL;
+
+// Consider making this two-entrypoint function into a single
+// entrypoint, as it might speed things up.
+
+VG_REGPARM(1) void disownShadowTemp(ShadowTemp* temp){
+  for(int i = 0; i < temp->num_vals; ++i){
+    disownShadowValue(temp->values[i]);
+  }
+  freeShadowTemp(temp);
+}
+VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
+  if (temp == NULL) return NULL;
+  ShadowTemp* result = newShadowTemp(temp->num_vals);
+  for(int i = 0; i < temp->num_vals; ++i){
+    ownShadowValue(temp->values[i]);
+    result->values[i] = temp->values[i];
+  }
+  return result;
+}
+void disownShadowValue(ShadowValue* val){
+  (val->ref_count)--;
+  if (val->ref_count < 1){
+    disownExpr(val->expr);
+    freeShadowValue(val);
+  }
+}
+void ownShadowValue(ShadowValue* val){
+  (val->ref_count)++;
+}
+
+void disownExpr(ConcExpr* expr){
+  (expr->ref_count)--;
+  if (expr->ref_count < 1){
+    if (expr->type == Node_Branch){
+      for(int i = 0; i < expr->branch.nargs; ++i){
+        disownExpr(expr->branch.args[i]);
+      }
+    }
+    freeExpr(expr);
+  }
+}
+
+void ownExpr(ConcExpr* expr){
+  (expr->ref_count)++;
+}

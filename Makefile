@@ -23,12 +23,19 @@ DEPS = deps/gmp-64/README deps/mpfr-64/README
 endif
 
 HEADERS=src/include/herbgrind.h src/helper/mpfr-valgrind-glue.h		\
-src/options.h src/runtime/shadowval.h src/runtime/value-shadowstate.h	\
-src/runtime/exprs.h src/runtime/exprs.hh src/instrument/instrument.h	\
+src/options.h src/runtime/value-shadowstate/shadowval.h			\
+src/runtime/value-shadowstate/value-shadowstate.h			\
+src/runtime/value-shadowstate/exprs.h					\
+src/runtime/value-shadowstate/exprs.hh					\
+src/runtime/op-shadowstate/shadowop.h src/instrument/instrument.h	\
 src/instrument/instrument-op.h src/instrument/instrument-storage.h
 SOURCES=src/hg_main.c src/mathwrap.c src/include/mk-mathreplace.py	\
-src/helper/mpfr-valgrind-glue.c src/options.c src/runtime/shadowval.c	\
-src/runtime/value-shadowstate.c src/instrument/instrument.c		\
+src/helper/mpfr-valgrind-glue.c src/options.c				\
+src/runtime/value-shadowstate/shadowval.c				\
+src/runtime/value-shadowstate/value-shadowstate.c			\
+src/runtime/value-shadowstate/shadowval.c				\
+src/runtime/value-shadowstate/exprs.c					\
+src/runtime/op-shadowstate/shadowop.c src/instrument/instrument.c	\
 src/instrument/instrument-op.c src/instrument/instrument-storage.c
 
 all: compile

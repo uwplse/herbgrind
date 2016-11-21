@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie            shadowval.c ---*/
+/*--- HerbGrind: a valgrind tool for Herbie             shadowop.c ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,4 +27,4 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#include "shadowval.h"
+#include "shadowop.h"

@@ -40,6 +40,9 @@
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
+VG_REGPARM(0) void nothing(void);
+VG_REGPARM(0) void nothing(void){
+}
 IRSB* hg_instrument (VgCallbackClosure* closure,
                      IRSB* sbIn,
                      const VexGuestLayout* layout,
