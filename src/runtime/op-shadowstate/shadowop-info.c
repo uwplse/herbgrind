@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie             shadowop.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie             shadowop.c ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,27 +27,4 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _SHADOWOP_H
-#define _SHADOWOP_H
-
-#include "pub_tool_basics.h"
-#include "pub_tool_tooliface.h"
-
-#include "../value-shadowstate/exprs.hh"
-
-typedef struct _ErrorAggregate {
-  double max_total_error;
-  double total_total_error;
-  double max_local_error;
-  double total_local_error;
-  long long int num_evals;
-} ErrorAggregate;
-
-typedef struct _ShadowOp {
-  IROp op_code;
-  Addr op_addr;
-  ErrorAggregate eagg;
-  SymbExpr* expr;
-} ShadowOp;
-
-#endif
+#include "shadowop-info.h"

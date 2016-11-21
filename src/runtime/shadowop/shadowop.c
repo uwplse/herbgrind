@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie             shadowop.c ---*/
+/*--- HerbGrind: a valgrind tool for Herbie             shadowop.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*

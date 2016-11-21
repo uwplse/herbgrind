@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie                exprs.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie             shadowop.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,48 +27,27 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _EXPRS_H
-#define _EXPRS_H
-
-#include "exprs.hh"
-
-#include "../op-shadowstate/shadowop-info.h"
+#ifndef _SHADOWOP_INFO_H
+#define _SHADOWOP_INFO_H
 
 #include "pub_tool_basics.h"
-#include "pub_tool_hashtable.h"
+#include "pub_tool_tooliface.h"
 
-typedef enum {
-  Node_Branch,
-  Node_Leaf
-} NodeType;
+#include "../value-shadowstate/exprs.hh"
 
-struct _ConcExpr {
-  int ref_count;
-  NodeType type;
-  double value;
-  struct {
-    ShadowOpInfo* op;
-    int nargs;
-    ConcExpr** args;
-  } branch;
-};
+typedef struct _ErrorAggregate {
+  double max_total_error;
+  double total_total_error;
+  double max_local_error;
+  double total_local_error;
+  long long int num_evals;
+} ErrorAggregate;
 
-struct _SymbExpr {
-  NodeType type;
-  double constVal;
-  Bool isConst;
-  struct {
-    ShadowOpInfo* op;
-    int nargs;
-    SymbExpr** args;
-    VgHashTable* equiv_map;
-  } branch;
-};
+typedef struct _ShadowOpInfo {
+  IROp op_code;
+  Addr op_addr;
+  ErrorAggregate eagg;
+  SymbExpr* expr;
+} ShadowOpInfo;
 
-typedef struct {
-  int* data;
-  int len;
-} NodePos;
-
-void freeExpr(ConcExpr* expr);
 #endif

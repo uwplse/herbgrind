@@ -27,7 +27,8 @@ src/options.h src/runtime/value-shadowstate/shadowval.h			\
 src/runtime/value-shadowstate/value-shadowstate.h			\
 src/runtime/value-shadowstate/exprs.h					\
 src/runtime/value-shadowstate/exprs.hh					\
-src/runtime/op-shadowstate/shadowop.h src/instrument/instrument.h	\
+src/runtime/op-shadowstate/shadowop-info.h				\
+src/runtime/shadowop/shadowop.h src/instrument/instrument.h		\
 src/instrument/instrument-op.h src/instrument/instrument-storage.h
 SOURCES=src/hg_main.c src/mathwrap.c src/include/mk-mathreplace.py	\
 src/helper/mpfr-valgrind-glue.c src/options.c				\
@@ -35,7 +36,8 @@ src/runtime/value-shadowstate/shadowval.c				\
 src/runtime/value-shadowstate/value-shadowstate.c			\
 src/runtime/value-shadowstate/shadowval.c				\
 src/runtime/value-shadowstate/exprs.c					\
-src/runtime/op-shadowstate/shadowop.c src/instrument/instrument.c	\
+src/runtime/op-shadowstate/shadowop-info.c				\
+src/runtime/shadowop/shadowop.c src/instrument/instrument.c		\
 src/instrument/instrument-op.c src/instrument/instrument-storage.c
 
 all: compile
