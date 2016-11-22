@@ -47,7 +47,6 @@ VG_REGPARM(1) void disownShadowTemp(ShadowTemp* temp){
   freeShadowTemp(temp);
 }
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
-  if (temp == NULL) return NULL;
   ShadowTemp* result = newShadowTemp(temp->num_vals);
   for(int i = 0; i < temp->num_vals; ++i){
     ownShadowValue(temp->values[i]);
