@@ -31,8 +31,8 @@
 
 #include "pub_tool_basics.h"
 
-#include "mpfr.h"
 #include "exprs.hh"
+#include "real.h"
 
 typedef enum {
   Ft_Single,
@@ -41,7 +41,7 @@ typedef enum {
 
 typedef struct _ShadowValue {
   UWord ref_count;
-  mpfr_t real;
+  Real real;
   ConcExpr* expr;
   FloatType type;
 } ShadowValue;

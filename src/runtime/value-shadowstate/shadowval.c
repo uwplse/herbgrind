@@ -29,6 +29,7 @@
 
 #include "shadowval.h"
 #include "exprs.h"
+#include "real.h"
 #include "pub_tool_mallocfree.h"
 
 ShadowTemp* newShadowTemp(int num_vals){
@@ -45,6 +46,6 @@ void freeShadowTemp(ShadowTemp* temp){
   VG_(free)(temp);
 }
 void freeShadowValue(ShadowValue* val){
-  mpfr_clear(val->real);
+  freeReal(val->real);
   VG_(free)(val);
 }
