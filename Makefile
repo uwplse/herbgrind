@@ -27,6 +27,7 @@ src/options.h src/runtime/value-shadowstate/shadowval.h			\
 src/runtime/value-shadowstate/value-shadowstate.h			\
 src/runtime/value-shadowstate/exprs.h					\
 src/runtime/value-shadowstate/exprs.hh					\
+src/runtime/value-shadowstate/real.h					\
 src/runtime/op-shadowstate/shadowop-info.h				\
 src/runtime/shadowop/shadowop.h src/instrument/instrument.h		\
 src/instrument/instrument-op.h src/instrument/instrument-storage.h
@@ -36,6 +37,7 @@ src/runtime/value-shadowstate/shadowval.c				\
 src/runtime/value-shadowstate/value-shadowstate.c			\
 src/runtime/value-shadowstate/shadowval.c				\
 src/runtime/value-shadowstate/exprs.c					\
+src/runtime/value-shadowstate/real.c					\
 src/runtime/op-shadowstate/shadowop-info.c				\
 src/runtime/shadowop/shadowop.c src/instrument/instrument.c		\
 src/instrument/instrument-op.c src/instrument/instrument-storage.c

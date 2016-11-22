@@ -25,6 +25,7 @@ HERBGRIND_SOURCES_COMMON = hg_main.c helper/mpfr-valgrind-glue.c	\
 runtime/value-shadowstate/value-shadowstate.c				\
 runtime/value-shadowstate/shadowval.c					\
 runtime/value-shadowstate/exprs.c					\
+runtime/value-shadowstate/real.c					\
 runtime/op-shadowstate/shadowop-info.c runtime/shadowop/shadowop.c	\
 options.c instrument/instrument.c instrument/instrument-op.c		\
 instrument/instrument-storage.c
