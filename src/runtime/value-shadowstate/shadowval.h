@@ -30,6 +30,7 @@
 #define _SHADOWVAL_H
 
 #include "pub_tool_basics.h"
+#include "pub_tool_xarray.h"
 
 #include "exprs.hh"
 #include "real.h"
@@ -43,6 +44,7 @@ typedef struct _ShadowValue {
   UWord ref_count;
   Real real;
   ConcExpr* expr;
+  XArray* influences;
   FloatType type;
 } ShadowValue;
 
