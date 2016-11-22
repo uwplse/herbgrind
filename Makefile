@@ -29,6 +29,7 @@ src/runtime/value-shadowstate/exprs.h					\
 src/runtime/value-shadowstate/exprs.hh					\
 src/runtime/value-shadowstate/real.h					\
 src/runtime/op-shadowstate/shadowop-info.h				\
+src/runtime/op-shadowstate/mark-info.h					\
 src/runtime/shadowop/shadowop.h src/instrument/instrument.h		\
 src/instrument/instrument-op.h src/instrument/instrument-storage.h
 SOURCES=src/hg_main.c src/mathwrap.c src/include/mk-mathreplace.py	\
