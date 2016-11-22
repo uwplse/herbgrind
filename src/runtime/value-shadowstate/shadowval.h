@@ -56,6 +56,8 @@ typedef struct _ShadowTemp {
 ShadowTemp* newShadowTemp(int num_vals);
 void freeShadowTemp(ShadowTemp* temp);
 
+ShadowValue* newShadowValue(void);
+ShadowValue* newShadowValueF(void);
 void freeShadowValue(ShadowValue* val);
 
 #endif

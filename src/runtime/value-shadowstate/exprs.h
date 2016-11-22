@@ -70,5 +70,7 @@ typedef struct {
   int len;
 } NodePos;
 
+VG_REGPARM(1) ConcExpr* mkLeafExpr(double value);
+VG_REGPARM(1) ConcExpr* mkLeafExprF(float value);
 void freeExpr(ConcExpr* expr);
 #endif

@@ -45,6 +45,18 @@ void freeShadowTemp(ShadowTemp* temp){
   VG_(free)(temp->values);
   VG_(free)(temp);
 }
+ShadowValue* newShadowValue(void){
+  ShadowValue* result = VG_(malloc)("shadow value", sizeof(ShadowValue));
+  result->ref_count = 1;
+  result->type = Ft_Double;
+  return result;
+}
+ShadowValue* newShadowValueF(void){
+  ShadowValue* result = VG_(malloc)("shadow value", sizeof(ShadowValue));
+  result->ref_count = 1;
+  result->type = Ft_Single;
+  return result;
+}
 void freeShadowValue(ShadowValue* val){
   freeReal(val->real);
   VG_(free)(val);
