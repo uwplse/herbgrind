@@ -33,18 +33,24 @@
 #include "pub_tool_libcbase.h"
 #include "pub_tool_libcprint.h"
 
+#include "mpfr.h"
+
 Bool print_in_blocks = False;
 Bool print_out_blocks = False;
+Int precision = 1000;
 
 // Called to process each command line option.
 Bool hg_process_cmd_line_option(const HChar* arg){
   if VG_XACT_CLO(arg, "--print-in-blocks", print_in_blocks, True) {}
   else if VG_XACT_CLO(arg, "--print-out-blocks", print_out_blocks, True) {}
+  else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else return False;
   return True;
 }
 
 void hg_print_usage(void){
+  VG_(printf)("--precision=value "
+              "Sets the mantissa size of the shadow \"real\" values.\n");
 }
 void hg_print_debug_usage(void){
   VG_(printf)(" --print-in-blocks "
