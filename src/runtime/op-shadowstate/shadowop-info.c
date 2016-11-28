@@ -28,3 +28,21 @@
 */
 
 #include "shadowop-info.h"
+#include "pub_tool_mallocfree.h"
+
+ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr,
+                             int numSIMDOperands, int nargs,
+                             FloatType argPrecision){
+  ShadowOpInfo* result = VG_(perm_malloc)(sizeof(ShadowOpInfo), vg_alignof(ShadowOpInfo));
+  result->op_code = op_code;
+  result->op_addr = op_addr;
+  result->eagg.max_total_error = -1;
+  result->eagg.total_total_error = 0;
+  result->eagg.max_local_error = -1;
+  result->eagg.total_local_error = 0;
+  result->expr = NULL;
+  result->exinfo.numSIMDOperands = numSIMDOperands;
+  result->exinfo.nargs = nargs;
+  result->exinfo.argPrecision = argPrecision;
+  return result;
+}

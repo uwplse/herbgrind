@@ -38,11 +38,10 @@
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcassert.h"
 
+#include "../runtime/value-shadowstate/shadowval.h"
+
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
-VG_REGPARM(0) void nothing(void);
-VG_REGPARM(0) void nothing(void){
-}
 IRSB* hg_instrument (VgCallbackClosure* closure,
                      IRSB* sbIn,
                      const VexGuestLayout* layout,
@@ -50,6 +49,7 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
                      const VexArchInfo* archinfo_host,
                      IRType gWordTy, IRType hWordTy) {
   if (print_in_blocks){
+    VG_(printf)("Printing in block:\n");
     printSuperBlock(sbIn);
   }
   IRSB* sbOut = deepCopyIRSBExceptStmts(sbIn);
@@ -64,12 +64,14 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
       instrumentStatement(sbOut, stmt, curAddr);
   }
   if (print_out_blocks){
+    VG_(printf)("Printing out block:\n");
     printSuperBlock(sbOut);
   }
   return sbOut;
 }
 
 void init_instrumentation(void){
+  initShadowValueSystem();
 }
 
 void finish_instrumentation(void){

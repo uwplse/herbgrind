@@ -32,20 +32,20 @@
 #include "../../options.h"
 #include "pub_tool_mallocfree.h"
 
-VG_REGPARM(1) Real mkReal(double bytes){
+Real mkReal(double bytes){
   Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
   mpfr_init2(result->mpfr_val, precision);
   mpfr_set_d(result->mpfr_val, bytes, MPFR_RNDN);
   return result;
 }
-VG_REGPARM(1) Real mkRealF(float bytes){
-  Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
-  mpfr_init2(result->mpfr_val, precision);
-  mpfr_set_flt(result->mpfr_val, bytes, MPFR_RNDN);
-  return result;
-}
-
-VG_REGPARM(0) void freeReal(Real real){
+void freeReal(Real real){
   mpfr_clear(real->mpfr_val);
   VG_(free)(real);
+}
+
+Real copyReal(Real real){
+  Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
+  mpfr_init2(result->mpfr_val, precision);
+  mpfr_set(result->mpfr_val, real->mpfr_val, MPFR_RNDN);
+  return result;
 }

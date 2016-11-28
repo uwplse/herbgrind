@@ -34,6 +34,7 @@
 #include "pub_tool_tooliface.h"
 
 #include "../value-shadowstate/exprs.hh"
+#include "../value-shadowstate/shadowval.h"
 
 typedef struct _ErrorAggregate {
   double max_total_error;
@@ -43,11 +44,22 @@ typedef struct _ErrorAggregate {
   long long int num_evals;
 } ErrorAggregate;
 
+typedef struct _ExtraInfo {
+  int numSIMDOperands;
+  int nargs;
+  FloatType argPrecision;
+} ExtraInfo;
+
 typedef struct _ShadowOpInfo {
   IROp op_code;
   Addr op_addr;
   ErrorAggregate eagg;
   SymbExpr* expr;
+  ExtraInfo exinfo;
 } ShadowOpInfo;
+
+ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr,
+                             int numSIMDOperands, int nargs,
+                             FloatType argPrecision);
 
 #endif

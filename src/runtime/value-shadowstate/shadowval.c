@@ -30,9 +30,26 @@
 #include "shadowval.h"
 #include "exprs.h"
 #include "real.h"
+#include "value-shadowstate.h"
 #include "pub_tool_mallocfree.h"
+#include "pub_tool_hashtable.h"
+#include "pub_tool_libcbase.h"
 
-ShadowTemp* newShadowTemp(int num_vals){
+VgHashTable* doubleShadowValueCache;
+VgHashTable* singleShadowValueCache;
+
+typedef struct _cacheEntry {
+  struct _cacheEntry* next;
+  UWord key;
+  ShadowValue* shadowValue;
+} CacheEntry;
+
+void initShadowValueSystem(void){
+  doubleShadowValueCache = VG_(HT_construct)("double shadow value cache");
+  singleShadowValueCache = VG_(HT_construct)("single shadow value cache");
+}
+
+VG_REGPARM(1) ShadowTemp* newShadowTemp(UWord num_vals){
   ShadowTemp* newShadowTemp =
     VG_(calloc)("shadow temp", 1, sizeof(ShadowTemp));
   newShadowTemp->num_vals = num_vals;
@@ -45,19 +62,46 @@ void freeShadowTemp(ShadowTemp* temp){
   VG_(free)(temp->values);
   VG_(free)(temp);
 }
-ShadowValue* newShadowValue(void){
-  ShadowValue* result = VG_(malloc)("shadow value", sizeof(ShadowValue));
-  result->ref_count = 1;
-  result->type = Ft_Double;
+void changeSingleValueType(ShadowTemp* temp, FloatType type){
+  temp->values[0]->type = type;
+}
+UWord hashDouble(double val){
+  UWord result;
+  VG_(memcpy)(&result, &val, sizeof(UWord));
   return result;
 }
-ShadowValue* newShadowValueF(void){
+ShadowValue* newShadowValue(FloatType type, double value){
+  UWord key = hashDouble(value);
+  CacheEntry* entry = VG_(HT_lookup)(type == Ft_Single ?
+                                     singleShadowValueCache :
+                                     doubleShadowValueCache,
+                                     key);
+  if (entry != NULL)
+    return entry->shadowValue;
+  entry = VG_(malloc)("shadow value cache entry", sizeof(CacheEntry));
+  entry->key = key;
+
   ShadowValue* result = VG_(malloc)("shadow value", sizeof(ShadowValue));
   result->ref_count = 1;
-  result->type = Ft_Single;
+  result->type = type;
+  result->real = mkReal(value);
+  result->expr = mkLeafExpr(value);
+  result->influences = NULL;
+  entry->shadowValue = result;
   return result;
 }
 void freeShadowValue(ShadowValue* val){
   freeReal(val->real);
   VG_(free)(val);
+}
+
+ShadowValue* copyShadowValue(ShadowValue* val){
+  ShadowValue* result = VG_(malloc)("shadow value", sizeof(ShadowValue));
+  result->type = val->type;
+  result->ref_count = 1;
+  result->real = copyReal(val->real);
+  result->expr = val->expr;
+  ownExpr(result->expr);
+  result->influences = val->influences;
+  return result;
 }

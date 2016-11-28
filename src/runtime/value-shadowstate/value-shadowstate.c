@@ -54,6 +54,13 @@ VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
   }
   return result;
 }
+ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
+  ShadowTemp* result = newShadowTemp(temp->num_vals);
+  for(int i = 0; i < temp->num_vals; ++i){
+    result->values[i] = copyShadowValue(temp->values[i]);
+  }
+  return result;
+}
 void disownShadowValue(ShadowValue* val){
   (val->ref_count)--;
   if (val->ref_count < 1){

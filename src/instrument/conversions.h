@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie             shadowop.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie          conversions.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,24 +27,17 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _SHADOWOP_H
-#define _SHADOWOP_H
+#ifndef _INSTRUMENT_CONVERSIONS_H
+#define _INSTRUMENT_CONVERSIONS_H
 
-#include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
-#include "pub_tool_xarray.h"
-#include "../value-shadowstate/shadowval.h"
-#include "../op-shadowstate/shadowop-info.h"
 
-typedef struct {
-  FloatType type;
-  union {
-    float argValuesF[4][8];
-    double argValues[4][4];
-  } values;
-  ShadowTemp* shadowArgs[4];
-} OpArgs;
+void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
+                          IRTemp dest);
 
-VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
-                                          OpArgs* args);
+Bool isConversionOp(IROp op_code);
+int conversionInputArgIndex(IROp op_code);
+int numConversionInputs(IROp op_code);
+int conversionInputType(IROp op_code);
+
 #endif

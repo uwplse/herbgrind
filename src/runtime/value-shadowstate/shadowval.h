@@ -36,6 +36,7 @@
 #include "real.h"
 
 typedef enum {
+  Ft_Invalid,
   Ft_Single,
   Ft_Double
 } FloatType;
@@ -53,11 +54,16 @@ typedef struct _ShadowTemp {
   int num_vals;
 } ShadowTemp;
 
-ShadowTemp* newShadowTemp(int num_vals);
+void initShadowValueSystem(void);
+ShadowTemp* newShadowTemp(UWord num_vals);
 void freeShadowTemp(ShadowTemp* temp);
+ShadowTemp* copyShadowTemp(ShadowTemp* temp);
+ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp);
+void changeSingleValueType(ShadowTemp* temp, FloatType type);
 
-ShadowValue* newShadowValue(void);
-ShadowValue* newShadowValueF(void);
+UWord hashDouble(double val);
+VG_REGPARM(1) ShadowValue* newShadowValue(FloatType type, double value);
 void freeShadowValue(ShadowValue* val);
+ShadowValue* copyShadowValue(ShadowValue* val);
 
 #endif

@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie             shadowop.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie          conversions.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -26,25 +26,21 @@
 
    The GNU General Public License is contained in the file COPYING.
 */
+#ifndef _CONVERSIONS_H
+#define _CONVERSIONS_H
 
-#ifndef _SHADOWOP_H
-#define _SHADOWOP_H
-
-#include "pub_tool_basics.h"
-#include "pub_tool_tooliface.h"
-#include "pub_tool_xarray.h"
 #include "../value-shadowstate/shadowval.h"
-#include "../op-shadowstate/shadowop-info.h"
 
-typedef struct {
-  FloatType type;
-  union {
-    float argValuesF[4][8];
-    double argValues[4][4];
-  } values;
-  ShadowTemp* shadowArgs[4];
-} OpArgs;
-
-VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
-                                          OpArgs* args);
+// Some conversion operators
+ShadowTemp* zeroHi96ofV128(ShadowTemp* input);
+ShadowTemp* zeroHi64ofV128(ShadowTemp* input);
+ShadowTemp* v128to32(ShadowTemp* input);
+ShadowTemp* v128to64(ShadowTemp* input);
+ShadowTemp* v128Hito64(ShadowTemp* input);
+ShadowTemp* setV128lo32(ShadowTemp* topThree, ShadowTemp* bottomOne);
+ShadowTemp* setV128lo64(ShadowTemp* topOne, ShadowTemp* bottomOne);
+ShadowTemp* f128Loto64(ShadowTemp* input);
+ShadowTemp* f128Hito64(ShadowTemp* input);
+ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* low);
+ShadowTemp* f64HLtoF128(ShadowTemp* hi, ShadowTemp* low);
 #endif

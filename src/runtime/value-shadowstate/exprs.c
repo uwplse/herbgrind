@@ -36,13 +36,10 @@ void freeExpr(ConcExpr* expr){
   }
   VG_(free)(expr);
 }
-VG_REGPARM(1) ConcExpr* mkLeafExpr(double value){
+ConcExpr* mkLeafExpr(double value){
   ConcExpr* result = VG_(malloc)("expr", sizeof(ConcExpr));
   result->ref_count = 1;
   result->type = Node_Leaf;
   result->value = value;
   return result;
-}
-VG_REGPARM(1) ConcExpr* mkLeafExprF(float value){
-  return mkLeafExpr(value);
 }

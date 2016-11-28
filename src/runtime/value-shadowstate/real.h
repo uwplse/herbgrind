@@ -37,9 +37,9 @@ typedef struct _RealStruct{
   mpfr_t mpfr_val;
 } *Real;
 
-VG_REGPARM(1) Real mkReal(double bytes);
-VG_REGPARM(1) Real mkRealF(float bytes);
+Real mkReal(double bytes);
 
-VG_REGPARM(0) void freeReal(Real real);
+void freeReal(Real real);
+Real copyReal(Real real);
 
 #endif
