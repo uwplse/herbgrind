@@ -31,39 +31,27 @@
 #include "exprs.h"
 #include "real.h"
 #include "value-shadowstate.h"
+
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_hashtable.h"
 #include "pub_tool_libcbase.h"
-
-VgHashTable* doubleShadowValueCache;
-VgHashTable* singleShadowValueCache;
-
-typedef struct _cacheEntry {
-  struct _cacheEntry* next;
-  UWord key;
-  ShadowValue* shadowValue;
-} CacheEntry;
-
-void initShadowValueSystem(void){
-  doubleShadowValueCache = VG_(HT_construct)("double shadow value cache");
-  singleShadowValueCache = VG_(HT_construct)("single shadow value cache");
-}
+#include "pub_tool_libcprint.h"
+#include "pub_tool_libcassert.h"
 
 VG_REGPARM(1) ShadowTemp* newShadowTemp(UWord num_vals){
+  VG_(printf)("Creating a fresh temp.\n");
   ShadowTemp* newShadowTemp =
-    VG_(calloc)("shadow temp", 1, sizeof(ShadowTemp));
+    VG_(perm_malloc)(sizeof(ShadowTemp), vg_alignof(ShadowTemp));
   newShadowTemp->num_vals = num_vals;
+  tl_assert(num_vals > 0);
   newShadowTemp->values =
-    VG_(calloc)("shadow temp", num_vals,
-                sizeof(ShadowValue*));
+    VG_(perm_malloc)(num_vals * sizeof(ShadowValue*), vg_alignof(ShadowValue*));
   return newShadowTemp;
 }
-void freeShadowTemp(ShadowTemp* temp){
-  VG_(free)(temp->values);
-  VG_(free)(temp);
-}
 void changeSingleValueType(ShadowTemp* temp, FloatType type){
-  temp->values[0]->type = type;
+  if (temp->values[0] != NULL){
+    temp->values[0]->type = type;
+  }
 }
 UWord hashDouble(double val){
   UWord result;
@@ -71,28 +59,11 @@ UWord hashDouble(double val){
   return result;
 }
 ShadowValue* newShadowValue(FloatType type, double value){
-  UWord key = hashDouble(value);
-  CacheEntry* entry = VG_(HT_lookup)(type == Ft_Single ?
-                                     singleShadowValueCache :
-                                     doubleShadowValueCache,
-                                     key);
-  if (entry != NULL)
-    return entry->shadowValue;
-  entry = VG_(malloc)("shadow value cache entry", sizeof(CacheEntry));
-  entry->key = key;
-
-  ShadowValue* result = VG_(malloc)("shadow value", sizeof(ShadowValue));
-  result->ref_count = 1;
-  result->type = type;
+  VG_(printf)("Creating a fresh val.\n");
+  ShadowValue* result = VG_(perm_malloc)(sizeof(ShadowValue), vg_alignof(ShadowValue));
   result->real = mkReal(value);
-  result->expr = mkLeafExpr(value);
-  result->influences = NULL;
-  entry->shadowValue = result;
+  result->type = type;
   return result;
-}
-void freeShadowValue(ShadowValue* val){
-  freeReal(val->real);
-  VG_(free)(val);
 }
 
 ShadowValue* copyShadowValue(ShadowValue* val){
@@ -101,7 +72,18 @@ ShadowValue* copyShadowValue(ShadowValue* val){
   result->ref_count = 1;
   result->real = copyReal(val->real);
   result->expr = val->expr;
-  ownExpr(result->expr);
   result->influences = val->influences;
   return result;
+}
+VG_REGPARM(3) void assertNumVals(const char* label, ShadowTemp* temp, int num_vals){
+  tl_assert2(temp->num_vals == num_vals,
+             "%s: Expected %d vals in %p, got %d\n",
+             label, num_vals, temp, temp->num_vals);
+}
+VG_REGPARM(3) void assertNumValsNot(const char* label,
+                                    ShadowTemp* temp,
+                                    int num_vals){
+  tl_assert2(temp->num_vals != num_vals,
+             "%s: Expected not %d vals in %p, got %d\n",
+             label, num_vals, temp, temp->num_vals);
 }

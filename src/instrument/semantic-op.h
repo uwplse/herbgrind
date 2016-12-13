@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie          conversions.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie          semantic-op.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,17 +27,18 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _INSTRUMENT_CONVERSIONS_H
-#define _INSTRUMENT_CONVERSIONS_H
+#ifndef _SEMANTIC_OP_H
+#define _SEMANTIC_OP_H
 
+#include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
 
-void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
-                          IRTemp dest);
+#include "../runtime/value-shadowstate/shadowval.h"
 
-Bool isConversionOp(IROp op_code);
-int conversionInputArgIndex(IROp op_code);
-int numConversionInputs(IROp op_code);
-int conversionInputType(IROp op_code);
+void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
+                          int nargs, IRExpr** argExprs,
+                          Addr curAddr, IRTemp dest);
 
+IRTemp runGetArg(IRSB* sbOut, FloatType type, IRExpr* argExpr,
+                 int num_vals);
 #endif

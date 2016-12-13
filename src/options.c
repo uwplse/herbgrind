@@ -37,12 +37,16 @@
 
 Bool print_in_blocks = False;
 Bool print_out_blocks = False;
+Bool print_block_boundries = False;
+Bool print_run_blocks = False;
 Int precision = 1000;
 
 // Called to process each command line option.
 Bool hg_process_cmd_line_option(const HChar* arg){
   if VG_XACT_CLO(arg, "--print-in-blocks", print_in_blocks, True) {}
   else if VG_XACT_CLO(arg, "--print-out-blocks", print_out_blocks, True) {}
+  else if VG_XACT_CLO(arg, "--print-block-boundries", print_block_boundries, True) {}
+  else if VG_XACT_CLO(arg, "--print-run-blocks", print_run_blocks, True) {}
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else return False;
   return True;
@@ -58,5 +62,9 @@ void hg_print_debug_usage(void){
               "from Valgrind.\n"
               " --print-out-blocks "
               "Prints the instrumented VEX superblocks that Herbgrind "
-              "returns to Valgrind.\n");
+              "returns to Valgrind.\n"
+              " --print-block-boundries "
+              "Prints +++++ between each executed block.\n"
+              " --print-run-blocks.\n"
+              "Prints the addresses of each run block.\n");
 }

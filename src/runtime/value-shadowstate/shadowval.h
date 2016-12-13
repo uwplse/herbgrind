@@ -34,14 +34,12 @@
 
 #include "exprs.hh"
 #include "real.h"
-
-typedef enum {
-  Ft_Invalid,
-  Ft_Single,
-  Ft_Double
-} FloatType;
+#include "../../helper/ir-info.h"
 
 typedef struct _ShadowValue {
+  // For the shadow temp stacks.
+  struct _ShadowValue* next;
+
   UWord ref_count;
   Real real;
   ConcExpr* expr;
@@ -50,20 +48,26 @@ typedef struct _ShadowValue {
 } ShadowValue;
 
 typedef struct _ShadowTemp {
+  // For the shadow temp stacks.
+  struct _ShadowTemp* next;
+
   ShadowValue** values;
   int num_vals;
 } ShadowTemp;
 
-void initShadowValueSystem(void);
-ShadowTemp* newShadowTemp(UWord num_vals);
-void freeShadowTemp(ShadowTemp* temp);
+// Don't assume that the new shadow temp will have NULL values!!!
+VG_REGPARM(1) ShadowTemp* newShadowTemp(UWord num_vals);
 ShadowTemp* copyShadowTemp(ShadowTemp* temp);
 ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp);
 void changeSingleValueType(ShadowTemp* temp, FloatType type);
 
 UWord hashDouble(double val);
-VG_REGPARM(1) ShadowValue* newShadowValue(FloatType type, double value);
-void freeShadowValue(ShadowValue* val);
+ShadowValue* newShadowValue(FloatType type, double value);
 ShadowValue* copyShadowValue(ShadowValue* val);
+
+VG_REGPARM(3) void assertNumVals(const char* label, ShadowTemp* temp, int num_vals);
+VG_REGPARM(3) void assertNumValsNot(const char* label,
+                                    ShadowTemp* temp,
+                                    int num_vals);
 
 #endif

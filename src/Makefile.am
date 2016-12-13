@@ -22,20 +22,22 @@ noinst_PROGRAMS += herbgrind-@VGCONF_ARCH_SEC@-@VGCONF_OS@
 endif
 
 HERBGRIND_SOURCES_COMMON = hg_main.c helper/mpfr-valgrind-glue.c	\
+helper/stack.c helper/instrument-util.c helper/ir-info.c		\
 runtime/value-shadowstate/value-shadowstate.c				\
 runtime/value-shadowstate/shadowval.c					\
 runtime/value-shadowstate/exprs.c runtime/value-shadowstate/real.c	\
 runtime/op-shadowstate/shadowop-info.c runtime/shadowop/shadowop.c	\
 runtime/shadowop/conversions.c options.c instrument/instrument.c	\
-instrument/helpers.c instrument/instrument-op.c				\
-instrument/instrument-storage.c instrument/conversions.c
+instrument/instrument-op.c instrument/instrument-storage.c		\
+instrument/conversion.c instrument/semantic-op.c
+
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_SOURCES      = \
 	$(HERBGRIND_SOURCES_COMMON)
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CPPFLAGS     = \
 	$(AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CFLAGS       = \
 	$(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
-	-g -Werror -Wall \
+	-g -O3 -Werror -Wall \
 	-I$(top_srcdir)/../deps/gmp-64/$(HG_LOCAL_INSTALL_NAME)/include/ \
 	-I$(top_srcdir)/../deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME)/include/
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_DEPENDENCIES = \

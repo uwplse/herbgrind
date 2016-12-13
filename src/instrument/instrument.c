@@ -37,8 +37,13 @@
 // of printf.
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcassert.h"
+#include "pub_tool_mallocfree.h"
 
+#include "../runtime/value-shadowstate/value-shadowstate.h"
 #include "../runtime/value-shadowstate/shadowval.h"
+
+#include "../helper/instrument-util.h"
+#include "../helper/debug.h"
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
@@ -48,20 +53,34 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
                      const VexGuestExtents* vge,
                      const VexArchInfo* archinfo_host,
                      IRType gWordTy, IRType hWordTy) {
+  IRSB* sbOut = deepCopyIRSBExceptStmts(sbIn);
+
   if (print_in_blocks){
-    VG_(printf)("Printing in block:\n");
+    VG_(printf)("Instrumenting block at %p:\n", (void*)closure->readdr);
     printSuperBlock(sbIn);
   }
-  IRSB* sbOut = deepCopyIRSBExceptStmts(sbIn);
+  if (print_run_blocks){
+    char* blockMessage = VG_(perm_malloc)(35, 1);
+    VG_(snprintf)(blockMessage, 35,
+                  "Running block at %p\n", (void*)closure->readdr);
+    addPrint(blockMessage);
+  }
+
   Addr curAddr = 0;
   for(int i = 0; i < sbIn->stmts_used; ++i){
     IRStmt* stmt = sbIn->stmts[i];
-    addStmtToIRSB(sbOut, stmt);
     if (stmt->tag == Ist_IMark){
       curAddr = stmt->Ist.IMark.addr;
     }
     if (curAddr)
+      preInstrumentStatement(sbOut, stmt, curAddr);
+    addStmtToIRSB(sbOut, stmt);
+    if (curAddr)
       instrumentStatement(sbOut, stmt, curAddr);
+  }
+  addBlockCleanup(sbOut);
+  if (print_block_boundries){
+    addPrint("\n+++++\n");
   }
   if (print_out_blocks){
     VG_(printf)("Printing out block:\n");
@@ -71,10 +90,20 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
 }
 
 void init_instrumentation(void){
-  initShadowValueSystem();
+  initValueShadowState();
+  initInstrumentationState();
 }
 
 void finish_instrumentation(void){
+}
+void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){
+  switch(stmt->tag){
+  case Ist_Exit:
+    addBlockCleanupG(sbOut, stmt->Ist.Exit.guard);
+    break;
+  default:
+    break;
+  }
 }
 
 void instrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){

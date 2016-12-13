@@ -38,6 +38,8 @@
 // Herbgrind passes back to Valgrind for execution.
 extern Bool print_in_blocks;
 extern Bool print_out_blocks;
+extern Bool print_block_boundries;
+extern Bool print_run_blocks;
 extern Int precision;
 
 Bool hg_process_cmd_line_option(const HChar* arg);

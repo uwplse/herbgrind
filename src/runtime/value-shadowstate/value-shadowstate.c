@@ -37,53 +37,92 @@ ShadowTemp* shadowTemps[MAX_TEMPS];
 ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
 VgHashTable* shadowMemory = NULL;
 
-// Consider making this two-entrypoint function into a single
-// entrypoint, as it might speed things up.
+Stack* freedTemps[MAX_TEMP_SHADOWS];
+Stack* freedVals;
+
+void initValueShadowState(void){
+  for(int i = 0; i < MAX_TEMP_SHADOWS; ++i){
+    freedTemps[i] = mkStack();
+  }
+  freedVals = mkStack();
+}
+
+VG_REGPARM(2) void dynamicCleanup(int nentries, TempDebtEntry* entries){
+  for(int i = 0; i < nentries; ++i){
+    freeShadowTemp(shadowTemps[entries[i].temp]);
+    shadowTemps[entries[i].temp] = NULL;
+  }
+}
+
+void freeShadowTemp(ShadowTemp* temp){
+  stack_push(freedTemps[temp->num_vals - 1], (void*)temp);
+}
+
+ShadowTemp* mkShadowTemp(UWord num_vals){
+  if (stack_empty(freedTemps[num_vals - 1])){
+    return newShadowTemp(num_vals);
+  } else {
+    return (void*)stack_pop(freedTemps[num_vals - 1]);
+  }
+}
+
+void freeShadowValue(ShadowValue* val){
+  if (val->influences != NULL){
+    VG_(deleteXA)(val->influences);
+    val->influences = NULL;
+  }
+  stack_push(freedVals, (void*)val);
+}
+
+ShadowValue* mkShadowValue(FloatType type, double value){
+  ShadowValue* result;
+  if (stack_empty(freedVals)){
+    result = newShadowValue(type, value);
+  } else {
+    result = (void*)stack_pop(freedVals);
+    setReal(result->real, value);
+    result->type = type;
+  }
+  result->ref_count = 1;
+  return result;
+}
 
 VG_REGPARM(1) void disownShadowTemp(ShadowTemp* temp){
-  for(int i = 0; i < temp->num_vals; ++i){
-    disownShadowValue(temp->values[i]);
-  }
+  /* if (temp == NULL) return; */
+  /* for(int i = 0; i < temp->num_vals; ++i){ */
+  /*   if (temp->values[i] != NULL){ */
+  /*     disownShadowValue(temp->values[i]); */
+  /*   } */
+  /* } */
   freeShadowTemp(temp);
 }
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
-  ShadowTemp* result = newShadowTemp(temp->num_vals);
+  ShadowTemp* result = mkShadowTemp(temp->num_vals);
   for(int i = 0; i < temp->num_vals; ++i){
-    ownShadowValue(temp->values[i]);
-    result->values[i] = temp->values[i];
+    if (temp->values[i] != NULL){
+      ownShadowValue(temp->values[i]);
+      result->values[i] = temp->values[i];
+    }
   }
   return result;
 }
 ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
-  ShadowTemp* result = newShadowTemp(temp->num_vals);
+  ShadowTemp* result = mkShadowTemp(temp->num_vals);
   for(int i = 0; i < temp->num_vals; ++i){
-    result->values[i] = copyShadowValue(temp->values[i]);
+    if (temp->values[i] != NULL){
+      result->values[i] = copyShadowValue(temp->values[i]);
+    }
   }
   return result;
 }
 void disownShadowValue(ShadowValue* val){
+  if (val == NULL) return;
   (val->ref_count)--;
   if (val->ref_count < 1){
-    disownExpr(val->expr);
     freeShadowValue(val);
   }
 }
 void ownShadowValue(ShadowValue* val){
+  if (val == NULL) return;
   (val->ref_count)++;
-}
-
-void disownExpr(ConcExpr* expr){
-  (expr->ref_count)--;
-  if (expr->ref_count < 1){
-    if (expr->type == Node_Branch){
-      for(int i = 0; i < expr->branch.nargs; ++i){
-        disownExpr(expr->branch.args[i]);
-      }
-    }
-    freeExpr(expr);
-  }
-}
-
-void ownExpr(ConcExpr* expr){
-  (expr->ref_count)++;
 }

@@ -26,12 +26,14 @@
 
    The GNU General Public License is contained in the file COPYING.
 */
-#include "pub_tool_basics.h"
-#include "pub_tool_tooliface.h"
-
 #ifndef _INSTRUMENT_STORAGE_H
 #define _INSTRUMENT_STORAGE_H
 
+#include "pub_tool_basics.h"
+#include "pub_tool_tooliface.h"
+#include "../helper/ir-info.h"
+
+void initInstrumentationState(void);
 void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src);
 void instrumentWriteConst(IRSB* sbOut, IRTemp dest,
                           IRConst* con);
@@ -58,7 +60,26 @@ void instrumentStoreG(IRSB* sbOut, IRExpr* addr,
                       IRExpr* guard, IRExpr* data);
 void instrumentCAS(IRSB* sbOut,
                    IRCAS* details);
-int isFloat(IRTypeEnv* env, IRTemp temp);
-int isFloatType(IRType type);
-void addDisownShadowTempCall(IRSB* sbOut, IRTemp shadowTemp);
+void addBlockCleanup(IRSB* sbOut);
+void addBlockCleanupG(IRSB* sbOut, IRExpr* guard);
+void cleanupAtEndOfBlock(IRSB* out, IRTemp shadowed_temp, int num_vals);
+void addDisownNonNull(IRSB* sbOut, IRTemp temp, int num_vals);
+void addDisown(IRSB* sbOut, IRTemp temp, int num_vals);
+void addClear(IRSB* sbOut, IRTemp temp, int num_vals);
+
+IRTemp runNewShadowTempG(IRSB* sbOut, IRTemp guard,
+                         int num_vals);
+IRTemp runNewShadowTemp(IRSB* sbOut, int num_vals);
+IRTemp runMkShadowTempG(IRSB* sbOut, IRTemp guard,
+                        int num_vals, FloatType valPrecision,
+                        IRExpr* valExpr);
+IRTemp runMkShadowTemp(IRSB* sbOut,
+                       int num_vals, FloatType valPecision,
+                       IRExpr* valExpr);
+IRTemp runMakeInputG(IRSB* sbOut, IRTemp guard,
+                     IRExpr* argExpr, FloatType type);
+IRTemp runMakeInput(IRSB* sbOut,
+                    IRExpr* argExpr,
+                    FloatType type);
+
 #endif

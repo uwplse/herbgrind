@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie                 real.c ---*/
+/*--- HerbGrind: a valgrind tool for Herbie          conversions.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,33 +27,16 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#include "real.h"
+#ifndef _INSTRUMENT_CONVERSIONS_H
+#define _INSTRUMENT_CONVERSIONS_H
 
-#include "../../options.h"
-#include "pub_tool_mallocfree.h"
-#include "pub_tool_libcprint.h"
+#include "pub_tool_tooliface.h"
 
-Real mkReal(double bytes){
-  Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
-  mpfr_init2(result->mpfr_val, precision);
-  mpfr_set_d(result->mpfr_val, bytes, MPFR_RNDN);
-  return result;
-}
-void setReal(Real r, double bytes){
-  mpfr_set_d(r->mpfr_val, bytes, MPFR_RNDN);
-}
-void freeReal(Real real){
-  mpfr_clear(real->mpfr_val);
-  VG_(free)(real);
-}
+void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
+                          IRTemp dest);
 
-double getDouble(Real real){
-  return mpfr_get_d(real->mpfr_val, MPFR_RNDN);
-}
+Bool isConversionOp(IROp op_code);
+int conversionInputArgIndex(IROp op_code);
+int numConversionInputs(IROp op_code);
 
-Real copyReal(Real real){
-  Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
-  mpfr_init2(result->mpfr_val, precision);
-  mpfr_set(result->mpfr_val, real->mpfr_val, MPFR_RNDN);
-  return result;
-}
+#endif

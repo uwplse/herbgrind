@@ -38,6 +38,9 @@ typedef struct _RealStruct{
 } *Real;
 
 Real mkReal(double bytes);
+void setReal(Real r, double bytes);
+
+double getDouble(Real real);
 
 void freeReal(Real real);
 Real copyReal(Real real);

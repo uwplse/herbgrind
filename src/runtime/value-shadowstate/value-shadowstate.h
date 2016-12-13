@@ -51,6 +51,8 @@
 #include "exprs.h"
 #include "pub_tool_tooliface.h"
 
+#include "../../helper/stack.h"
+
 #define MAX_TEMPS 1000
 #define MAX_REGISTERS 1000
 #define MAX_THREADS 16
@@ -58,10 +60,27 @@
 extern ShadowTemp* shadowTemps[MAX_TEMPS];
 extern ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
 
+#define MAX_TEMP_SHADOWS 4
+
+extern Stack* freedTemps[MAX_TEMP_SHADOWS];
+extern Stack* freedVals;
+
+typedef struct _TempDebtEntry {
+  IRTemp temp;
+  int num_vals;
+} TempDebtEntry;
+
+void initValueShadowState(void);
+VG_REGPARM(2) void dynamicCleanup(int nentries, TempDebtEntry* entries);
 VG_REGPARM(1) void disownShadowTemp(ShadowTemp* index);
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp);
+
+VG_REGPARM(1) ShadowTemp* mkShadowTemp(UWord num_vals);
+void freeShadowTemp(ShadowTemp* temp);
 void disownShadowValue(ShadowValue* val);
 void ownShadowValue(ShadowValue* val);
+void freeShadowValue(ShadowValue* val);
+ShadowValue* mkShadowValue(FloatType type, double value);
 void disownExpr(ConcExpr* expr);
 void ownExpr(ConcExpr* expr);
 #endif

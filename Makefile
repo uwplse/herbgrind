@@ -23,7 +23,9 @@ DEPS = deps/gmp-64/README deps/mpfr-64/README
 endif
 
 HEADERS=src/include/herbgrind.h src/helper/mpfr-valgrind-glue.h		\
-src/options.h src/runtime/value-shadowstate/shadowval.h			\
+src/helper/stack.h src/helper/instrument-util.h src/helper/ir-info.h	\
+src/helper/debug.h src/options.h					\
+src/runtime/value-shadowstate/shadowval.h				\
 src/runtime/value-shadowstate/value-shadowstate.h			\
 src/runtime/value-shadowstate/exprs.h					\
 src/runtime/value-shadowstate/exprs.hh					\
@@ -32,10 +34,12 @@ src/runtime/op-shadowstate/shadowop-info.h				\
 src/runtime/op-shadowstate/mark-info.h					\
 src/runtime/shadowop/shadowop.h src/runtime/shadowop/conversions.h	\
 src/instrument/instrument.h src/instrument/instrument-op.h		\
-src/instrument/conversions.h src/instrument/instrument-storage.h	\
-src/instrument/helpers.h
+src/instrument/instrument-storage.h src/instrument/conversion.h		\
+src/instrument/semantic-op.h
+
 SOURCES=src/hg_main.c src/mathwrap.c src/include/mk-mathreplace.py	\
-src/helper/mpfr-valgrind-glue.c src/options.c				\
+src/helper/mpfr-valgrind-glue.c src/helper/stack.c			\
+src/helper/instrument-util.c src/helper/ir-info.c src/options.c		\
 src/runtime/value-shadowstate/shadowval.c				\
 src/runtime/value-shadowstate/value-shadowstate.c			\
 src/runtime/value-shadowstate/shadowval.c				\
@@ -44,8 +48,8 @@ src/runtime/value-shadowstate/real.c					\
 src/runtime/op-shadowstate/shadowop-info.c				\
 src/runtime/shadowop/shadowop.c src/runtime/shadowop/conversions.c	\
 src/instrument/instrument.c src/instrument/instrument-op.c		\
-src/instrument/instrument-storage.c src/instrument/helpers.c		\
-src/instrument/conversions.c
+src/instrument/instrument-storage.c src/instrument/conversion.c		\
+src/instrument/semantic-op.c
 
 all: compile
 

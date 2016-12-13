@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie                 real.c ---*/
+/*--- HerbGrind: a valgrind tool for Herbie                debug.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -26,34 +26,19 @@
 
    The GNU General Public License is contained in the file COPYING.
 */
+#include "pub_tool_libcassert.h"
 
-#include "real.h"
+#define addNumValsAssert(sbOut, label, shadow_temp, num_vals)     \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumVals", VG_(fnptr_to_fnentry)(assertNumVals), mkIRExprVec_3(mkU64((uintptr_t)label), IRExpr_RdTmp(shadow_temp), mkU64(num_vals)))))
+#define addNumValsAssertNot(sbOut, label, shadow_temp, num_vals)     \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumValsNot", VG_(fnptr_to_fnentry)(assertNumValsNot), mkIRExprVec_3(mkU64((uintptr_t)label), IRExpr_RdTmp(shadow_temp), mkU64(num_vals)))))
+#define addNumValsAssertG(sbOut, guard_temp, label, shadow_temp, num_vals) \
+  addStmtToIRSB(sbOut, mkDirtyG_0_3(assertNumVals, mkU64((uintptr_t)label), IRExpr_RdTmp(shadow_temp), mkU64(num_vals), guard_temp))
 
-#include "../../options.h"
-#include "pub_tool_mallocfree.h"
-#include "pub_tool_libcprint.h"
+static inline
+void fail(void){
+  tl_assert(0);
+}
+#define addFail(sbOut) \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(0, "fail", VG_(fnptr_to_fnentry)(fail), mkIRExprVec_0())));
 
-Real mkReal(double bytes){
-  Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
-  mpfr_init2(result->mpfr_val, precision);
-  mpfr_set_d(result->mpfr_val, bytes, MPFR_RNDN);
-  return result;
-}
-void setReal(Real r, double bytes){
-  mpfr_set_d(r->mpfr_val, bytes, MPFR_RNDN);
-}
-void freeReal(Real real){
-  mpfr_clear(real->mpfr_val);
-  VG_(free)(real);
-}
-
-double getDouble(Real real){
-  return mpfr_get_d(real->mpfr_val, MPFR_RNDN);
-}
-
-Real copyReal(Real real){
-  Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
-  mpfr_init2(result->mpfr_val, precision);
-  mpfr_set(result->mpfr_val, real->mpfr_val, MPFR_RNDN);
-  return result;
-}

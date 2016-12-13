@@ -28,10 +28,11 @@
 */
 
 #include "shadowop.h"
+#include "../value-shadowstate/value-shadowstate.h"
 
 VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                                           OpArgs* args){
-  ShadowTemp* result = newShadowTemp(opInfo->exinfo.numSIMDOperands);
+  ShadowTemp* result = mkShadowTemp(opInfo->exinfo.numSIMDOperands);
   for(int i = 0; i < opInfo->exinfo.nargs; ++i){
   }
   return result;

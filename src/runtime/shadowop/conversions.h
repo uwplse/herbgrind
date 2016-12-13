@@ -43,4 +43,5 @@ ShadowTemp* f128Loto64(ShadowTemp* input);
 ShadowTemp* f128Hito64(ShadowTemp* input);
 ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* low);
 ShadowTemp* f64HLtoF128(ShadowTemp* hi, ShadowTemp* low);
+ShadowTemp* i64UtoV128(ShadowTemp* t);
 #endif

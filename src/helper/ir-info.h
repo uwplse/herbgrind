@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie                 real.c ---*/
+/*--- HerbGrind: a valgrind tool for Herbie              ir-info.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,33 +27,25 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#include "real.h"
+#ifndef _IR_INFO_H
+#define _IR_INFO_H
 
-#include "../../options.h"
-#include "pub_tool_mallocfree.h"
-#include "pub_tool_libcprint.h"
+#include "pub_tool_basics.h"
+#include "pub_tool_tooliface.h"
 
-Real mkReal(double bytes){
-  Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
-  mpfr_init2(result->mpfr_val, precision);
-  mpfr_set_d(result->mpfr_val, bytes, MPFR_RNDN);
-  return result;
-}
-void setReal(Real r, double bytes){
-  mpfr_set_d(r->mpfr_val, bytes, MPFR_RNDN);
-}
-void freeReal(Real real){
-  mpfr_clear(real->mpfr_val);
-  VG_(free)(real);
-}
+typedef enum {
+  Ft_Invalid,
+  Ft_Single,
+  Ft_Double
+} FloatType;
 
-double getDouble(Real real){
-  return mpfr_get_d(real->mpfr_val, MPFR_RNDN);
-}
+FloatType argPrecision(IROp op_code);
 
-Real copyReal(Real real){
-  Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
-  mpfr_init2(result->mpfr_val, precision);
-  mpfr_set(result->mpfr_val, real->mpfr_val, MPFR_RNDN);
-  return result;
-}
+int numChannelsIn(IROp op_code);
+int numChannelsOut(IROp op_code);
+int numSIMDOperands(IROp op_code);
+
+int isFloatType(IRType type);
+int isFloat(IRTypeEnv* env, IRTemp temp);
+
+#endif

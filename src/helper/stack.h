@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie                 real.c ---*/
+/*--- HerbGrind: a valgrind tool for Herbie                stack.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,33 +27,32 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#include "real.h"
+#ifndef _STACK_H
+#define _STACK_H
 
-#include "../../options.h"
-#include "pub_tool_mallocfree.h"
-#include "pub_tool_libcprint.h"
+#include "pub_tool_basics.h"
+#include "pub_tool_tooliface.h"
 
-Real mkReal(double bytes){
-  Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
-  mpfr_init2(result->mpfr_val, precision);
-  mpfr_set_d(result->mpfr_val, bytes, MPFR_RNDN);
-  return result;
-}
-void setReal(Real r, double bytes){
-  mpfr_set_d(r->mpfr_val, bytes, MPFR_RNDN);
-}
-void freeReal(Real real){
-  mpfr_clear(real->mpfr_val);
-  VG_(free)(real);
-}
+typedef struct _Stack Stack;
 
-double getDouble(Real real){
-  return mpfr_get_d(real->mpfr_val, MPFR_RNDN);
-}
+// Dodgy C inheritance heavily encouraged.
+typedef struct _StackNode {
+  struct _StackNode* next;
+} StackNode;
 
-Real copyReal(Real real){
-  Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
-  mpfr_init2(result->mpfr_val, precision);
-  mpfr_set(result->mpfr_val, real->mpfr_val, MPFR_RNDN);
-  return result;
-}
+Stack* mkStack(void);
+void freeStack(Stack* s);
+// WARNING: You are responsible for freeing anything you add to the
+// stack, preferably after removing it or freeing the stack.
+void stack_push(Stack* s, StackNode* item);
+VG_REGPARM(2) void stack_push2(Stack* s, StackNode* item_node);
+StackNode* stack_pop(Stack* s);
+int stack_empty(Stack* s);
+
+void addStackPushG(IRSB* sbOut, IRTemp guard, Stack* s, IRTemp node);
+void addStackPush(IRSB* sbOut, Stack* s, IRTemp node);
+IRTemp runStackPop(IRSB* sbOut, Stack* s);
+IRTemp runStackPopG(IRSB* sbOut, IRTemp guard_temp, Stack* s);
+IRTemp runStackEmpty(IRSB* sbOut, Stack* s);
+
+#endif

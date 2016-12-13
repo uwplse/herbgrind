@@ -33,44 +33,48 @@
 #include "pub_tool_libcprint.h"
 
 ShadowTemp* zeroHi96ofV128(ShadowTemp* input){
-  ShadowTemp* result = newShadowTemp(4);
+  ShadowTemp* result = mkShadowTemp(4);
   result->values[0] = input->values[0];
-  ownShadowValue(result->values[0]);
+  if (result->values[0] != NULL){
+    ownShadowValue(result->values[0]);
+  }
   return result;
 }
 ShadowTemp* zeroHi64ofV128(ShadowTemp* input){
-  ShadowTemp* result = newShadowTemp(2);
+  ShadowTemp* result = mkShadowTemp(2);
   result->values[0] = input->values[0];
-  ownShadowValue(result->values[0]);
+  if (result->values[0] != NULL){
+    ownShadowValue(result->values[0]);
+  }
   return result;
 }
 ShadowTemp* v128to32(ShadowTemp* input){
   tl_assert(input->num_vals == 4);
-  ShadowTemp* result = newShadowTemp(1);
+  ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = input->values[0];
-  ownShadowValue(result->values[0]);
+  if (result->values[0] != NULL){
+    ownShadowValue(result->values[0]);
+  }
   return result;
 }
 ShadowTemp* v128to64(ShadowTemp* input){
-  VG_(printf)("************V128to64**************");
-  tl_assert(input);
-  tl_assert(input->num_vals == 2);
-  ShadowTemp* result = newShadowTemp(1);
-  tl_assert(input->values);
-  tl_assert(input->values[0]);
+  ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = input->values[0];
-  ownShadowValue(result->values[0]);
+  if (result->values[0] != NULL){
+    ownShadowValue(result->values[0]);
+  }
   return result;
 }
 ShadowTemp* v128Hito64(ShadowTemp* input){
-  VG_(printf)("******v128Hito64******");
   tl_assert(input);
   tl_assert(input->num_vals == 2);
-  ShadowTemp* result = newShadowTemp(1);
+  ShadowTemp* result = mkShadowTemp(1);
   tl_assert(input->values);
   tl_assert(input->values[1]);
   result->values[0] = input->values[1];
-  ownShadowValue(result->values[0]);
+  if (result->values[0] != NULL){
+    ownShadowValue(result->values[0]);
+  }
   return result;
 }
 ShadowTemp* setV128lo32(ShadowTemp* topThree, ShadowTemp* bottomOne){
@@ -78,7 +82,9 @@ ShadowTemp* setV128lo32(ShadowTemp* topThree, ShadowTemp* bottomOne){
   tl_assert(bottomOne->num_vals == 1);
   ShadowTemp* result = copyShadowTemp(topThree);
   result->values[0] = bottomOne->values[0];
-  ownShadowValue(result->values[0]);
+  if (result->values[0] != NULL){
+    ownShadowValue(result->values[0]);
+  }
   return result;
 }
 ShadowTemp* setV128lo64(ShadowTemp* topOne, ShadowTemp* bottomOne){
@@ -86,41 +92,62 @@ ShadowTemp* setV128lo64(ShadowTemp* topOne, ShadowTemp* bottomOne){
   tl_assert(bottomOne->num_vals == 1);
   ShadowTemp* result = copyShadowTemp(topOne);
   result->values[0] = bottomOne->values[0];
-  ownShadowValue(result->values[0]);
+  if (result->values[0] != NULL){
+    ownShadowValue(result->values[0]);
+  }
   return result;
 }
 ShadowTemp* f128Loto64(ShadowTemp* input){
   tl_assert(input->num_vals == 2);
-  ShadowTemp* result = newShadowTemp(1);
+  ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = input->values[0];
-  ownShadowValue(result->values[0]);
+  if (result->values[0] != NULL){
+    ownShadowValue(result->values[0]);
+  }
   return result;
 }
 ShadowTemp* f128Hito64(ShadowTemp* input){
   tl_assert(input->num_vals == 2);
-  ShadowTemp* result = newShadowTemp(1);
+  ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = input->values[1];
-  ownShadowValue(result->values[0]);
+  if (result->values[0] != NULL){
+    ownShadowValue(result->values[0]);
+  }
   return result;
 }
 ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* low){
-  VG_(printf)("******i64HLtoV128******");
-  ShadowTemp* result = newShadowTemp(2);
+  ShadowTemp* result = mkShadowTemp(2);
   tl_assert(hi);
   tl_assert(low);
   tl_assert(hi->values);
   tl_assert(low->values);
   result->values[0] = hi->values[0];
-  ownShadowValue(result->values[0]);
+  if (result->values[0] != NULL){
+    ownShadowValue(result->values[0]);
+  }
   result->values[1] = low->values[0];
-  ownShadowValue(result->values[1]);
+  if (result->values[1] != NULL){
+    ownShadowValue(result->values[1]);
+  }
   return result;
 }
 ShadowTemp* f64HLtoF128(ShadowTemp* hi, ShadowTemp* low){
-  ShadowTemp* result = newShadowTemp(2);
+  ShadowTemp* result = mkShadowTemp(2);
   result->values[0] = hi->values[0];
-  ownShadowValue(result->values[0]);
+  if (result->values[0] != NULL){
+    ownShadowValue(result->values[0]);
+  }
   result->values[1] = low->values[0];
-  ownShadowValue(result->values[1]);
+  if (result->values[1] != NULL){
+    ownShadowValue(result->values[0]);
+  }
+  return result;
+}
+ShadowTemp* i64UtoV128(ShadowTemp* t){
+  ShadowTemp* result = mkShadowTemp(2);
+  result->values[0] = t->values[0];
+  if (result->values[0] != NULL){
+    ownShadowValue(result->values[0]);
+  }
   return result;
 }

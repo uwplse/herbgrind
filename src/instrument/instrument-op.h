@@ -34,11 +34,6 @@
 #include "../runtime/value-shadowstate/shadowval.h"
 
 void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr, Addr curAddr);
-void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
-                          int nargs, IRExpr** argExprs,
-                          Addr curAddr, IRTemp dest);
 
 Bool isFloatOp(IROp op);
-int numSIMDOperands(IROp op_code);
-FloatType argPrecision(IROp op_code);
 #endif
