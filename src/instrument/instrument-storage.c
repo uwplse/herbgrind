@@ -29,6 +29,7 @@
 
 #include "instrument-storage.h"
 #include "../runtime/value-shadowstate/value-shadowstate.h"
+#include "../runtime/shadowop/shadowop.h"
 #include "../helper/instrument-util.h"
 #include "../helper/debug.h"
 
@@ -39,6 +40,7 @@
 #include "pub_tool_xarray.h"
 
 XArray* tempDebt;
+OpArgs argStruct;
 
 void initInstrumentationState(void){
   tempDebt = VG_(newXA)(VG_(malloc), "temp debt array",
@@ -131,10 +133,21 @@ void instrumentCAS(IRSB* sbOut,
                    IRCAS* details){
 }
 void addBlockCleanup(IRSB* sbOut){
+  TempDebtEntry* curDebtContents =
+    VG_(perm_malloc)(sizeof(TempDebtEntry) * VG_(sizeXA)(tempDebt),
+                     vg_alignof(TempDebtEntry));
   for(int i = 0; i < VG_(sizeXA)(tempDebt); ++i){
-    TempDebtEntry* entry = VG_(indexXA)(tempDebt, i);
-    addClear(sbOut, entry->temp, entry->num_vals);
+    curDebtContents[i] = *(TempDebtEntry*)VG_(indexXA)(tempDebt, i);
   }
+  IRDirty* dynCleanupDirty =
+    unsafeIRDirty_0_N(2, "dynamicCleanup",
+                      dynamicCleanup,
+                      mkIRExprVec_2(mkU64(VG_(sizeXA)(tempDebt)),
+                                    mkU64((uintptr_t)curDebtContents)));
+  dynCleanupDirty->mFx = Ifx_Modify;
+  dynCleanupDirty->mAddr = mkU64((uintptr_t)shadowTemps);
+  dynCleanupDirty->mSize = sizeof(ShadowTemp) * MAX_TEMPS;
+  addStmtToIRSB(sbOut, IRStmt_Dirty(dynCleanupDirty));
   VG_(deleteXA)(tempDebt);
   tempDebt = VG_(newXA)(VG_(malloc), "temp debt array", VG_(free),
                         sizeof(TempDebtEntry));
@@ -190,12 +203,50 @@ void addDisown(IRSB* sbOut, IRTemp temp, int num_vals){
     IRTemp value = runIndexG(sbOut, tempNonNull,
                              IRExpr_RdTmp(valuesAddr),
                              ShadowValue*, i);
-    IRTemp valueNonNull = runNonZeroCheck64(sbOut, value);
-    IRTemp shouldPush = runAnd(sbOut, tempNonNull, valueNonNull);
-    addStackPushG(sbOut, shouldPush,
-                  freedVals, value);
+    addSVDisownG(sbOut, tempNonNull, value);
   }
   addStackPushG(sbOut, tempNonNull, freedTemps[num_vals - 1], temp);
+}
+void addSVDisown(IRSB* sbOut, IRTemp sv){
+  IRTemp valueNonNull = runNonZeroCheck64(sbOut, sv);
+  IRTemp prevRefCount = runArrowG(sbOut, valueNonNull, sv, ShadowValue,
+                                  ref_count);
+  IRTemp lastRef = runBinop(sbOut, Iop_CmpEQ64,
+                            IRExpr_RdTmp(prevRefCount),
+                            mkU64(1));
+  // This works for a slightly strange reason. If valueNonNull is
+  // false, then LoadG64, which is what runArrowG ends up expanding
+  // to, returns zero since it's not supposed to load anything. That
+  // means that lastRef will be false, so we can safely use it as our
+  // store condition and know that whenever it is true, sv will be non
+  // null and safe to push.
+  addStackPushG(sbOut, lastRef, freedVals, sv);
+  IRTemp newRefCount = runBinop(sbOut, Iop_Sub64,
+                                IRExpr_RdTmp(prevRefCount),
+                                mkU64(1));
+  addStoreArrowG(sbOut, valueNonNull, sv, ShadowValue,
+                 ref_count, IRExpr_RdTmp(newRefCount));
+}
+void addSVDisownG(IRSB* sbOut, IRTemp guard_temp, IRTemp sv){
+  IRTemp valueNonNull = runNonZeroCheck64(sbOut, sv);
+  IRTemp shouldDoAnythingAtAll =
+    runAnd(sbOut, valueNonNull, guard_temp);
+  IRTemp prevRefCount = runArrowG(sbOut, shouldDoAnythingAtAll,
+                                  sv, ShadowValue,
+                                  ref_count);
+  IRTemp lastRef = runBinop(sbOut, Iop_CmpEQ64,
+                            IRExpr_RdTmp(prevRefCount),
+                            mkU64(1));
+  IRTemp shouldPush = runAnd(sbOut, shouldDoAnythingAtAll, lastRef);
+  addStackPushG(sbOut, shouldPush, freedVals, sv);
+  IRTemp newRefCount = runBinop(sbOut, Iop_Sub64,
+                                IRExpr_RdTmp(prevRefCount),
+                                mkU64(1));
+  IRTemp shouldUpdateRefCount = runAnd(sbOut, shouldDoAnythingAtAll,
+                                       runUnopT(sbOut, Iop_Not1,
+                                                lastRef));
+  addStoreArrowG(sbOut, shouldUpdateRefCount, sv, ShadowValue,
+                 ref_count, IRExpr_RdTmp(newRefCount));
 }
 void addClear(IRSB* sbOut, IRTemp dest, int num_vals){
   IRTemp oldShadowTemp = runLoad64C(sbOut, &(shadowTemps[dest]));
@@ -204,10 +255,6 @@ void addClear(IRSB* sbOut, IRTemp dest, int num_vals){
 }
 IRTemp runNewShadowTempG(IRSB* sbOut, IRTemp guard,
                          int num_vals){
-  return runDirtyG_1_1(sbOut, guard, mkShadowTemp, mkU64(num_vals));
-
-
-
   IRTemp stackEmpty = runStackEmpty(sbOut, freedTemps[num_vals - 1]);
   IRTemp shouldMakeNew = runAnd(sbOut, guard, stackEmpty);
   IRTemp freshTemp = runDirtyG_1_1(sbOut, shouldMakeNew,
@@ -220,17 +267,6 @@ IRTemp runNewShadowTempG(IRSB* sbOut, IRTemp guard,
   return resultTemp;
 }
 IRTemp runNewShadowTemp(IRSB* sbOut, int num_vals){
-  IRTemp dest = newIRTemp(sbOut->tyenv, Ity_I64);
-  addStmtToIRSB(sbOut, IRStmt_WrTmp(dest,
-                                    IRExpr_CCall(mkIRCallee(1, "mkShadowTemp",
-                                                            VG_(fnptr_to_fnentry(mkShadowTemp))),
-                                                 Ity_I64,
-                                                 mkIRExprVec_1(mkU64(num_vals)))));
-  return dest;
-
-
-
-
   IRTemp stackEmpty = runStackEmpty(sbOut, freedTemps[num_vals - 1]);
   IRTemp freshTemp = runDirtyG_1_1(sbOut, stackEmpty,
                                    newShadowTemp, mkU64(num_vals));
@@ -240,27 +276,135 @@ IRTemp runNewShadowTemp(IRSB* sbOut, int num_vals){
   IRTemp resultTemp = runITE(sbOut, stackEmpty, IRExpr_RdTmp(freshTemp), IRExpr_RdTmp(poppedTemp));
   return resultTemp;
 }
-IRTemp runMkShadowTempG(IRSB* sbOut, IRTemp guard,
+
+IRTemp runMkShadowTempG(IRSB* sbOut, IRTemp guard_temp,
                         int num_vals, FloatType valPrecision,
                         IRExpr* valExpr){
-  IRTemp temp = runNewShadowTempG(sbOut, guard, num_vals);
-  IRTemp tempValues = runArrowG(sbOut, guard, temp, ShadowTemp, values);
-  for(int i = 0; i < num_vals; ++i){
-    addStoreIndexG(sbOut, guard, IRExpr_RdTmp(tempValues),
-                   ShadowValue*, i, mkU64(0));
+  if (num_vals == 1){
+  IRTemp temp = runNewShadowTempG(sbOut, guard_temp, num_vals);
+  IRTemp tempValues = runArrowG(sbOut, guard_temp,
+                                temp, ShadowTemp, values);
+    addStoreIndexG(sbOut, guard_temp,
+                   IRExpr_RdTmp(tempValues), ShadowValue*,
+                   0,
+                   IRExpr_RdTmp(runMkShadowValueG(sbOut, guard_temp,
+                                                  valPrecision,
+                                                  valExpr)));
+    return temp;
+  } else if (num_vals == 2 && valPrecision == Ft_Double){
+  IRTemp temp = runNewShadowTempG(sbOut, guard_temp, num_vals);
+  IRTemp tempValues = runArrowG(sbOut, guard_temp,
+                                temp, ShadowTemp, values);
+    IRExpr* valExprs[2];
+    for(int i = 0; i < 2; ++i){
+      valExprs[i] = IRExpr_RdTmp(runUnop(sbOut, i == 0 ? Iop_V128to64 : Iop_V128HIto64, valExpr));
+      addStoreIndexG(sbOut, guard_temp,
+                     IRExpr_RdTmp(tempValues), ShadowValue*,
+                     i,
+                     IRExpr_RdTmp(runMkShadowValueG(sbOut, guard_temp,
+                                                    Ft_Double,
+                                                    valExprs[i])));
+    }
+    return temp;
+  } else if (num_vals == 4 && valPrecision == Ft_Single){
+    addStoreC(sbOut, valExpr, argStruct.values.argValuesF[0]);
+    IRTemp temp = newIRTemp(sbOut->tyenv, Ity_I64);
+    IRDirty* mkDirty = 
+      unsafeIRDirty_1_N(temp, 1, "mkShadowTempFourSingles",
+                        VG_(fnptr_to_fnentry)(mkShadowTempFourSingles),
+                        mkIRExprVec_1(mkU64((uintptr_t)argStruct.values.argValuesF[0])));
+    mkDirty->guard = IRExpr_RdTmp(guard_temp);
+    addStmtToIRSB(sbOut, IRStmt_Dirty(mkDirty));
+    return temp;
+  } else {
+    tl_assert(0);
   }
-  return temp;
 }
 IRTemp runMkShadowTemp(IRSB* sbOut,
-                       int num_vals, FloatType valPecision,
+                       int num_vals, FloatType valPrecision,
                        IRExpr* valExpr){
   IRTemp temp = runNewShadowTemp(sbOut, num_vals);
   IRTemp tempValues = runArrow(sbOut, temp, ShadowTemp, values);
-  for(int i = 0; i < num_vals; ++i){
-    addStoreIndex(sbOut, IRExpr_RdTmp(tempValues),
-                  ShadowValue*, i, mkU64(0));
+  if (num_vals == 1){
+    addStore(sbOut, mkU64(0), IRExpr_RdTmp(tempValues));
+  } else {
+    addStore(sbOut, mkU128(0), IRExpr_RdTmp(tempValues));
+  }
+  if (num_vals == 1){
+    addStoreIndex(sbOut, IRExpr_RdTmp(tempValues), ShadowValue*,
+                  0,
+                  IRExpr_RdTmp(runMkShadowValue(sbOut, valPrecision,
+                                                valExpr)));
+  } else if (num_vals == 2 && valPrecision == Ft_Double){
+    IRExpr* firstValExpr =
+      IRExpr_RdTmp(runUnop(sbOut, Iop_V128to64, valExpr));
+    IRExpr* secondValExpr =
+      IRExpr_RdTmp(runUnop(sbOut, Iop_V128HIto64, valExpr));
+    addStoreIndex(sbOut, IRExpr_RdTmp(tempValues), ShadowValue*,
+                  0,
+                  IRExpr_RdTmp(runMkShadowValue(sbOut, Ft_Double,
+                                                firstValExpr)));
+    addStoreIndex(sbOut, IRExpr_RdTmp(tempValues), ShadowValue*,
+                  1,
+                  IRExpr_RdTmp(runMkShadowValue(sbOut, Ft_Double,
+                                                secondValExpr)));
+  } else if (num_vals == 4 && valPrecision == Ft_Single){
+    addStoreC(sbOut, valExpr, argStruct.values.argValuesF[0]);
+    return runPureCFunc64(sbOut,
+                          mkIRExprVec_1(mkU64((uinptr_t)argStruct.values.argValuesF[0])),
+                          mkShadowTempFourSingles,
+                          "mkShadowTempFourSingles");
+  } else {
+    tl_assert(0);
   }
   return temp;
+}
+IRTemp runMkShadowValue(IRSB* sbOut,
+                        FloatType type,
+                        IRExpr* doubleExpr){
+  IRTemp stackEmpty = runStackEmpty(sbOut, freedVals);
+  IRTemp stackEmptyWord = runUnopT(sbOut, Iop_1Uto64, stackEmpty);
+  IRTemp freshValue =
+    runPureCCall(sbOut,
+                 mkIRCallee(3, "newShadowValueG",
+                            VG_(fnptr_to_fnentry)(newShadowValueG)),
+                 Ity_I64,
+                 mkIRExprVec_3(IRExpr_RdTmp(stackEmptyWord),
+                               mkU64(type),
+                               doubleExpr));
+
+  IRTemp poppedValue = runStackPopG(sbOut, runUnopT(sbOut, Iop_Not1,
+                                                    stackEmpty),
+                                    freedVals);
+  IRTemp result = runITE(sbOut, stackEmpty,
+                         IRExpr_RdTmp(freshValue),
+                         IRExpr_RdTmp(poppedValue));
+  addStoreArrow(sbOut, result, ShadowValue, ref_count, mkU64(1));
+  return result;
+}
+IRTemp runMkShadowValueG(IRSB* sbOut, IRTemp guard_temp,
+                         FloatType type,
+                         IRExpr* doubleExpr){
+  IRTemp stackEmpty = runStackEmptyG(sbOut, guard_temp, freedVals);
+  IRTemp shouldMake = runUnopT(sbOut, Iop_1Uto64,
+                               runAnd(sbOut, stackEmpty, guard_temp));
+  IRTemp freshValue =
+    runPureCCall(sbOut,
+                 mkIRCallee(3, "newShadowValueG",
+                            VG_(fnptr_to_fnentry)(newShadowValueG)),
+                 Ity_I64,
+                 mkIRExprVec_3(IRExpr_RdTmp(shouldMake),
+                               mkU64(type),
+                               doubleExpr));
+  IRTemp shouldPop = runAnd(sbOut, runUnopT(sbOut, Iop_Not1, stackEmpty),
+                            guard_temp);
+  IRTemp poppedValue = runStackPopG(sbOut, shouldPop,
+                                    freedVals);
+  IRTemp result = runITE(sbOut, stackEmpty,
+                         IRExpr_RdTmp(freshValue),
+                         IRExpr_RdTmp(poppedValue));
+  addStoreArrowG(sbOut, guard_temp, result, ShadowValue, ref_count, mkU64(1));
+  return result;
 }
 
 IRTemp runMakeInput(IRSB* sbOut, 
@@ -331,4 +475,7 @@ IRTemp runMakeInputG(IRSB* sbOut, IRTemp guard,
     tl_assert(0);
     return 0;
   }
+}
+
+void addStoreTempG(IRSB* sbOut, IRTemp guard, IRTemp temp,
 }

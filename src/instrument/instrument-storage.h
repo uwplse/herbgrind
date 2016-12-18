@@ -65,6 +65,8 @@ void addBlockCleanupG(IRSB* sbOut, IRExpr* guard);
 void cleanupAtEndOfBlock(IRSB* out, IRTemp shadowed_temp, int num_vals);
 void addDisownNonNull(IRSB* sbOut, IRTemp temp, int num_vals);
 void addDisown(IRSB* sbOut, IRTemp temp, int num_vals);
+void addSVDisown(IRSB* sbOut, IRTemp sv);
+void addSVDisownG(IRSB* sbOut, IRTemp guard_temp, IRTemp sv);
 void addClear(IRSB* sbOut, IRTemp temp, int num_vals);
 
 IRTemp runNewShadowTempG(IRSB* sbOut, IRTemp guard,
@@ -76,6 +78,12 @@ IRTemp runMkShadowTempG(IRSB* sbOut, IRTemp guard,
 IRTemp runMkShadowTemp(IRSB* sbOut,
                        int num_vals, FloatType valPecision,
                        IRExpr* valExpr);
+IRTemp runMkShadowValue(IRSB* sbOut,
+                        FloatType type,
+                        IRExpr* doubleExpr);
+IRTemp runMkShadowValueG(IRSB* sbOut, IRTemp guard_temp,
+                         FloatType type,
+                         IRExpr* doubleExpr);
 IRTemp runMakeInputG(IRSB* sbOut, IRTemp guard,
                      IRExpr* argExpr, FloatType type);
 IRTemp runMakeInput(IRSB* sbOut,

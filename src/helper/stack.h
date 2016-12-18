@@ -33,12 +33,17 @@
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
 
-typedef struct _Stack Stack;
 
 // Dodgy C inheritance heavily encouraged.
 typedef struct _StackNode {
   struct _StackNode* next;
 } StackNode;
+
+/* typedef struct _Stack Stack; */
+typedef struct _Stack {
+  StackNode* head;
+} Stack;
+
 
 Stack* mkStack(void);
 void freeStack(Stack* s);
@@ -54,5 +59,6 @@ void addStackPush(IRSB* sbOut, Stack* s, IRTemp node);
 IRTemp runStackPop(IRSB* sbOut, Stack* s);
 IRTemp runStackPopG(IRSB* sbOut, IRTemp guard_temp, Stack* s);
 IRTemp runStackEmpty(IRSB* sbOut, Stack* s);
+IRTemp runStackEmptyG(IRSB* sbOut, IRTemp guard_temp, Stack* s);
 
 #endif

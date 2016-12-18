@@ -55,10 +55,6 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
     if (isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[i]))){
       if (argExprs[i]->tag == Iex_Const){
         addDisownNonNull(sbOut, shadowArgs[i], numChannelsIn(op_code));
-      } else {
-        cleanupAtEndOfBlock(sbOut,
-                            argExprs[i]->Iex.RdTmp.tmp,
-                            numChannelsIn(op_code));
       }
     }
   }
@@ -78,7 +74,9 @@ IRTemp runGetArg(IRSB* sbOut, FloatType type, IRExpr* argExpr,
 
     IRTemp freshArg = runMakeInputG(sbOut, argNull, argExpr, type);
 
-    addStoreGC(sbOut, argNull, IRExpr_RdTmp(freshArg), &(shadowTemps[argExpr->Iex.RdTmp.tmp]));
+    addStoreGC(sbOut, argNull, IRExpr_RdTmp(freshArg),
+               &(shadowTemps[argExpr->Iex.RdTmp.tmp]));
+    cleanupAtEndOfBlock(sbOut, argExpr->Iex.RdTmp.tmp, num_vals);
 
     IRTemp result = runITE(sbOut, argNull,
                            IRExpr_RdTmp(freshArg),

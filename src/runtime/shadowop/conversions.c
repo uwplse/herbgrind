@@ -88,12 +88,17 @@ ShadowTemp* setV128lo32(ShadowTemp* topThree, ShadowTemp* bottomOne){
   return result;
 }
 ShadowTemp* setV128lo64(ShadowTemp* topOne, ShadowTemp* bottomOne){
-  tl_assert(topOne->num_vals == 2);
-  tl_assert(bottomOne->num_vals == 1);
+  tl_assert2(topOne->num_vals == bottomOne->num_vals * 2,
+             "Tried to set the low 64 bits of a 128 bit value, "
+             "but sizes don't match! The 128-bit value has %d "
+             "shadow values, but the 64-bit value has %d",
+             topOne->num_vals, bottomOne->num_vals);
   ShadowTemp* result = copyShadowTemp(topOne);
-  result->values[0] = bottomOne->values[0];
-  if (result->values[0] != NULL){
-    ownShadowValue(result->values[0]);
+  for (int i = 0; i < bottomOne->num_vals; ++i){
+    result->values[i] = bottomOne->values[i];
+    if (result->values[i] != NULL){
+      ownShadowValue(result->values[i]);
+    }
   }
   return result;
 }

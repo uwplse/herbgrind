@@ -39,7 +39,6 @@
 #include "pub_tool_libcassert.h"
 
 VG_REGPARM(1) ShadowTemp* newShadowTemp(UWord num_vals){
-  VG_(printf)("Creating a fresh temp.\n");
   ShadowTemp* newShadowTemp =
     VG_(perm_malloc)(sizeof(ShadowTemp), vg_alignof(ShadowTemp));
   newShadowTemp->num_vals = num_vals;
@@ -58,12 +57,21 @@ UWord hashDouble(double val){
   VG_(memcpy)(&result, &val, sizeof(UWord));
   return result;
 }
+inline
 ShadowValue* newShadowValue(FloatType type, double value){
-  VG_(printf)("Creating a fresh val.\n");
   ShadowValue* result = VG_(perm_malloc)(sizeof(ShadowValue), vg_alignof(ShadowValue));
   result->real = mkReal(value);
   result->type = type;
+  result->ref_count = 1;
   return result;
+}
+VG_REGPARM(3)
+ShadowValue* newShadowValueG(UWord guard, FloatType type, double value){
+  if (guard){
+    return newShadowValue(type, value);
+  } else {
+    return NULL;
+  }
 }
 
 ShadowValue* copyShadowValue(ShadowValue* val){

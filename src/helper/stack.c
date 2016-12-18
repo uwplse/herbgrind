@@ -36,10 +36,6 @@
 
 #include <stddef.h>
 
-typedef struct _Stack {
-  StackNode* head;
-} Stack;
-
 Stack* mkStack(void){
   Stack* newStack = VG_(malloc)("stack", sizeof(Stack));
   newStack->head = NULL;
@@ -87,4 +83,8 @@ IRTemp runStackPopG(IRSB* sbOut, IRTemp guard_temp, Stack* s){
 }
 IRTemp runStackEmpty(IRSB* sbOut, Stack* s){
   return runZeroCheck64(sbOut, runLoad64C(sbOut, &(s->head)));
+}
+IRTemp runStackEmptyG(IRSB* sbOut, IRTemp guard_temp, Stack* s){
+  return runZeroCheck64(sbOut,
+                        runLoadG64C(sbOut, &(s->head), guard_temp));
 }

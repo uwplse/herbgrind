@@ -49,6 +49,12 @@ void initValueShadowState(void){
 
 VG_REGPARM(2) void dynamicCleanup(int nentries, TempDebtEntry* entries){
   for(int i = 0; i < nentries; ++i){
+    ShadowTemp* temp = shadowTemps[entries[i].temp];
+    for(int j = 0; j < temp->num_vals; ++j){
+      if (temp->values[j] != NULL){
+        disownShadowValue(temp->values[j]);
+      }
+    }
     freeShadowTemp(shadowTemps[entries[i].temp]);
     shadowTemps[entries[i].temp] = NULL;
   }
@@ -58,6 +64,7 @@ void freeShadowTemp(ShadowTemp* temp){
   stack_push(freedTemps[temp->num_vals - 1], (void*)temp);
 }
 
+inline
 ShadowTemp* mkShadowTemp(UWord num_vals){
   if (stack_empty(freedTemps[num_vals - 1])){
     return newShadowTemp(num_vals);
@@ -74,12 +81,20 @@ void freeShadowValue(ShadowValue* val){
   stack_push(freedVals, (void*)val);
 }
 
+inline
+StackNode* stack_pop_fast(Stack* s){
+  StackNode* oldHead = s->head;
+  s->head = oldHead->next;
+  return oldHead;
+}
+
+inline
 ShadowValue* mkShadowValue(FloatType type, double value){
   ShadowValue* result;
   if (stack_empty(freedVals)){
     result = newShadowValue(type, value);
   } else {
-    result = (void*)stack_pop(freedVals);
+    result = (void*)stack_pop_fast(freedVals);
     setReal(result->real, value);
     result->type = type;
   }
@@ -87,15 +102,6 @@ ShadowValue* mkShadowValue(FloatType type, double value){
   return result;
 }
 
-VG_REGPARM(1) void disownShadowTemp(ShadowTemp* temp){
-  /* if (temp == NULL) return; */
-  /* for(int i = 0; i < temp->num_vals; ++i){ */
-  /*   if (temp->values[i] != NULL){ */
-  /*     disownShadowValue(temp->values[i]); */
-  /*   } */
-  /* } */
-  freeShadowTemp(temp);
-}
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
   ShadowTemp* result = mkShadowTemp(temp->num_vals);
   for(int i = 0; i < temp->num_vals; ++i){
@@ -117,12 +123,49 @@ ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
 }
 void disownShadowValue(ShadowValue* val){
   if (val == NULL) return;
-  (val->ref_count)--;
-  if (val->ref_count < 1){
+  if (val->ref_count < 2){
     freeShadowValue(val);
+  } else {
+    (val->ref_count)--;
   }
 }
 void ownShadowValue(ShadowValue* val){
   if (val == NULL) return;
   (val->ref_count)++;
+}
+
+VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value){
+  ShadowTemp* result = mkShadowTemp(1);
+  result->values[0] = mkShadowValue(Ft_Double, value);
+  return result;
+}
+VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values){
+  ShadowTemp* result = mkShadowTemp(2);
+  result->values[0] =
+    mkShadowValue(Ft_Double, values[0]);
+  result->values[1] =
+    mkShadowValue(Ft_Double, values[1]);
+  return result;
+}
+VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(float value){
+  ShadowTemp* result = mkShadowTemp(1);
+  result->values[0] = mkShadowValue(Ft_Single, value);
+  return result;
+}
+inline
+VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values){
+  ShadowTemp* result = mkShadowTemp(4);
+  result->values[0] =
+    mkShadowValue(Ft_Single, values[0]);
+  result->values[1] =
+    mkShadowValue(Ft_Single, values[1]);
+  result->values[2] =
+    mkShadowValue(Ft_Single, values[2]);
+  result->values[3] =
+    mkShadowValue(Ft_Single, values[3]);
+  return result;
+}
+VG_REGPARM(1) ShadowTemp* mkShadowTempFourSinglesG(UWord guard, float* values){
+  if (!guard) return NULL;
+  return mkShadowTempFourSingles(values);
 }

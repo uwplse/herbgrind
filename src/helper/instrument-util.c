@@ -36,6 +36,16 @@ IRTemp runLoad64(IRSB* sbOut, IRExpr* address){
   addStmtToIRSB(sbOut, IRStmt_WrTmp(dest, IRExpr_Load(ENDIAN, Ity_I64, address)));
   return dest;
 }
+IRTemp runLoad32(IRSB* sbOut, IRExpr* address){
+  IRTemp dest = newIRTemp(sbOut->tyenv, Ity_I32);
+  addStmtToIRSB(sbOut, IRStmt_WrTmp(dest, IRExpr_Load(ENDIAN, Ity_I32, address)));
+  return dest;
+}
+IRTemp runLoad128(IRSB* sbOut, IRExpr* address){
+  IRTemp dest = newIRTemp(sbOut->tyenv, Ity_V128);
+  addStmtToIRSB(sbOut, IRStmt_WrTmp(dest, IRExpr_Load(ENDIAN, Ity_V128, address)));
+  return dest;
+}
 IRTemp runLoadG64(IRSB* sbOut, IRExpr* address, IRExpr* guard){
   IRTemp dest = newIRTemp(sbOut->tyenv, Ity_I64);
   addStmtToIRSB(sbOut, IRStmt_LoadG(ENDIAN, ILGop_Ident64, dest, address, mkU64(0), guard));
@@ -62,24 +72,28 @@ IRTemp runBinop(IRSB* sbOut, IROp op_code, IRExpr* arg1, IRExpr* arg2){
 }
 
 IRTemp runAnd(IRSB* sbOut, IRTemp arg1_temp, IRTemp arg2_temp){
-  IRTemp arg1_temp8 = runUnop(sbOut, Iop_1Uto8, IRExpr_RdTmp(arg1_temp));
-  IRTemp arg2_temp8 = runUnop(sbOut, Iop_1Uto8, IRExpr_RdTmp(arg2_temp));
-  IRTemp dest_temp8 = runBinop(sbOut, Iop_And8,
-                               IRExpr_RdTmp(arg1_temp8),
-                               IRExpr_RdTmp(arg2_temp8));
-  IRTemp dest_temp32 = runUnop(sbOut, Iop_8Uto32,
-                               IRExpr_RdTmp(dest_temp8));
+  IRTemp arg1_temp32 = runUnop(sbOut, Iop_1Uto32, IRExpr_RdTmp(arg1_temp));
+  IRTemp arg2_temp32 = runUnop(sbOut, Iop_1Uto32, IRExpr_RdTmp(arg2_temp));
+  IRTemp dest_temp32 = runBinop(sbOut, Iop_And32,
+                               IRExpr_RdTmp(arg1_temp32),
+                               IRExpr_RdTmp(arg2_temp32));
   return runUnop(sbOut, Iop_32to1, IRExpr_RdTmp(dest_temp32));
+}
+IRTemp runAndto64(IRSB* sbOut, IRTemp arg1_temp, IRTemp arg2_temp){
+  IRTemp arg1_temp64 = runUnop(sbOut, Iop_1Uto64, IRExpr_RdTmp(arg1_temp));
+  IRTemp arg2_temp64 = runUnop(sbOut, Iop_1Uto64, IRExpr_RdTmp(arg2_temp));
+  IRTemp dest_temp64 = runBinop(sbOut, Iop_And64,
+                               IRExpr_RdTmp(arg1_temp64),
+                               IRExpr_RdTmp(arg2_temp64));
+  return dest_temp64;
 }
 
 IRTemp runOr(IRSB* sbOut, IRTemp arg1_temp, IRTemp arg2_temp){
-  IRTemp arg1_temp8 = runUnop(sbOut, Iop_1Uto8, IRExpr_RdTmp(arg1_temp));
-  IRTemp arg2_temp8 = runUnop(sbOut, Iop_1Uto8, IRExpr_RdTmp(arg2_temp));
-  IRTemp dest_temp8 = runBinop(sbOut, Iop_Or8,
-                               IRExpr_RdTmp(arg1_temp8),
-                               IRExpr_RdTmp(arg2_temp8));
-  IRTemp dest_temp32 = runUnop(sbOut, Iop_8Uto32,
-                               IRExpr_RdTmp(dest_temp8));
+  IRTemp arg1_temp32 = runUnop(sbOut, Iop_1Uto32, IRExpr_RdTmp(arg1_temp));
+  IRTemp arg2_temp32 = runUnop(sbOut, Iop_1Uto32, IRExpr_RdTmp(arg2_temp));
+  IRTemp dest_temp32 = runBinop(sbOut, Iop_Or32,
+                               IRExpr_RdTmp(arg1_temp32),
+                               IRExpr_RdTmp(arg2_temp32));
   return runUnop(sbOut, Iop_32to1, IRExpr_RdTmp(dest_temp32));
 }
 
@@ -121,6 +135,14 @@ IRTemp runDirtyG_1_N(IRSB* sbOut, int nargs, const char* fname, void* f,
     unsafeIRDirty_1_N(dest, nargs, fname, VG_(fnptr_to_fnentry)(f), args);
   dirty->guard = guard_expr;
   addStmtToIRSB(sbOut, IRStmt_Dirty(dirty));
+  return dest;
+}
+
+IRTemp runPureCCall(IRSB* sbOut, IRCallee* callee, IRType retty,
+                    IRExpr** args){
+  IRTemp dest = newIRTemp(sbOut->tyenv, retty);
+  addStmtToIRSB(sbOut, IRStmt_WrTmp(dest,
+                                    IRExpr_CCall(callee, retty, args)));
   return dest;
 }
 

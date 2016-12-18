@@ -72,10 +72,11 @@ typedef struct _TempDebtEntry {
 
 void initValueShadowState(void);
 VG_REGPARM(2) void dynamicCleanup(int nentries, TempDebtEntry* entries);
-VG_REGPARM(1) void disownShadowTemp(ShadowTemp* index);
+VG_REGPARM(1) void disownShadowTempNonNull(ShadowTemp* temp);
+VG_REGPARM(1) void disownShadowTemp(ShadowTemp* temp);
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp);
 
-VG_REGPARM(1) ShadowTemp* mkShadowTemp(UWord num_vals);
+ShadowTemp* mkShadowTemp(UWord num_vals);
 void freeShadowTemp(ShadowTemp* temp);
 void disownShadowValue(ShadowValue* val);
 void ownShadowValue(ShadowValue* val);
@@ -83,4 +84,10 @@ void freeShadowValue(ShadowValue* val);
 ShadowValue* mkShadowValue(FloatType type, double value);
 void disownExpr(ConcExpr* expr);
 void ownExpr(ConcExpr* expr);
+
+VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value);
+VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values);
+VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(float value);
+VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values);
+VG_REGPARM(1) ShadowTemp* mkShadowTempFourSinglesG(UWord guard, float* values);
 #endif

@@ -63,14 +63,16 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     }
     if (argExprs[0]->tag == Iex_Const ||
         !isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[0]))){
-      shadowInput1T = runMakeInputG(sbOut, inputPreexisting, argExprs[0], argPrecision(op_code));
-      shadowInput2T = runLoad64C(sbOut, &(shadowTemps[argExprs[1]->Iex.RdTmp.tmp]));
+      shadowInput2T =
+        runLoad64C(sbOut, &(shadowTemps[argExprs[1]->Iex.RdTmp.tmp]));
       inputPreexisting = runNonZeroCheck64(sbOut, shadowInput2T);
+      shadowInput1T = runMakeInputG(sbOut, inputPreexisting, argExprs[0], argPrecision(op_code));
     } else if (argExprs[1]->tag == Iex_Const ||
                !isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[1]))){
-      shadowInput1T = runLoad64C(sbOut, &(shadowTemps[argExprs[0]->Iex.RdTmp.tmp]));
-      shadowInput2T = runMakeInputG(sbOut, inputPreexisting, argExprs[1], argPrecision(op_code));
+      shadowInput1T =
+        runLoad64C(sbOut, &(shadowTemps[argExprs[0]->Iex.RdTmp.tmp]));
       inputPreexisting = runNonZeroCheck64(sbOut, shadowInput1T);
+      shadowInput2T = runMakeInputG(sbOut, inputPreexisting, argExprs[1], argPrecision(op_code));
     } else {
       IRTemp loadedShadowInput1T = runLoad64C(sbOut, &(shadowTemps[argExprs[0]->Iex.RdTmp.tmp]));
       IRTemp loadedShadowInput2T = runLoad64C(sbOut, &(shadowTemps[argExprs[1]->Iex.RdTmp.tmp]));

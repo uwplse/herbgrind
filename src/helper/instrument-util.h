@@ -41,6 +41,7 @@
 #define ENDIAN Iend_BE;
 #endif
 
+#define mkU128(x) IRExpr_Const(IRConst_V128(x))
 #define mkU64(x) IRExpr_Const(IRConst_U64(x))
 #define mkU32(x) IRExpr_Const(IRConst_U32(x))
 #define mkU1(x) IRExpr_Const(IRConst_U1(x))
@@ -51,6 +52,8 @@ IRTemp runLoad64(IRSB* sbOut, IRExpr* address);
 IRTemp runLoadG64(IRSB* sbOut, IRExpr* address, IRExpr* guard);
 #define runLoadG64C(sbOut, addr_const, guard_temp)      \
   runLoadG64(sbOut, mkU64((uintptr_t)addr_const), IRExpr_RdTmp(guard_temp))
+IRTemp runLoad32(IRSB* sbOut, IRExpr* address);
+IRTemp runLoad128(IRSB* sbOut, IRExpr* address);
 
 #define addStore(sbOut, src_expr, dest_addr_expr) \
   addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, dest_addr_expr, src_expr))
@@ -89,6 +92,7 @@ IRTemp runBinop(IRSB* sbOut, IROp op_code, IRExpr* arg1, IRExpr* arg2);
 
 IRTemp runOr(IRSB* sbOut, IRTemp arg1_temp, IRTemp arg2_temp);
 IRTemp runAnd(IRSB* sbOut, IRTemp arg1_temp, IRTemp arg2_temp);
+IRTemp runAndto64(IRSB* sbOut, IRTemp arg1_temp, IRTemp arg2_temp);
 
 #define runNonZeroCheck64(sbOut, check_temp) \
   runBinop(sbOut, Iop_CmpNE64, IRExpr_RdTmp(check_temp), mkU64(0));
@@ -174,5 +178,16 @@ IRTemp runPureC2Func64(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2,
                                       array_addr_expr,  \
                                       element_type,     \
                                       const_index))) 
+IRTemp runPureCCall(IRSB* sbOut, IRCallee* callee, IRType retty,
+                      IRExpr** aPureCCall(sbOut
+
+#define runSemanticWiden(sbOut, single_temp) \
+  runUnopT(sbOut,                                \
+           Iop_ReinterpF64asI64,                 \
+           runUnopT(sbOut,                       \
+                    Iop_F32toF64,                \
+                    runUnopT(sbOut,               \
+                             Iop_ReinterpI32asF32,      \
+                             single_temp)))
 
 #endif
