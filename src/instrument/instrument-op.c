@@ -40,7 +40,6 @@
 #include "../runtime/value-shadowstate/exprs.h"
 #include "../runtime/value-shadowstate/shadowval.h"
 #include "../runtime/value-shadowstate/real.h"
-#include "../runtime/value-shadowstate/value-shadowstate.h"
 
 void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr, Addr curAddr){
   // Get the IROp value, the number of args, and the argument

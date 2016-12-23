@@ -37,8 +37,7 @@
 #include "../../helper/ir-info.h"
 
 typedef struct _ShadowValue {
-  // For the shadow temp stacks.
-  struct _ShadowValue* next;
+  // For the shadow temp stacks. struct _ShadowValue* next;
 
   UWord ref_count;
   Real real;
@@ -63,6 +62,7 @@ void changeSingleValueType(ShadowTemp* temp, FloatType type);
 
 UWord hashDouble(double val);
 ShadowValue* newShadowValue(FloatType type, double value);
+ShadowValue* newShadowValueBare(FloatType type);
 VG_REGPARM(3)
 ShadowValue* newShadowValueG(UWord guard, FloatType type, double value);
 ShadowValue* copyShadowValue(ShadowValue* val);

@@ -31,93 +31,65 @@
 #include "pub_tool_libcassert.h"
 #include "pub_tool_libcprint.h"
 
-IRTemp runLoad64(IRSB* sbOut, IRExpr* address){
+IRExpr* runLoad64(IRSB* sbOut, IRExpr* address){
   IRTemp dest = newIRTemp(sbOut->tyenv, Ity_I64);
   addStmtToIRSB(sbOut, IRStmt_WrTmp(dest, IRExpr_Load(ENDIAN, Ity_I64, address)));
-  return dest;
+  return IRExpr_RdTmp(dest);
 }
-IRTemp runLoad32(IRSB* sbOut, IRExpr* address){
+IRExpr* runLoad32(IRSB* sbOut, IRExpr* address){
   IRTemp dest = newIRTemp(sbOut->tyenv, Ity_I32);
   addStmtToIRSB(sbOut, IRStmt_WrTmp(dest, IRExpr_Load(ENDIAN, Ity_I32, address)));
-  return dest;
+  return IRExpr_RdTmp(dest);
 }
-IRTemp runLoad128(IRSB* sbOut, IRExpr* address){
+IRExpr* runLoad128(IRSB* sbOut, IRExpr* address){
   IRTemp dest = newIRTemp(sbOut->tyenv, Ity_V128);
   addStmtToIRSB(sbOut, IRStmt_WrTmp(dest, IRExpr_Load(ENDIAN, Ity_V128, address)));
-  return dest;
+  return IRExpr_RdTmp(dest);
 }
-IRTemp runLoadG64(IRSB* sbOut, IRExpr* address, IRExpr* guard){
+IRExpr* runLoadG64(IRSB* sbOut, IRExpr* address, IRExpr* guard){
   IRTemp dest = newIRTemp(sbOut->tyenv, Ity_I64);
   addStmtToIRSB(sbOut, IRStmt_LoadG(ENDIAN, ILGop_Ident64, dest, address, mkU64(0), guard));
-  return dest;
+  return IRExpr_RdTmp(dest);
 }
 
-IRTemp runUnop(IRSB* sbOut, IROp op_code, IRExpr* arg){
+IRExpr* runUnop(IRSB* sbOut, IROp op_code, IRExpr* arg){
   IRType resultType;
   IRType argTypes[4];
   typeOfPrimop(op_code, &resultType, &(argTypes[0]),
                &(argTypes[1]), &(argTypes[2]), &(argTypes[3]));
   IRTemp result = newIRTemp(sbOut->tyenv, resultType);
   addStmtToIRSB(sbOut, IRStmt_WrTmp(result, IRExpr_Unop(op_code, arg)));
-  return result;
+  return IRExpr_RdTmp(result);
 }
-IRTemp runBinop(IRSB* sbOut, IROp op_code, IRExpr* arg1, IRExpr* arg2){
+IRExpr* runBinop(IRSB* sbOut, IROp op_code, IRExpr* arg1, IRExpr* arg2){
   IRType resultType;
   IRType argTypes[4];
   typeOfPrimop(op_code, &resultType, &(argTypes[0]),
                &(argTypes[1]), &(argTypes[2]), &(argTypes[3]));
   IRTemp result = newIRTemp(sbOut->tyenv, resultType);
   addStmtToIRSB(sbOut, IRStmt_WrTmp(result, IRExpr_Binop(op_code, arg1, arg2)));
-  return result;
+  return IRExpr_RdTmp(result);
 }
 
-IRTemp runAnd(IRSB* sbOut, IRTemp arg1_temp, IRTemp arg2_temp){
-  IRTemp arg1_temp32 = runUnop(sbOut, Iop_1Uto32, IRExpr_RdTmp(arg1_temp));
-  IRTemp arg2_temp32 = runUnop(sbOut, Iop_1Uto32, IRExpr_RdTmp(arg2_temp));
-  IRTemp dest_temp32 = runBinop(sbOut, Iop_And32,
-                               IRExpr_RdTmp(arg1_temp32),
-                               IRExpr_RdTmp(arg2_temp32));
-  return runUnop(sbOut, Iop_32to1, IRExpr_RdTmp(dest_temp32));
+IRExpr* runAnd(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2){
+  IRExpr* arg1_32 = runUnop(sbOut, Iop_1Uto32, arg1);
+  IRExpr* arg2_32 = runUnop(sbOut, Iop_1Uto32, arg2);
+  IRExpr* dest_32 = runBinop(sbOut, Iop_And32,
+                             arg1_32,
+                             arg2_32);
+  return runUnop(sbOut, Iop_32to1, dest_32);
 }
-IRTemp runAndto64(IRSB* sbOut, IRTemp arg1_temp, IRTemp arg2_temp){
-  IRTemp arg1_temp64 = runUnop(sbOut, Iop_1Uto64, IRExpr_RdTmp(arg1_temp));
-  IRTemp arg2_temp64 = runUnop(sbOut, Iop_1Uto64, IRExpr_RdTmp(arg2_temp));
-  IRTemp dest_temp64 = runBinop(sbOut, Iop_And64,
-                               IRExpr_RdTmp(arg1_temp64),
-                               IRExpr_RdTmp(arg2_temp64));
-  return dest_temp64;
+IRExpr* runAndto64(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2){
+  IRExpr* arg1_64 = runUnop(sbOut, Iop_1Uto64, arg1);
+  IRExpr* arg2_64 = runUnop(sbOut, Iop_1Uto64, arg2);
+  return runBinop(sbOut, Iop_And64, arg1_64, arg2_64);
 }
 
-IRTemp runOr(IRSB* sbOut, IRTemp arg1_temp, IRTemp arg2_temp){
-  IRTemp arg1_temp32 = runUnop(sbOut, Iop_1Uto32, IRExpr_RdTmp(arg1_temp));
-  IRTemp arg2_temp32 = runUnop(sbOut, Iop_1Uto32, IRExpr_RdTmp(arg2_temp));
-  IRTemp dest_temp32 = runBinop(sbOut, Iop_Or32,
-                               IRExpr_RdTmp(arg1_temp32),
-                               IRExpr_RdTmp(arg2_temp32));
-  return runUnop(sbOut, Iop_32to1, IRExpr_RdTmp(dest_temp32));
-}
-
-IRTemp runPureCFunc64(IRSB* sbOut, IRExpr* arg,
-                      void* mkFunc, const char* funcName){
-  IRTemp dest = newIRTemp(sbOut->tyenv, Ity_I64);
-  addStmtToIRSB(sbOut,
-                IRStmt_WrTmp(dest,
-                             IRExpr_CCall(mkIRCallee(1, funcName,
-                                                     VG_(fnptr_to_fnentry)(mkFunc)),
-                                          Ity_I64, mkIRExprVec_1(arg))));
-  return dest;
-}
-
-IRTemp runPureC2Func64(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2,
-                       void* mkFunc, const char* funcName){
-  IRTemp dest = newIRTemp(sbOut->tyenv, Ity_I64);
-  addStmtToIRSB(sbOut,
-                IRStmt_WrTmp(dest,
-                             IRExpr_CCall(mkIRCallee(2, funcName,
-                                                     VG_(fnptr_to_fnentry)(mkFunc)),
-                                          Ity_I64, mkIRExprVec_2(arg1,
-                                                                 arg2))));
-  return dest;
+IRExpr* runOr(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2){
+  IRExpr* arg1_32 = runUnop(sbOut, Iop_1Uto32, arg1);
+  IRExpr* arg2_32 = runUnop(sbOut, Iop_1Uto32, arg2);
+  IRExpr* dest_32 = runBinop(sbOut, Iop_Or32, arg1_32, arg2_32);
+  return runUnop(sbOut, Iop_32to1, dest_32);
 }
 
 IRStmt* mkDirtyG_0_N(int nargs, const char* fname, void* f,
@@ -128,33 +100,33 @@ IRStmt* mkDirtyG_0_N(int nargs, const char* fname, void* f,
   return IRStmt_Dirty(dirty);
 }
 
-IRTemp runDirtyG_1_N(IRSB* sbOut, int nargs, const char* fname, void* f,
+IRExpr* runDirtyG_1_N(IRSB* sbOut, int nargs, const char* fname, void* f,
                      IRExpr** args, IRExpr* guard_expr){
   IRTemp dest = newIRTemp(sbOut->tyenv, Ity_I64);
   IRDirty* dirty =
     unsafeIRDirty_1_N(dest, nargs, fname, VG_(fnptr_to_fnentry)(f), args);
   dirty->guard = guard_expr;
   addStmtToIRSB(sbOut, IRStmt_Dirty(dirty));
-  return dest;
+  return IRExpr_RdTmp(dest);
 }
 
-IRTemp runPureCCall(IRSB* sbOut, IRCallee* callee, IRType retty,
-                    IRExpr** args){
+IRExpr* runPureCCall(IRSB* sbOut, IRCallee* callee, IRType retty,
+                     IRExpr** args){
   IRTemp dest = newIRTemp(sbOut->tyenv, retty);
   addStmtToIRSB(sbOut, IRStmt_WrTmp(dest,
                                     IRExpr_CCall(callee, retty, args)));
-  return dest;
+  return IRExpr_RdTmp(dest);
 }
 
-IRTemp runITE(IRSB* sbOut, IRTemp cond_temp,
-              IRExpr* true_expr, IRExpr* false_expr){
+IRExpr* runITE(IRSB* sbOut, IRExpr* cond,
+               IRExpr* true_expr, IRExpr* false_expr){
   tl_assert(typeOfIRExpr(sbOut->tyenv, true_expr) ==
             typeOfIRExpr(sbOut->tyenv, false_expr));
   IRTemp dest = newIRTemp(sbOut->tyenv,
                           typeOfIRExpr(sbOut->tyenv, true_expr));
   addStmtToIRSB(sbOut, IRStmt_WrTmp(dest,
-                                    IRExpr_ITE(IRExpr_RdTmp(cond_temp),
+                                    IRExpr_ITE(cond,
                                                true_expr,
                                                false_expr)));
-  return dest;
+  return IRExpr_RdTmp(dest);
 }

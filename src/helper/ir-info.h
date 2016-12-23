@@ -40,10 +40,12 @@ typedef enum {
 } FloatType;
 
 FloatType argPrecision(IROp op_code);
+FloatType resultPrecision(IROp op_code);
 
 int numChannelsIn(IROp op_code);
 int numChannelsOut(IROp op_code);
 int numSIMDOperands(IROp op_code);
+int inferOtherNumChannels(int inferIndex, IRExpr* arg, IROp op_code);
 
 int isFloatType(IRType type);
 int isFloat(IRTypeEnv* env, IRTemp temp);

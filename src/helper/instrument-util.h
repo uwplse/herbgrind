@@ -46,148 +46,131 @@
 #define mkU32(x) IRExpr_Const(IRConst_U32(x))
 #define mkU1(x) IRExpr_Const(IRConst_U1(x))
 
-IRTemp runLoad64(IRSB* sbOut, IRExpr* address);
+IRExpr* runLoad64(IRSB* sbOut, IRExpr* address);
 #define runLoad64C(sbOut, addr_const) \
   runLoad64(sbOut, mkU64((uintptr_t)addr_const))
-IRTemp runLoadG64(IRSB* sbOut, IRExpr* address, IRExpr* guard);
-#define runLoadG64C(sbOut, addr_const, guard_temp)      \
-  runLoadG64(sbOut, mkU64((uintptr_t)addr_const), IRExpr_RdTmp(guard_temp))
-IRTemp runLoad32(IRSB* sbOut, IRExpr* address);
-IRTemp runLoad128(IRSB* sbOut, IRExpr* address);
+IRExpr* runLoadG64(IRSB* sbOut, IRExpr* address, IRExpr* guard);
+#define runLoadG64C(sbOut, addr_const, guard)      \
+  runLoadG64(sbOut, mkU64((uintptr_t)addr_const), guard)
+IRExpr* runLoad32(IRSB* sbOut, IRExpr* address);
+IRExpr* runLoad128(IRSB* sbOut, IRExpr* address);
 
-#define addStore(sbOut, src_expr, dest_addr_expr) \
-  addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, dest_addr_expr, src_expr))
-#define addStoreG(sbOut, guard_temp, src_expr, dest_addr_expr)          \
-  addStmtToIRSB(sbOut, IRStmt_StoreG(ENDIAN, dest_addr_expr, src_expr, IRExpr_RdTmp(guard_temp)))
+#define addStore(sbOut, src_expr, dest_addr) \
+  addStmtToIRSB(sbOut, IRStmt_Store(ENDIAN, dest_addr, src_expr))
+#define addStoreG(sbOut, guard, src_expr, dest_addr)          \
+  addStmtToIRSB(sbOut, IRStmt_StoreG(ENDIAN, dest_addr, src_expr, guard))
 #define addStoreC(sbOut, src_expr, dest_addr_const) \
   addStore(sbOut, src_expr, mkU64((uintptr_t)dest_addr_const))
-#define addStoreGC(sbOut, guard_temp, src_expr, dest_addr_const)        \
-  addStoreG(sbOut, guard_temp, src_expr, mkU64((uintptr_t)dest_addr_const))
+#define addStoreGC(sbOut, guard, src_expr, dest_addr_const)        \
+  addStoreG(sbOut, guard, src_expr, mkU64((uintptr_t)dest_addr_const))
 
-IRTemp runDirtyG_1_N(IRSB* sbOut, int nargs, const char* fname, void* f,
-                     IRExpr** args, IRExpr* guard_expr);
-#define runDirtyG_1_1(sbOut, guard_temp, f, arg_expr) \
-  runDirtyG_1_N(sbOut, 1, #f, f, mkIRExprVec_1(arg_expr), \
-                IRExpr_RdTmp(guard_temp))
+IRExpr* runDirtyG_1_N(IRSB* sbOut, int nargs, const char* fname, void* f,
+                     IRExpr** args, IRExpr* guard);
+#define runDirtyG_1_1(sbOut, guard, f, arg)                     \
+  runDirtyG_1_N(sbOut, 1, #f, f, mkIRExprVec_1(arg), guard)
+#define runDirtyG_1_2(sbOut, guard, f, arg1, arg2)              \
+  runDirtyG_1_N(sbOut, 2, #f, f, mkIRExprVec_2(arg1, arg2), guard)
+#define runDirtyG_1_3(sbOut, guard, f, arg1, arg2, arg3)                \
+  runDirtyG_1_N(sbOut, 3, #f, f, mkIRExprVec_3(arg1, arg2, arg3), guard)
 IRStmt* mkDirtyG_0_N(int nargs, const char* fname, void* f,
-                     IRExpr** args, IRExpr* guard_expr);
-#define mkDirtyG_0_1(f, arg_expr, guard_temp)                           \
-  mkDirtyG_0_N(1,#f,f, mkIRExprVec_1(arg_expr), IRExpr_RdTmp(guard_temp))
-#define mkDirtyG_0_2(f, arg1_expr, arg2_expr, guard_temp)               \
-  mkDirtyG_0_N(2,#f,f, mkIRExprVec_2(arg1_expr, arg2_expr),             \
-               IRExpr_RdTmp(guard_temp))
-#define mkDirtyG_0_3(f, arg1_expr, arg2_expr, arg3_expr, guard_temp)    \
-  mkDirtyG_0_N(3,#f,f, mkIRExprVec_3(arg1_expr, arg2_expr, arg3_expr),  \
-               IRExpr_RdTmp(guard_temp))
+                     IRExpr** args, IRExpr* guard);
+#define mkDirtyG_0_1(f, arg, guard)                           \
+  mkDirtyG_0_N(1,#f,f, mkIRExprVec_1(arg), guard)
+#define mkDirtyG_0_2(f, arg1, arg2, guard)               \
+  mkDirtyG_0_N(2,#f,f, mkIRExprVec_2(arg1, arg2), guard)
+#define mkDirtyG_0_3(f, arg1, arg2, arg3, guard)    \
+  mkDirtyG_0_N(3,#f,f, mkIRExprVec_3(arg1, arg2, arg3), guard)
 
-IRTemp runUnop(IRSB* sbOut, IROp op_code, IRExpr* arg);
+IRExpr* runUnop(IRSB* sbOut, IROp op_code, IRExpr* arg);
 
-#define runUnopT(sbOut, op_code, arg_temp) \
-  runUnop(sbOut, op_code, IRExpr_RdTmp(arg_temp))
+IRExpr* runBinop(IRSB* sbOut, IROp op_code, IRExpr* arg1, IRExpr* arg2);
 
-IRTemp runBinop(IRSB* sbOut, IROp op_code, IRExpr* arg1, IRExpr* arg2);
+IRExpr* runOr(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2);
+IRExpr* runAnd(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2);
+IRExpr* runAndto64(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2);
 
-#define runBinopT(sbOut, op_code, arg1_temp, arg2_temp)           \
-  runBinop(sbOut, op_code, IRExpr_RdTmp(arg1_temp), IRExpr_RdTmp(arg2_temp))
-
-IRTemp runOr(IRSB* sbOut, IRTemp arg1_temp, IRTemp arg2_temp);
-IRTemp runAnd(IRSB* sbOut, IRTemp arg1_temp, IRTemp arg2_temp);
-IRTemp runAndto64(IRSB* sbOut, IRTemp arg1_temp, IRTemp arg2_temp);
-
-#define runNonZeroCheck64(sbOut, check_temp) \
-  runBinop(sbOut, Iop_CmpNE64, IRExpr_RdTmp(check_temp), mkU64(0));
-#define runZeroCheck64(sbOut, check_temp) \
-  runBinop(sbOut, Iop_CmpEQ64, IRExpr_RdTmp(check_temp), mkU64(0));
+#define runNonZeroCheck64(sbOut, check) \
+  runBinop(sbOut, Iop_CmpNE64, check, mkU64(0));
+#define runZeroCheck64(sbOut, check) \
+  runBinop(sbOut, Iop_CmpEQ64, check, mkU64(0));
 
 #define addPrintOp(op_code) \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "ppIROp", VG_(fnptr_to_fnentry)(ppIROp), mkIRExprVec_1(mkU64((uintptr_t)op_code)))));
 
 #define addPrint(string) \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "print", VG_(fnptr_to_fnentry)(VG_(printf)), mkIRExprVec_1(mkU64((uintptr_t)string)))));
-#define addPrintG(guard_temp, string)                                    \
-  addStmtToIRSB(sbOut, mkDirtyG_0_1(VG_(fnptr_to_fnentry)(VG_(printf)), mkU64((uintptr_t)string), guard_temp));
-#define addPrintGE(guard_expr, string)                                  \
-  addStmtToIRSB(sbOut, mkDirtyG_0_N(1, "printf", VG_(fnptr_to_fnentry)(VG_(printf)), mkIRExprVec_1(mkU64((uintptr_t)string)), guard_expr));
+#define addPrintG(guard, string)                                    \
+  addStmtToIRSB(sbOut, mkDirtyG_0_1(VG_(fnptr_to_fnentry)(VG_(printf)), mkU64((uintptr_t)string), guard));
 
 #define addPrint2(format, arg)                                          \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(2, "print", VG_(fnptr_to_fnentry)(VG_(printf)), mkIRExprVec_2(mkU64((uintptr_t)format), arg))));
-#define addPrintG2(guard_temp, format, arg)                              \
-  addStmtToIRSB(sbOut, mkDirtyG_0_2(VG_(fnptr_to_fnentry)(VG_(printf)), mkU64((uintptr_t)format), arg, guard_temp));
+#define addPrintG2(guard, format, arg)                              \
+  addStmtToIRSB(sbOut, mkDirtyG_0_2(VG_(fnptr_to_fnentry)(VG_(printf)), mkU64((uintptr_t)format), arg, guard));
 #define addPrint3(format, arg1, arg2)                                   \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "print", VG_(fnptr_to_fnentry)(VG_(printf)), mkIRExprVec_3(mkU64((uintptr_t)format), arg1, arg2))));
-#define addPrintG3(guard_temp, format, arg1, arg2)                      \
-  addStmtToIRSB(sbOut, mkDirtyG_0_3(VG_(fnptr_to_fnentry)(VG_(printf)), mkU64((uintptr_t)format), arg1, arg2, guard_temp));
+#define addPrintG3(guard, format, arg1, arg2)                      \
+  addStmtToIRSB(sbOut, mkDirtyG_0_3(VG_(fnptr_to_fnentry)(VG_(printf)), mkU64((uintptr_t)format), arg1, arg2, guard));
 
-#define mkConvert(dest_temp, input_temp, conversion)                    \
-  unsafeIRDirty_1_N(dest_temp, 1, #conversion, VG_(fnptr_to_fnentry)(conversion), mkIRExprVec_1(IRExpr_RdTmp(input_temp)));
+#define mkConvert(dest, input, conversion)                    \
+  unsafeIRDirty_1_N(dest, 1, #conversion, VG_(fnptr_to_fnentry)(conversion), mkIRExprVec_1(input));
 
-IRTemp runITE(IRSB* sbOut, IRTemp cond_temp,
-              IRExpr* true_expr, IRExpr* false_expr);
+IRExpr* runITE(IRSB* sbOut, IRExpr* cond,
+               IRExpr* true_branch, IRExpr* false_branch);
 
-IRTemp runPureCFunc64(IRSB* sbOut, IRExpr* arg,
-                      void* mkFunc, const char* funcName);
-IRTemp runPureC2Func64(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2,
-                       void* mkFunc, const char* funcName);
-
-#define runArrowAddr(sbOut, struct_temp, struct_type, member)           \
-  runBinop(sbOut, Iop_Add64, IRExpr_RdTmp(struct_temp), mkU64(offsetof(struct_type, member)))
-#define runArrow(sbOut, struct_temp, struct_type, member)               \
-  runLoad64(sbOut, IRExpr_RdTmp(runArrowAddr(sbOut, struct_temp, struct_type, member)))
-#define runArrowG(sbOut, guard_temp, struct_temp, struct_type, member)  \
+IRExpr* runPureCCall(IRSB* sbOut, IRCallee* callee, IRType retty,
+                     IRExpr** args);
+#define runPureCCall64(sbOut, f, arg)                                   \
+  runPureCCall(sbOut,                                                   \
+               mkIRCallee(1, #f, VG_(fnptr_to_fnentry)(f)),             \
+               Ity_I64,                                                 \
+               mkIRExprVec_1(arg));
+#define runArrowAddr(sbOut, struct_expr, struct_type, member)           \
+  runBinop(sbOut, Iop_Add64, struct_expr, mkU64(offsetof(struct_type, member)))
+#define runArrow(sbOut, struct_expr, struct_type, member)               \
+  runLoad64(sbOut, runArrowAddr(sbOut, struct_expr, struct_type, member))
+#define runArrowG(sbOut, guard, struct_expr, struct_type, member)  \
   runLoadG64(sbOut, \
-             IRExpr_RdTmp(runArrowAddr(sbOut, struct_temp,              \
-                                       struct_type, member)),           \
-             IRExpr_RdTmp(guard_temp))
-#define addStoreArrow(sbOut, struct_temp, struct_type, \
-                      member, new_value_expr)          \
-  addStore(sbOut, new_value_expr, \
-           IRExpr_RdTmp(runArrowAddr(sbOut, struct_temp, \
-                                     struct_type, member)))
-#define addStoreArrowG(sbOut, guard_temp, struct_temp, struct_type,     \
-                       member, new_value_expr)          \
-  addStoreG(sbOut, guard_temp,                                \
-            new_value_expr,                                     \
-            IRExpr_RdTmp(runArrowAddr(sbOut, struct_temp,       \
-                                      struct_type, member)))
+             runArrowAddr(sbOut, struct_expr,              \
+                          struct_type, member),           \
+             guard)
+#define addStoreArrow(sbOut, struct_expr, struct_type, \
+                      member, new_value)          \
+  addStore(sbOut, new_value, \
+           runArrowAddr(sbOut, struct_expr, \
+                        struct_type, member))
+#define addStoreArrowG(sbOut, guard, struct_expr, struct_type,  \
+                       member, new_value)                       \
+  addStoreG(sbOut, guard,                                       \
+            new_value,                                          \
+            runArrowAddr(sbOut, struct_expr,                    \
+                         struct_type, member))
 
-#define runIndexAddr(sbOut, array_addr_expr, element_type, index) \
-  runBinop(sbOut, Iop_Add64, array_addr_expr, mkU64(sizeof(element_type) \
-                                                    * index))
-#define runIndex(sbOut, array_addr_expr, element_type, index)   \
-  runLoad64(sbOut, IRExpr_RdTmp(runIndexAddr(sbOut, array_addr_expr, \
-                                             element_type, index)))
-#define runIndexG(sbOut, guard_temp, array_addr_expr,                   \
+#define runIndexAddr(sbOut, array_addr, element_type, index)        \
+  runBinop(sbOut, Iop_Add64, array_addr, mkU64(sizeof(element_type) \
+                                               * index))
+#define runIndex(sbOut, array_addr, element_type, index)        \
+  runLoad64(sbOut, runIndexAddr(sbOut, array_addr,              \
+                                element_type, index))
+#define runIndexG(sbOut, guard, array_addr,                             \
                   element_type, const_index)                            \
-  runLoadG64(sbOut, IRExpr_RdTmp(runIndexAddr(sbOut, array_addr_expr,   \
-                                                element_type, \
-                                                const_index)),      \
-               IRExpr_RdTmp(guard_temp))
-#define addStoreIndex(sbOut, array_addr_expr, element_type, \
-                      const_index, src_expr) \
-  addStore(sbOut, src_expr, \
-             IRExpr_RdTmp(runIndexAddr(sbOut,                           \
-                                       array_addr_expr,                 \
-                                       element_type,                    \
-                                       const_index)))
+  runLoadG64(sbOut, runIndexAddr(sbOut, array_addr,                     \
+                                 element_type,                          \
+                                 const_index),                          \
+             guard)
+#define addStoreIndex(sbOut, array_addr, element_type,                  \
+                      const_index, src_expr)                            \
+  addStore(sbOut, src_expr,                                             \
+           IRExpr_RdTmp(runIndexAddr(sbOut,                             \
+                                     array_addr,                        \
+                                     element_type,                      \
+                                     const_index)))
 
-#define addStoreIndexG(sbOut, guard_temp, array_addr_expr, \
+#define addStoreIndexG(sbOut, guard, array_addr,            \
                        element_type, const_index, src_expr) \
-  addStoreG(sbOut, guard_temp, \
-            src_expr,                                   \
-            IRExpr_RdTmp(runIndexAddr(sbOut,            \
-                                      array_addr_expr,  \
-                                      element_type,     \
-                                      const_index))) 
-IRTemp runPureCCall(IRSB* sbOut, IRCallee* callee, IRType retty,
-                      IRExpr** aPureCCall(sbOut
-
-#define runSemanticWiden(sbOut, single_temp) \
-  runUnopT(sbOut,                                \
-           Iop_ReinterpF64asI64,                 \
-           runUnopT(sbOut,                       \
-                    Iop_F32toF64,                \
-                    runUnopT(sbOut,               \
-                             Iop_ReinterpI32asF32,      \
-                             single_temp)))
-
+  addStoreG(sbOut, guard,                                   \
+            src_expr,                                       \
+            runIndexAddr(sbOut,                             \
+                         array_addr,                       \
+                         element_type,                      \
+                         const_index)))
 #endif

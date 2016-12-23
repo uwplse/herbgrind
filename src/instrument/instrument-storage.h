@@ -60,34 +60,51 @@ void instrumentStoreG(IRSB* sbOut, IRExpr* addr,
                       IRExpr* guard, IRExpr* data);
 void instrumentCAS(IRSB* sbOut,
                    IRCAS* details);
-void addBlockCleanup(IRSB* sbOut);
+void finishInstrumentingBlock(IRSB* sbOut);
 void addBlockCleanupG(IRSB* sbOut, IRExpr* guard);
-void cleanupAtEndOfBlock(IRSB* out, IRTemp shadowed_temp, int num_vals);
-void addDisownNonNull(IRSB* sbOut, IRTemp temp, int num_vals);
-void addDisown(IRSB* sbOut, IRTemp temp, int num_vals);
-void addSVDisown(IRSB* sbOut, IRTemp sv);
-void addSVDisownG(IRSB* sbOut, IRTemp guard_temp, IRTemp sv);
-void addClear(IRSB* sbOut, IRTemp temp, int num_vals);
+void cleanupAtEndOfBlock(IRSB* sbOut, IRTemp shadowed_temp);
+void addDynamicDisown(IRSB* sbOut, IRTemp idx);
+void addDynamicDisownNonNull(IRSB* sbOut, IRTemp idx);
+void addDisownNonNull(IRSB* sbOut, IRExpr* shadow_temp, int num_vals);
+void addDisown(IRSB* sbOut, IRExpr* shadow_temp, int num_vals);
+void addDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* shadow_temp, int num_vals);
+void addSVDisown(IRSB* sbOut, IRExpr* sv);
+void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv);
+void addClear(IRSB* sbOut, IRTemp shadowed_temp, int num_vals);
 
-IRTemp runNewShadowTempG(IRSB* sbOut, IRTemp guard,
-                         int num_vals);
-IRTemp runNewShadowTemp(IRSB* sbOut, int num_vals);
-IRTemp runMkShadowTempG(IRSB* sbOut, IRTemp guard,
-                        int num_vals, FloatType valPrecision,
-                        IRExpr* valExpr);
-IRTemp runMkShadowTemp(IRSB* sbOut,
-                       int num_vals, FloatType valPecision,
-                       IRExpr* valExpr);
-IRTemp runMkShadowValue(IRSB* sbOut,
-                        FloatType type,
-                        IRExpr* doubleExpr);
-IRTemp runMkShadowValueG(IRSB* sbOut, IRTemp guard_temp,
-                         FloatType type,
-                         IRExpr* doubleExpr);
-IRTemp runMakeInputG(IRSB* sbOut, IRTemp guard,
-                     IRExpr* argExpr, FloatType type);
-IRTemp runMakeInput(IRSB* sbOut,
-                    IRExpr* argExpr,
-                    FloatType type);
+IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
+                      IRExpr* argExpr,
+                      FloatType type, int num_vals);
+IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
+                     FloatType type, int num_vals);
 
+IRExpr* runLoadTemp(IRSB* sbOut, int idx);
+void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
+                  FloatType type,
+                  int idx);
+void addStoreTempG(IRSB* sbOut, IRExpr* guard,
+                   IRExpr* shadow_temp,
+                   FloatType type,
+                   int idx);
+Bool tempIsTyped(int idx);
+FloatType tempType(int idx);
+Bool hasStaticShadow(IRExpr* expr);
+Bool canHaveShadow(IRTypeEnv* tyenv, IRExpr* expr);
+IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr);
+
+/* IRExpr* runNewShadowTempG(IRSB* sbOut, IRExpr* guard, */
+/*                           int num_vals); */
+/* IRExpr* runNewShadowTemp(IRSB* sbOut, int num_vals); */
+/* IRExpr* runMkShadowTempG(IRSB* sbOut, IRExpr* guard, */
+/*                          int num_vals, FloatType valPrecision, */
+/*                          IRExpr* valExpr); */
+/* IRExpr* runMkShadowTemp(IRSB* sbOut, */
+/*                         int num_vals, FloatType valPecision, */
+/*                         IRExpr* valExpr); */
+/* IRExpr* runMkShadowValue(IRSB* sbOut, */
+/*                          FloatType type, */
+/*                          IRExpr* doubleExpr); */
+/* IRExpr* runMkShadowValueG(IRSB* sbOut, IRExpr* guard, */
+/*                           FloatType type, */
+/*                           IRExpr* doubleExpr); */
 #endif

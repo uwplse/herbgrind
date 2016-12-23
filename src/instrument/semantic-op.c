@@ -36,20 +36,24 @@
 #include "../helper/instrument-util.h"
 #include "../helper/debug.h"
 
-#include "../runtime/value-shadowstate/value-shadowstate.h"
 #include "instrument-storage.h"
 
 void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                           int nargs, IRExpr** argExprs,
                           Addr curAddr, IRTemp dest){
-  IRTemp shadowArgs[4];
+  IRExpr* shadowArgs[4];
   for(int i = 0; i < nargs; ++i){
     if (isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[i]))){
       shadowArgs[i] =
-        runGetArg(sbOut, argPrecision(op_code), argExprs[i],
-                  numChannelsIn(op_code));
+        runGetArg(sbOut, argExprs[i],
+                  argPrecision(op_code), numChannelsIn(op_code));
     }
   }
+
+  IRExpr* shadowOutput =
+    runShadowOp(sbOut, op_code, shadowArgs);
+  addStoreTemp(sbOut, shadowOutput, argPrecision(op_code),
+               dest);
 
   for(int i = 0; i < nargs; ++i){
     if (isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[i]))){
@@ -60,28 +64,24 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
   }
 }
 
-IRTemp runGetArg(IRSB* sbOut, FloatType type, IRExpr* argExpr,
-                 int num_vals){
-  if (argExpr->tag == Iex_Const){
-    IRTemp result = runMakeInput(sbOut, argExpr, type);
-    return result;
+IRExpr* runShadowOp(IRSB* sbOut, IROp op_code, IRExpr** args){
+}
+
+IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
+                  FloatType type, int num_vals){
+  if (argExpr->tag == Iex_Const) {
+    return runMakeInput(sbOut, argExpr, type, num_vals);
   } else {
-    // Iex_RdTmp
-    IRTemp loadedArg =
-      runLoad64C(sbOut,
-                 &(shadowTemps[argExpr->Iex.RdTmp.tmp]));
-    IRTemp argNull = runZeroCheck64(sbOut, loadedArg);
+    IRExpr* loaded =
+      runLoadTemp(sbOut, argExpr->Iex.RdTmp.tmp);
+    if (hasStaticShadow(argExpr)){
+      return loaded;
+    } else {
+      IRExpr* shouldMake = runZeroCheck64(sbOut, loaded);
+      IRExpr* freshArg =
+        runMakeInputG(sbOut, shouldMake, argExpr, type, num_vals);
 
-    IRTemp freshArg = runMakeInputG(sbOut, argNull, argExpr, type);
-
-    addStoreGC(sbOut, argNull, IRExpr_RdTmp(freshArg),
-               &(shadowTemps[argExpr->Iex.RdTmp.tmp]));
-    cleanupAtEndOfBlock(sbOut, argExpr->Iex.RdTmp.tmp, num_vals);
-
-    IRTemp result = runITE(sbOut, argNull,
-                           IRExpr_RdTmp(freshArg),
-                           IRExpr_RdTmp(loadedArg));
-    return result;
-
+      return runITE(sbOut, shouldMake, freshArg, loaded);
+    }
   }
 }

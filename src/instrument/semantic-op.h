@@ -39,6 +39,6 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                           int nargs, IRExpr** argExprs,
                           Addr curAddr, IRTemp dest);
 
-IRTemp runGetArg(IRSB* sbOut, FloatType type, IRExpr* argExpr,
-                 int num_vals);
+IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
+                  FloatType type, int num_vals);
 #endif

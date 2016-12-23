@@ -29,31 +29,52 @@
 
 #include "real.h"
 
-#include "../../options.h"
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_libcprint.h"
 
 Real mkReal(double bytes){
   Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
+  #ifdef USE_MPFR
   mpfr_init2(result->mpfr_val, precision);
   mpfr_set_d(result->mpfr_val, bytes, MPFR_RNDN);
+  #else
+  mpf_init2(result->mpf_val, precision);
+  mpf_set_d(result->mpf_val, bytes);
+  #endif
   return result;
 }
 void setReal(Real r, double bytes){
+  #ifdef USE_MPFR
   mpfr_set_d(r->mpfr_val, bytes, MPFR_RNDN);
+  #else
+  mpf_set_d(r->mpf_val, bytes);
+  #endif
 }
 void freeReal(Real real){
+  #ifdef USE_MPFR
   mpfr_clear(real->mpfr_val);
+  #else
+  mpf_clear(real->mpf_val);
+  #endif
   VG_(free)(real);
 }
 
 double getDouble(Real real){
+  #ifdef USE_MPFR
   return mpfr_get_d(real->mpfr_val, MPFR_RNDN);
+  #else
+  return mpf_get_d(real->mpf_val);
+  #endif
 }
 
 Real copyReal(Real real){
   Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
+  #ifdef USE_MPFR
   mpfr_init2(result->mpfr_val, precision);
   mpfr_set(result->mpfr_val, real->mpfr_val, MPFR_RNDN);
+  #else
+  mpf_init2(result->mpf_val, precision);
+  mpf_set(result->mpf_val, real->mpf_val);
+  #endif
   return result;
 }

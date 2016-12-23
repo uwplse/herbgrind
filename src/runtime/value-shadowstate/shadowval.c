@@ -30,7 +30,6 @@
 #include "shadowval.h"
 #include "exprs.h"
 #include "real.h"
-#include "value-shadowstate.h"
 
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_hashtable.h"
@@ -38,6 +37,7 @@
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcassert.h"
 
+int shadow_temps_made = 0;
 VG_REGPARM(1) ShadowTemp* newShadowTemp(UWord num_vals){
   ShadowTemp* newShadowTemp =
     VG_(perm_malloc)(sizeof(ShadowTemp), vg_alignof(ShadowTemp));
@@ -65,10 +65,18 @@ ShadowValue* newShadowValue(FloatType type, double value){
   result->ref_count = 1;
   return result;
 }
+inline
+ShadowValue* newShadowValue(FloatType type){
+  ShadowValue* result =
+    VG_(perm_malloc)(sizeof(ShadowValue), vg_alignof(ShadowValue));
+  result->type = type;
+  result->ref_count = 1;
+  return result;
+}
 VG_REGPARM(3)
 ShadowValue* newShadowValueG(UWord guard, FloatType type, double value){
   if (guard){
-    return newShadowValue(type, value);
+    return newShadowValue(type);
   } else {
     return NULL;
   }

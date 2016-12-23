@@ -30,11 +30,22 @@
 #ifndef _REAL_H
 #define _REAL_H
 
+#include "../../options.h"
+
+#ifdef USE_MPFR
 #include "mpfr.h"
+#else
+#include "gmp.h"
+#endif
+
 #include "pub_tool_basics.h"
 
 typedef struct _RealStruct{
+  #ifdef USE_MPFR
   mpfr_t mpfr_val;
+  #else
+  mpf_t mpf_val;
+  #endif
 } *Real;
 
 Real mkReal(double bytes);

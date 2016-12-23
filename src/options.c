@@ -54,7 +54,8 @@ Bool hg_process_cmd_line_option(const HChar* arg){
 
 void hg_print_usage(void){
   VG_(printf)("--precision=value "
-              "Sets the mantissa size of the shadow \"real\" values.\n");
+              "Sets the mantissa size of the shadow \"real\" values.\n"
+              );
 }
 void hg_print_debug_usage(void){
   VG_(printf)(" --print-in-blocks "

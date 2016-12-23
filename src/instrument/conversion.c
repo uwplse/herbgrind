@@ -29,7 +29,6 @@
 
 #include "conversion.h"
 #include "../helper/instrument-util.h"
-#include "../runtime/value-shadowstate/value-shadowstate.h"
 #include "../runtime/shadowop/conversions.h"
 #include "pub_tool_machine.h"
 #include "pub_tool_libcassert.h"
@@ -37,67 +36,156 @@
 #include "pub_tool_mallocfree.h"
 #include "instrument-storage.h"
 
+typedef enum {
+  Uncertain,
+  DefinitelyFalse,
+  DefinitelyTrue,
+} Booly;
+
 void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                           IRTemp dest){
-  IRTemp shadowInput1T, shadowInput2T;
-  IRTemp inputPreexisting = newIRTemp(sbOut->tyenv, Ity_I1);
-  IRTemp newShadowT = newIRTemp(sbOut->tyenv, Ity_I64);
-
-  return;
+  IRExpr* shadowInputs[2];
+  IRExpr* inputPreexisting;
+  Booly inputsPreexistingStatic[2] = {Uncertain, Uncertain};
+  IRExpr* inputsPreexistingDynamic[2] = {NULL, NULL};
+  IRExpr* shadowOutput;
 
   if (numConversionInputs(op_code) == 1){
     int inputIndex = conversionInputArgIndex(op_code);
-    if (argExprs[inputIndex]->tag == Iex_Const ||
-        !isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[0]))){
+    if (!canHaveShadow(sbOut->tyenv, argExprs[0])){
       return;
-    }
-    shadowInput1T = runLoad64C(sbOut, &(shadowTemps[argExprs[inputIndex]->Iex.RdTmp.tmp]));
-    shadowInput2T = 0;
-    inputPreexisting = runNonZeroCheck64(sbOut, shadowInput1T);
-  } else {
-    if ((argExprs[0]->tag == Iex_Const ||
-         !isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[0]))) &&
-        (argExprs[1]->tag == Iex_Const ||
-         !isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[1])))){
-      return;
-    }
-    if (argExprs[0]->tag == Iex_Const ||
-        !isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[0]))){
-      shadowInput2T =
-        runLoad64C(sbOut, &(shadowTemps[argExprs[1]->Iex.RdTmp.tmp]));
-      inputPreexisting = runNonZeroCheck64(sbOut, shadowInput2T);
-      shadowInput1T = runMakeInputG(sbOut, inputPreexisting, argExprs[0], argPrecision(op_code));
-    } else if (argExprs[1]->tag == Iex_Const ||
-               !isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[1]))){
-      shadowInput1T =
-        runLoad64C(sbOut, &(shadowTemps[argExprs[0]->Iex.RdTmp.tmp]));
-      inputPreexisting = runNonZeroCheck64(sbOut, shadowInput1T);
-      shadowInput2T = runMakeInputG(sbOut, inputPreexisting, argExprs[1], argPrecision(op_code));
     } else {
-      IRTemp loadedShadowInput1T = runLoad64C(sbOut, &(shadowTemps[argExprs[0]->Iex.RdTmp.tmp]));
-      IRTemp loadedShadowInput2T = runLoad64C(sbOut, &(shadowTemps[argExprs[1]->Iex.RdTmp.tmp]));
-      IRTemp input1Preexisting = runNonZeroCheck64(sbOut, loadedShadowInput1T);
-      IRTemp input2Preexisting = runNonZeroCheck64(sbOut, loadedShadowInput2T);
+      shadowInputs[0] =
+        runLoadTemp(sbOut, argExprs[inputIndex]->Iex.RdTmp.tmp);
+      if (hasStaticShadow(argExprs[0])){
+        // To make sure we don't accidentally use this in any guarded
+        // calls when this happens, because it means we statically know
+        // whether it preexists or not.
+        inputPreexisting = NULL;
+      } else {
+        inputPreexisting = runNonZeroCheck64(sbOut, shadowInputs[0]);
+      }
+    }
+    shadowInputs[1] = 0;
+  } else {
+    if (!canHaveShadow(sbOut->tyenv, argExprs[0]) &&
+        !canHaveShadow(sbOut->tyenv, argExprs[1])){
+      return;
+    } else if (hasStaticShadow(argExprs[0]) ||
+               hasStaticShadow(argExprs[1])) {
+      for (int i = 0; i < 2; ++i){
+        if (canHaveShadow(sbOut->tyenv, argExprs[i])){
+          shadowInputs[i] =
+            runLoadTemp(sbOut, argExprs[i]->Iex.RdTmp.tmp);
+          if (!hasStaticShadow(argExprs[i])){
+            IRExpr* loadedNull =
+              runNonZeroCheck64(sbOut, shadowInputs[i]);
+            IRExpr* freshInput =
+              runMakeInputG(sbOut, loadedNull,
+                            argExprs[i],
+                            tempType(argExprs[1-i]->Iex.RdTmp.tmp),
+                            inferOtherNumChannels(i,
+                                                  argExprs[1-i],
+                                                  op_code));
+            shadowInputs[i] = runITE(sbOut, loadedNull,
+                                     freshInput,
+                                     shadowInputs[i]);
+            inputsPreexistingStatic[i] = Uncertain;
+            inputsPreexistingDynamic[i] =
+              runUnop(sbOut, Iop_Not1, loadedNull);
+          } else {
+            inputsPreexistingStatic[i] = DefinitelyTrue;
+            inputsPreexistingDynamic[i] = NULL;
+          }
+        } else {
+          inputsPreexistingStatic[i] = DefinitelyFalse;
+          inputsPreexistingDynamic[i] = NULL;
+          shadowInputs[i] =
+            runMakeInput(sbOut, argExprs[i],
+                         tempType(argExprs[1-i]->Iex.RdTmp.tmp),
+                         inferOtherNumChannels(i,
+                                               argExprs[1-i],
+                                               op_code));
+        }
+      }
+      // To make sure we don't accidentally use this in any guarded
+      // calls when this happens, because it means we statically know
+      // whether it preexists or not.
+      inputPreexisting = NULL;
+    } else if (!canHaveShadow(sbOut->tyenv, argExprs[0])) {
+      shadowInputs[1] =
+        runLoadTemp(sbOut, argExprs[1]->Iex.RdTmp.tmp);
       inputPreexisting =
-        runOr(sbOut, input1Preexisting, input2Preexisting);
-      IRTemp input1Null = runUnop(sbOut, Iop_Not1, IRExpr_RdTmp(input1Preexisting));
-      IRTemp input2Null = runUnop(sbOut, Iop_Not1, IRExpr_RdTmp(input2Preexisting));
-
-      IRTemp mkInput1 = runAnd(sbOut, input1Null, input2Preexisting);
-      IRTemp mkInput2 = runAnd(sbOut, input2Null, input1Preexisting);
-
-      IRTemp freshShadowInput1T = runMakeInputG(sbOut, mkInput1, argExprs[0], argPrecision(op_code));
-      IRTemp freshShadowInput2T = runMakeInputG(sbOut, mkInput2, argExprs[1], argPrecision(op_code));
-      addStoreGC(sbOut, mkInput1, IRExpr_RdTmp(freshShadowInput1T),
-                 &(shadowTemps[argExprs[0]->Iex.RdTmp.tmp]));
-      addStoreGC(sbOut, mkInput1, IRExpr_RdTmp(freshShadowInput2T),
-                 &(shadowTemps[argExprs[1]->Iex.RdTmp.tmp]));
-      shadowInput1T = runITE(sbOut, input1Preexisting,
-                             IRExpr_RdTmp(loadedShadowInput1T),
-                             IRExpr_RdTmp(freshShadowInput1T));
-      shadowInput2T = runITE(sbOut, input2Preexisting,
-                             IRExpr_RdTmp(loadedShadowInput2T),
-                             IRExpr_RdTmp(freshShadowInput1T));
+        runNonZeroCheck64(sbOut, shadowInputs[1]);
+      FloatType inferredPrecision = argPrecision(op_code);
+      // You better make sure you handle all the cases where this
+      // could be false lower down.
+      if (inferredPrecision != Ft_Invalid){
+        int num_vals =
+          inferOtherNumChannels(0, shadowInputs[1], op_code);
+        shadowInputs[0] =
+          runMakeInputG(sbOut, inputPreexisting, argExprs[0],
+                        inferredPrecision, num_vals);
+      } else {
+        shadowInputs[0] = NULL;
+      }
+      inputsPreexistingStatic[0] = DefinitelyFalse;
+      inputsPreexistingStatic[1] = Uncertain;
+      inputsPreexistingDynamic[0] = NULL;
+      inputsPreexistingDynamic[1] = inputPreexisting;
+    } else if (!canHaveShadow(sbOut->tyenv, argExprs[1])) {
+      shadowInputs[0] =
+        runLoadTemp(sbOut, argExprs[0]->Iex.RdTmp.tmp);
+      inputPreexisting =
+        runNonZeroCheck64(sbOut, shadowInputs[0]);
+      // You better make sure you handle all the cases where this
+      // could be false lower down.
+      FloatType inferredPrecision = argPrecision(op_code);
+      if (inferredPrecision != Ft_Invalid){
+        int numChannels = inferOtherNumChannels(1, shadowInputs[0],
+                                                op_code);
+        shadowInputs[1] =
+          runMakeInputG(sbOut, inputPreexisting, argExprs[1],
+                        inferredPrecision,
+                        numChannels);
+      } else {
+        shadowInputs[1] = NULL;
+      }
+      inputsPreexistingStatic[0] = Uncertain;
+      inputsPreexistingStatic[1] = DefinitelyFalse;
+      inputsPreexistingDynamic[0] = inputPreexisting;
+      inputsPreexistingDynamic[1] = NULL;
+    } else {
+      inputsPreexistingStatic[0] = Uncertain;
+      inputsPreexistingStatic[1] = Uncertain;
+      for(int i = 0; i < 2; ++i){
+        shadowInputs[i] =
+          runLoadTemp(sbOut, argExprs[i]->Iex.RdTmp.tmp);
+        inputsPreexistingDynamic[i] =
+          runNonZeroCheck64(sbOut, shadowInputs[i]);
+      }
+      for(int i = 0; i < 2; ++i){
+        IRExpr* shouldMake =
+          runAnd(sbOut,
+                 runUnop(sbOut, Iop_Not1,
+                         inputsPreexistingDynamic[i]),
+                 inputsPreexistingDynamic[1-i]);
+        FloatType inferredPrecision = argPrecision(op_code);
+        // You better make sure you handle all the cases where this
+        // could be false lower down.
+        if (inferredPrecision != Ft_Invalid){
+          IRExpr* freshInput =
+            runMakeInputG(sbOut, shouldMake, argExprs[i],
+                          argPrecision(op_code),
+                          numChannelsIn(op_code));
+          shadowInputs[i] =
+            runITE(sbOut, shouldMake, freshInput, shadowInputs[i]);
+        }
+      }
+      inputPreexisting =
+        runOr(sbOut,
+              inputsPreexistingDynamic[0],
+              inputsPreexistingDynamic[1]);
     }
   }
 
@@ -111,10 +199,16 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
   case Iop_RoundF64toInt:
   case Iop_RoundF32toInt:
     {
-      IRDirty* copyTempDirty =
-        mkConvert(newShadowT, shadowInput1T, copyShadowTemp);
-      copyTempDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyTempDirty));
+      if (inputPreexisting == NULL){
+        tl_assert(shadowInputs[0]);
+        shadowOutput =
+          runPureCCall64(sbOut, copyShadowTemp, shadowInputs[0]);
+      } else {
+        tl_assert(shadowInputs[0]);
+        shadowOutput =
+          runDirtyG_1_1(sbOut, inputPreexisting,
+                        copyShadowTemp, shadowInputs[0]);
+      }
     }
     break;
     // These change the type of the output, but are otherwise like the
@@ -124,153 +218,260 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
   case Iop_F64toF32:
   case Iop_F32toF64:
     {
-      IRDirty* copyTempDirty =
-        mkConvert(newShadowT, shadowInput1T, deepCopyShadowTemp);
-      copyTempDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyTempDirty));
+      if (inputPreexisting == NULL){
+        tl_assert(shadowInputs[0]);
+        shadowOutput =
+          runPureCCall64(sbOut, deepCopyShadowTemp, shadowInputs[0]);
+      } else {
+        tl_assert(shadowInputs[0]);
+        shadowOutput =
+          runDirtyG_1_1(sbOut, inputPreexisting, deepCopyShadowTemp,
+                        shadowInputs[0]);
+      }
 
       IRDirty* changeTypeDirty =
         unsafeIRDirty_0_N(2, "changeSingleValueType",
                           VG_(fnptr_to_fnentry)(changeSingleValueType),
-                          mkIRExprVec_2(IRExpr_RdTmp(newShadowT),
+                          mkIRExprVec_2(shadowOutput,
                                         mkU64(op_code == Iop_F32toF64 ?
                                               Ft_Double : Ft_Single)));
-      changeTypeDirty->guard = IRExpr_RdTmp(inputPreexisting);
+      if (inputPreexisting != NULL){
+        changeTypeDirty->guard = inputPreexisting;
+      }
       addStmtToIRSB(sbOut, IRStmt_Dirty(changeTypeDirty));
     }
     break;
     // These manipulate SIMD values
   case Iop_ZeroHI96ofV128:
-    {
-      IRDirty* copyFirstFloatDirty =
-        mkConvert(newShadowT, shadowInput1T, zeroHi96ofV128);
-      copyFirstFloatDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyFirstFloatDirty));
-    }
-    break;
   case Iop_ZeroHI64ofV128:
-    {
-      IRDirty* copyFirstFloatDirty =
-        mkConvert(newShadowT, shadowInput1T, zeroHi64ofV128);
-      copyFirstFloatDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyFirstFloatDirty));
-    }
-    break;
   case Iop_V128to32:
-    {
-      IRDirty* copyFirstFloatDirty =
-        mkConvert(newShadowT, shadowInput1T, v128to32);
-      copyFirstFloatDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyFirstFloatDirty));
-    }
-    break;
   case Iop_V128to64:
-    {
-      IRDirty* copyFirstFloatDirty =
-        mkConvert(newShadowT, shadowInput1T, v128to64);
-      copyFirstFloatDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyFirstFloatDirty));
-    }
-    break;
   case Iop_V128HIto64:
+  case Iop_64UtoV128:
     {
-      IRDirty* copySecondFloatDirty =
-        mkConvert(newShadowT, shadowInput1T, v128Hito64);
-      copySecondFloatDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copySecondFloatDirty));
-    }
-    break;
-  case Iop_SetV128lo32:
-    {
-      IRDirty* combineFloatsDirty =
-        unsafeIRDirty_1_N(newShadowT, 1,
-                          "setV128lo32",
-                          VG_(fnptr_to_fnentry)(setV128lo32),
-                          mkIRExprVec_2(IRExpr_RdTmp(shadowInput1T),
-                                        IRExpr_RdTmp(shadowInput2T)));
-      combineFloatsDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(combineFloatsDirty));
+      ShadowTemp* (*convertFunc)(ShadowTemp* input);
+      switch(op_code){
+      case Iop_ZeroHI96ofV128:
+        convertFunc = zeroHi96ofV128;
+        break;
+      case Iop_ZeroHI64ofV128:
+        convertFunc = zeroHi64ofV128;
+        break;
+      case Iop_V128to32:
+        convertFunc = v128to32;
+        break;
+      case Iop_V128to64:
+        convertFunc = v128to64;
+        break;
+      case Iop_V128HIto64:
+        convertFunc = v128Hito64;
+        break;
+      case Iop_64UtoV128:
+        convertFunc = i64UtoV128;
+        break;
+      default:
+        tl_assert(0);
+        return;
+      }
+      if (inputPreexisting == NULL){
+        tl_assert(shadowInputs[0]);
+        shadowOutput =
+          runPureCCall64(sbOut, convertFunc, shadowInputs[0]);
+      } else {
+        tl_assert(shadowInputs[0]);
+        shadowOutput =
+          runDirtyG_1_1(sbOut, inputPreexisting,
+                        convertFunc, shadowInputs[0]);
+      }
     }
     break;
   case Iop_SetV128lo64:
     {
-      IRDirty* combineFloatsDirty =
-        unsafeIRDirty_1_N(newShadowT, 1,
-                          "setV128lo64",
-                          VG_(fnptr_to_fnentry)(setV128lo64),
-                          mkIRExprVec_2(IRExpr_RdTmp(shadowInput1T),
-                                        IRExpr_RdTmp(shadowInput2T)));
-      combineFloatsDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(combineFloatsDirty));
+      // In this case we'll be able to infer the types, so we will
+      // have already constructed both inputs.
+      if (inputsPreexistingStatic[0] == DefinitelyTrue ||
+          inputsPreexistingStatic[1] == DefinitelyTrue){
+        tl_assert(shadowInputs[1]);
+        shadowOutput =
+          runPureCCall(sbOut,
+                       mkIRCallee(2, "setV128lo64",
+                                  VG_(fnptr_to_fnentry)(setV128lo64)),
+                       Ity_I64,
+                       mkIRExprVec_2(shadowInputs[0], shadowInputs[1]));
+      } else if (inputsPreexistingStatic[0] == DefinitelyFalse){
+        tl_assert(inputsPreexistingDynamic[1]);
+        shadowOutput =
+          runDirtyG_1_3(sbOut, inputsPreexistingDynamic[1],
+                        setV128lo64Dynamic1,
+                        shadowInputs[1],
+                        mkU64(argExprs[0]->Iex.RdTmp.tmp),
+                        argExprs[0]);
+        cleanupAtEndOfBlock(sbOut, argExprs[0]->Iex.RdTmp.tmp);
+      } else if (inputsPreexistingStatic[1] == DefinitelyFalse){
+        tl_assert(inputsPreexistingDynamic[0]);
+        shadowOutput =
+          runDirtyG_1_3(sbOut, inputsPreexistingDynamic[0],
+                        setV128lo64Dynamic2,
+                        shadowInputs[0],
+                        mkU64(argExprs[1]->Iex.RdTmp.tmp),
+                        argExprs[1]);
+        cleanupAtEndOfBlock(sbOut, argExprs[0]->Iex.RdTmp.tmp);
+      } else {
+        // Otherwise we couldn't infer types statically, so we have to
+        // use guarded dynamic calls depending on which one(s) already
+        // exist.
+
+        // If neither exist, we won't do anything, just like every
+        // other conversion operation.
+
+        // If one exists, but the other does not, at runtime we'll
+        // infer the type of the one that doesn't exist based on the
+        // type of the one that does, so we can create a shadow value
+        // for it and do the operation.
+        tl_assert(inputsPreexistingDynamic[0]);
+        tl_assert(inputsPreexistingDynamic[1]);
+        IRExpr* shouldCreate1 =
+          runAnd(sbOut,
+                 runUnop(sbOut, Iop_Not1, inputsPreexistingDynamic[0]),
+                 inputsPreexistingDynamic[1]);
+        IRExpr* result1;
+        if (argExprs[0]->tag == Iex_RdTmp){
+          tl_assert(shadowInputs[1]);
+          result1 =
+            runDirtyG_1_3(sbOut, shouldCreate1,
+                          setV128lo64Dynamic1,
+                          shadowInputs[1],
+                          mkU64(argExprs[0]->Iex.RdTmp.tmp),
+                          argExprs[0]);
+          cleanupAtEndOfBlock(sbOut, argExprs[0]->Iex.RdTmp.tmp);
+        } else {
+          tl_assert(shadowInputs[1]);
+          result1 =
+            runDirtyG_1_3(sbOut, shouldCreate1,
+                          setV128lo64Dynamic1,
+                          shadowInputs[1],
+                          mkU64(IRTemp_INVALID),
+                          argExprs[0]);
+        }
+        IRExpr* shouldCreate2 =
+          runAnd(sbOut,
+                 runUnop(sbOut, Iop_Not1, inputsPreexistingDynamic[1]),
+                 inputsPreexistingDynamic[0]);
+        IRExpr* result2;
+        if (argExprs[1]->tag == Iex_RdTmp){
+          tl_assert(shadowInputs[0]);
+          result2 =
+            runDirtyG_1_3(sbOut, shouldCreate2,
+                          setV128lo64Dynamic2,
+                          shadowInputs[0],
+                          mkU64(argExprs[1]->Iex.RdTmp.tmp),
+                          argExprs[1]);
+        } else {
+          tl_assert(shadowInputs[0]);
+          result2 =
+            runDirtyG_1_3(sbOut, shouldCreate2,
+                          setV128lo64Dynamic2,
+                          shadowInputs[0],
+                          mkU64(IRTemp_INVALID),
+                          argExprs[1]);
+        }
+        IRExpr* shouldCreateNeither =
+          runAnd(sbOut,
+                 inputsPreexistingDynamic[0],
+                 inputsPreexistingDynamic[1]);
+        IRExpr* result3 =
+          runDirtyG_1_2(sbOut, shouldCreateNeither,
+                        setV128lo64,
+                        shadowInputs[0],
+                        shadowInputs[1]);
+
+        shadowOutput =
+          runITE(sbOut, shouldCreateNeither,
+                 result3,
+                 runITE(sbOut, shouldCreate1,
+                        result1,
+                        result2));
+      }
     }
     break;
-  case Iop_F128LOtoF64:
-    {
-      IRDirty* copyFirstFloatDirty =
-        mkConvert(newShadowT, shadowInput1T, f128Loto64);
-      copyFirstFloatDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyFirstFloatDirty));
-    }
-    break;
-  case Iop_F128HItoF64:
-    {
-      IRDirty* copySecondFloatDirty =
-        mkConvert(newShadowT, shadowInput1T, f128Hito64);
-      copySecondFloatDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copySecondFloatDirty));
-    }
-    break;
+  case Iop_SetV128lo32:
   case Iop_64HLtoV128:
     {
-      IRDirty* combineFloatsDirty =
-        unsafeIRDirty_1_N(newShadowT, 1,
-                          "i64HLtoV128",
-                          VG_(fnptr_to_fnentry)(i64HLtoV128),
-                          mkIRExprVec_2(IRExpr_RdTmp(shadowInput1T),
-                                        IRExpr_RdTmp(shadowInput2T)));
-      combineFloatsDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(combineFloatsDirty));
-    }
-    break;
-  case Iop_F64HLtoF128:
-    {
-      IRDirty* combineFloatsDirty =
-        unsafeIRDirty_1_N(newShadowT, 1,
-                          "f64HLtoF128",
-                          VG_(fnptr_to_fnentry)(f64HLtoF128),
-                          mkIRExprVec_2(IRExpr_RdTmp(shadowInput1T),
-                                        IRExpr_RdTmp(shadowInput2T)));
-      combineFloatsDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(combineFloatsDirty));
-    }
-    break;
-  case Iop_64UtoV128:
-    {
-      IRDirty* copyFirstFloatDirty =
-        mkConvert(newShadowT, shadowInput1T, f128Loto64);
-      copyFirstFloatDirty->guard = IRExpr_RdTmp(inputPreexisting);
-      addStmtToIRSB(sbOut, IRStmt_Dirty(copyFirstFloatDirty));
+      ShadowTemp* (*combineFunc)(ShadowTemp* in1, ShadowTemp* in2);
+      switch(op_code){
+      case Iop_SetV128lo32:
+        combineFunc = setV128lo32;
+        break;
+      case Iop_64HLtoV128:
+        combineFunc = i64HLtoV128;
+        break;
+      default:
+        tl_assert(0);
+        return;
+      }
+      if (inputPreexisting == NULL){
+        shadowOutput =
+          runPureCCall(sbOut,
+                       mkIRCallee(2, "setV128lo32",
+                                  VG_(fnptr_to_fnentry)(combineFunc)),
+                       Ity_I64,
+                       mkIRExprVec_2(shadowInputs[0], shadowInputs[1]));
+      } else {
+        shadowOutput = runDirtyG_1_2(sbOut, inputPreexisting,
+                                     combineFunc,
+                                     shadowInputs[0],
+                                     shadowInputs[1]);
+      }
     }
     break;
   default:
     tl_assert(0);
+    return;
   }
-  // Store the result if the input already existed, store NULL
-  // otherwise.
-  IRTemp resultVal = runITE(sbOut, inputPreexisting,
-                            IRExpr_RdTmp(newShadowT),
-                            mkU64(0));
-  addStoreC(sbOut, IRExpr_RdTmp(resultVal),
-            &(shadowTemps[dest]));
+  // Store the result if the input already existed
+  if (hasStaticShadow(argExprs[0])){
+    addStoreTemp(sbOut, shadowOutput,
+                 tempType(argExprs[0]->Iex.RdTmp.tmp),
+                 dest);
+  } else if (numConversionInputs(op_code) == 2 &&
+             hasStaticShadow(argExprs[1])){
+    addStoreTemp(sbOut, shadowOutput,
+                 tempType(argExprs[1]->Iex.RdTmp.tmp),
+                 dest);
+  } else {
+    addStoreTempG(sbOut, inputPreexisting, shadowOutput,
+                  resultPrecision(op_code),
+                  dest);
+  }
 
   // Finally, if we created inputs for constants, free them up, since
   // we have no where to put them.
   if (numConversionInputs(op_code) == 2){
-    if (argExprs[0]->tag == Iex_Const){
-      addDisownNonNull(sbOut, shadowInput1T, numChannelsIn(op_code));
-    }
-    if (argExprs[1]->tag == Iex_Const){
-      addDisownNonNull(sbOut, shadowInput2T, numChannelsIn(op_code));
+    if (inputPreexisting == NULL){
+      for (int i = 0; i < 2; ++i){
+        if (!canHaveShadow(sbOut->tyenv, argExprs[i])){
+          if (argPrecision(op_code) == Ft_Invalid){
+            addDynamicDisownNonNull(sbOut, i);
+          } else {
+            addDisownNonNull(sbOut, shadowInputs[i],
+                             numChannelsIn(op_code));
+          }
+        }
+      }
+    } else {
+      for (int i = 0; i < 2; ++i){
+        if (!canHaveShadow(sbOut->tyenv, argExprs[i])){
+          if (argPrecision(op_code) == Ft_Invalid){
+            addDynamicDisown(sbOut, i);
+          } else {
+            int num_vals =
+              inferOtherNumChannels(i, shadowInputs[1-i], op_code);
+            addDisownG(sbOut, inputPreexisting,
+                       shadowInputs[i],
+                       num_vals);
+          }
+        }
+      }
     }
   }
 }
@@ -355,12 +556,12 @@ int numConversionInputs(IROp op_code){
   case Iop_F32toF64:
   case Iop_RoundF64toInt:
   case Iop_RoundF32toInt:
+  case Iop_F64toF32:
     return 1;
   case Iop_SetV128lo32:
   case Iop_SetV128lo64:
   case Iop_64HLtoV128:
   case Iop_F64HLtoF128:
-  case Iop_F64toF32:
     return 2;
   default:
     tl_assert(0);

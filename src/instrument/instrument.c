@@ -39,7 +39,6 @@
 #include "pub_tool_libcassert.h"
 #include "pub_tool_mallocfree.h"
 
-#include "../runtime/value-shadowstate/value-shadowstate.h"
 #include "../runtime/value-shadowstate/shadowval.h"
 
 #include "../helper/instrument-util.h"
@@ -78,7 +77,7 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
     if (curAddr)
       instrumentStatement(sbOut, stmt, curAddr);
   }
-  addBlockCleanup(sbOut);
+  finishInstrumentingBlock(sbOut);
   if (print_block_boundries){
     addPrint("\n+++++\n");
   }
@@ -90,7 +89,6 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
 }
 
 void init_instrumentation(void){
-  initValueShadowState();
   initInstrumentationState();
 }
 

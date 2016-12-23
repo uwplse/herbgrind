@@ -32,6 +32,7 @@
 #include "pub_tool_hashtable.h"
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcassert.h"
+#include "pub_tool_libcbase.h"
 
 ShadowTemp* shadowTemps[MAX_TEMPS];
 ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
@@ -47,16 +48,17 @@ void initValueShadowState(void){
   freedVals = mkStack();
 }
 
-VG_REGPARM(2) void dynamicCleanup(int nentries, TempDebtEntry* entries){
+VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
   for(int i = 0; i < nentries; ++i){
-    ShadowTemp* temp = shadowTemps[entries[i].temp];
+    ShadowTemp* temp = shadowTemps[entries[i]];
+    if (temp == NULL) continue;
     for(int j = 0; j < temp->num_vals; ++j){
       if (temp->values[j] != NULL){
         disownShadowValue(temp->values[j]);
       }
     }
-    freeShadowTemp(shadowTemps[entries[i].temp]);
-    shadowTemps[entries[i].temp] = NULL;
+    freeShadowTemp(shadowTemps[entries[i]]);
+    shadowTemps[entries[i]] = NULL;
   }
 }
 
@@ -88,6 +90,9 @@ StackNode* stack_pop_fast(Stack* s){
   return oldHead;
 }
 
+int reused = 0;
+int fresh = 0;
+
 inline
 ShadowValue* mkShadowValue(FloatType type, double value){
   ShadowValue* result;
@@ -95,9 +100,9 @@ ShadowValue* mkShadowValue(FloatType type, double value){
     result = newShadowValue(type, value);
   } else {
     result = (void*)stack_pop_fast(freedVals);
-    setReal(result->real, value);
     result->type = type;
   }
+  setReal(result->real, value);
   result->ref_count = 1;
   return result;
 }
@@ -120,6 +125,21 @@ ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
     }
   }
   return result;
+}
+inline
+void disownShadowTemp(ShadowTemp* temp){
+  for(int i = 0; i < temp->num_vals; ++i){
+    disownShadowValue(temp->values[i]);
+  }
+  freeShadowTemp(temp);
+}
+VG_REGPARM(1) void disownShadowTempNonNullDynamic(IRTemp idx){
+  disownShadowTemp(shadowTemps[idx]);
+}
+VG_REGPARM(1) void disownShadowTempDynamic(IRTemp idx){
+  if (shadowTemps[idx] != NULL){
+    disownShadowTemp(shadowTemps[idx]);
+  }
 }
 void disownShadowValue(ShadowValue* val){
   if (val == NULL) return;
@@ -147,9 +167,17 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values){
     mkShadowValue(Ft_Double, values[1]);
   return result;
 }
-VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(float value){
+VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(double value){
   ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = mkShadowValue(Ft_Single, value);
+  return result;
+}
+VG_REGPARM(1) ShadowTemp* mkShadowTempTwoSingles(UWord values){
+  ShadowTemp* result = mkShadowTemp(2);
+  float floatValues[2];
+  VG_(memcpy)(floatValues, &values, sizeof(floatValues));
+  result->values[0] = mkShadowValue(Ft_Single, floatValues[0]);
+  result->values[1] = mkShadowValue(Ft_Single, floatValues[1]);
   return result;
 }
 inline

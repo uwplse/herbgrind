@@ -7,7 +7,7 @@ then
     exit $?
 fi
 
-$HERBGRIND_DIR/valgrind/herbgrind-install/bin/valgrind --tool=herbgrind $* > output.gh
+$HERBGRIND_DIR/valgrind/herbgrind-install/bin/valgrind --tool=herbgrind $* 2> >(tee output.gh)
 mkdir -p $HERBGRIND_DIR/logs
 FILENAME=`/usr/bin/env date -Iseconds`-`git -C $HERBGRIND_DIR rev-parse HEAD`.gh
 FILEPATH=$HERBGRIND_DIR/logs/$FILENAME

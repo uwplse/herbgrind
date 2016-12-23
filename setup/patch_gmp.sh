@@ -51,6 +51,8 @@ $SED -i \
      -e 's/free.*(.*);/\/\/&/' \
      -e 's/fprintf.*(.*);/;\/\/&/'\
      -e 's/abort.*(.*);/;\/\/&/'\
+     -e 's/raise.*(.*);/;\/\/&/'\
+     ../deps/gmp-$1/invalid.c \
      ../deps/gmp-$1/memory.c \
      ../deps/gmp-$1/assert.c \
      ../deps/gmp-$1/errno.c \

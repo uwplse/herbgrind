@@ -29,12 +29,13 @@
 
 #include "stack.h"
 
+#include <stddef.h>
+
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_libcassert.h"
 #include "pub_tool_machine.h"
 #include "instrument-util.h"
 
-#include <stddef.h>
 
 Stack* mkStack(void){
   Stack* newStack = VG_(malloc)("stack", sizeof(Stack));
@@ -56,35 +57,35 @@ StackNode* stack_pop(Stack* s){
 int stack_empty(Stack* s){
   return (s->head == NULL);
 }
-void addStackPushG(IRSB* sbOut, IRTemp guard, Stack* s, IRTemp node){
-  IRTemp sHead = runLoad64C(sbOut, &(s->head));
+void addStackPushG(IRSB* sbOut, IRExpr* guard, Stack* s, IRExpr* node){
+  IRExpr* sHead = runLoad64C(sbOut, &(s->head));
   addStoreArrowG(sbOut, guard, node, StackNode,
-                 next, IRExpr_RdTmp(sHead));
-  addStoreGC(sbOut, guard, IRExpr_RdTmp(node), &(s->head));
+                 next, sHead);
+  addStoreGC(sbOut, guard, node, &(s->head));
 }
-void addStackPush(IRSB* sbOut, Stack* s, IRTemp node){
-  IRTemp sHead = runLoad64C(sbOut, &(s->head));
-  addStoreArrow(sbOut, node, StackNode, next, IRExpr_RdTmp(sHead));
-  addStoreC(sbOut, IRExpr_RdTmp(node), &(s->head));
+void addStackPush(IRSB* sbOut, Stack* s, IRExpr* node){
+  IRExpr* sHead = runLoad64C(sbOut, &(s->head));
+  addStoreArrow(sbOut, node, StackNode, next, sHead);
+  addStoreC(sbOut, node, &(s->head));
 }
-IRTemp runStackPop(IRSB* sbOut, Stack* s){
-  IRTemp oldHead = runLoad64C(sbOut, &(s->head));
-  IRTemp oldHeadNext = runArrow(sbOut,
-                                oldHead, StackNode, next);
-  addStoreC(sbOut, IRExpr_RdTmp(oldHeadNext), &(s->head));
-  return oldHead;
-}
-IRTemp runStackPopG(IRSB* sbOut, IRTemp guard_temp, Stack* s){
-  IRTemp oldHead = runLoadG64C(sbOut, &(s->head), guard_temp);
-  IRTemp oldHeadNext = runArrowG(sbOut, guard_temp,
+IRExpr* runStackPop(IRSB* sbOut, Stack* s){
+  IRExpr* oldHead = runLoad64C(sbOut, &(s->head));
+  IRExpr* oldHeadNext = runArrow(sbOut,
                                  oldHead, StackNode, next);
-  addStoreGC(sbOut, guard_temp, IRExpr_RdTmp(oldHeadNext), &(s->head));
+  addStoreC(sbOut, oldHeadNext, &(s->head));
   return oldHead;
 }
-IRTemp runStackEmpty(IRSB* sbOut, Stack* s){
+IRExpr* runStackPopG(IRSB* sbOut, IRExpr* guard, Stack* s){
+  IRExpr* oldHead = runLoadG64C(sbOut, &(s->head), guard);
+  IRExpr* oldHeadNext = runArrowG(sbOut, guard,
+                                  oldHead, StackNode, next);
+  addStoreGC(sbOut, guard, oldHeadNext, &(s->head));
+  return oldHead;
+}
+IRExpr* runStackEmpty(IRSB* sbOut, Stack* s){
   return runZeroCheck64(sbOut, runLoad64C(sbOut, &(s->head)));
 }
-IRTemp runStackEmptyG(IRSB* sbOut, IRTemp guard_temp, Stack* s){
+IRExpr* runStackEmptyG(IRSB* sbOut, IRExpr* guard, Stack* s){
   return runZeroCheck64(sbOut,
-                        runLoadG64C(sbOut, &(s->head), guard_temp));
+                        runLoadG64C(sbOut, &(s->head), guard));
 }

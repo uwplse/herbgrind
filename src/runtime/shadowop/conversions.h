@@ -32,16 +32,34 @@
 #include "../value-shadowstate/shadowval.h"
 
 // Some conversion operators
+VG_REGPARM(1)
 ShadowTemp* zeroHi96ofV128(ShadowTemp* input);
+VG_REGPARM(1)
 ShadowTemp* zeroHi64ofV128(ShadowTemp* input);
+VG_REGPARM(1)
 ShadowTemp* v128to32(ShadowTemp* input);
+VG_REGPARM(1)
 ShadowTemp* v128to64(ShadowTemp* input);
+VG_REGPARM(1)
 ShadowTemp* v128Hito64(ShadowTemp* input);
-ShadowTemp* setV128lo32(ShadowTemp* topThree, ShadowTemp* bottomOne);
-ShadowTemp* setV128lo64(ShadowTemp* topOne, ShadowTemp* bottomOne);
-ShadowTemp* f128Loto64(ShadowTemp* input);
-ShadowTemp* f128Hito64(ShadowTemp* input);
-ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* low);
-ShadowTemp* f64HLtoF128(ShadowTemp* hi, ShadowTemp* low);
+VG_REGPARM(1)
 ShadowTemp* i64UtoV128(ShadowTemp* t);
+VG_REGPARM(1)
+ShadowTemp* f128Loto64(ShadowTemp* input);
+VG_REGPARM(1)
+ShadowTemp* f128Hito64(ShadowTemp* input);
+VG_REGPARM(2)
+ShadowTemp* setV128lo32(ShadowTemp* topThree, ShadowTemp* bottomOne);
+VG_REGPARM(2)
+ShadowTemp* setV128lo64(ShadowTemp* topOne, ShadowTemp* bottomOne);
+VG_REGPARM(3)
+ShadowTemp* setV128lo64Dynamic1(ShadowTemp* bottom,
+                                IRTemp topIdx, UWord* topVal);
+VG_REGPARM(3)
+ShadowTemp* setV128lo64Dynamic2(ShadowTemp* top,
+                                IRTemp bottomIdx, UWord bottomVal);
+VG_REGPARM(2)
+ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* low);
+VG_REGPARM(2)
+ShadowTemp* f64HLtoF128(ShadowTemp* hi, ShadowTemp* low);
 #endif

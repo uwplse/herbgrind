@@ -65,19 +65,17 @@ extern ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
 extern Stack* freedTemps[MAX_TEMP_SHADOWS];
 extern Stack* freedVals;
 
-typedef struct _TempDebtEntry {
-  IRTemp temp;
-  int num_vals;
-} TempDebtEntry;
-
 void initValueShadowState(void);
-VG_REGPARM(2) void dynamicCleanup(int nentries, TempDebtEntry* entries);
+VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries);
 VG_REGPARM(1) void disownShadowTempNonNull(ShadowTemp* temp);
 VG_REGPARM(1) void disownShadowTemp(ShadowTemp* temp);
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp);
 
 ShadowTemp* mkShadowTemp(UWord num_vals);
 void freeShadowTemp(ShadowTemp* temp);
+void disownShadowTemp(ShadowTemp* temp);
+VG_REGPARM(1) void disownShadowTempNonNullDynamic(IRTemp idx);
+VG_REGPARM(1) void disownShadowTempDynamic(IRTemp idx);
 void disownShadowValue(ShadowValue* val);
 void ownShadowValue(ShadowValue* val);
 void freeShadowValue(ShadowValue* val);
@@ -87,7 +85,8 @@ void ownExpr(ConcExpr* expr);
 
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value);
 VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values);
-VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(float value);
+VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(double value);
+VG_REGPARM(1) ShadowTemp* mkShadowTempTwoSingles(UWord values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSinglesG(UWord guard, float* values);
 #endif

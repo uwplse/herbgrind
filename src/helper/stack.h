@@ -54,11 +54,11 @@ VG_REGPARM(2) void stack_push2(Stack* s, StackNode* item_node);
 StackNode* stack_pop(Stack* s);
 int stack_empty(Stack* s);
 
-void addStackPushG(IRSB* sbOut, IRTemp guard, Stack* s, IRTemp node);
-void addStackPush(IRSB* sbOut, Stack* s, IRTemp node);
-IRTemp runStackPop(IRSB* sbOut, Stack* s);
-IRTemp runStackPopG(IRSB* sbOut, IRTemp guard_temp, Stack* s);
-IRTemp runStackEmpty(IRSB* sbOut, Stack* s);
-IRTemp runStackEmptyG(IRSB* sbOut, IRTemp guard_temp, Stack* s);
+void addStackPushG(IRSB* sbOut, IRExpr* guard, Stack* s, IRExpr* node);
+void addStackPush(IRSB* sbOut, Stack* s, IRExpr* node);
+IRExpr* runStackPop(IRSB* sbOut, Stack* s);
+IRExpr* runStackPopG(IRSB* sbOut, IRExpr* guard_temp, Stack* s);
+IRExpr* runStackEmpty(IRSB* sbOut, Stack* s);
+IRExpr* runStackEmptyG(IRSB* sbOut, IRExpr* guard_temp, Stack* s);
 
 #endif
