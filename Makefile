@@ -33,9 +33,9 @@ src/runtime/value-shadowstate/real.h					\
 src/runtime/op-shadowstate/shadowop-info.h				\
 src/runtime/op-shadowstate/mark-info.h					\
 src/runtime/shadowop/shadowop.h src/runtime/shadowop/conversions.h	\
-src/instrument/instrument.h src/instrument/instrument-op.h		\
-src/instrument/instrument-storage.h src/instrument/conversion.h		\
-src/instrument/semantic-op.h
+src/runtime/shadowop/realop.h src/instrument/instrument.h		\
+src/instrument/instrument-op.h src/instrument/instrument-storage.h	\
+src/instrument/conversion.h src/instrument/semantic-op.h
 
 SOURCES=src/hg_main.c src/mathwrap.c src/include/mk-mathreplace.py	\
 src/helper/mpfr-valgrind-glue.c src/helper/stack.c			\
@@ -47,9 +47,9 @@ src/runtime/value-shadowstate/exprs.c					\
 src/runtime/value-shadowstate/real.c					\
 src/runtime/op-shadowstate/shadowop-info.c				\
 src/runtime/shadowop/shadowop.c src/runtime/shadowop/conversions.c	\
-src/instrument/instrument.c src/instrument/instrument-op.c		\
-src/instrument/instrument-storage.c src/instrument/conversion.c		\
-src/instrument/semantic-op.c
+src/runtime/shadowop/realop.c src/instrument/instrument.c		\
+src/instrument/instrument-op.c src/instrument/instrument-storage.c	\
+src/instrument/conversion.c src/instrument/semantic-op.c
 
 all: compile
 

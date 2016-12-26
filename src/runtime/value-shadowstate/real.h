@@ -48,7 +48,7 @@ typedef struct _RealStruct{
   #endif
 } *Real;
 
-Real mkReal(double bytes);
+Real mkReal(void);
 void setReal(Real r, double bytes);
 
 double getDouble(Real real);

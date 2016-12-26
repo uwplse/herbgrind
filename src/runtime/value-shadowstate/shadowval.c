@@ -58,30 +58,14 @@ UWord hashDouble(double val){
   return result;
 }
 inline
-ShadowValue* newShadowValue(FloatType type, double value){
-  ShadowValue* result = VG_(perm_malloc)(sizeof(ShadowValue), vg_alignof(ShadowValue));
-  result->real = mkReal(value);
-  result->type = type;
-  result->ref_count = 1;
-  return result;
-}
-inline
 ShadowValue* newShadowValue(FloatType type){
   ShadowValue* result =
     VG_(perm_malloc)(sizeof(ShadowValue), vg_alignof(ShadowValue));
   result->type = type;
   result->ref_count = 1;
+  result->real = mkReal();
   return result;
 }
-VG_REGPARM(3)
-ShadowValue* newShadowValueG(UWord guard, FloatType type, double value){
-  if (guard){
-    return newShadowValue(type);
-  } else {
-    return NULL;
-  }
-}
-
 ShadowValue* copyShadowValue(ShadowValue* val){
   ShadowValue* result = VG_(malloc)("shadow value", sizeof(ShadowValue));
   result->type = val->type;
@@ -91,7 +75,8 @@ ShadowValue* copyShadowValue(ShadowValue* val){
   result->influences = val->influences;
   return result;
 }
-VG_REGPARM(3) void assertNumVals(const char* label, ShadowTemp* temp, int num_vals){
+VG_REGPARM(3) void assertNumVals(const char* label, ShadowTemp* temp,
+                                 int num_vals){
   tl_assert2(temp->num_vals == num_vals,
              "%s: Expected %d vals in %p, got %d\n",
              label, num_vals, temp, temp->num_vals);

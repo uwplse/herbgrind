@@ -36,15 +36,17 @@
 #include "../value-shadowstate/shadowval.h"
 #include "../op-shadowstate/shadowop-info.h"
 
-typedef struct {
-  FloatType type;
-  union {
-    float argValuesF[4][8];
-    double argValues[4][4];
-  } values;
-  ShadowTemp* shadowArgs[4];
-} OpArgs;
+union {
+  float argValuesF[4][8];
+  double argValues[4][4];
+} computedArgs;
+
+ShadowValue* shadowArgs[4];
 
 VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
-                                          OpArgs* args);
+                                          ShadowTemp** args);
+ShadowValue* executeChannelShadowOp(int nargs,
+                                    FloatType precision,
+                                    IROp op_code,
+                                    ShadowValue** args);
 #endif

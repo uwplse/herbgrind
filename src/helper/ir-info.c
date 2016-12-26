@@ -65,6 +65,8 @@ int numChannelsIn(IROp op_code){
   case Iop_RSqrtEst64Fx2:
   case Iop_Abs64Fx2:
   case Iop_Neg64Fx2:
+  case Iop_Neg32Fx2:
+  case Iop_Abs32Fx2:
   case Iop_RSqrtEst32Fx2:
   case Iop_RecipEst32Fx2:
   case Iop_F128HItoF64:
@@ -104,8 +106,6 @@ int numChannelsIn(IROp op_code){
   case Iop_RSqrtStep32Fx2:
   case Iop_RecipStep64Fx2:
   case Iop_RSqrtStep64Fx2:
-  case Iop_Neg32Fx2:
-  case Iop_Abs32Fx2:
   case Iop_Mul64F0x2:
   case Iop_Div64F0x2:
   case Iop_Sub64F0x2:

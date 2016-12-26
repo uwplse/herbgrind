@@ -32,39 +32,66 @@
 #include "pub_tool_libcassert.h"
 #include "pub_tool_machine.h"
 #include "pub_tool_libcprint.h"
+#include "pub_tool_mallocfree.h"
 
 #include "../helper/instrument-util.h"
 #include "../helper/debug.h"
+
+#include "../runtime/op-shadowstate/shadowop-info.h"
+#include "../runtime/shadowop/shadowop.h"
 
 #include "instrument-storage.h"
 
 void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                           int nargs, IRExpr** argExprs,
                           Addr curAddr, IRTemp dest){
-  IRExpr* shadowArgs[4];
+  IRExpr* args[4];
   for(int i = 0; i < nargs; ++i){
     if (isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[i]))){
-      shadowArgs[i] =
+      args[i] =
         runGetArg(sbOut, argExprs[i],
                   argPrecision(op_code), numChannelsIn(op_code));
     }
   }
 
   IRExpr* shadowOutput =
-    runShadowOp(sbOut, op_code, shadowArgs);
+    runShadowOp(sbOut, op_code, curAddr, args, nargs);
+  if (op_code == Iop_Add32F0x4){
+    addPrint2("Putting result of Add32F0x4 in %lu\n", mkU64(dest));
+    addNumValsAssert(sbOut, "here", shadowOutput, 4);
+  }
   addStoreTemp(sbOut, shadowOutput, argPrecision(op_code),
                dest);
 
   for(int i = 0; i < nargs; ++i){
     if (isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[i]))){
       if (argExprs[i]->tag == Iex_Const){
-        addDisownNonNull(sbOut, shadowArgs[i], numChannelsIn(op_code));
+        addDisownNonNull(sbOut, args[i], numChannelsIn(op_code));
       }
     }
   }
 }
 
-IRExpr* runShadowOp(IRSB* sbOut, IROp op_code, IRExpr** args){
+IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
+                    Addr curAddr,
+                    IRExpr** args, int nargs){
+  ShadowOpInfo* info =
+    VG_(perm_malloc)(sizeof(ShadowOpInfo), vg_alignof(ShadowOpInfo));
+  info->op_code = op_code;
+  info->op_addr = curAddr;
+  info->exinfo.numSIMDOperands = numSIMDOperands(op_code);
+  info->exinfo.numChannels = numChannelsOut(op_code);
+  info->exinfo.nargs = nargs;
+  info->exinfo.argPrecision = argPrecision(op_code);
+  for(int i = 0; i < nargs; ++i){
+    addStoreC(sbOut, args[i], (&shadowArgs[i]));
+  }
+  return runPureCCall(sbOut,
+                      mkIRCallee(2, "executeShadowOp",
+                                 VG_(fnptr_to_fnentry)(executeShadowOp)),
+                      Ity_I64,
+                      mkIRExprVec_2(mkU64((uintptr_t)info),
+                                    mkU64((uintptr_t)&shadowArgs)));
 }
 
 IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,

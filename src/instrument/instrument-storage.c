@@ -41,7 +41,6 @@
 #include "pub_tool_libcbase.h"
 
 XArray* tempDebt;
-OpArgs argStruct;
 FloatType tyenv[MAX_TEMPS];
 
 void initInstrumentationState(void){
@@ -283,20 +282,18 @@ IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
     }
   } else if (num_vals == 2 && valType == Ft_Double) {
     tl_assert(bytesType == Ity_V128);
-    addStoreC(sbOut, argExpr, argStruct.values.argValues[0]); 
+    addStoreC(sbOut, argExpr, computedArgs.argValues[0]); 
     result = runPureCCall64(sbOut, mkShadowTempTwoDoubles,
-                          mkU64((uintptr_t)argStruct.values
-                                .argValues[0]));
+                          mkU64((uintptr_t)computedArgs.argValues[0]));
   } else if (num_vals == 2 && valType == Ft_Single) {
     tl_assert(bytesType == Ity_I64);
     result = runPureCCall64(sbOut, mkShadowTempTwoSingles, argExpr);
   } else if (num_vals == 4) {
     tl_assert(valType == Ft_Single);
     tl_assert(bytesType == Ity_V128);
-    addStoreC(sbOut, argExpr, argStruct.values.argValues[0]);
+    addStoreC(sbOut, argExpr, computedArgs.argValues[0]);
     result = runPureCCall64(sbOut, mkShadowTempFourSingles,
-                          mkU64((uintptr_t)argStruct.values
-                                .argValues[0]));
+                          mkU64((uintptr_t)computedArgs.argValues[0]));
   } else {
     tl_assert2(0, "Hey, you can't have %d vals!\n", num_vals);
   }
@@ -328,19 +325,17 @@ IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
     result = runDirtyG_1_1(sbOut, guard, mkShadowTempTwoSingles, argExpr);
   } else if (num_vals == 2 && valType == Ft_Double){ 
     tl_assert(bytesType == Ity_V128);
-    addStoreGC(sbOut, guard, argExpr, argStruct.values.argValues[0]);
+    addStoreGC(sbOut, guard, argExpr, computedArgs.argValues[0]);
     result = runDirtyG_1_1(sbOut, guard,
                            mkShadowTempTwoDoubles,
-                           mkU64((uintptr_t)argStruct.values
-                                 .argValues[0]));
+                           mkU64((uintptr_t)computedArgs.argValues[0]));
   } else if (num_vals == 4){
     tl_assert(valType == Ft_Single);
     tl_assert(bytesType == Ity_V128);
-    addStoreGC(sbOut, guard, argExpr, argStruct.values.argValues[0]);
+    addStoreGC(sbOut, guard, argExpr, computedArgs.argValues[0]);
     result = runDirtyG_1_1(sbOut, guard,
                            mkShadowTempFourSingles,
-                           mkU64((uintptr_t)argStruct.values
-                                 .argValues[0]));
+                           mkU64((uintptr_t)computedArgs.argValues[0]));
   } else {
     tl_assert2(0, "Hey, you can't have %d vals!\n", num_vals);
   }
@@ -433,157 +428,3 @@ IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr){
   }
   return result;
 }
-
-/* IRExpr* runNewShadowTempG(IRSB* sbOut, IRExpr* guard, int num_vals){ */
-/*   IRExpr* stackEmpty = runStackEmpty(sbOut, freedTemps[num_vals - 1]); */
-/*   IRExpr* shouldMakeNew = runAnd(sbOut, guard, stackEmpty); */
-/*   IRExpr* freshTemp = runDirtyG_1_1(sbOut, shouldMakeNew, */
-/*                                    newShadowTemp, mkU64(num_vals)); */
-/*   IRExpr* shouldPop = runAnd(sbOut, guard, */
-/*                             runUnopT(sbOut, Iop_Not1, stackEmpty)); */
-/*   IRExpr* poppedTemp = runStackPopG(sbOut, shouldPop, */
-/*                                    freedTemps[num_vals - 1]); */
-/*   IRExpr* resultTemp = runITE(sbOut, stackEmpty, freshTemp, poppedTemp); */
-/*   return resultTemp; */
-/* } */
-/* IRExpr* runNewShadowTemp(IRSB* sbOut, int num_vals){ */
-/*   IRExpr* stackEmpty = runStackEmpty(sbOut, freedTemps[num_vals - 1]); */
-/*   IRExpr* freshTemp = */
-/*     runDirtyG_1_1(sbOut, stackEmpty, newShadowTemp, mkU64(num_vals)); */
-/*   IRExpr* poppedTemp = */
-/*     runStackPopG(sbOut, runUnop(sbOut, Iop_Not1, stackEmpty), */
-/*                  freedTemps[num_vals - 1]); */
-/*   IRExpr* resultTemp = runITE(sbOut, stackEmpty, freshTemp, poppedTemp); */
-/*   return resultTemp; */
-/* } */
-
-/* IRExpr* runMkShadowTempG(IRSB* sbOut, IRExpr* guard, */
-/*                          int num_vals, FloatType valPrecision, */
-/*                          IRExpr* valExpr){ */
-/*   if (num_vals == 1){ */
-/*   IRExpr* temp = runNewShadowTempG(sbOut, guard_temp, num_vals); */
-/*   IRExpr* tempValues = runArrowG(sbOut, guard_temp, */
-/*                                 temp, ShadowTemp, values); */
-/*     addStoreIndexG(sbOut, guard_temp, */
-/*                    IRExpr_RdTmp(tempValues), ShadowValue*, */
-/*                    0, */
-/*                    IRExpr_RdTmp(runMkShadowValueG(sbOut, guard_temp, */
-/*                                                   valPrecision, */
-/*                                                   valExpr))); */
-/*     return temp; */
-/*   } else if (num_vals == 2 && valPrecision == Ft_Double){ */
-/*   IRTemp temp = runNewShadowTempG(sbOut, guard_temp, num_vals); */
-/*   IRTemp tempValues = runArrowG(sbOut, guard_temp, */
-/*                                 temp, ShadowTemp, values); */
-/*     IRExpr* valExprs[2]; */
-/*     for(int i = 0; i < 2; ++i){ */
-/*       valExprs[i] = IRExpr_RdTmp(runUnop(sbOut, i == 0 ? Iop_V128to64 : Iop_V128HIto64, valExpr)); */
-/*       addStoreIndexG(sbOut, guard_temp, */
-/*                      IRExpr_RdTmp(tempValues), ShadowValue*, */
-/*                      i, */
-/*                      IRExpr_RdTmp(runMkShadowValueG(sbOut, guard_temp, */
-/*                                                     Ft_Double, */
-/*                                                     valExprs[i]))); */
-/*     } */
-/*     return temp; */
-/*   } else if (num_vals == 4 && valPrecision == Ft_Single){ */
-/*     addStoreC(sbOut, valExpr, argStruct.values.argValuesF[0]); */
-/*     IRTemp temp = newIRTemp(sbOut->tyenv, Ity_I64); */
-/*     IRDirty* mkDirty =  */
-/*       unsafeIRDirty_1_N(temp, 1, "mkShadowTempFourSingles", */
-/*                         VG_(fnptr_to_fnentry)(mkShadowTempFourSingles), */
-/*                         mkIRExprVec_1(mkU64((uintptr_t)argStruct.values.argValuesF[0]))); */
-/*     mkDirty->guard = IRExpr_RdTmp(guard_temp); */
-/*     addStmtToIRSB(sbOut, IRStmt_Dirty(mkDirty)); */
-/*     return temp; */
-/*   } else { */
-/*     tl_assert(0); */
-/*   } */
-/* } */
-/* IRTemp runMkShadowTemp(IRSB* sbOut, */
-/*                        int num_vals, FloatType valPrecision, */
-/*                        IRExpr* valExpr){ */
-/*   IRTemp temp = runNewShadowTemp(sbOut, num_vals); */
-/*   IRTemp tempValues = runArrow(sbOut, temp, ShadowTemp, values); */
-/*   if (num_vals == 1){ */
-/*     addStore(sbOut, mkU64(0), IRExpr_RdTmp(tempValues)); */
-/*   } else { */
-/*     addStore(sbOut, mkU128(0), IRExpr_RdTmp(tempValues)); */
-/*   } */
-/*   if (num_vals == 1){ */
-/*     addStoreIndex(sbOut, IRExpr_RdTmp(tempValues), ShadowValue*, */
-/*                   0, */
-/*                   IRExpr_RdTmp(runMkShadowValue(sbOut, valPrecision, */
-/*                                                 valExpr))); */
-/*   } else if (num_vals == 2 && valPrecision == Ft_Double){ */
-/*     IRExpr* firstValExpr = */
-/*       IRExpr_RdTmp(runUnop(sbOut, Iop_V128to64, valExpr)); */
-/*     IRExpr* secondValExpr = */
-/*       IRExpr_RdTmp(runUnop(sbOut, Iop_V128HIto64, valExpr)); */
-/*     addStoreIndex(sbOut, IRExpr_RdTmp(tempValues), ShadowValue*, */
-/*                   0, */
-/*                   IRExpr_RdTmp(runMkShadowValue(sbOut, Ft_Double, */
-/*                                                 firstValExpr))); */
-/*     addStoreIndex(sbOut, IRExpr_RdTmp(tempValues), ShadowValue*, */
-/*                   1, */
-/*                   IRExpr_RdTmp(runMkShadowValue(sbOut, Ft_Double, */
-/*                                                 secondValExpr))); */
-/*   } else if (num_vals == 4 && valPrecision == Ft_Single){ */
-/*     addStoreC(sbOut, valExpr, argStruct.values.argValuesF[0]); */
-/*     return runPureCFunc64(sbOut, */
-/*                           mkU64((uintptr_t)argStruct.values.argValuesF[0]), */
-/*                           mkShadowTempFourSingles, */
-/*                           "mkShadowTempFourSingles"); */
-/*   } else { */
-/*     tl_assert(0); */
-/*   } */
-/*   return temp; */
-/* } */
-/* IRTemp runMkShadowValue(IRSB* sbOut, */
-/*                         FloatType type, */
-/*                         IRExpr* doubleExpr){ */
-/*   IRTemp stackEmpty = runStackEmpty(sbOut, freedVals); */
-/*   IRTemp stackEmptyWord = runUnopT(sbOut, Iop_1Uto64, stackEmpty); */
-/*   IRTemp freshValue = */
-/*     runPureCCall(sbOut, */
-/*                  mkIRCallee(3, "newShadowValueG", */
-/*                             VG_(fnptr_to_fnentry)(newShadowValueG)), */
-/*                  Ity_I64, */
-/*                  mkIRExprVec_3(IRExpr_RdTmp(stackEmptyWord), */
-/*                                mkU64(type), */
-/*                                doubleExpr)); */
-
-/*   IRTemp poppedValue = runStackPopG(sbOut, runUnopT(sbOut, Iop_Not1, */
-/*                                                     stackEmpty), */
-/*                                     freedVals); */
-/*   IRTemp result = runITE(sbOut, stackEmpty, */
-/*                          IRExpr_RdTmp(freshValue), */
-/*                          IRExpr_RdTmp(poppedValue)); */
-/*   addStoreArrow(sbOut, result, ShadowValue, ref_count, mkU64(1)); */
-/*   return result; */
-/* } */
-/* IRTemp runMkShadowValueG(IRSB* sbOut, IRTemp guard_temp, */
-/*                          FloatType type, */
-/*                          IRExpr* doubleExpr){ */
-/*   IRTemp stackEmpty = runStackEmptyG(sbOut, guard_temp, freedVals); */
-/*   IRTemp shouldMake = runUnopT(sbOut, Iop_1Uto64, */
-/*                                runAnd(sbOut, stackEmpty, guard_temp)); */
-/*   IRTemp freshValue = */
-/*     runPureCCall(sbOut, */
-/*                  mkIRCallee(3, "newShadowValueG", */
-/*                             VG_(fnptr_to_fnentry)(newShadowValueG)), */
-/*                  Ity_I64, */
-/*                  mkIRExprVec_3(IRExpr_RdTmp(shouldMake), */
-/*                                mkU64(type), */
-/*                                doubleExpr)); */
-/*   IRTemp shouldPop = runAnd(sbOut, runUnopT(sbOut, Iop_Not1, stackEmpty), */
-/*                             guard_temp); */
-/*   IRTemp poppedValue = runStackPopG(sbOut, shouldPop, */
-/*                                     freedVals); */
-/*   IRTemp result = runITE(sbOut, stackEmpty, */
-/*                          IRExpr_RdTmp(freshValue), */
-/*                          IRExpr_RdTmp(poppedValue)); */
-/*   addStoreArrowG(sbOut, guard_temp, result, ShadowValue, ref_count, mkU64(1)); */
-/*   return result; */
-/* } */
-/*  */

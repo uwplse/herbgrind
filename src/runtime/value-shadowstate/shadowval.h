@@ -61,10 +61,8 @@ ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp);
 void changeSingleValueType(ShadowTemp* temp, FloatType type);
 
 UWord hashDouble(double val);
-ShadowValue* newShadowValue(FloatType type, double value);
-ShadowValue* newShadowValueBare(FloatType type);
+ShadowValue* newShadowValue(FloatType type);
 VG_REGPARM(3)
-ShadowValue* newShadowValueG(UWord guard, FloatType type, double value);
 ShadowValue* copyShadowValue(ShadowValue* val);
 
 VG_REGPARM(3) void assertNumVals(const char* label, ShadowTemp* temp, int num_vals);

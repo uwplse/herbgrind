@@ -28,10 +28,12 @@
 */
 
 #include "shadowop.h"
+#include "../value-shadowstate/value-shadowstate.h"
+#include "realop.h"
 
 VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                                           ShadowTemp** args){
-  ShadowTemp* result = mkShadowTemp(opInfo->exinfo.numSIMDOperands);
+  ShadowTemp* result = mkShadowTemp(opInfo->exinfo.numChannels);
   for(int i = 0; i < opInfo->exinfo.numSIMDOperands; ++i){
     ShadowValue* vals[opInfo->exinfo.nargs];
     for(int j = 0; j < opInfo->exinfo.nargs; ++j){
@@ -46,17 +48,10 @@ VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
   return result;
 }
 ShadowValue* executeChannelShadowOp(int nargs,
-                                    FloatType precision,
+                                    FloatType type,
                                     IROp op_code,
                                     ShadowValue** args){
-  ShadowValue* result = newShadowValue(precision, 
-  switch(nargs){
-  case 1:
-
-  case 2:
-  case 3:
-  default:
-    tl_assert(0);
-    return NULL;
-  }
+  ShadowValue* result = newShadowValue(type);
+  result->real = execRealOp(op_code, args);
+  return result;
 }

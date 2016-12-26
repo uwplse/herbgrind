@@ -29,7 +29,7 @@
 #include "pub_tool_libcassert.h"
 
 #define addNumValsAssert(sbOut, label, shadow_temp, num_vals)     \
-  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumVals", VG_(fnptr_to_fnentry)(assertNumVals), mkIRExprVec_3(mkU64((uintptr_t)label), IRExpr_RdTmp(shadow_temp), mkU64(num_vals)))))
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumVals", VG_(fnptr_to_fnentry)(assertNumVals), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_temp, mkU64(num_vals)))))
 #define addNumValsAssertNot(sbOut, label, shadow_temp, num_vals)     \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumValsNot", VG_(fnptr_to_fnentry)(assertNumValsNot), mkIRExprVec_3(mkU64((uintptr_t)label), IRExpr_RdTmp(shadow_temp), mkU64(num_vals)))))
 #define addNumValsAssertG(sbOut, guard_temp, label, shadow_temp, num_vals) \

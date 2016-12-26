@@ -79,6 +79,7 @@ VG_REGPARM(1) void disownShadowTempDynamic(IRTemp idx);
 void disownShadowValue(ShadowValue* val);
 void ownShadowValue(ShadowValue* val);
 void freeShadowValue(ShadowValue* val);
+ShadowValue* mkShadowValueBare(FloatType type);
 ShadowValue* mkShadowValue(FloatType type, double value);
 void disownExpr(ConcExpr* expr);
 void ownExpr(ConcExpr* expr);

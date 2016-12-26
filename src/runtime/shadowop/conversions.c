@@ -105,9 +105,10 @@ ShadowTemp* f128Hito64(ShadowTemp* input){
 }
 VG_REGPARM(2)
 ShadowTemp* setV128lo32(ShadowTemp* topThree, ShadowTemp* bottomOne){
-  tl_assert(topThree->num_vals == 4);
+  tl_assert2(topThree->num_vals == 4,
+             "Wrong number of values! Expected 4, got %d\n",
+             topThree->num_vals);
   tl_assert(bottomOne->num_vals == 1);
-  return NULL;
   ShadowTemp* result = copyShadowTemp(topThree);
   result->values[0] = bottomOne->values[0];
   if (result->values[0] != NULL){

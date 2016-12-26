@@ -46,6 +46,7 @@ typedef struct _ErrorAggregate {
 
 typedef struct _ExtraInfo {
   int numSIMDOperands;
+  int numChannels;
   int nargs;
   FloatType argPrecision;
 } ExtraInfo;

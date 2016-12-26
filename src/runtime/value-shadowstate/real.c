@@ -31,15 +31,14 @@
 
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_libcprint.h"
+#include "pub_tool_libcassert.h"
 
-Real mkReal(double bytes){
+Real mkReal(void){
   Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
   #ifdef USE_MPFR
   mpfr_init2(result->mpfr_val, precision);
-  mpfr_set_d(result->mpfr_val, bytes, MPFR_RNDN);
   #else
   mpf_init2(result->mpf_val, precision);
-  mpf_set_d(result->mpf_val, bytes);
   #endif
   return result;
 }
@@ -47,6 +46,7 @@ void setReal(Real r, double bytes){
   #ifdef USE_MPFR
   mpfr_set_d(r->mpfr_val, bytes, MPFR_RNDN);
   #else
+  tl_assert(r->mpf_val);
   mpf_set_d(r->mpf_val, bytes);
   #endif
 }

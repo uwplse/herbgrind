@@ -41,4 +41,7 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
 
 IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
                   FloatType type, int num_vals);
+IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
+                    Addr curAddr,
+                    IRExpr** args, int nargs);
 #endif

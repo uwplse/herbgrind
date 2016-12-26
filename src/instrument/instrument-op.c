@@ -56,24 +56,38 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr, Addr curAddr){
     break;
   case Iex_Binop:
     op_code = expr->Iex.Binop.op;
-    nargs = 2;
-    argExprs[0] = expr->Iex.Binop.arg1;
-    argExprs[1] = expr->Iex.Binop.arg2;
+    switch(op_code){
+    case Iop_Sqrt64Fx2:
+    case Iop_SqrtF64:
+    case Iop_SqrtF32:
+    case Iop_RecpExpF64:
+    case Iop_RecpExpF32:
+    case Iop_SinF64:
+    case Iop_CosF64:
+    case Iop_TanF64:
+    case Iop_2xm1F64:
+      nargs = 1;
+      argExprs[0] = expr->Iex.Binop.arg2;
+      break;
+    default:
+      nargs = 2;
+      argExprs[0] = expr->Iex.Binop.arg1;
+      argExprs[1] = expr->Iex.Binop.arg2;
+      break;
+    }
     break;
   case Iex_Triop:
     op_code = expr->Iex.Triop.details->op;
-    nargs = 3;
-    argExprs[0] = expr->Iex.Triop.details->arg1;
-    argExprs[1] = expr->Iex.Triop.details->arg2;
-    argExprs[2] = expr->Iex.Triop.details->arg3;
+    nargs = 2;
+    argExprs[0] = expr->Iex.Triop.details->arg2;
+    argExprs[1] = expr->Iex.Triop.details->arg3;
     break;
   case Iex_Qop:
     op_code = expr->Iex.Qop.details->op;
-    nargs = 4;
-    argExprs[0] = expr->Iex.Qop.details->arg1;
-    argExprs[1] = expr->Iex.Qop.details->arg2;
-    argExprs[2] = expr->Iex.Qop.details->arg3;
-    argExprs[3] = expr->Iex.Qop.details->arg4;
+    nargs = 3;
+    argExprs[0] = expr->Iex.Qop.details->arg2;
+    argExprs[1] = expr->Iex.Qop.details->arg3;
+    argExprs[2] = expr->Iex.Qop.details->arg4;
     break;
   default:
     tl_assert(0);

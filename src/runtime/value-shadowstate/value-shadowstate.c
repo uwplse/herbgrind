@@ -90,20 +90,22 @@ StackNode* stack_pop_fast(Stack* s){
   return oldHead;
 }
 
-int reused = 0;
-int fresh = 0;
-
 inline
-ShadowValue* mkShadowValue(FloatType type, double value){
+ShadowValue* mkShadowValueBare(FloatType type){
   ShadowValue* result;
   if (stack_empty(freedVals)){
-    result = newShadowValue(type, value);
+    result = newShadowValue(type);
   } else {
     result = (void*)stack_pop_fast(freedVals);
     result->type = type;
   }
-  setReal(result->real, value);
   result->ref_count = 1;
+  return result;
+}
+inline
+ShadowValue* mkShadowValue(FloatType type, double value){
+  ShadowValue* result = mkShadowValueBare(type);
+  setReal(result->real, value);
   return result;
 }
 
