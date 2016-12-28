@@ -65,6 +65,7 @@ void addBlockCleanupG(IRSB* sbOut, IRExpr* guard);
 void cleanupAtEndOfBlock(IRSB* sbOut, IRTemp shadowed_temp);
 void addDynamicDisown(IRSB* sbOut, IRTemp idx);
 void addDynamicDisownNonNull(IRSB* sbOut, IRTemp idx);
+void addDynamicDisownNonNullDetached(IRSB* sbOut, IRExpr* st);
 void addDisownNonNull(IRSB* sbOut, IRExpr* shadow_temp, int num_vals);
 void addDisown(IRSB* sbOut, IRExpr* shadow_temp, int num_vals);
 void addDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* shadow_temp, int num_vals);

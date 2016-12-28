@@ -43,7 +43,7 @@ VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
       executeChannelShadowOp(opInfo->exinfo.nargs,
                              opInfo->exinfo.argPrecision,
                              opInfo->op_code,
-                             vals); 
+                             vals);
   }
   return result;
 }
@@ -52,6 +52,6 @@ ShadowValue* executeChannelShadowOp(int nargs,
                                     IROp op_code,
                                     ShadowValue** args){
   ShadowValue* result = mkShadowValueBare(type);
-  result->real = execRealOp(op_code, args);
+  execRealOp(op_code, &(result->real), args);
   return result;
 }

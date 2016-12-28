@@ -57,7 +57,7 @@ void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src){
     return;
   }
   // Load the new temp into memory.
-  IRExpr* newShadowTemp = runLoad64C(sbOut, &(shadowTemps[src]));
+  IRExpr* newShadowTemp = runLoadTemp(sbOut, src);
 
   // Copy across the new temp and increment it's ref count.
   // Increment the ref count of the new temp
@@ -74,9 +74,9 @@ void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src){
   IRExpr* tempNonNull = runNonZeroCheck64(sbOut, newShadowTemp);
   copyShadowTempDirty->guard = tempNonNull;
   addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowTempDirty));
-  addStoreGC(sbOut, tempNonNull,
-             IRExpr_RdTmp(newShadowTempCopy),
-             &(shadowTemps[dest]));
+  addStoreTempG(sbOut, tempNonNull,
+                IRExpr_RdTmp(newShadowTempCopy),
+                tyenv[src], dest);
 }
 void instrumentWriteConst(IRSB* sbOut, IRTemp dest,
                           IRConst* con){
@@ -196,6 +196,13 @@ void addDynamicDisownNonNull(IRSB* sbOut, IRTemp idx){
   disownDirty->mAddr = mkU64((uintptr_t)&(shadowTemps[idx]));
   disownDirty->mSize = sizeof(ShadowTemp*);
   addStmtToIRSB(sbOut, IRStmt_Dirty(disownDirty));
+}
+void addDynamicDisownNonNullDetached(IRSB* sbOut, IRExpr* st){
+  runPureCCall(sbOut,
+               mkIRCallee(1, "disownShadowTemp",
+                          VG_(fnptr_to_fnentry)(disownShadowTemp)),
+               Ity_I64,
+               mkIRExprVec_1(st));
 }
 void addDisownNonNull(IRSB* sbOut, IRExpr* shadow_temp, int num_vals){
   IRExpr* valuesAddr = runArrow(sbOut, shadow_temp, ShadowTemp, values);

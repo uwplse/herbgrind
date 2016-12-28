@@ -451,10 +451,11 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       for (int i = 0; i < 2; ++i){
         if (!canHaveShadow(sbOut->tyenv, argExprs[i])){
           if (argPrecision(op_code) == Ft_Invalid){
-            addDynamicDisownNonNull(sbOut, i);
+            addDynamicDisownNonNullDetached(sbOut, shadowInputs[i]);
           } else {
             addDisownNonNull(sbOut, shadowInputs[i],
-                             numChannelsIn(op_code));
+                             inferOtherNumChannels(i, argExprs[i],
+                                                   op_code));
           }
         }
       }
