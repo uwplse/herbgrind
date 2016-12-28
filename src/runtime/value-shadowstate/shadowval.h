@@ -37,7 +37,8 @@
 #include "../../helper/ir-info.h"
 
 typedef struct _ShadowValue {
-  // For the shadow temp stacks. struct _ShadowValue* next;
+  // For the shadow temp stacks.
+  struct _ShadowValue* next;
 
   UWord ref_count;
   Real real;

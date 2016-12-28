@@ -36,6 +36,15 @@
   addStmtToIRSB(sbOut, mkDirtyG_0_3(assertNumVals, mkU64((uintptr_t)label), IRExpr_RdTmp(shadow_temp), mkU64(num_vals), guard_temp))
 
 static inline
+void assertNEQ(char* message, int val1, int val2){
+  tl_assert2(val1 != val2, message);
+}
+
+#define addAssertNEQ(sbOut, message, val1, val2) \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNEQ", \
+                                                      VG_(fnptr_to_fnentry)(assertNEQ), mkIRExprVec_3(mkU64((uintptr_t)message), val1, val2))))
+
+static inline
 void fail(void){
   tl_assert(0);
 }

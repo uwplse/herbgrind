@@ -46,7 +46,6 @@ void setReal(Real r, double bytes){
   #ifdef USE_MPFR
   mpfr_set_d(r->mpfr_val, bytes, MPFR_RNDN);
   #else
-  tl_assert(r->mpf_val);
   mpf_set_d(r->mpf_val, bytes);
   #endif
 }

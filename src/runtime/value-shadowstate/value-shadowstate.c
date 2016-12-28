@@ -74,13 +74,17 @@ ShadowTemp* mkShadowTemp(UWord num_vals){
     return (void*)stack_pop(freedTemps[num_vals - 1]);
   }
 }
-
+inline
+void stack_push_fast(Stack* s, StackNode* item_node){
+  item_node->next = s->head;
+  s->head = item_node;
+}
 void freeShadowValue(ShadowValue* val){
   if (val->influences != NULL){
     VG_(deleteXA)(val->influences);
     val->influences = NULL;
   }
-  stack_push(freedVals, (void*)val);
+  stack_push_fast(freedVals, (void*)val);
 }
 
 inline

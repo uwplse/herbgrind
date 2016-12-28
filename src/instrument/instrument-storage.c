@@ -352,7 +352,8 @@ void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
                   FloatType type,
                   int idx){
   tl_assert2(tyenv[idx] == Ft_Invalid,
-             "Tried to set an already set temp!\n");
+             "Tried to set an already set temp %d!\n",
+             idx);
   tyenv[idx] = type;
   addStoreC(sbOut, shadow_temp, &(shadowTemps[idx]));
   cleanupAtEndOfBlock(sbOut, idx);

@@ -56,10 +56,6 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
 
   IRExpr* shadowOutput =
     runShadowOp(sbOut, op_code, curAddr, args, nargs);
-  if (op_code == Iop_Add32F0x4){
-    addPrint2("Putting result of Add32F0x4 in %lu\n", mkU64(dest));
-    addNumValsAssert(sbOut, "here", shadowOutput, 4);
-  }
   addStoreTemp(sbOut, shadowOutput, argPrecision(op_code),
                dest);
 

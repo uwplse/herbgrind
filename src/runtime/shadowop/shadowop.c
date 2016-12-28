@@ -51,7 +51,7 @@ ShadowValue* executeChannelShadowOp(int nargs,
                                     FloatType type,
                                     IROp op_code,
                                     ShadowValue** args){
-  ShadowValue* result = newShadowValue(type);
+  ShadowValue* result = mkShadowValueBare(type);
   result->real = execRealOp(op_code, args);
   return result;
 }
