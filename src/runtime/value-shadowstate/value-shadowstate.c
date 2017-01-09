@@ -143,7 +143,7 @@ VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
   }
   return result;
 }
-ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
+VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
   ShadowTemp* result = mkShadowTemp(temp->num_vals);
   for(int i = 0; i < temp->num_vals; ++i){
     if (temp->values[i] != NULL){
