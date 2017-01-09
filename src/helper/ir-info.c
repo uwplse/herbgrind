@@ -599,7 +599,8 @@ int inferOtherNumChannels(int inferIndex, IRExpr* arg, IROp op_code){
 }
 
 int isFloatType(IRType type){
-  return type == Ity_F32 || type == Ity_F64
+  return type == Ity_I32 || type == Ity_I64
+    || type == Ity_F32 || type == Ity_F64
     || type == Ity_V128;
 }
 
