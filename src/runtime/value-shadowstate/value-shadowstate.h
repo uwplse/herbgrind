@@ -71,6 +71,7 @@ VG_REGPARM(2) void dynamicPut(Int tsDest, ShadowTemp* st);
 VG_REGPARM(1) void disownShadowTempNonNull(ShadowTemp* temp);
 VG_REGPARM(1) void disownShadowTemp(ShadowTemp* temp);
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp);
+VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp);
 
 ShadowTemp* mkShadowTemp(UWord num_vals);
 void freeShadowTemp(ShadowTemp* temp);

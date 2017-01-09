@@ -58,7 +58,6 @@ typedef struct _ShadowTemp {
 // Don't assume that the new shadow temp will have NULL values!!!
 VG_REGPARM(1) ShadowTemp* newShadowTemp(UWord num_vals);
 ShadowTemp* copyShadowTemp(ShadowTemp* temp);
-ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp);
 void changeSingleValueType(ShadowTemp* temp, FloatType type);
 
 UWord hashDouble(double val);
