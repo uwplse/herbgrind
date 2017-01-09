@@ -117,7 +117,7 @@ VG_REGPARM(3)
 ShadowTemp* setV128lo64Dynamic2(ShadowTemp* top,
                                 IRTemp bottomIdx, UWord bottomVal){
   ShadowTemp* bottom;
-  if (top->num_vals == Ft_Double){
+  if (top->num_vals == 2){
     double val;
     VG_(memcpy)(&val, &bottomVal, sizeof(double));
     bottom = mkShadowTempOneDouble(val);
