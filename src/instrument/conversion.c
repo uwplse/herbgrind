@@ -325,7 +325,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                           "here", shadowOutput, 4);
         addAssertTempValidG(sbOut, inputsPreexistingDynamic[0],
                             "here2", shadowOutput);
-        cleanupAtEndOfBlock(sbOut, argExprs[0]->Iex.RdTmp.tmp);
+        cleanupAtEndOfBlock(sbOut, argExprs[1]->Iex.RdTmp.tmp);
       } else {
         // Otherwise we couldn't infer types statically, so we have to
         // use guarded dynamic calls depending on which one(s) already
@@ -377,6 +377,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                           shadowInputs[0],
                           mkU64(argExprs[1]->Iex.RdTmp.tmp),
                           argExprs[1]);
+          cleanupAtEndOfBlock(sbOut, argExprs[1]->Iex.RdTmp.tmp);
         } else {
           tl_assert(shadowInputs[0]);
           result2 =

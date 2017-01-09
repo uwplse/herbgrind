@@ -98,7 +98,6 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
   }
   tyenv[dest] = Ft_Unknown;
 }
-int dummy;
 void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
   return;
   // This procedure adds instrumentation to sbOut which shadows the
