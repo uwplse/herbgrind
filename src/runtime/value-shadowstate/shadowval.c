@@ -75,6 +75,14 @@ ShadowValue* copyShadowValue(ShadowValue* val){
   result->influences = val->influences;
   return result;
 }
+VG_REGPARM(2) void assertValValid(const char* label, ShadowValue* val){
+  tl_assert2(val->real != NULL, "%s: value is %p", label, val);
+}
+VG_REGPARM(2) void assertTempValid(const char* label, ShadowTemp* temp){
+  for(int i = 0; i < temp->num_vals; ++i){
+    assertValValid(label, temp->values[i]);
+  }
+}
 VG_REGPARM(3) void assertNumVals(const char* label, ShadowTemp* temp,
                                  int num_vals){
   tl_assert2(temp->num_vals == num_vals,

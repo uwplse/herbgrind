@@ -99,8 +99,10 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr, Addr curAddr){
       instrumentConversion(sbOut, op_code, argExprs, dest);
     } else {
       instrumentSemanticOp(sbOut, op_code, nargs, argExprs,
-                         curAddr, dest);
+                           curAddr, dest);
     }
+  } else {
+    addStoreNonFloat(dest);
   }
 }
 

@@ -323,7 +323,7 @@ FloatType argPrecision(IROp op_code){
   switch(op_code){
     // Non-semantic ops have no need for this, since they will never
     // be constructing new shadow values, so we can just return
-    // Ft_Invalid for them.
+    // Ft_Unknown for them.
   case Iop_RecipEst32Fx4:
   case Iop_RSqrtEst32Fx4:
   case Iop_Abs32Fx4:
@@ -436,15 +436,17 @@ FloatType argPrecision(IROp op_code){
   case Iop_F64HLtoF128:
     return Ft_Double;
   case Iop_SetV128lo64:
+    return Ft_Unknown;
   default:
-    return Ft_Invalid;
+    tl_assert(0);
+    return Ft_NonFloat;
   }
 }
 FloatType resultPrecision(IROp op_code){
   switch(op_code){
     // Non-semantic ops have no need for this, since they will never
     // be constructing new shadow values, so we can just return
-    // Ft_Invalid for them.
+    // Ft_NonFloat for them.
   case Iop_RecipEst32Fx4:
   case Iop_RSqrtEst32Fx4:
   case Iop_Abs32Fx4:
@@ -557,8 +559,10 @@ FloatType resultPrecision(IROp op_code){
   case Iop_F32toF64:
     return Ft_Double;
   case Iop_SetV128lo64:
+    return Ft_Unknown;
   default:
-    return Ft_Invalid;
+    tl_assert(0);
+    return Ft_NonFloat;
   }
 }
 int inferOtherNumChannels(int inferIndex, IRExpr* arg, IROp op_code){

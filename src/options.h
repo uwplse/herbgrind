@@ -40,6 +40,7 @@ extern Bool print_in_blocks;
 extern Bool print_out_blocks;
 extern Bool print_block_boundries;
 extern Bool print_run_blocks;
+extern Bool print_moves;
 extern Int precision;
 
 /* #define USE_MPFR */

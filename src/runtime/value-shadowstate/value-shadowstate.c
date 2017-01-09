@@ -33,6 +33,9 @@
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcassert.h"
 #include "pub_tool_libcbase.h"
+#include "pub_tool_threadstate.h"
+
+#include "../../options.h"
 
 ShadowTemp* shadowTemps[MAX_TEMPS];
 ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
@@ -61,18 +64,35 @@ VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
     shadowTemps[entries[i]] = NULL;
   }
 }
-
+VG_REGPARM(2) void dynamicPut(Int tsDest, ShadowTemp* st){
+  for(int i = 0; i < st->num_vals; ++i){
+    ShadowValue* val = st->values[i];
+    int size = val->type == Ft_Single ? sizeof(float) : sizeof(double);
+    shadowThreadState[VG_(get_running_tid)()][tsDest + (i * size)] =
+      val;
+    ownShadowValue(val);
+  }
+}
 void freeShadowTemp(ShadowTemp* temp){
+  if (print_moves){
+    VG_(printf)("Freeing temp %p\n", temp);
+  }
   stack_push(freedTemps[temp->num_vals - 1], (void*)temp);
 }
 
 inline
 ShadowTemp* mkShadowTemp(UWord num_vals){
+  ShadowTemp* result;
   if (stack_empty(freedTemps[num_vals - 1])){
-    return newShadowTemp(num_vals);
+    result = newShadowTemp(num_vals);
   } else {
-    return (void*)stack_pop(freedTemps[num_vals - 1]);
+    result = (void*)stack_pop(freedTemps[num_vals - 1]);
   }
+  if (print_moves){
+    VG_(printf)("Making temp %p with %lu vals\n",
+                result, num_vals);
+  }
+  return result;
 }
 inline
 void stack_push_fast(Stack* s, StackNode* item_node){

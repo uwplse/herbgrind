@@ -34,10 +34,18 @@
 #include "pub_tool_tooliface.h"
 
 typedef enum {
-  Ft_Invalid,
+  Ft_NonFloat,
+  Ft_Unknown,
   Ft_Single,
   Ft_Double
 } FloatType;
+
+typedef enum {
+  Ts_Unknown,
+  Ts_NonFloat,
+  Ts_Single,
+  Ts_Double
+} TSType;
 
 FloatType argPrecision(IROp op_code);
 FloatType resultPrecision(IROp op_code);

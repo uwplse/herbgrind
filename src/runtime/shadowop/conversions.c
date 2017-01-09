@@ -37,8 +37,9 @@ VG_REGPARM(1)
 ShadowTemp* zeroHi96ofV128(ShadowTemp* input){
   ShadowTemp* result = mkShadowTemp(4);
   result->values[0] = input->values[0];
-  if (result->values[0] != NULL){
-    ownShadowValue(result->values[0]);
+  ownShadowValue(result->values[0]);
+  for(int i = 1; i < 4; ++i){
+    result->values[i] = mkShadowValue(Ft_Single, 0.0);
   }
   return result;
 }
@@ -46,9 +47,8 @@ VG_REGPARM(1)
 ShadowTemp* zeroHi64ofV128(ShadowTemp* input){
   ShadowTemp* result = mkShadowTemp(2);
   result->values[0] = input->values[0];
-  if (result->values[0] != NULL){
-    ownShadowValue(result->values[0]);
-  }
+  ownShadowValue(result->values[0]);
+  result->values[1] = mkShadowValue(Ft_Single, 0.0);
   return result;
 }
 VG_REGPARM(1)
@@ -56,31 +56,23 @@ ShadowTemp* v128to32(ShadowTemp* input){
   tl_assert(input->num_vals == 4);
   ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = input->values[0];
-  if (result->values[0] != NULL){
-    ownShadowValue(result->values[0]);
-  }
+  ownShadowValue(result->values[0]);
   return result;
 }
 VG_REGPARM(1)
 ShadowTemp* v128to64(ShadowTemp* input){
+  tl_assert(input->num_vals == 2);
   ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = input->values[0];
-  if (result->values[0] != NULL){
-    ownShadowValue(result->values[0]);
-  }
+  ownShadowValue(result->values[0]);
   return result;
 }
 VG_REGPARM(1)
 ShadowTemp* v128Hito64(ShadowTemp* input){
-  tl_assert(input);
   tl_assert(input->num_vals == 2);
   ShadowTemp* result = mkShadowTemp(1);
-  tl_assert(input->values);
-  tl_assert(input->values[1]);
   result->values[0] = input->values[1];
-  if (result->values[0] != NULL){
-    ownShadowValue(result->values[0]);
-  }
+  ownShadowValue(result->values[0]);
   return result;
 }
 VG_REGPARM(1)
@@ -88,9 +80,7 @@ ShadowTemp* f128Loto64(ShadowTemp* input){
   tl_assert(input->num_vals == 2);
   ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = input->values[0];
-  if (result->values[0] != NULL){
-    ownShadowValue(result->values[0]);
-  }
+  ownShadowValue(result->values[0]);
   return result;
 }
 VG_REGPARM(1)
@@ -98,9 +88,7 @@ ShadowTemp* f128Hito64(ShadowTemp* input){
   tl_assert(input->num_vals == 2);
   ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = input->values[1];
-  if (result->values[0] != NULL){
-    ownShadowValue(result->values[0]);
-  }
+  ownShadowValue(result->values[0]);
   return result;
 }
 VG_REGPARM(2)
@@ -111,9 +99,7 @@ ShadowTemp* setV128lo32(ShadowTemp* topThree, ShadowTemp* bottomOne){
   tl_assert(bottomOne->num_vals == 1);
   ShadowTemp* result = copyShadowTemp(topThree);
   result->values[0] = bottomOne->values[0];
-  if (result->values[0] != NULL){
-    ownShadowValue(result->values[0]);
-  }
+  ownShadowValue(result->values[0]);
   return result;
 }
 inline
@@ -123,9 +109,7 @@ ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
   ShadowTemp* result = copyShadowTemp(top);
   for (int i = 0; i < bottom->num_vals; ++i){
     result->values[i] = bottom->values[i];
-    if (result->values[i] != NULL){
-      ownShadowValue(result->values[i]);
-    }
+    ownShadowValue(result->values[i]);
   }
   return result;
 }
@@ -152,7 +136,6 @@ ShadowTemp* setV128lo64Dynamic2(ShadowTemp* top,
 VG_REGPARM(3)
 ShadowTemp* setV128lo64Dynamic1(ShadowTemp* bottom,
                                 IRTemp topIdx, UWord* topVal){
-  tl_assert(0);
   ShadowTemp* top;
   if (bottom->num_vals == Ft_Double){
     top = mkShadowTempTwoDoubles((double*)topVal);
@@ -171,39 +154,26 @@ ShadowTemp* setV128lo64Dynamic1(ShadowTemp* bottom,
 VG_REGPARM(2)
 ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* low){
   ShadowTemp* result = mkShadowTemp(2);
-  tl_assert(hi);
-  tl_assert(low);
-  tl_assert(hi->values);
-  tl_assert(low->values);
   result->values[0] = hi->values[0];
-  if (result->values[0] != NULL){
-    ownShadowValue(result->values[0]);
-  }
+  ownShadowValue(result->values[0]);
   result->values[1] = low->values[0];
-  if (result->values[1] != NULL){
-    ownShadowValue(result->values[1]);
-  }
+  ownShadowValue(result->values[1]);
   return result;
 }
 VG_REGPARM(2)
 ShadowTemp* f64HLtoF128(ShadowTemp* hi, ShadowTemp* low){
   ShadowTemp* result = mkShadowTemp(2);
   result->values[0] = hi->values[0];
-  if (result->values[0] != NULL){
-    ownShadowValue(result->values[0]);
-  }
+  ownShadowValue(result->values[0]);
   result->values[1] = low->values[0];
-  if (result->values[1] != NULL){
-    ownShadowValue(result->values[0]);
-  }
+  ownShadowValue(result->values[0]);
   return result;
 }
 VG_REGPARM(2)
 ShadowTemp* i64UtoV128(ShadowTemp* t){
   ShadowTemp* result = mkShadowTemp(2);
   result->values[0] = t->values[0];
-  if (result->values[0] != NULL){
-    ownShadowValue(result->values[0]);
-  }
+  ownShadowValue(result->values[0]);
+  result->values[1] = mkShadowValue(Ft_Double, 0.0);
   return result;
 }

@@ -44,6 +44,15 @@ VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                              opInfo->exinfo.argPrecision,
                              opInfo->op_code,
                              vals);
+    assertValValid("operand.", result->values[i]);
+  }
+  for(int i = opInfo->exinfo.numSIMDOperands;
+      i < opInfo->exinfo.numChannels; ++i){
+    // According to the libvex_ir.h documentation, the non-operated
+    // values should be copied from the first operand.
+    result->values[i] = args[0]->values[i];
+    assertValValid("copied.", result->values[i]);
+    ownShadowValue(result->values[i]);
   }
   return result;
 }

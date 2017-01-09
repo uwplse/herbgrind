@@ -36,6 +36,9 @@
 #include "pub_tool_mallocfree.h"
 #include "instrument-storage.h"
 
+#include "../runtime/value-shadowstate/value-shadowstate.h"
+#include "../helper/debug.h"
+
 typedef enum {
   Uncertain,
   DefinitelyFalse,
@@ -120,7 +123,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       FloatType inferredPrecision = argPrecision(op_code);
       // You better make sure you handle all the cases where this
       // could be false lower down.
-      if (inferredPrecision != Ft_Invalid){
+      if (inferredPrecision != Ft_Unknown){
         int num_vals =
           inferOtherNumChannels(0, shadowInputs[1], op_code);
         shadowInputs[0] =
@@ -141,7 +144,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       // You better make sure you handle all the cases where this
       // could be false lower down.
       FloatType inferredPrecision = argPrecision(op_code);
-      if (inferredPrecision != Ft_Invalid){
+      if (inferredPrecision != Ft_Unknown){
         int numChannels = inferOtherNumChannels(1, shadowInputs[0],
                                                 op_code);
         shadowInputs[1] =
@@ -173,7 +176,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
         FloatType inferredPrecision = argPrecision(op_code);
         // You better make sure you handle all the cases where this
         // could be false lower down.
-        if (inferredPrecision != Ft_Invalid){
+        if (inferredPrecision != Ft_Unknown){
           IRExpr* freshInput =
             runMakeInputG(sbOut, shouldMake, argExprs[i],
                           argPrecision(op_code),
@@ -315,6 +318,10 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                         shadowInputs[0],
                         mkU64(argExprs[1]->Iex.RdTmp.tmp),
                         argExprs[1]);
+        addNumValsAssertG(sbOut, inputsPreexistingDynamic[0],
+                          "here", shadowOutput, 4);
+        addAssertTempValidG(sbOut, inputsPreexistingDynamic[0],
+                            "here2", shadowOutput);
         cleanupAtEndOfBlock(sbOut, argExprs[0]->Iex.RdTmp.tmp);
       } else {
         // Otherwise we couldn't infer types statically, so we have to
@@ -416,11 +423,17 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                                   VG_(fnptr_to_fnentry)(combineFunc)),
                        Ity_I64,
                        mkIRExprVec_2(shadowInputs[0], shadowInputs[1]));
+        addNumValsAssert(sbOut, "1", shadowOutput, 4);
+        addAssertValValid(sbOut, "1", shadowOutput);
+
       } else {
         shadowOutput = runDirtyG_1_2(sbOut, inputPreexisting,
                                      combineFunc,
                                      shadowInputs[0],
                                      shadowInputs[1]);
+        addNumValsAssertG(sbOut, inputPreexisting, "2", shadowOutput,
+                          numChannelsOut(op_code));
+        addAssertTempValidG(sbOut, inputPreexisting, "2", shadowOutput);
       }
     }
     break;
@@ -432,16 +445,16 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
   if (hasStaticShadow(argExprs[0])){
     addStoreTemp(sbOut, shadowOutput,
                  tempType(argExprs[0]->Iex.RdTmp.tmp),
-                 dest);
+                 dest, typeOfIRTemp(sbOut->tyenv, dest));
   } else if (numConversionInputs(op_code) == 2 &&
              hasStaticShadow(argExprs[1])){
     addStoreTemp(sbOut, shadowOutput,
                  tempType(argExprs[1]->Iex.RdTmp.tmp),
-                 dest);
+                 dest, typeOfIRTemp(sbOut->tyenv, dest));
   } else {
     addStoreTempG(sbOut, inputPreexisting, shadowOutput,
                   resultPrecision(op_code),
-                  dest);
+                  dest, typeOfIRTemp(sbOut->tyenv, dest));
   }
 
   // Finally, if we created inputs for constants, free them up, since
@@ -450,7 +463,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     if (inputPreexisting == NULL){
       for (int i = 0; i < 2; ++i){
         if (!canHaveShadow(sbOut->tyenv, argExprs[i])){
-          if (argPrecision(op_code) == Ft_Invalid){
+          if (argPrecision(op_code) == Ft_Unknown){
             addDynamicDisownNonNullDetached(sbOut, shadowInputs[i]);
           } else {
             addDisownNonNull(sbOut, shadowInputs[i],
@@ -462,7 +475,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     } else {
       for (int i = 0; i < 2; ++i){
         if (!canHaveShadow(sbOut->tyenv, argExprs[i])){
-          if (argPrecision(op_code) == Ft_Invalid){
+          if (argPrecision(op_code) == Ft_Unknown){
             addDynamicDisown(sbOut, i);
           } else {
             int num_vals =

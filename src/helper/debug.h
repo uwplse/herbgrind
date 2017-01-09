@@ -28,21 +28,36 @@
 */
 #include "pub_tool_libcassert.h"
 
-#define addNumValsAssert(sbOut, label, shadow_temp, num_vals)     \
-  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumVals", VG_(fnptr_to_fnentry)(assertNumVals), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_temp, mkU64(num_vals)))))
-#define addNumValsAssertNot(sbOut, label, shadow_temp, num_vals)     \
-  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumValsNot", VG_(fnptr_to_fnentry)(assertNumValsNot), mkIRExprVec_3(mkU64((uintptr_t)label), IRExpr_RdTmp(shadow_temp), mkU64(num_vals)))))
-#define addNumValsAssertG(sbOut, guard_temp, label, shadow_temp, num_vals) \
-  addStmtToIRSB(sbOut, mkDirtyG_0_3(assertNumVals, mkU64((uintptr_t)label), IRExpr_RdTmp(shadow_temp), mkU64(num_vals), guard_temp))
+#define addNumValsAssert(sbOut, label, shadow_expr, num_vals)     \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumVals", VG_(fnptr_to_fnentry)(assertNumVals), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_expr, mkU64(num_vals)))))
+#define addNumValsAssertNot(sbOut, label, shadow_expr, num_vals)     \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumValsNot", VG_(fnptr_to_fnentry)(assertNumValsNot), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_expr, mkU64(num_vals)))))
+#define addNumValsAssertG(sbOut, guard, label, shadow_expr, num_vals) \
+  addStmtToIRSB(sbOut, mkDirtyG_0_3(assertNumVals, mkU64((uintptr_t)label), shadow_expr, mkU64(num_vals), guard))
+#define addNumValsAssertNotG(sbOut, guard, label, shadow_expr, num_vals) \
+  addStmtToIRSB(sbOut, mkDirtyG_0_3(assertNumValsNot, mkU64((uintptr_t)label), shadow_expr, mkU64(num_vals), guard))
+
+#define addAssertValValid(sbOut, label, val) \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(2, "assertValValid", assertValValid, mkIRExprVec_2(mkU64((uintptr_t)label), val))))
+
+#define addAssertTempValid(sbOut, label, temp) \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(2, "assertValValid", assertTempValid, mkIRExprVec_2(mkU64((uintptr_t)label), temp))))
+#define addAssertTempValidG(sbOut, guard, label, temp)                  \
+  addStmtToIRSB(sbOut, mkDirtyG_0_2(assertTempValid, \
+                                    mkU64((uintptr_t)label), \
+                                    temp, guard))
 
 static inline
 void assertNEQ(char* message, int val1, int val2){
-  tl_assert2(val1 != val2, message);
+  tl_assert2(val1 != val2, "%s: %X vs. %X", message, val1, val2);
 }
 
 #define addAssertNEQ(sbOut, message, val1, val2) \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNEQ", \
                                                       VG_(fnptr_to_fnentry)(assertNEQ), mkIRExprVec_3(mkU64((uintptr_t)message), val1, val2))))
+
+#define addAssertNEQG(sbOut, guard, message, val1, val2) \
+  addStmtToIRSB(sbOut, mkDirtyG_0_3(assertNEQ, mkU64((uintptr_t)message), val1, val2, guard));
 
 static inline
 void fail(void){
