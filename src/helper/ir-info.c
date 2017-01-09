@@ -559,8 +559,10 @@ FloatType resultPrecision(IROp op_code){
   case Iop_F32toF64:
     return Ft_Double;
   case Iop_SetV128lo64:
+  case Iop_64UtoV128:
     return Ft_Unknown;
   default:
+    ppIROp(op_code);
     tl_assert(0);
     return Ft_NonFloat;
   }
