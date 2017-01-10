@@ -560,6 +560,21 @@ void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal){
 void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
                   FloatType type,
                   int idx, IRType size){
+  if (size == Ity_I32 || size == Ity_F32){
+    tl_assert(type == Ft_Single);
+    addNumValsAssert(sbOut, "Storing f32", shadow_temp, 1);
+  } else if (size == Ity_I64 || size == Ity_F64){
+    tl_assert(type == Ft_Double);
+    addNumValsAssert(sbOut, "Storing f64", shadow_temp, 1);
+  } else {
+    tl_assert(size == Ity_V128);
+    if (type == Ft_Single){
+      addNumValsAssert(sbOut, "Storing f32x4", shadow_temp, 4);
+    } else {
+      tl_assert(type == Ft_Double);
+      addNumValsAssert(sbOut, "Storing f64x2", shadow_temp, 2);
+    }
+  }
   if (print_moves){
     addPrint3("Storing shadow temp %p for temp %d\n", shadow_temp, mkU64(idx));
   }
