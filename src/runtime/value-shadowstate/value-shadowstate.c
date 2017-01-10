@@ -183,6 +183,9 @@ void ownShadowValue(ShadowValue* val){
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value){
   ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = mkShadowValue(Ft_Double, value);
+  if (print_moves){
+    VG_(printf)("Made one double %p\n", result);
+  }
   return result;
 }
 VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values){

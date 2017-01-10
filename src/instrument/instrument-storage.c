@@ -99,7 +99,6 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
   tyenv[dest] = Ft_Unknown;
 }
 void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
-  return;
   // This procedure adds instrumentation to sbOut which shadows the
   // putting of a value from a temporary into thread state.
 
@@ -159,7 +158,6 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
     }
   }
   if (!canHaveShadow(sbOut->tyenv, data)){
-    return;
     for(int i = 0; i < dest_size; ++i){
       Int dest_addr = tsDest + (i * sizeof(float));
       addSetTSVal(sbOut, dest_addr, mkU64(0));
@@ -174,7 +172,6 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
       for(int i = 0; i < dest_size; ++i){
         Int dest_addr = tsDest + (i * sizeof(float));
         if (tempType(idx) == Ft_Double){
-          return;
           if (i % 2 == 1){
             addSetTSVal(sbOut, dest_addr, mkU64(0));
             tsinfo[dest_addr] = Ts_NonFloat;
@@ -189,9 +186,6 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
         } else {
           IRExpr* value =
             runIndex(sbOut, values, ShadowValue*, i);
-          char* message = VG_(perm_malloc)(100, 1);
-          VG_(snprintf)(message, 100, "before setting from %d (value %d)", idx, i);
-          addAssertValValid(sbOut, message, value);
 
           addSVOwnNonNull(sbOut, value);
           addSetTSVal(sbOut, dest_addr, value);
@@ -199,7 +193,6 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
         }
       }
     } else {
-      return;
       // Otherwise, we don't know whether or not there is a shadow
       // temp to be stored.
       IRExpr* stExists = runNonZeroCheck64(sbOut, st);
@@ -567,20 +560,8 @@ void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal){
 void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
                   FloatType type,
                   int idx, IRType size){
-  if (size == Ity_I32 || size == Ity_F32){
-    tl_assert(type == Ft_Single);
-    addNumValsAssert(sbOut, "Storing f32", shadow_temp, 1);
-  } else if (size == Ity_I64 || size == Ity_F64){
-    tl_assert(type == Ft_Double);
-    addNumValsAssert(sbOut, "Storing f64", shadow_temp, 1);
-  } else {
-    tl_assert(size == Ity_V128);
-    if (type == Ft_Single){
-      addNumValsAssert(sbOut, "Storing f32x4", shadow_temp, 4);
-    } else {
-      tl_assert(type == Ft_Double);
-      addNumValsAssert(sbOut, "Storing f64x2", shadow_temp, 2);
-    }
+  if (print_moves){
+    addPrint3("Storing shadow temp %p for temp %d\n", shadow_temp, mkU64(idx));
   }
   tl_assert2(tyenv[idx] == Ft_NonFloat,
              "Tried to set an already set temp %d!\n",
@@ -593,29 +574,8 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard,
                    IRExpr* shadow_temp,
                    FloatType type,
                    int idx, IRType size){
-  if (size == Ity_I32 || size == Ity_F32){
-    tl_assert(type == Ft_Single);
-    addNumValsAssertG(sbOut, guard, "Storing f32 g", shadow_temp, 1);
-  } else if (size == Ity_I64 || size == Ity_F64){
-    if (type == Ft_Double){
-      addNumValsAssertG(sbOut, guard, "Storing f64 g", shadow_temp, 1);
-    } else {
-      tl_assert2(type == Ft_Single,
-                 "Type isn't single, it's %d!\n",
-                 type);
-      addNumValsAssertG(sbOut, guard, "Storing f32x2 g", shadow_temp, 2);
-    }
-  } else {
-    tl_assert(size == Ity_V128);
-    if (type == Ft_Single){
-      addNumValsAssertG(sbOut, guard, "Storing f32x4 g", shadow_temp, 4);
-    } else if (type == Ft_Double){
-      addNumValsAssertG(sbOut, guard, "Storing f64x2 g", shadow_temp, 2);
-    } else {
-      tl_assert(type == Ft_Unknown);
-      addNumValsAssertNotG(sbOut, guard, "Storing v128 (unknown)",
-                           shadow_temp, 1);
-    }
+  if (print_moves){
+    addPrint3("Conditionally storing shadow temp %p for temp %d\n", shadow_temp, mkU64(idx));
   }
   tl_assert2(tyenv[idx] == Ft_NonFloat ||
              tyenv[idx] == Ft_Unknown ||

@@ -105,7 +105,10 @@ ShadowTemp* setV128lo32(ShadowTemp* topThree, ShadowTemp* bottomOne){
 inline
 VG_REGPARM(2)
 ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
-  tl_assert(top->num_vals == bottom->num_vals * 2);
+  tl_assert2(top->num_vals == bottom->num_vals * 2,
+             "Wrong number of values! First argument %p has %d values, "
+             "and second argument %p has %d values.\n",
+             top, top->num_vals, bottom, bottom->num_vals);
   ShadowTemp* result = copyShadowTemp(top);
   for (int i = 0; i < bottom->num_vals; ++i){
     result->values[i] = bottom->values[i];
@@ -123,6 +126,9 @@ ShadowTemp* setV128lo64Dynamic2(ShadowTemp* top,
     bottom = mkShadowTempOneDouble(val);
   } else {
     bottom = mkShadowTempTwoSingles(bottomVal);
+  }
+  if (print_moves){
+    VG_(printf)("Made %p for conversion dynamic 2.\n", bottom);
   }
   if (bottomIdx != IRTemp_INVALID){
     shadowTemps[bottomIdx] = bottom;

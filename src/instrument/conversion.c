@@ -321,10 +321,6 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                         shadowInputs[0],
                         mkU64(argExprs[1]->Iex.RdTmp.tmp),
                         argExprs[1]);
-        addNumValsAssertG(sbOut, inputsPreexistingDynamic[0],
-                          "here", shadowOutput, 4);
-        addAssertTempValidG(sbOut, inputsPreexistingDynamic[0],
-                            "here2", shadowOutput);
         cleanupAtEndOfBlock(sbOut, argExprs[1]->Iex.RdTmp.tmp);
       } else {
         // Otherwise we couldn't infer types statically, so we have to
@@ -428,17 +424,12 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                                   VG_(fnptr_to_fnentry)(combineFunc)),
                        Ity_I64,
                        mkIRExprVec_2(shadowInputs[0], shadowInputs[1]));
-        addNumValsAssert(sbOut, "1", shadowOutput, 4);
-        addAssertValValid(sbOut, "1", shadowOutput);
 
       } else {
         shadowOutput = runDirtyG_1_2(sbOut, inputPreexisting,
                                      combineFunc,
                                      shadowInputs[0],
                                      shadowInputs[1]);
-        addNumValsAssertG(sbOut, inputPreexisting, "2", shadowOutput,
-                          numChannelsOut(op_code));
-        addAssertTempValidG(sbOut, inputPreexisting, "2", shadowOutput);
       }
     }
     break;

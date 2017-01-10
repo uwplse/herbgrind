@@ -51,11 +51,6 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
       args[i] =
         runGetArg(sbOut, argExprs[i],
                   argPrecision(op_code), numChannelsIn(op_code));
-      if (op_code == Iop_Add32F0x4){
-        tl_assert(numChannelsIn(op_code) == 4 && argPrecision(op_code) == Ft_Single);
-        addAssertTempValid(sbOut, "run get", args[i]);
-        addNumValsAssert(sbOut, "run get", args[i], 4);
-      }
     }
   }
 
@@ -100,7 +95,7 @@ IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
   if (argExpr->tag == Iex_Const) { // TODO !canHaveShadow
     IRExpr* result = runMakeInput(sbOut, argExpr, type, num_vals);
     if (print_moves){
-      addPrint2("making temp %p for constant.\n", result);
+      addPrint2("Making temp %p for constant.\n", result);
     }
     return result;
   } else {
@@ -116,14 +111,14 @@ IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
         runMakeInputG(sbOut, shouldMake, argExpr, type, num_vals);
 
       IRExpr* result = runITE(sbOut, shouldMake, freshArg, loaded);
+      IRExpr* shouldntMake = runUnop(sbOut, Iop_Not1, shouldMake);
       if (print_moves){
         addPrintG3(shouldMake, "Making %p in %d\n",
                    freshArg, mkU64(argExpr->Iex.RdTmp.tmp));
-        IRExpr* shouldntMake = runUnop(sbOut, Iop_Not1, shouldMake);
         addPrintG3(shouldntMake, "Loaded %p from %d\n",
                    loaded, mkU64(argExpr->Iex.RdTmp.tmp));
       }
-      /* addNumValsAssertG(sbOut, shouldntMake, "loaded2", result, num_vals); */
+      addNumValsAssertG(sbOut, shouldntMake, "loaded2", result, num_vals);
 
       return result;
     }
