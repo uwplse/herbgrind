@@ -211,7 +211,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
         IRExpr* values =
           runArrowG(sbOut, stExists, st, ShadowTemp, values);
         /* IRExpr* value = runIndexG(sbOut, stExists, values, ShadowValue*, 0); */
-        IRExpr* value = runLoad64(sbOut, values);
+        IRExpr* value = runLoadG64(sbOut, values, stExists);
 
         addSVOwnNonNullG(sbOut, stExists, value);
         addSetTSVal(sbOut, tsDest, value);
@@ -425,14 +425,13 @@ void addSVDisown(IRSB* sbOut, IRExpr* sv){
   IRExpr* prevRefCount =
     runArrowG(sbOut, valueNonNull, sv, ShadowValue, ref_count);
   IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
-  IRExpr* shouldPush = runAnd(sbOut, valueNonNull, lastRef);
-  addStackPushG(sbOut, shouldPush, freedVals, sv);
+  // If value is null, then preRefCount will be zero, so lastRef will be false.
+  addStackPushG(sbOut, lastRef, freedVals, sv);
 
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
   IRExpr* shouldUpdateRefCount =
-    runAnd(sbOut, valueNonNull,
-           runUnop(sbOut, Iop_Not1, lastRef));
+    runBinop(sbOut, Iop_CmpLT64U, mkU64(1), prevRefCount);
   addStoreArrowG(sbOut, shouldUpdateRefCount, sv, ShadowValue,
                  ref_count, newRefCount);
 }
