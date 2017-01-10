@@ -54,10 +54,10 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
     }
   }
 
-  /* IRExpr* shadowOutput = */
-  /*   runShadowOp(sbOut, op_code, curAddr, args, nargs); */
-  /* addStoreTemp(sbOut, shadowOutput, argPrecision(op_code), */
-  /*              dest, typeOfIRTemp(sbOut->tyenv, dest)); */
+  IRExpr* shadowOutput =
+    runShadowOp(sbOut, op_code, curAddr, args, nargs);
+  addStoreTemp(sbOut, shadowOutput, argPrecision(op_code),
+               dest, typeOfIRTemp(sbOut->tyenv, dest));
 
   for(int i = 0; i < nargs; ++i){
     if (isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[i]))){
@@ -102,8 +102,6 @@ IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
     IRExpr* loaded =
       runLoadTemp(sbOut, argExpr->Iex.RdTmp.tmp);
     if (hasStaticShadow(argExpr)){
-      addPrint3("Loaded %p from %d\n",
-                loaded, mkU64(argExpr->Iex.RdTmp.tmp));
       return loaded;
     } else {
       IRExpr* shouldMake = runZeroCheck64(sbOut, loaded);
