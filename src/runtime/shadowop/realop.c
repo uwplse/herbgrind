@@ -94,7 +94,9 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
   case Iop_Sqrt32F0x4:
   case Iop_Sqrt64F0x2:
   case Iop_Sqrt64Fx2:
-    CALL1(sqrt, (*result)->RVAL, args[0]->real->RVAL);
+    if (mpf_get_d(args[0]->real->RVAL) >= 0.0){
+      CALL1(sqrt, (*result)->RVAL, args[0]->real->RVAL);
+    }
     break;
   case Iop_RecpExpF64:
   case Iop_RecpExpF32:
