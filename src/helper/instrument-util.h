@@ -90,9 +90,9 @@ IRExpr* runAnd(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2);
 IRExpr* runAndto64(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2);
 
 #define runNonZeroCheck64(sbOut, check) \
-  runBinop(sbOut, Iop_CmpNE64, check, mkU64(0));
+  runBinop(sbOut, Iop_CmpNE64, check, mkU64(0))
 #define runZeroCheck64(sbOut, check) \
-  runBinop(sbOut, Iop_CmpEQ64, check, mkU64(0));
+  runBinop(sbOut, Iop_CmpEQ64, check, mkU64(0))
 
 #define addPrintOp(op_code) \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "ppIROp", VG_(fnptr_to_fnentry)(ppIROp), mkIRExprVec_1(mkU64((uintptr_t)op_code)))));
