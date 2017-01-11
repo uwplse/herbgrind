@@ -83,7 +83,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
             runLoadTemp(sbOut, argExprs[i]->Iex.RdTmp.tmp);
           if (!hasStaticShadow(argExprs[i])){
             IRExpr* loadedNull =
-              runNonZeroCheck64(sbOut, shadowInputs[i]);
+              runZeroCheck64(sbOut, shadowInputs[i]);
             int numVals =
               inferOtherNumChannels(i, argExprs[1-i], op_code);
             IRExpr* freshInput =
