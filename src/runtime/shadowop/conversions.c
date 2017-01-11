@@ -98,6 +98,7 @@ ShadowTemp* setV128lo32(ShadowTemp* topThree, ShadowTemp* bottomOne){
              topThree->num_vals);
   tl_assert(bottomOne->num_vals == 1);
   ShadowTemp* result = copyShadowTemp(topThree);
+  disownShadowValue(result->values[0]);
   result->values[0] = bottomOne->values[0];
   ownShadowValue(result->values[0]);
   return result;
