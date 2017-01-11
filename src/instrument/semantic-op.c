@@ -95,7 +95,7 @@ IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
   if (argExpr->tag == Iex_Const) { // TODO !canHaveShadow
     IRExpr* result = runMakeInput(sbOut, argExpr, type, num_vals);
     if (print_moves){
-      addPrint2("Making temp %p for constant.\n", result);
+      addPrint3("Making temp %p for constant (with %d values).\n", result, mkU64(num_vals));
     }
     return result;
   } else {
@@ -111,8 +111,10 @@ IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
       IRExpr* result = runITE(sbOut, shouldMake, freshArg, loaded);
       IRExpr* shouldntMake = runUnop(sbOut, Iop_Not1, shouldMake);
       if (print_moves){
-        addPrintG3(shouldMake, "Making %p in %d\n",
+        addPrintG3(shouldMake, "Making %p in %d",
                    freshArg, mkU64(argExpr->Iex.RdTmp.tmp));
+        addPrintG2(shouldMake, " with %d values\n",
+                   mkU64(num_vals));
         addPrintG3(shouldntMake, "Loaded %p from %d\n",
                    loaded, mkU64(argExpr->Iex.RdTmp.tmp));
       }

@@ -288,6 +288,9 @@ void instrumentCAS(IRSB* sbOut,
 void finishInstrumentingBlock(IRSB* sbOut){
   VG_(memset)(tyenv, 0, sizeof tyenv);
   VG_(memset)(tsinfo, 0, sizeof tsinfo);
+  if (VG_(sizeXA)(tempDebt) == 0){
+    return;
+  }
   IRTemp* curDebtContents =
     VG_(perm_malloc)(sizeof(IRTemp) * VG_(sizeXA)(tempDebt),
                      vg_alignof(IRTemp));
@@ -589,9 +592,6 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard,
                    IRExpr* shadow_temp,
                    FloatType type,
                    int idx, IRType size){
-  if (print_moves){
-    addPrint3("Conditionally storing shadow temp %p for temp %d\n", shadow_temp, mkU64(idx));
-  }
   tl_assert2(tyenv[idx] == Ft_NonFloat ||
              tyenv[idx] == Ft_Unknown ||
              tyenv[idx] == type,

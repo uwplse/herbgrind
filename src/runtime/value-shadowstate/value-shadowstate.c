@@ -52,6 +52,7 @@ void initValueShadowState(void){
 }
 
 VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
+  Bool hasEntriesToCleanup = False;
   for(int i = 0; i < nentries; ++i){
     ShadowTemp* temp = shadowTemps[entries[i]];
     if (temp == NULL) continue;
@@ -61,7 +62,18 @@ VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
       }
     }
     freeShadowTemp(shadowTemps[entries[i]]);
+    if (print_moves){
+      if (!hasEntriesToCleanup){
+        VG_(printf)("Freeing temp(s) %p", shadowTemps[entries[i]]);
+        hasEntriesToCleanup = True;
+      } else {
+        VG_(printf)(", %p", shadowTemps[entries[i]]);
+      }
+    }
     shadowTemps[entries[i]] = NULL;
+  }
+  if (hasEntriesToCleanup){
+    VG_(printf)("\n");
   }
 }
 VG_REGPARM(2) void dynamicPut(Int tsDest, ShadowTemp* st){
@@ -74,9 +86,6 @@ VG_REGPARM(2) void dynamicPut(Int tsDest, ShadowTemp* st){
   }
 }
 void freeShadowTemp(ShadowTemp* temp){
-  if (print_moves){
-    VG_(printf)("Freeing temp %p\n", temp);
-  }
   stack_push(freedTemps[temp->num_vals - 1], (void*)temp);
 }
 
@@ -87,10 +96,6 @@ ShadowTemp* mkShadowTemp(UWord num_vals){
     result = newShadowTemp(num_vals);
   } else {
     result = (void*)stack_pop(freedTemps[num_vals - 1]);
-  }
-  if (print_moves){
-    VG_(printf)("Making temp %p with %lu vals\n",
-                result, num_vals);
   }
   return result;
 }

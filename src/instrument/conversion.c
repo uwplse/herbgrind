@@ -447,6 +447,10 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                  tempType(argExprs[1]->Iex.RdTmp.tmp),
                  dest, typeOfIRTemp(sbOut->tyenv, dest));
   } else {
+    if (print_moves){
+      addPrintG3(inputPreexisting, "Putting converted temp %p in %d\n",
+                 shadowOutput, mkU64(dest));
+    }
     addStoreTempG(sbOut, inputPreexisting, shadowOutput,
                   resultPrecision(op_code),
                   dest, typeOfIRTemp(sbOut->tyenv, dest));
