@@ -424,7 +424,6 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                                   VG_(fnptr_to_fnentry)(combineFunc)),
                        Ity_I64,
                        mkIRExprVec_2(shadowInputs[0], shadowInputs[1]));
-
       } else {
         shadowOutput = runDirtyG_1_2(sbOut, inputPreexisting,
                                      combineFunc,
