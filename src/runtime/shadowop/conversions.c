@@ -38,8 +38,17 @@ ShadowTemp* zeroHi96ofV128(ShadowTemp* input){
   ShadowTemp* result = mkShadowTemp(4);
   result->values[0] = input->values[0];
   ownShadowValue(result->values[0]);
+  if (print_value_moves){
+    VG_(printf)("Owning value %p (new ref count %lu) "
+                "copied in zeroHi96ofV128\n",
+                result->values[0], result->values[0]->ref_count);
+  }
   for(int i = 1; i < 4; ++i){
     result->values[i] = mkShadowValue(Ft_Single, 0.0);
+    if (print_value_moves){
+      VG_(printf)("Making shadow value %p as part of zeroHi96ofV128.\n",
+                  result->values[i]);
+    }
   }
   return result;
 }
@@ -48,7 +57,17 @@ ShadowTemp* zeroHi64ofV128(ShadowTemp* input){
   ShadowTemp* result = mkShadowTemp(2);
   result->values[0] = input->values[0];
   ownShadowValue(result->values[0]);
+  if (print_value_moves){
+    VG_(printf)("Owning value %p (new ref count %lu) "
+                "copied in zeroHi64ofV128\n",
+                result->values[0],
+                result->values[0]->ref_count);
+  }
   result->values[1] = mkShadowValue(Ft_Single, 0.0);
+  if (print_value_moves){
+    VG_(printf)("Making shadow value %p as part of zeroHi64ofV128.\n",
+                result->values[1]);
+  }
   return result;
 }
 VG_REGPARM(1)
@@ -57,6 +76,12 @@ ShadowTemp* v128to32(ShadowTemp* input){
   ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = input->values[0];
   ownShadowValue(result->values[0]);
+  if (print_value_moves){
+    VG_(printf)("Owning value %p (new ref count %lu) "
+                "copied in v128to32\n",
+                result->values[0],
+                result->values[0]->ref_count);
+  }
   return result;
 }
 VG_REGPARM(1)
@@ -65,6 +90,12 @@ ShadowTemp* v128to64(ShadowTemp* input){
   ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = input->values[0];
   ownShadowValue(result->values[0]);
+  if (print_value_moves){
+    VG_(printf)("Owning value %p (new ref count %lu) "
+                "copied in v128to64\n",
+                result->values[0],
+                result->values[0]->ref_count);
+  }
   return result;
 }
 VG_REGPARM(1)
@@ -73,6 +104,12 @@ ShadowTemp* v128Hito64(ShadowTemp* input){
   ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = input->values[1];
   ownShadowValue(result->values[0]);
+  if (print_value_moves){
+    VG_(printf)("Owning value %p (new ref count %lu) "
+                "copied in v128Hito64\n",
+                result->values[0],
+                result->values[0]->ref_count);
+  }
   return result;
 }
 VG_REGPARM(1)
@@ -81,6 +118,12 @@ ShadowTemp* f128Loto64(ShadowTemp* input){
   ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = input->values[0];
   ownShadowValue(result->values[0]);
+  if (print_value_moves){
+    VG_(printf)("Owning value %p (new ref count %lu) "
+                "copied in f128Loto64\n",
+                result->values[0],
+                result->values[0]->ref_count);
+  }
   return result;
 }
 VG_REGPARM(1)
@@ -89,6 +132,12 @@ ShadowTemp* f128Hito64(ShadowTemp* input){
   ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = input->values[1];
   ownShadowValue(result->values[0]);
+  if (print_value_moves){
+    VG_(printf)("Owning value %p (new ref count %lu) "
+                "copied in f128Hito64\n",
+                result->values[0],
+                result->values[0]->ref_count);
+  }
   return result;
 }
 VG_REGPARM(2)
@@ -98,9 +147,19 @@ ShadowTemp* setV128lo32(ShadowTemp* topThree, ShadowTemp* bottomOne){
              topThree->num_vals);
   tl_assert(bottomOne->num_vals == 1);
   ShadowTemp* result = copyShadowTemp(topThree);
+  if (print_value_moves){
+    VG_(printf)("Disowning extreniously copied value %p (old rc %lu)\n",
+                result->values[0], result->values[0]->ref_count);
+  }
   disownShadowValue(result->values[0]);
   result->values[0] = bottomOne->values[0];
   ownShadowValue(result->values[0]);
+  if (print_value_moves){
+    VG_(printf)("Owning value %p (new ref count %lu) "
+                "copied in setV128lo32\n",
+                result->values[0],
+                result->values[0]->ref_count);
+  }
   return result;
 }
 inline
@@ -114,6 +173,12 @@ ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
   for (int i = 0; i < bottom->num_vals; ++i){
     result->values[i] = bottom->values[i];
     ownShadowValue(result->values[i]);
+    if (print_value_moves){
+      VG_(printf)("Owning value %p (new ref count %lu) "
+                  "copied in setV128lo64\n",
+                  result->values[i],
+                  result->values[i]->ref_count);
+    }
   }
   return result;
 }
@@ -125,11 +190,17 @@ ShadowTemp* setV128lo64Dynamic2(ShadowTemp* top,
     double val;
     VG_(memcpy)(&val, &bottomVal, sizeof(double));
     bottom = mkShadowTempOneDouble(val);
+    if (print_temp_moves){
+      VG_(printf)("Made %p with one double because %p has two doubles.\n",
+                  bottom, top);
+    }
   } else {
     bottom = mkShadowTempTwoSingles(bottomVal);
-  }
-  if (print_moves){
-    VG_(printf)("Made %p for conversion dynamic 2.\n", bottom);
+    if (print_temp_moves){
+      VG_(printf)("Made %p with two singles because "
+                  "%p has four singles.\n",
+                  bottom, top);
+    }
   }
   if (bottomIdx != IRTemp_INVALID){
     shadowTemps[bottomIdx] = bottom;
@@ -146,8 +217,17 @@ ShadowTemp* setV128lo64Dynamic1(ShadowTemp* bottom,
   ShadowTemp* top;
   if (bottom->num_vals == 1){
     top = mkShadowTempTwoDoubles((double*)topVal);
+    if (print_temp_moves){
+      VG_(printf)("Made %p with two doubles because %p has one double.\n",
+                  top, bottom);
+    }
   } else {
     top = mkShadowTempFourSingles((float*)topVal);
+    if (print_temp_moves){
+      VG_(printf)("Made %p with four singles because "
+                  "%p has two singles.\n",
+                  top, bottom);
+    }
   }
   if (topIdx != IRTemp_INVALID){
     shadowTemps[topIdx] = top;
@@ -209,6 +289,12 @@ ShadowTemp* f64HLtoF128(ShadowTemp* hi, ShadowTemp* low){
   ownShadowValue(result->values[0]);
   result->values[1] = low->values[0];
   ownShadowValue(result->values[1]);
+  if (print_value_moves){
+    VG_(printf)("Owning values %p (rc %lu) and %p (rc %lu), "
+                "copied in f64HL to F128\n",
+                result->values[0], result->values[0]->ref_count,
+                result->values[1], result->values[1]->ref_count);
+  }
   return result;
 }
 VG_REGPARM(2)
@@ -217,6 +303,12 @@ ShadowTemp* i64UtoV128(ShadowTemp* t){
   result->values[0] = t->values[0];
   ownShadowValue(result->values[0]);
   result->values[1] = mkShadowValue(Ft_Double, 0.0);
+  if (print_value_moves){
+    VG_(printf)("Making shadow value %p and owning %p (rc %lu) "
+                "as part of i64UtoV128\n",
+                result->values[1],
+                result->values[0], result->values[0]->ref_count);
+  }
   return result;
 }
 

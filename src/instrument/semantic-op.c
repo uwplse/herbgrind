@@ -48,14 +48,29 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
   IRExpr* args[4];
   for(int i = 0; i < nargs; ++i){
     if (isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[i]))){
+      if (print_temp_moves){
+        addPrintOp(op_code);
+        addPrint(": ");
+      }
       args[i] =
         runGetArg(sbOut, argExprs[i],
                   argPrecision(op_code), numChannelsIn(op_code));
     }
   }
 
+  if (print_semantic_ops){
+    ppIROp(op_code);
+    VG_(printf)("\n");
+    addPrintOp(op_code);
+    addPrint("\n");
+  }
+
   IRExpr* shadowOutput =
     runShadowOp(sbOut, op_code, curAddr, args, nargs);
+  if (print_temp_moves){
+    addPrint3("Putting result of op, %p, in %d", shadowOutput, mkU64(dest));
+    addPrint2(" (with %d values)\n", mkU64(numChannelsOut(op_code)));
+  }
   addStoreTemp(sbOut, shadowOutput, argPrecision(op_code),
                dest, typeOfIRTemp(sbOut->tyenv, dest));
 
@@ -80,6 +95,7 @@ IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
   for(int i = 0; i < nargs; ++i){
     addStoreC(sbOut, args[i], (&shadowArgs[i]));
   }
+  tl_assert(info->op_code < Iop_LAST);
   return runPureCCall(sbOut,
                       mkIRCallee(2, "executeShadowOp",
                                  VG_(fnptr_to_fnentry)(executeShadowOp)),
@@ -96,7 +112,7 @@ IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
              argExpr->Iex.RdTmp.tmp);
   if (!canStoreShadow(sbOut->tyenv, argExpr)) {
     IRExpr* result = runMakeInput(sbOut, argExpr, type, num_vals);
-    if (print_moves){
+    if (print_temp_moves){
       addPrint3("Making temp %p for constant (with %d values).\n", result, mkU64(num_vals));
     }
     return result;
@@ -112,7 +128,7 @@ IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
 
       IRExpr* result = runITE(sbOut, shouldMake, freshArg, loaded);
       IRExpr* shouldntMake = runUnop(sbOut, Iop_Not1, shouldMake);
-      if (print_moves){
+      if (print_temp_moves){
         addPrintG3(shouldMake, "Making %p in %d",
                    freshArg, mkU64(argExpr->Iex.RdTmp.tmp));
         addPrintG2(shouldMake, " with %d values\n",

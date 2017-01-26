@@ -41,6 +41,9 @@ Bool print_block_boundries = False;
 Bool print_run_blocks = False;
 Bool print_temp_moves = False;
 Bool print_value_moves = False;
+Bool print_semantic_ops = False;
+Bool print_conversions = False;
+Bool print_types = False;
 Int precision = 1000;
 
 // Called to process each command line option.
@@ -51,6 +54,9 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-run-blocks", print_run_blocks, True) {}
   else if VG_XACT_CLO(arg, "--print-temp-moves", print_temp_moves, True) {}
   else if VG_XACT_CLO(arg, "--print-value-moves", print_value_moves, True) {}
+  else if VG_XACT_CLO(arg, "--print-semantic-ops", print_semantic_ops, True) {}
+  else if VG_XACT_CLO(arg, "--print-conversions", print_conversions, True) {}
+  else if VG_XACT_CLO(arg, "--print-types", print_types, True) {}
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else return False;
   return True;
@@ -70,10 +76,16 @@ void hg_print_debug_usage(void){
               "returns to Valgrind.\n"
               " --print-block-boundries "
               "Prints +++++ between each executed block.\n"
-              " --print-run-blocks.\n"
+              " --print-run-blocks"
               "Prints the addresses of each run block.\n"
-              " --print-temp-moves.\n"
+              " --print-temp-moves "
               "Prints each shadow temp movement.\n"
-              " --print-value-moves.\n"
-              "Prints each shadow value movement.\n");
+              " --print-value-moves "
+              "Prints each shadow value movement.\n"
+              " --print-semantic-ops "
+              "Prints each semantic op executed\n"
+              " --print-conversions "
+              "Prints each conversion op executed\n"
+              " --print-types "
+              "Prints some type inferences\n");
 }

@@ -30,10 +30,17 @@
 #include "shadowop.h"
 #include "../value-shadowstate/value-shadowstate.h"
 #include "realop.h"
+#include "pub_tool_libcprint.h"
+#include "pub_tool_libcassert.h"
 
 VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                                           ShadowTemp** args){
+  tl_assert(opInfo->op_code < Iop_LAST);
   ShadowTemp* result = mkShadowTemp(opInfo->exinfo.numChannels);
+  if (print_value_moves){
+    ppIROp(opInfo->op_code);
+    VG_(printf)(": Making value(s) ");
+  }
   for(int i = 0; i < opInfo->exinfo.numSIMDOperands; ++i){
     ShadowValue* vals[opInfo->exinfo.nargs];
     for(int j = 0; j < opInfo->exinfo.nargs; ++j){
@@ -44,6 +51,17 @@ VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                              opInfo->exinfo.argPrecision,
                              opInfo->op_code,
                              vals);
+    if (print_value_moves){
+      if (i == 0){
+        VG_(printf)("%p", result->values[i]);
+      } else {
+        VG_(printf)(", %p", result->values[i]);
+      }
+    }
+  }
+  if (opInfo->exinfo.numSIMDOperands < opInfo->exinfo.numChannels &&
+      print_value_moves){
+    VG_(printf)(" and copying shadow value(s) ");
   }
   for(int i = opInfo->exinfo.numSIMDOperands;
       i < opInfo->exinfo.numChannels; ++i){
@@ -51,7 +69,19 @@ VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
     // values should be copied from the first operand.
     result->values[i] = args[0]->values[i];
     ownShadowValue(result->values[i]);
+    if (print_value_moves){
+      VG_(printf)("%p (new rc %lu), ",
+                  result->values[i], result->values[i]->ref_count);
+    }
   }
+  if (print_value_moves){
+    if (opInfo->exinfo.numSIMDOperands < opInfo->exinfo.numChannels){
+      VG_(printf)("from %p to %p\n", args[0], result);
+    } else {
+      VG_(printf)("\n");
+    }
+  }
+  tl_assert(opInfo->op_code < Iop_LAST);
   return result;
 }
 ShadowValue* executeChannelShadowOp(int nargs,

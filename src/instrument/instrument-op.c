@@ -31,6 +31,8 @@
 #include "pub_tool_machine.h"
 #include "pub_tool_xarray.h"
 
+#include "pub_tool_libcprint.h"
+
 #include "instrument-op.h"
 #include "instrument-storage.h"
 #include "conversion.h"

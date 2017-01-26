@@ -54,6 +54,15 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
   IRExpr* inputsPreexistingDynamic[2] = {NULL, NULL};
   IRExpr* shadowOutput;
 
+  if (print_conversions){
+    VG_(printf)("Instrumenting ");
+    ppIROp(op_code);
+    VG_(printf)("\n");
+    addPrint("Running ");
+    addPrintOp(op_code);
+    addPrint("\n");
+  }
+
   if (numConversionInputs(op_code) == 1){
     int inputIndex = conversionInputArgIndex(op_code);
     if (!canHaveShadow(sbOut->tyenv, argExprs[inputIndex])){
@@ -88,6 +97,14 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
           canBeFloat(sbOut->tyenv, argExprs[1])){
         addMarkUnshadowed(dest);
       } else {
+        if (print_types){
+          VG_(printf)("Marking %d as non-float because the inputs ",
+                      dest);
+          ppIRExpr(argExprs[0]);
+          VG_(printf)(" and ");
+          ppIRExpr(argExprs[1]);
+          VG_(printf)(" can't be floats.\n");
+        }
         addStoreNonFloat(dest);
       }
       return;
@@ -477,8 +494,9 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                  outputPrecision,
                  dest, typeOfIRTemp(sbOut->tyenv, dest));
   } else {
-    if (print_moves){
-      addPrintG3(inputPreexisting, "Putting converted temp %p in %d\n",
+    if (print_temp_moves){
+      addPrintOpG(inputPreexisting, op_code);
+      addPrintG3(inputPreexisting, ": Putting converted temp %p in %d\n",
                  shadowOutput, mkU64(dest));
     }
     addStoreTempG(sbOut, inputPreexisting, shadowOutput,

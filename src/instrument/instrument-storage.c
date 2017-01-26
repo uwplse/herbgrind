@@ -84,8 +84,8 @@ void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src){
   addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowTempDirty));
   addStoreTempG(sbOut, tempNonNull,
                 IRExpr_RdTmp(newShadowTempCopy),
-  if (print_moves){
                 tempContext[src], dest, typeOfIRTemp(sbOut->tyenv, src));
+  if (print_temp_moves){
     addPrintG3(tempNonNull, "Copying shadow temp %p in %d ", newShadowTemp, mkU64(src));
     addPrintG3(tempNonNull, "to %p in %d\n",
                IRExpr_RdTmp(newShadowTempCopy), mkU64(dest));
@@ -143,8 +143,26 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
       // runtime, we'll do a runtime check to see if there is a shadow
       // value there, and disown it if there is.
       if (tsHasStaticShadow(dest_addr)){
+        if (print_value_moves){
+          IRExpr* oldValRCount =
+            runArrow(sbOut, oldVal, ShadowValue, ref_count);
+          addPrint3("Disowning %p (old rc %d) "
+                    "from thread state overwrite.\n",
+                    oldVal, oldValRCount);
+        }
         addSVDisownNonNull(sbOut, oldVal);
       } else {
+        if (print_value_moves){
+          IRExpr* oldValNonNull =
+            runNonZeroCheck64(sbOut, oldVal);
+          IRExpr* oldValRCount =
+            runArrowG(sbOut, oldValNonNull, oldVal,
+                      ShadowValue, ref_count);
+          addPrintG3(oldValNonNull,
+                     "Disowning %p (old rc %d) "
+                     "from thread state overwrite.\n",
+                     oldVal, oldValRCount);
+        }
         addSVDisown(sbOut, oldVal);
       }
     }
@@ -155,6 +173,11 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
       if (canBeFloat(sbOut->tyenv, data)){
         addSetTSValUnshadowed(sbOut, dest_addr);
       } else {
+        if (print_types){
+          VG_(printf)("Setting TS(%d) to non-float, "
+                      "because %d can't contain a float.\n",
+                      dest_addr, data->Iex.RdTmp.tmp);
+        }
         addSetTSValNonFloat(sbOut, dest_addr);
       }
     }
@@ -597,6 +620,9 @@ void addSVOwnNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Add64, prevRefCount, mkU64(1));
   addStoreArrowG(sbOut, guard, sv, ShadowValue, ref_count, newRefCount);
+  if (print_value_moves){
+    addPrintG3(guard, "[2] Owning %p, new ref_count %d\n", sv, newRefCount);
+  }
 }
 void addSVOwnNonNull(IRSB* sbOut, IRExpr* sv){
   IRExpr* prevRefCount =
@@ -612,6 +638,10 @@ void addSVDisown(IRSB* sbOut, IRExpr* sv){
   IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
   // If value is null, then preRefCount will be zero, so lastRef will be false.
   addStackPushG(sbOut, lastRef, freedVals, sv);
+  if (print_value_moves){
+    addPrintG2(lastRef,
+               "Disowned last reference to %p! Freeing...\n", sv);
+  }
 
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
@@ -625,10 +655,18 @@ void addSVDisownNonNull(IRSB* sbOut, IRExpr* sv){
     runArrow(sbOut, sv, ShadowValue, ref_count);
   IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
   addStackPushG(sbOut, lastRef, freedVals, sv);
+  if (print_value_moves){
+    addPrintG2(lastRef,
+               "Disowned last reference to %p! Freeing...\n", sv);
+  }
 
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
   IRExpr* shouldUpdateRefCount = runUnop(sbOut, Iop_Not1, lastRef);
+  if (print_value_moves){
+    addPrintG3(shouldUpdateRefCount,
+               "[2] Disowning %p, new ref_count %d\n", sv, newRefCount);
+  }
   addStoreArrowG(sbOut, shouldUpdateRefCount, sv, ShadowValue,
                  ref_count, newRefCount);
 }
@@ -639,6 +677,10 @@ void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
     runArrowG(sbOut, shouldDoAnythingAtAll, sv, ShadowValue, ref_count);
   IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
   IRExpr* shouldPush = runAnd(sbOut, shouldDoAnythingAtAll, lastRef);
+  if (print_value_moves){
+    addPrintG2(shouldPush,
+               "Disowned last reference to %p! Freeing...\n", sv);
+  }
   addStackPushG(sbOut, shouldPush, freedVals, sv);
 
   IRExpr* newRefCount =
@@ -646,6 +688,10 @@ void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
   IRExpr* shouldUpdateRefCount =
     runAnd(sbOut, shouldDoAnythingAtAll,
            runUnop(sbOut, Iop_Not1, lastRef));
+  if (print_value_moves){
+    addPrintG3(shouldUpdateRefCount,
+               "[3] Disowning %p, new ref_count %d\n", sv, newRefCount);
+  }
   addStoreArrowG(sbOut, shouldUpdateRefCount, sv, ShadowValue,
                  ref_count, newRefCount);
 }
@@ -792,6 +838,21 @@ void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest){
   tsContext[tsDest] = Ft_Unshadowed;
 }
 void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal){
+  if (print_value_moves){
+    IRExpr* existing = runGetTSVal(sbOut, tsDest);
+    IRExpr* overwriting = runNonZeroCheck64(sbOut, existing);
+    IRExpr* valueNonNull = runNonZeroCheck64(sbOut, newVal);
+    IRExpr* shouldPrintAtAll = runOr(sbOut, overwriting, valueNonNull);
+    addPrintG3(shouldPrintAtAll,
+               "Setting thread state %d to %p",
+               mkU64(tsDest), newVal);
+    IRExpr* newValType = runArrowG(sbOut, valueNonNull,
+                                   newVal, ShadowValue, type);
+    addPrintG2(valueNonNull, " (type %d)\n", newValType);
+    addPrintG(runAnd(sbOut, shouldPrintAtAll,
+                     runUnop(sbOut, Iop_Not1, valueNonNull)),
+              "\n");
+  }
   addStoreC(sbOut,
             newVal,
             &(shadowThreadState[VG_(get_running_tid)()][tsDest]));

@@ -643,3 +643,23 @@ int isFloat(IRTypeEnv* env, IRTemp temp){
   IRType type = typeOfIRTemp(env, temp);
   return isFloatType(type);
 }
+
+void ppFloatType(FloatType type){
+  switch(type){
+  case Ft_Unknown:
+    VG_(printf)("Ft_Unknown");
+    break;
+  case Ft_NonFloat:
+    VG_(printf)("Ft_NonFloat");
+    break;
+  case Ft_Unshadowed:
+    VG_(printf)("Ft_Unshadowed");
+    break;
+  case Ft_Single:
+    VG_(printf)("Ft_Single");
+    break;
+  case Ft_Double:
+    VG_(printf)("Ft_Double");
+    break;
+  }
+}
