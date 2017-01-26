@@ -60,10 +60,8 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                dest, typeOfIRTemp(sbOut->tyenv, dest));
 
   for(int i = 0; i < nargs; ++i){
-    if (isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[i]))){
-      if (argExprs[i]->tag == Iex_Const){
-        addDisownNonNull(sbOut, args[i], numChannelsIn(op_code));
-      }
+    if (!canStoreShadow(sbOut->tyenv, argExprs[i])){
+      addDisownNonNull(sbOut, args[i], numChannelsIn(op_code));
     }
   }
 }

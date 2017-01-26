@@ -35,5 +35,8 @@
 
 void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr, Addr curAddr);
 
+Bool isSpecialOp(IROp op_code);
+void handleSpecialOp(IRSB* sbOut, IROp op_code,
+                     IRExpr** argExprs, IRTemp dest);
 Bool isFloatOp(IROp op);
 #endif

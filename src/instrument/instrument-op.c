@@ -94,7 +94,9 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr, Addr curAddr){
     return;
   }
   // If the op isn't a float op, dont shadow it.
-  if (isFloatOp(op_code)){
+  if (isSpecialOp(op_code)){
+    handleSpecialOp(sbOut, op_code, argExprs, dest);
+  } else if (isFloatOp(op_code)){
     if (isConversionOp(op_code)){
       instrumentConversion(sbOut, op_code, argExprs, dest);
     } else {
