@@ -68,6 +68,10 @@ extern Stack* freedVals;
 void initValueShadowState(void);
 VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries);
 VG_REGPARM(2) void dynamicPut(Int tsDest, ShadowTemp* st);
+VG_REGPARM(2) ShadowTemp* dynamicGet64(Int tsSrc,
+                                       UWord tsBytes);
+VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
+                                        UWord bytes1, UWord bytes2);
 VG_REGPARM(1) void disownShadowTempNonNull(ShadowTemp* temp);
 VG_REGPARM(1) void disownShadowTemp(ShadowTemp* temp);
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp);
@@ -92,4 +96,5 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(double value);
 VG_REGPARM(1) ShadowTemp* mkShadowTempTwoSingles(UWord values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSinglesG(UWord guard, float* values);
+ShadowValue* getTS(Int idx);
 #endif

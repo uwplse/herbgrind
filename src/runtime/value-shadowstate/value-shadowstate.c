@@ -88,6 +88,98 @@ VG_REGPARM(2) void dynamicPut(Int tsDest, ShadowTemp* st){
     ownShadowValue(val);
   }
 }
+VG_REGPARM(1) ShadowTemp* dynamicGet64(Int tsSrc, UWord tsBytes){
+  ShadowValue* firstValue = getTS(tsSrc);
+  if (firstValue == NULL){
+    ShadowValue* secondValue = getTS(tsSrc + sizeof(float));
+    if (secondValue == NULL || secondValue->type != Ft_Single){
+      return NULL;
+    }
+    ShadowTemp* temp = mkShadowTemp(2);
+    float firstValueBytes;
+    VG_(memcpy)(&firstValueBytes, &tsBytes, sizeof(float));
+    firstValue = mkShadowValue(Ft_Single, firstValueBytes);
+    temp->values[0] = firstValue;
+    temp->values[1] = secondValue;
+    ownShadowValue(secondValue);
+    return temp;
+  } if (firstValue->type == Ft_Double){
+    ShadowTemp* temp = mkShadowTemp(1);
+    temp->values[0] = firstValue;
+    ownShadowValue(firstValue);
+    return temp;
+  } else {
+    ShadowValue* secondValue = getTS(tsSrc + sizeof(float));
+    if (secondValue == NULL){
+      float secondValueBytes;
+      VG_(memcpy)(&secondValueBytes, (&tsBytes) + sizeof(float),
+                  sizeof(float));
+      secondValue = mkShadowValue(Ft_Single, secondValueBytes);
+    } else {
+      ownShadowValue(secondValue);
+    ownShadowValue(firstValue);
+    tl_assert(secondValue->type == Ft_Single);
+    ShadowTemp* temp = mkShadowTemp(2);
+    temp->values[0] = firstValue;
+    temp->values[1] = secondValue;
+    return temp;
+  }
+}
+VG_REGPARM(1) ShadowTemp* dynamicGet128(Int tsSrc,
+                                        UWord bytes1,
+                                        UWord bytes2){
+  FloatType valType = Ft_Unknown;
+  int setIndex = 0;
+  ShadowValue* setValue = NULL;
+  for(int i = 0; i < 4; ++i){
+    ShadowValue* value = getTS(tsSrc + sizeof(float) * i);
+    if (value != NULL){
+      tl_assert2(value->type == valType || valType == Ft_Unknown,
+                 "Mismatched values! "
+                 "TS(%d) (%p) has type %d, "
+                 "but TS(%d) (%p) has type %d!\n",
+                 tsSrc + sizeof(float) * setIndex, setValue, valType,
+                 tsSrc + sizeof(float) * i, value, value->type);
+      valType = value->type;
+      setIndex = i;
+      setValue = value;
+    }
+  }
+  if (valType == Ft_Unknown){
+    return NULL;
+  } else if (valType == Ft_Double){
+    ShadowTemp* temp = mkShadowTemp(2);
+    for(int i = 0; i < 2; ++i){
+      Int tsAddr = tsSrc + sizeof(double) * i;
+      temp->values[i] = getTS(tsAddr);
+      if (temp->values[i] == NULL){
+        double valBytes;
+        VG_(memcpy)(&valBytes, i == 0 ? &bytes1 : &bytes2,
+                    sizeof(double));
+        temp->values[i] = mkShadowValue(Ft_Double, valBytes);
+      } else {
+        ownShadowValue(temp->values[i]);
+      }
+    }
+    return temp;
+  } else {
+    ShadowTemp* temp = mkShadowTemp(4);
+    for(int i = 0; i < 4; ++i){
+      Int tsAddr = tsSrc + sizeof(float) * i;
+      temp->values[i] = getTS(tsAddr);
+      if (temp->values[i] == NULL){
+        float valBytes;
+        VG_(memcpy)(&valBytes,
+                    (i < 3 ? &bytes1 : &bytes2) + (i % 2) * sizeof(float),
+                    sizeof(float));
+        temp->values[i] = mkShadowValue(Ft_Single, valBytes);
+      } else {
+        ownShadowValue(temp->values[i]);
+      }
+    }
+    return temp;
+  }
+}
 void freeShadowTemp(ShadowTemp* temp){
   stack_push(freedTemps[temp->num_vals - 1], (void*)temp);
 }

@@ -654,6 +654,26 @@ void addClear(IRSB* sbOut, IRTemp dest, int num_vals){
   addDisownNonNull(sbOut, oldShadowTemp, num_vals);
   addStoreC(sbOut, mkU64(0), &(shadowTemps[dest]));
 }
+IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
+                              IRExpr** values){
+  IRExpr* stackEmpty = runStackEmpty(sbOut, freedTemps[num_values-1]);
+  IRExpr* freshTemp = runDirtyG_1_1(sbOut, stackEmpty, newShadowTemp,
+                                    mkU64(num_values));
+  IRExpr* poppedTemp = runStackPopG(sbOut,
+                                    runUnop(sbOut, Iop_Not1, stackEmpty),
+                                    freedTemps[num_values-1]);
+  IRExpr* temp = runITE(sbOut, stackEmpty, freshTemp, poppedTemp);
+  IRExpr* tempValues = runArrow(sbOut, temp, ShadowTemp, values);
+  for(int i = 0; i < num_values; ++i){
+    addStoreIndex(sbOut, tempValues, ShadowValue, i, values[i]);
+  }
+  return temp;
+}
+IRExpr* runMkShadowValG(IRSB* sbOut, IRExpr* guard,
+                        FloatType type, IRExpr* valExpr){
+  return runDirtyG_1_2(sbOut, guard, mkShadowValue,
+                       mkU64(type), valExpr);
+}
 IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
                      FloatType valType, int num_vals){
   IRExpr* result;
@@ -747,6 +767,14 @@ IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc){
   return runLoad64C(sbOut,
                     &(shadowThreadState[VG_(get_running_tid)()][tsSrc]));
 }
+IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc){
+  return runLoad64(sbOut,
+                   runBinop(sbOut,
+                            Iop_Add64,
+                            mkU64((uintptr_t)shadowThreadState
+                                  [VG_(get_running_tid)()]),
+                            tsSrc));
+}
 void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
                         IRExpr* newVal, FloatType floatType){
   tl_assert(floatType == Ft_Single ||
@@ -767,6 +795,14 @@ void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal){
   addStoreC(sbOut,
             newVal,
             &(shadowThreadState[VG_(get_running_tid)()][tsDest]));
+}
+void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal){
+  addStore(sbOut, newVal,
+           runBinop(sbOut,
+                    Iop_Add64,
+                    mkU64((uintptr_t)shadowThreadState
+                          [VG_(get_running_tid)()]),
+                    tsDest));
 }
 void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
                   FloatType type,

@@ -77,6 +77,10 @@ void addSVOwnNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv);
 void addSVOwnNonNull(IRSB* sbOut, IRExpr* sv);
 void addClear(IRSB* sbOut, IRTemp shadowed_temp, int num_vals);
 
+IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
+                              IRExpr** values);
+IRExpr* runMkShadowValG(IRSB* sbOut, IRExpr* guard,
+                        FloatType type, IRExpr* valExpr);
 IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
                       IRExpr* argExpr,
                       FloatType type, int num_vals);
@@ -88,10 +92,9 @@ void addStoreNonFloat(int idx);
 void addMarkUnknown(int idx);
 void addMarkUnshadowed(int idx);
 IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc);
-void addTSStoreValue(IRSB* sbOut, IRExpr* shadow_val,
-                     Int tsDest);
-void addTSStoreValueMaybeNull(IRSB* sbOut, IRExpr* shadow_val,
-                              Int tsDest);
+IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc);
+void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
+                        IRExpr* newVal, FloatType floatType);
 void addSetTSValNonFloat(IRSB* sbOut, Int tsDest);
 void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest);
 void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal);
