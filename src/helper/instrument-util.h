@@ -101,26 +101,28 @@ IRExpr* runAndto64(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2);
   runBinop(sbOut, Iop_CmpEQ64, check, mkU64(0))
 
 #define addPrintOp(op_code) \
-  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "ppIROp", VG_(fnptr_to_fnentry)(ppIROp), mkIRExprVec_1(mkU64((uintptr_t)op_code)))));
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "ppIROp", VG_(fnptr_to_fnentry)(ppIROp), mkIRExprVec_1(mkU64((uintptr_t)op_code)))))
+#define addPrintOpG(guard, op_code)                                     \
+  addStmtToIRSB(sbOut, mkDirtyG_0_1(VG_(fnptr_to_fnentry)(ppIROp), mkU64((uintptr_t)op_code), guard))
 #define addPrintTy(ty_code) \
-  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "ppIRType", VG_(fnptr_to_fnentry)(ppIRType), mkIRExprVec_1(mkU64((uintptr_t)ty_code)))));
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "ppIRType", VG_(fnptr_to_fnentry)(ppIRType), mkIRExprVec_1(mkU64((uintptr_t)ty_code)))))
 
 #define addPrint(string) \
-  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "print", VG_(fnptr_to_fnentry)(VG_(printf)), mkIRExprVec_1(mkU64((uintptr_t)string)))));
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "print", VG_(fnptr_to_fnentry)(VG_(printf)), mkIRExprVec_1(mkU64((uintptr_t)string)))))
 #define addPrintG(guard, string)                                    \
-  addStmtToIRSB(sbOut, mkDirtyG_0_1(VG_(fnptr_to_fnentry)(VG_(printf)), mkU64((uintptr_t)string), guard));
+  addStmtToIRSB(sbOut, mkDirtyG_0_1(VG_(fnptr_to_fnentry)(VG_(printf)), mkU64((uintptr_t)string), guard))
 
 #define addPrint2(format, arg)                                          \
-  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(2, "print", VG_(fnptr_to_fnentry)(VG_(printf)), mkIRExprVec_2(mkU64((uintptr_t)format), arg))));
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(2, "print", VG_(fnptr_to_fnentry)(VG_(printf)), mkIRExprVec_2(mkU64((uintptr_t)format), arg))))
 #define addPrintG2(guard, format, arg)                              \
-  addStmtToIRSB(sbOut, mkDirtyG_0_2(VG_(fnptr_to_fnentry)(VG_(printf)), mkU64((uintptr_t)format), arg, guard));
+  addStmtToIRSB(sbOut, mkDirtyG_0_2(VG_(fnptr_to_fnentry)(VG_(printf)), mkU64((uintptr_t)format), arg, guard))
 #define addPrint3(format, arg1, arg2)                                   \
-  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "print", VG_(fnptr_to_fnentry)(VG_(printf)), mkIRExprVec_3(mkU64((uintptr_t)format), arg1, arg2))));
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "print", VG_(fnptr_to_fnentry)(VG_(printf)), mkIRExprVec_3(mkU64((uintptr_t)format), arg1, arg2))))
 #define addPrintG3(guard, format, arg1, arg2)                      \
-  addStmtToIRSB(sbOut, mkDirtyG_0_3(VG_(fnptr_to_fnentry)(VG_(printf)), mkU64((uintptr_t)format), arg1, arg2, guard));
+  addStmtToIRSB(sbOut, mkDirtyG_0_3(VG_(fnptr_to_fnentry)(VG_(printf)), mkU64((uintptr_t)format), arg1, arg2, guard))
 
 #define mkConvert(dest, input, conversion)                    \
-  unsafeIRDirty_1_N(dest, 1, #conversion, VG_(fnptr_to_fnentry)(conversion), mkIRExprVec_1(input));
+  unsafeIRDirty_1_N(dest, 1, #conversion, VG_(fnptr_to_fnentry)(conversion), mkIRExprVec_1(input))
 
 IRExpr* runITE(IRSB* sbOut, IRExpr* cond,
                IRExpr* true_branch, IRExpr* false_branch);
@@ -131,7 +133,17 @@ IRExpr* runPureCCall(IRSB* sbOut, IRCallee* callee, IRType retty,
   runPureCCall(sbOut,                                                   \
                mkIRCallee(1, #f, VG_(fnptr_to_fnentry)(f)),             \
                Ity_I64,                                                 \
-               mkIRExprVec_1(arg));
+               mkIRExprVec_1(arg))
+#define runPureCCall64_2(sbOut, f, arg1, arg2)                  \
+  runPureCCall(sbOut,                                           \
+               mkIRCallee(2, #f, VG_(fnptr_to_fnentry)(f)),     \
+               Ity_I64,                                         \
+               mkIRExprVec_2(arg1, arg2))
+#define runPureCCall64_3(sbOut, f, arg1, arg2, arg3)            \
+  runPureCCall(sbOut,                                           \
+               mkIRCallee(3, #f, VG_(fnptr_to_fnentry)(f)),     \
+               Ity_I64,                                         \
+               mkIRExprVec_3(arg1, arg2, arg3))
 #define runArrowAddr(sbOut, struct_expr, struct_type, member)           \
   runBinop(sbOut, Iop_Add64, struct_expr, mkU64(offsetof(struct_type, member)))
 #define runArrow(sbOut, struct_expr, struct_type, member)               \
@@ -168,10 +180,7 @@ IRExpr* runPureCCall(IRSB* sbOut, IRCallee* callee, IRType retty,
 #define addStoreIndex(sbOut, array_addr, element_type,                  \
                       const_index, src_expr)                            \
   addStore(sbOut, src_expr,                                             \
-           IRExpr_RdTmp(runIndexAddr(sbOut,                             \
-                                     array_addr,                        \
-                                     element_type,                      \
-                                     const_index)))
+           runIndexAddr(sbOut, array_addr, element_type, const_index))
 
 #define addStoreIndexG(sbOut, guard, array_addr,            \
                        element_type, const_index, src_expr) \
@@ -181,4 +190,8 @@ IRExpr* runPureCCall(IRSB* sbOut, IRCallee* callee, IRType retty,
                          array_addr,                       \
                          element_type,                      \
                          const_index)))
+#define runF32toF64(sbOut, f32)                                 \
+  runUnop(sbOut, Iop_ReinterpF64asI64,                          \
+          runUnop(sbOut, Iop_F32toF64,                          \
+                  runUnop(sbOut, Iop_ReinterpI32asF32, f32)))
 #endif
