@@ -52,6 +52,12 @@ IRExpr* runLoadG64(IRSB* sbOut, IRExpr* address, IRExpr* guard){
   return IRExpr_RdTmp(dest);
 }
 
+IRExpr* runGetC(IRSB* sbOut, IRType type, Int address){
+  IRTemp dest = newIRTemp(sbOut->tyenv, type);
+  addStmtToIRSB(sbOut, IRStmt_WrTmp(dest, IRExpr_Get(address, type)));
+  return IRExpr_RdTmp(dest);
+}
+
 IRExpr* runUnop(IRSB* sbOut, IROp op_code, IRExpr* arg){
   IRType resultType;
   IRType argTypes[4];

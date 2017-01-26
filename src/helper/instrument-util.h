@@ -38,7 +38,7 @@
 #ifdef VG_LITTLEENDIAN
 #define ENDIAN Iend_LE
 #else
-#define ENDIAN Iend_BE;
+#define ENDIAN Iend_BE
 #endif
 
 #define mkU128(x) IRExpr_Const(IRConst_V128(x))
@@ -63,6 +63,12 @@ IRExpr* runLoad128(IRSB* sbOut, IRExpr* address);
   addStore(sbOut, src_expr, mkU64((uintptr_t)dest_addr_const))
 #define addStoreGC(sbOut, guard, src_expr, dest_addr_const)        \
   addStoreG(sbOut, guard, src_expr, mkU64((uintptr_t)dest_addr_const))
+
+IRExpr* runGetC(IRSB* sbOut, IRType type, Int addr_const);
+#define runGet64C(sbOut, addr_const)            \
+  runGetC(sbOut, Ity_I64, addr_const)
+#define runGet32C(sbOut, addr_const)            \
+  runGetC(sbOut, Ity_I32, addr_const)
 
 IRExpr* runDirtyG_1_N(IRSB* sbOut, int nargs, const char* fname, void* f,
                      IRExpr** args, IRExpr* guard);
