@@ -39,7 +39,8 @@ Bool print_in_blocks = False;
 Bool print_out_blocks = False;
 Bool print_block_boundries = False;
 Bool print_run_blocks = False;
-Bool print_moves = False;
+Bool print_temp_moves = False;
+Bool print_value_moves = False;
 Int precision = 1000;
 
 // Called to process each command line option.
@@ -48,7 +49,8 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-out-blocks", print_out_blocks, True) {}
   else if VG_XACT_CLO(arg, "--print-block-boundries", print_block_boundries, True) {}
   else if VG_XACT_CLO(arg, "--print-run-blocks", print_run_blocks, True) {}
-  else if VG_XACT_CLO(arg, "--print-moves", print_moves, True) {}
+  else if VG_XACT_CLO(arg, "--print-temp-moves", print_temp_moves, True) {}
+  else if VG_XACT_CLO(arg, "--print-value-moves", print_value_moves, True) {}
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else return False;
   return True;
@@ -70,6 +72,8 @@ void hg_print_debug_usage(void){
               "Prints +++++ between each executed block.\n"
               " --print-run-blocks.\n"
               "Prints the addresses of each run block.\n"
-              " --print-moves.\n"
+              " --print-temp-moves.\n"
+              "Prints each shadow temp movement.\n"
+              " --print-value-moves.\n"
               "Prints each shadow value movement.\n");
 }

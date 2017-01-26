@@ -51,6 +51,10 @@ static inline
 void assertNEQ(char* message, int val1, int val2){
   tl_assert2(val1 != val2, "%s: %X vs. %X", message, val1, val2);
 }
+static inline
+void assertEQ(char* message, int val1, int val2){
+  tl_assert2(val1 == val2, "%s: %X vs. %X", message, val1, val2);
+}
 
 #define addAssertNEQ(sbOut, message, val1, val2) \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNEQ", \
@@ -59,6 +63,9 @@ void assertNEQ(char* message, int val1, int val2){
 #define addAssertNEQG(sbOut, guard, message, val1, val2) \
   addStmtToIRSB(sbOut, mkDirtyG_0_3(assertNEQ, mkU64((uintptr_t)message), val1, val2, guard));
 
+#define addAssertEQ(sbOut, message, val1, val2) \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertEQ", \
+                                                      VG_(fnptr_to_fnentry)(assertEQ), mkIRExprVec_3(mkU64((uintptr_t)message), val1, val2))))
 static inline
 void fail(void){
   tl_assert(0);
