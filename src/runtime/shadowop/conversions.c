@@ -159,13 +159,48 @@ ShadowTemp* setV128lo64Dynamic1(ShadowTemp* bottom,
   return result;
 }
 VG_REGPARM(2)
-ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* low){
-  ShadowTemp* result = mkShadowTemp(2);
-  result->values[0] = hi->values[0];
-  ownShadowValue(result->values[0]);
-  result->values[1] = low->values[0];
-  ownShadowValue(result->values[1]);
-  return result;
+ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* lo){
+  if (hi->values[0]->type == Ft_Double){
+    tl_assert(hi->values[1]->type == Ft_Double);
+    tl_assert(lo->values[0]->type == Ft_Double);
+    tl_assert(lo->values[1]->type == Ft_Double);
+    ShadowTemp* result = mkShadowTemp(2);
+    result->values[0] = hi->values[0];
+    ownShadowValue(result->values[0]);
+    result->values[1] = lo->values[0];
+    ownShadowValue(result->values[1]);
+    if (print_value_moves){
+      VG_(printf)("Owning values %p (rc %lu) and %p (rc %lu), "
+                  "copied in i64HLtoV128\n",
+                  result->values[0], result->values[0]->ref_count,
+                  result->values[1], result->values[1]->ref_count);
+    }
+    return result;
+  } else {
+    tl_assert(hi->values[0]->type == Ft_Double);
+    tl_assert(hi->values[1]->type == Ft_Double);
+    tl_assert(lo->values[0]->type == Ft_Double);
+    tl_assert(lo->values[1]->type == Ft_Double);
+    ShadowTemp* result = mkShadowTemp(4);
+    result->values[0] = hi->values[0];
+    ownShadowValue(result->values[0]);
+    result->values[1] = hi->values[1];
+    ownShadowValue(result->values[1]);
+    result->values[2] = lo->values[0];
+    ownShadowValue(result->values[2]);
+    result->values[3] = lo->values[1];
+    ownShadowValue(result->values[3]);
+    if (print_value_moves){
+      VG_(printf)("Owning values %p (rc %lu), %p (rc %lu), "
+                  "%p (rc %lu), and %p (rc %lu), "
+                  "copied in i64HLtoV128",
+                  result->values[0], result->values[0]->ref_count,
+                  result->values[1], result->values[1]->ref_count,
+                  result->values[2], result->values[2]->ref_count,
+                  result->values[3], result->values[3]->ref_count);
+    }
+    return result;
+  }
 }
 VG_REGPARM(2)
 ShadowTemp* f64HLtoF128(ShadowTemp* hi, ShadowTemp* low){

@@ -989,3 +989,31 @@ Bool tsHasStaticShadow(Int tsAddr){
     return False;
   }
 }
+// Produce an expression to calculate (base + ((idx + bias) % len)),
+// where base, bias, and len are fixed, and idx can vary at runtime.
+// The type of the resulting expression is Ity_I32.
+IRExpr* mkArrayLookupExpr(IRSB* sbOut,
+                          Int base, IRExpr* idx,
+                          Int bias, Int len,
+                          IRType elemSize){
+  // Set op the temps to hold all the different intermediary values.
+  IRExpr* index =
+    runUnop(sbOut,
+            Iop_32Uto64,
+            runUnop(sbOut,
+                    Iop_64HIto32,
+                    runBinop(sbOut,
+                             Iop_DivModU64to32,
+                             runBinop(sbOut,
+                                      Iop_Add64,
+                                      idx,
+                                      mkU64(bias)),
+                             mkU64(len))));
+  return runBinop(sbOut,
+                  Iop_Add64,
+                  mkU64(base),
+                  runBinop(sbOut,
+                           Iop_Mul64,
+                           mkU64(sizeofIRType(elemSize)),
+                           index));
+}

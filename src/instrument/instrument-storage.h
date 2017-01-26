@@ -118,4 +118,8 @@ int numTempValues(IRSB* sbOut, int idx);
 int exprSize(IRTypeEnv* tyenv, IRExpr* expr);
 Bool tsAddrCanHoldShadow(Int tsAddr);
 Bool tsHasStaticShadow(Int tsAddr);
+IRExpr* mkArrayLookupExpr(IRSB* sbOut,
+                          Int base, IRExpr* idx,
+                          Int bias, Int len,
+                          IRType elemSize);
 #endif
