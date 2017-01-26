@@ -105,9 +105,37 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr, Addr curAddr){
     addStoreNonFloat(dest);
   }
 }
+Bool isSpecialOp(IROp op_code){
+  switch(op_code){
+  case Iop_I32StoF64:
+  case Iop_XorV128:
+  case Iop_AndV128:
+  case Iop_OrV128:
+  case Iop_NotV128:
+    return True;
+  default:
+    return False;
+  }
+}
+
+void handleSpecialOp(IRSB* sbOut, IROp op_code,
+                     IRExpr** argExprs, IRTemp dest){
+  switch(op_code){
+  case Iop_I32StoF64:
+  case Iop_XorV128:
+  case Iop_AndV128:
+  case Iop_OrV128:
+  case Iop_NotV128:
+    addMarkUnshadowed(dest);
+    break;
+  default:
+    break;
+  }
+}
 
 Bool isFloatOp(IROp op_code){
   switch(op_code){
+  case Iop_32UtoV128:
   case Iop_64UtoV128:
   case Iop_RecipEst32Fx4:
   case Iop_RSqrtEst32Fx4:
@@ -178,6 +206,16 @@ Bool isFloatOp(IROp op_code){
   /* case Iop_XorV128: */
   case Iop_Sub64F0x2:
   case Iop_Add64F0x2:
+  case Iop_Max64F0x2:
+  case Iop_Max64Fx2:
+  case Iop_Max32F0x4:
+  case Iop_Max32Fx4:
+  case Iop_Max32Fx2:
+  case Iop_Min64F0x2:
+  case Iop_Min64Fx2:
+  case Iop_Min32F0x4:
+  case Iop_Min32Fx4:
+  case Iop_Min32Fx2:
     // Ternary Ops
   case Iop_Add32Fx8:
   case Iop_Sub32Fx8:

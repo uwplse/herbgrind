@@ -415,7 +415,6 @@ void addSVOwnNonNull(IRSB* sbOut, IRExpr* sv){
     runBinop(sbOut, Iop_Add64, prevRefCount, mkU64(1));
   addStoreArrow(sbOut, sv, ShadowValue, ref_count, newRefCount);
 }
-int dummy2;
 void addSVDisown(IRSB* sbOut, IRExpr* sv){
   IRExpr* valueNonNull = runNonZeroCheck64(sbOut, sv);
   IRExpr* prevRefCount =

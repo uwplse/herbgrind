@@ -50,6 +50,8 @@
 #define DEF3(f) \
   int mpfr_##f(mpfr_t res, mpfr_t arg1, mpfr_t arg2, mpfr_t arg3, \
                mpfr_rnd_t round)
+#define GETD(f)                                 \
+  mpfr_get_d(v, MPFR_RNDN)
 #define RET return
 #else
 #include "gmp.h"
@@ -65,6 +67,8 @@
   void mpf_##f(mpf_t res, mpf_t arg1, mpf_t arg2)
 #define DEF3(f) \
   void mpf_##f(mpf_t res, mpf_t arg1, mpf_t arg2, mpf_t arg3)
+#define GETD(v) \
+  mpf_get_d(v)
 #define RET
 #endif
 
@@ -83,6 +87,8 @@ DEF2(scale);
 DEF3(fma);
 DEF3(fms);
 DEF1(rec_sqrt);
+DEF2(max);
+DEF2(min);
 #endif
 
 #endif

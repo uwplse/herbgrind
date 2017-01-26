@@ -37,7 +37,6 @@
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcassert.h"
 
-int shadow_temps_made = 0;
 VG_REGPARM(1) ShadowTemp* newShadowTemp(UWord num_vals){
   ShadowTemp* newShadowTemp =
     VG_(perm_malloc)(sizeof(ShadowTemp), vg_alignof(ShadowTemp));

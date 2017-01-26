@@ -97,6 +97,10 @@ int numChannelsIn(IROp op_code){
   case Iop_Sub32F0x4:
   case Iop_Mul32F0x4:
   case Iop_Div32F0x4:
+  case Iop_Max32F0x4:
+  case Iop_Min32F0x4:
+  case Iop_Min32Fx4:
+  case Iop_Max32Fx4:
   case Iop_SetV128lo32:
     return 4;
   case Iop_Add32Fx2:
@@ -178,6 +182,7 @@ int numChannelsIn(IROp op_code){
   case Iop_SetV128lo64:
     tl_assert2(0, "Couldn't infer type!\n");
   default:
+    ppIROp(op_code);
     tl_assert(0);
     return 0;
   }
@@ -230,6 +235,8 @@ int numSIMDOperands(IROp op_code){
     // Binary Ops
   case Iop_RecipStep32Fx4:
   case Iop_RSqrtStep32Fx4:
+  case Iop_Max32Fx4:
+  case Iop_Min32Fx4:
     return 4;
   case Iop_Add32Fx2:
   case Iop_Sub32Fx2:
@@ -240,6 +247,10 @@ int numSIMDOperands(IROp op_code){
   case Iop_RSqrtStep64Fx2:
   case Iop_Neg32Fx2:
   case Iop_Abs32Fx2:
+  case Iop_Max32Fx2:
+  case Iop_Min32Fx2:
+  case Iop_Max64Fx2:
+  case Iop_Min64Fx2:
     return 2;
   case Iop_Add32F0x4:
   case Iop_Sub32F0x4:
@@ -263,6 +274,10 @@ int numSIMDOperands(IROp op_code){
   case Iop_XorV128:
   case Iop_Sub64F0x2:
   case Iop_Add64F0x2:
+  case Iop_Max64F0x2:
+  case Iop_Max32F0x4:
+  case Iop_Min64F0x2:
+  case Iop_Min32F0x4:
     return 1;
     // Ternary Ops
   case Iop_Add32Fx8:
@@ -347,6 +362,12 @@ FloatType argPrecision(IROp op_code){
   case Iop_Sub32F0x4:
   case Iop_Mul32F0x4:
   case Iop_Div32F0x4:
+  case Iop_Max32F0x4:
+  case Iop_Max32Fx2:
+  case Iop_Max32Fx4:
+  case Iop_Min32F0x4:
+  case Iop_Min32Fx2:
+  case Iop_Min32Fx4:
   case Iop_RecipStep32Fx2:
   case Iop_RSqrtStep32Fx2:
   case Iop_RecipStep64Fx2:
@@ -434,6 +455,10 @@ FloatType argPrecision(IROp op_code){
   case Iop_F64toF32:
   case Iop_64HLtoV128:
   case Iop_F64HLtoF128:
+  case Iop_Max64F0x2:
+  case Iop_Max64Fx2:
+  case Iop_Min64F0x2:
+  case Iop_Min64Fx2:
     return Ft_Double;
   case Iop_SetV128lo64:
     return Ft_Unknown;
@@ -470,6 +495,12 @@ FloatType resultPrecision(IROp op_code){
   case Iop_Sub32F0x4:
   case Iop_Mul32F0x4:
   case Iop_Div32F0x4:
+  case Iop_Max32F0x4:
+  case Iop_Max32Fx2:
+  case Iop_Max32Fx4:
+  case Iop_Min32F0x4:
+  case Iop_Min32Fx2:
+  case Iop_Min32Fx4:
   case Iop_RecipStep32Fx2:
   case Iop_RSqrtStep32Fx2:
   case Iop_RecipStep64Fx2:
@@ -530,6 +561,10 @@ FloatType resultPrecision(IROp op_code){
   case Iop_Sub64Fx2:
   case Iop_Mul64Fx2:
   case Iop_Div64Fx2:
+  case Iop_Max64F0x2:
+  case Iop_Max64Fx2:
+  case Iop_Min64F0x2:
+  case Iop_Min64Fx2:
   case Iop_AtanF64:
   case Iop_Yl2xF64:
   case Iop_Yl2xp1F64:

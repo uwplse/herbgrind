@@ -63,28 +63,28 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
     break;
   case Iop_SinF64:
     #ifndef USE_MPFR
-    tl_assert(0);
+    tl_assert2(0, "GMP doesn't support shadowing the Sin64 instruction");
     #else
     CALL1(sin, (*result)->RVAL, args[0]->real->RVAL);
     #endif
     break;
   case Iop_CosF64:
     #ifndef USE_MPFR
-    tl_assert(0);
+    tl_assert2(0, "GMP doesn't support shadowing the Cos64 instruction");
     #else
     CALL1(cos, (*result)->RVAL, args[0]->real->RVAL);
     #endif
     break;
   case Iop_TanF64:
     #ifndef USE_MPFR
-    tl_assert(0);
+    tl_assert2(0, "GMP doesn't support shadowing the Tan64 instruction");
     #else
     CALL1(tan, (*result)->RVAL, args[0]->real->RVAL);
     #endif
     break;
   case Iop_2xm1F64:
     #ifndef USE_MPFR
-    tl_assert(0);
+    tl_assert2(0, "GMP doesn't support shadowing the 2xm164 instruction");
     #else
     CALL1(2xm1, (*result)->RVAL, args[0]->real->RVAL);
     #endif
@@ -94,14 +94,15 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
   case Iop_Sqrt32F0x4:
   case Iop_Sqrt64F0x2:
   case Iop_Sqrt64Fx2:
-    if (mpf_get_d(args[0]->real->RVAL) >= 0.0){
+    if (GETD(args[0]->real->RVAL) >= 0.0){
       CALL1(sqrt, (*result)->RVAL, args[0]->real->RVAL);
     }
     break;
   case Iop_RecpExpF64:
   case Iop_RecpExpF32:
     #ifndef USE_MPFR
-    tl_assert(0);
+    tl_assert2(0,
+               "GMP doesn't support shadowing the recpexp instructions");
     #else
     CALL1(recp_exp, (*result)->RVAL, args[0]->real->RVAL);
     #endif
@@ -175,16 +176,34 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
   case Iop_DivF32:
   case Iop_DivF64r32:
   case Iop_Div64Fx2:
-    if (mpf_get_d(args[1]->real->RVAL) != 0.0){
+    if (GETD(args[1]->real->RVAL) != 0.0){
       CALL2(div, (*result)->RVAL,
             args[0]->real->RVAL,
             args[1]->real->RVAL);
     }
     break;
+  case Iop_Max64F0x2:
+  case Iop_Max64Fx2:
+  case Iop_Max32F0x4:
+  case Iop_Max32Fx4:
+  case Iop_Max32Fx2:
+    CALL2(max, (*result)->RVAL,
+          args[0]->real->RVAL,
+          args[1]->real->RVAL);
+    break;
+  case Iop_Min64F0x2:
+  case Iop_Min64Fx2:
+  case Iop_Min32F0x4:
+  case Iop_Min32Fx4:
+  case Iop_Min32Fx2:
+    CALL2(min, (*result)->RVAL,
+          args[0]->real->RVAL,
+          args[1]->real->RVAL);
+    break;
   /* case Iop_XorV128: */
   case Iop_AtanF64:
     #ifndef USE_MPFR
-    tl_assert(0);
+    tl_assert2(0, "GMP doesn't support shadwing the atan64 instruction");
     #else
     CALL2(atan2, (*result)->RVAL,
           args[0]->real->RVAL,
@@ -193,7 +212,8 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
     break;
   case Iop_Yl2xF64:
     #ifndef USE_MPFR
-    tl_assert(0);
+    tl_assert2(0,
+               "GMP doesn't support shadowing the y12xf64 instruction");
     #else
     CALL2(yl2x, (*result)->RVAL,
           args[0]->real->RVAL,
@@ -202,7 +222,8 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
     break;
   case Iop_Yl2xp1F64:
     #ifndef USE_MPFR
-    tl_assert(0);
+    tl_assert2(0,
+               "GMP doesn't support shadowing the t12xp1f64 instruction");
     #else
     CALL2(yl2xp, (*result)->RVAL,
           args[0]->real->RVAL,
@@ -211,7 +232,8 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
     break;
   case Iop_ScaleF64:
     #ifndef USE_MPFR
-    tl_assert(0);
+    tl_assert2(0,
+               "GMP doesn't support shadowing the scale64 instruction");
     #else
     CALL2(scale, (*result)->RVAL,
           args[0]->real->RVAL,
@@ -236,6 +258,9 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
           args[2]->real->RVAL);
     break;
   default:
+    VG_(printf)("Don't recognize (%d) ", op_code);
+    ppIROp(op_code);
+    VG_(printf)("\n");
     tl_assert(0);
     return;
   }
@@ -287,5 +312,19 @@ DEF3(fms){
 DEF1(rec_sqrt){
   mpf_sqrt(res, arg);
   mpf_ui_div(res, 1, res);
+}
+DEF2(max){
+  if (mpf_cmp(arg1, arg2) > 0){
+    mpf_set(res, arg1);
+  } else {
+    mpf_set(res, arg2);
+  }
+}
+DEF2(min){
+  if (mpf_cmp(arg1, arg2) < 0){
+    mpf_set(res, arg1);
+  } else {
+    mpf_set(res, arg2);
+  }
 }
 #endif
