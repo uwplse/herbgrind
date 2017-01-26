@@ -92,7 +92,11 @@ IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
 
 IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
                   FloatType type, int num_vals){
-  if (argExpr->tag == Iex_Const) { // TODO !canHaveShadow
+  tl_assert2(canBeFloat(sbOut->tyenv, argExpr),
+             "Temp %d can't hold a float, "
+             "but we're using it as an argument!\n",
+             argExpr->Iex.RdTmp.tmp);
+  if (!canStoreShadow(sbOut->tyenv, argExpr)) {
     IRExpr* result = runMakeInput(sbOut, argExpr, type, num_vals);
     if (print_moves){
       addPrint3("Making temp %p for constant (with %d values).\n", result, mkU64(num_vals));

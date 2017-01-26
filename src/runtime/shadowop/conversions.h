@@ -61,5 +61,7 @@ ShadowTemp* setV128lo64Dynamic2(ShadowTemp* top,
 VG_REGPARM(2)
 ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* low);
 VG_REGPARM(2)
+ShadowTemp* i32UtoV128(ShadowTemp* t);
+VG_REGPARM(2)
 ShadowTemp* f64HLtoF128(ShadowTemp* hi, ShadowTemp* low);
 #endif

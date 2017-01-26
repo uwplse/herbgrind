@@ -144,7 +144,7 @@ VG_REGPARM(3)
 ShadowTemp* setV128lo64Dynamic1(ShadowTemp* bottom,
                                 IRTemp topIdx, UWord* topVal){
   ShadowTemp* top;
-  if (bottom->num_vals == Ft_Double){
+  if (bottom->num_vals == 1){
     top = mkShadowTempTwoDoubles((double*)topVal);
   } else {
     top = mkShadowTempFourSingles((float*)topVal);
@@ -173,7 +173,7 @@ ShadowTemp* f64HLtoF128(ShadowTemp* hi, ShadowTemp* low){
   result->values[0] = hi->values[0];
   ownShadowValue(result->values[0]);
   result->values[1] = low->values[0];
-  ownShadowValue(result->values[0]);
+  ownShadowValue(result->values[1]);
   return result;
 }
 VG_REGPARM(2)
@@ -182,5 +182,23 @@ ShadowTemp* i64UtoV128(ShadowTemp* t){
   result->values[0] = t->values[0];
   ownShadowValue(result->values[0]);
   result->values[1] = mkShadowValue(Ft_Double, 0.0);
+  return result;
+}
+
+VG_REGPARM(2)
+ShadowTemp* i32UtoV128(ShadowTemp* t){
+  ShadowTemp* result = mkShadowTemp(4);
+  result->values[0] = t->values[0];
+  ownShadowValue(result->values[0]);
+  for (int i = 1; i < 4; ++i){
+    result->values[i] = mkShadowValue(Ft_Single, 0.0);
+  }
+  if (print_value_moves){
+    VG_(printf)("Copying shadow value %p to %p, "
+                "and making values %p, %p, and %p "
+                "as part of i32UtoV128\n",
+                result->values[0], result,
+                result->values[1], result->values[2], result->values[3]);
+  }
   return result;
 }

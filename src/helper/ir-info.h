@@ -34,18 +34,12 @@
 #include "pub_tool_tooliface.h"
 
 typedef enum {
-  Ft_NonFloat,
   Ft_Unknown,
+  Ft_NonFloat,
+  Ft_Unshadowed,
   Ft_Single,
   Ft_Double
 } FloatType;
-
-typedef enum {
-  Ts_Unknown,
-  Ts_NonFloat,
-  Ts_Single,
-  Ts_Double
-} TSType;
 
 FloatType argPrecision(IROp op_code);
 FloatType resultPrecision(IROp op_code);
@@ -57,5 +51,7 @@ int inferOtherNumChannels(int inferIndex, IRExpr* arg, IROp op_code);
 
 int isFloatType(IRType type);
 int isFloat(IRTypeEnv* env, IRTemp temp);
+
+void ppFloatType(FloatType type);
 
 #endif

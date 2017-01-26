@@ -86,12 +86,16 @@ IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
 IRExpr* runLoadTemp(IRSB* sbOut, int idx);
 void addStoreNonFloat(int idx);
 void addMarkUnknown(int idx);
+void addMarkUnshadowed(int idx);
 IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc);
 void addTSStoreValue(IRSB* sbOut, IRExpr* shadow_val,
                      Int tsDest);
 void addTSStoreValueMaybeNull(IRSB* sbOut, IRExpr* shadow_val,
                               Int tsDest);
+void addSetTSValNonFloat(IRSB* sbOut, Int tsDest);
+void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest);
 void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal);
+void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal);
 void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
                   FloatType type,
                   int idx, IRType size);
@@ -103,8 +107,12 @@ Bool tempIsTyped(int idx);
 FloatType tempType(int idx);
 Bool hasStaticShadow(IRExpr* expr);
 Bool canHaveShadow(IRTypeEnv* tyenv, IRExpr* expr);
+Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr);
 Bool canStoreShadow(IRTypeEnv* typeEnv, IRExpr* expr);
 IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr);
 int valueSize(IRSB* sbOut, int idx);
 int numTempValues(IRSB* sbOut, int idx);
+int exprSize(IRTypeEnv* tyenv, IRExpr* expr);
+Bool tsAddrCanHoldShadow(Int tsAddr);
+Bool tsHasStaticShadow(Int tsAddr);
 #endif

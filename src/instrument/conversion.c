@@ -56,12 +56,22 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
 
   if (numConversionInputs(op_code) == 1){
     int inputIndex = conversionInputArgIndex(op_code);
-    if (!canHaveShadow(sbOut->tyenv, argExprs[0])){
+    if (!canHaveShadow(sbOut->tyenv, argExprs[inputIndex])){
+      if (canBeFloat(sbOut->tyenv, argExprs[inputIndex])){
+        addMarkUnshadowed(dest);
+      } else {
+        if (print_types){
+          VG_(printf)("Marking %d as non-float because the input ", dest);
+          ppIRExpr(argExprs[0]);
+          VG_(printf)(" cannot be a float.\n");
+        }
+        addStoreNonFloat(dest);
+      }
       return;
     } else {
       shadowInputs[0] =
         runLoadTemp(sbOut, argExprs[inputIndex]->Iex.RdTmp.tmp);
-      if (hasStaticShadow(argExprs[0])){
+      if (hasStaticShadow(argExprs[inputIndex])){
         // To make sure we don't accidentally use this in any guarded
         // calls when this happens, because it means we statically know
         // whether it preexists or not.
@@ -74,6 +84,12 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
   } else {
     if (!canHaveShadow(sbOut->tyenv, argExprs[0]) &&
         !canHaveShadow(sbOut->tyenv, argExprs[1])){
+      if (canBeFloat(sbOut->tyenv, argExprs[0]) ||
+          canBeFloat(sbOut->tyenv, argExprs[1])){
+        addMarkUnshadowed(dest);
+      } else {
+        addStoreNonFloat(dest);
+      }
       return;
     } else if (hasStaticShadow(argExprs[0]) ||
                hasStaticShadow(argExprs[1])) {
@@ -440,15 +456,25 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     tl_assert(0);
     return;
   }
-  // Store the result if the input already existed
-  if (hasStaticShadow(argExprs[0])){
+  FloatType outputPrecision = resultPrecision(op_code);
+  if (outputPrecision == Ft_Unknown){
+    if (hasStaticShadow(argExprs[0])){
+      outputPrecision = tempType(argExprs[0]->Iex.RdTmp.tmp);
+    } else if (numConversionInputs(op_code) == 2 &&
+               hasStaticShadow(argExprs[1])){
+      outputPrecision = tempType(argExprs[1]->Iex.RdTmp.tmp);
+    }
+  }
+  if (hasStaticShadow(argExprs[0]) ||
+      (numConversionInputs(op_code) == 2 &&
+       hasStaticShadow(argExprs[1]))){
+    if (print_temp_moves){
+      addPrintOp(op_code);
+      addPrint3(": Putting conerted temp %p in %d\n",
+                shadowOutput, mkU64(dest));
+    }
     addStoreTemp(sbOut, shadowOutput,
-                 tempType(argExprs[0]->Iex.RdTmp.tmp),
-                 dest, typeOfIRTemp(sbOut->tyenv, dest));
-  } else if (numConversionInputs(op_code) == 2 &&
-             hasStaticShadow(argExprs[1])){
-    addStoreTemp(sbOut, shadowOutput,
-                 tempType(argExprs[1]->Iex.RdTmp.tmp),
+                 outputPrecision,
                  dest, typeOfIRTemp(sbOut->tyenv, dest));
   } else {
     if (print_moves){
@@ -456,7 +482,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                  shadowOutput, mkU64(dest));
     }
     addStoreTempG(sbOut, inputPreexisting, shadowOutput,
-                  resultPrecision(op_code),
+                  outputPrecision,
                   dest, typeOfIRTemp(sbOut->tyenv, dest));
   }
 

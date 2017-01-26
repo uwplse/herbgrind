@@ -57,11 +57,6 @@ VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
     ShadowTemp* temp = shadowTemps[entries[i]];
     if (temp == NULL) continue;
     for(int j = 0; j < temp->num_vals; ++j){
-      if (temp->values[j] != NULL){
-        disownShadowValue(temp->values[j]);
-      }
-    }
-    freeShadowTemp(shadowTemps[entries[i]]);
     if (print_moves){
       if (!hasEntriesToCleanup){
         VG_(printf)("Freeing temp(s) %p", shadowTemps[entries[i]]);
@@ -69,12 +64,15 @@ VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
       } else {
         VG_(printf)(", %p", shadowTemps[entries[i]]);
       }
+      disownShadowValue(temp->values[j]);
     }
+    freeShadowTemp(temp);
     shadowTemps[entries[i]] = NULL;
   }
-  if (hasEntriesToCleanup){
-    VG_(printf)("\n");
-  }
+}
+inline
+ShadowValue* getTS(Int idx){
+  return shadowThreadState[VG_(get_running_tid)()][idx];
 }
 VG_REGPARM(2) void dynamicPut(Int tsDest, ShadowTemp* st){
   for(int i = 0; i < st->num_vals; ++i){
@@ -82,6 +80,11 @@ VG_REGPARM(2) void dynamicPut(Int tsDest, ShadowTemp* st){
     int size = val->type == Ft_Single ? sizeof(float) : sizeof(double);
     shadowThreadState[VG_(get_running_tid)()][tsDest + (i * size)] =
       val;
+    if (val->type == Ft_Double){
+      shadowThreadState[VG_(get_running_tid)()]
+        [tsDest + ((i + 1) * size)] =
+        NULL;
+    }
     ownShadowValue(val);
   }
 }
@@ -141,9 +144,8 @@ ShadowValue* mkShadowValue(FloatType type, double value){
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
   ShadowTemp* result = mkShadowTemp(temp->num_vals);
   for(int i = 0; i < temp->num_vals; ++i){
-    if (temp->values[i] != NULL){
-      ownShadowValue(temp->values[i]);
-      result->values[i] = temp->values[i];
+    ownShadowValue(temp->values[i]);
+    result->values[i] = temp->values[i];
     }
   }
   return result;
@@ -151,9 +153,7 @@ VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
 VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
   ShadowTemp* result = mkShadowTemp(temp->num_vals);
   for(int i = 0; i < temp->num_vals; ++i){
-    if (temp->values[i] != NULL){
-      result->values[i] = copyShadowValue(temp->values[i]);
-    }
+    result->values[i] = copyShadowValue(temp->values[i]);
   }
   return result;
 }
