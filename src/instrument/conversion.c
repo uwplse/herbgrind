@@ -482,9 +482,11 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       outputPrecision = tempType(argExprs[1]->Iex.RdTmp.tmp);
     }
   }
-  if (hasStaticShadow(argExprs[0]) ||
+  if ((numConversionInputs(op_code) == 1 &&
+       hasStaticShadow(argExprs[conversionInputArgIndex(op_code)])) ||
       (numConversionInputs(op_code) == 2 &&
-       hasStaticShadow(argExprs[1]))){
+       (hasStaticShadow(argExprs[0]) ||
+        hasStaticShadow(argExprs[1])))){
     if (print_temp_moves){
       addPrintOp(op_code);
       addPrint3(": Putting conerted temp %p in %d\n",

@@ -199,8 +199,14 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
                           dest_addr);
             }
           } else {
-            IRExpr* value =
-              runIndex(sbOut, values, ShadowValue*, i / 2);
+            addSetTSValUnshadowed(sbOut, dest_addr);
+            IRExpr* value;
+            if (i == 0){
+              value = runLoad64(sbOut, values);
+            } else {
+              value =
+                runIndex(sbOut, values, ShadowValue*, i / 2);
+            }
             addSetTSValNonNull(sbOut, dest_addr, value, Ft_Double);
 
             if (print_value_moves){
@@ -242,7 +248,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
 
         addSVOwnNonNullG(sbOut, stExists, value);
         addSetTSVal(sbOut, tsDest, value);
-        tsContext[tsDest] = Ft_Single;
+        tsContext[tsDest] = Ft_Unknown;
       } else {
         // If it's 128-bits, and we don't have static info about it,
         // then it could either be two doubles or four singles, so
@@ -303,7 +309,7 @@ void instrumentPutI(IRSB* sbOut,
   }
   if (!canHaveShadow(sbOut->tyenv, data)){
     for(int i = 0; i < dest_size; ++i){
-      addSetTSValDynamic(sbOut, dest_addrs[i], NULL);
+      addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
     }
   } else {
     int tempIdx = data->Iex.RdTmp.tmp;
@@ -314,7 +320,7 @@ void instrumentPutI(IRSB* sbOut,
       for(int i = 0; i < dest_size; ++i){
         if (tempType(tempIdx) == Ft_Double){
           if (i % 2 == 1){
-            addSetTSValDynamic(sbOut, dest_addrs[i], NULL);
+            addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
           } else {
             IRExpr* value =
               runIndex(sbOut, values, ShadowValue*, i / 2);
@@ -783,6 +789,7 @@ IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
   IRExpr* temp = runITE(sbOut, stackEmpty, freshTemp, poppedTemp);
   IRExpr* tempValues = runArrow(sbOut, temp, ShadowTemp, values);
   for(int i = 0; i < num_values; ++i){
+    addSVOwnNonNull(sbOut, values[i]);
     addStoreIndex(sbOut, tempValues, ShadowValue, i, values[i]);
   }
   return temp;
