@@ -352,117 +352,189 @@ void instrumentPutI(IRSB* sbOut,
 }
 void instrumentGet(IRSB* sbOut, IRTemp dest,
                    Int tsSrc, IRType type){
-  int src_size;
-  switch(type){
-  case Ity_I32:
-  case Ity_F32:
-    src_size = 1;
-    break;
-  case Ity_I64:
-  case Ity_F64:
-    src_size = 2;
-    break;
-  case Ity_V128:
-    src_size = 4;
-    break;
-  default:
+  if (!canStoreShadow(sbOut->tyenv, IRExpr_RdTmp(dest))){
     return;
   }
-  FloatType val_type = Ft_Unknown;
-  Int set_addr = 0;
-  for(int i = 0; i < src_size; ++i){
-    Int src_addr = tsSrc + (i * sizeof(float));
-    if (val_type != tsContext[src_addr] &&
-        tsContext[src_addr] != Ft_NonFloat){
-      if (val_type == Ft_Unknown || val_type == Ft_Unshadowed){
-        val_type = tsContext[src_addr];
-        set_addr = src_addr;
-      } else {
-        tl_assert2(tsContext[src_addr] == Ft_Unknown ||
-                   tsContext[src_addr] == Ft_NonFloat ||
-                   tsContext[src_addr] == Ft_Unshadowed,
-                   "Mismatched types in thread state get! "
-                   "TS(%d) has type %d, but TS(%d) has type %d!\n",
-                   src_addr, tsContext[src_addr], set_addr, val_type);
+  int src_size = typeSize(type);
+  if (src_size == 1){
+    FloatType valType = tsContext[tsSrc];
+    // Getting the first half of a double is undefined.
+    tl_assert(valType != Ft_Double);
+    // If it's not a float propagate that information.
+    if (valType == Ft_NonFloat){
+      if (print_types){
+        VG_(printf)("Marking %d as nonfloat because TS(%d) is nonfloat.\n",
+                    dest, tsSrc);
+      }
+      addStoreTempNonFloat(sbOut, dest);
+    } else if (valType == Ft_Unshadowed){
+      addStoreTempUnshadowed(sbOut, dest);
+    } else if (valType == Ft_Single) {
+      // If we know it's a non-null single, then we can load it
+      // unconditionally.
+      IRExpr* val = runGetTSVal(sbOut, tsSrc);
+      IRExpr* temp = runMkShadowTempValues(sbOut, 1, &val);
+      addStoreTemp(sbOut, temp, Ft_Single, dest);
+      if (print_temp_moves){
+        addPrint2("Moving value from TS(%d) ", mkU64(tsSrc));
+        addPrint3("into t%d (%p)\n",
+                  mkU64(dest), temp);
+      }
+    } else if (valType == Ft_Unknown){
+      IRExpr* loaded = runGetTSVal(sbOut, tsSrc);
+      addStoreTempUnknown(sbOut, loaded, dest);
+      if (print_temp_moves){
+        IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, loaded);
+        addPrintG2(loadedNonNull,
+                   "Moving value from TS(%d) ", mkU64(tsSrc));
+        addPrintG3(loadedNonNull,
+                   "into t%d (%p)\n",
+                   mkU64(dest), loaded);
       }
     }
-  }
-  if (val_type == Ft_NonFloat){
-    if (print_types){
-      VG_(printf)("Marking %d as nonfloat because TS(%d) is nonfloat.\n",
-                  dest, set_addr);
-    }
-    tempContext[dest] = Ft_NonFloat;
-  } else if (val_type == Ft_Single || src_size == 1){
-    tl_assert(val_type != Ft_Double);
-    IRExpr* svs[4];
-    for(int i = 0; i < src_size; ++i){
-      Int src_addr = tsSrc + (i * sizeof(float));
-      if (tsContext[src_addr] == Ft_Single){
-        svs[i] = runGetTSVal(sbOut, src_addr);
-      } else {
-        IRExpr* loaded = runGetTSVal(sbOut, src_addr);
-        IRExpr* loadedNull = runZeroCheck64(sbOut, loaded);
-        IRExpr* valExpr = runF32toF64(sbOut, runGet32C(sbOut, src_addr));
-        IRExpr* freshSV = runMkShadowValG(sbOut, loadedNull,
-                                          Ft_Single, valExpr);
-        svs[i] = runITE(sbOut, loadedNull, freshSV, loaded);
+  } else if (src_size == 2){
+    FloatType valType = inferTSType64(tsSrc);
+    if (valType == Ft_NonFloat){
+      if (print_types){
+        VG_(printf)("Marking %d as nonfloat because TS(%d) is nonfloat.\n",
+                    dest, tsSrc);
       }
-    }
-    IRExpr* temp = runMkShadowTempValues(sbOut, src_size, svs);
-    addStoreTemp(sbOut, temp,
-                 Ft_Single, dest, type);
-    if (print_temp_moves){
-      addPrint3("Getting %p from thread state %d ",
-                temp, mkU64(tsSrc));
-      addPrint2("into temp %d\n", mkU64(dest));
-    }
-  } else if (val_type == Ft_Double){
-    IRExpr* svs[2];
-    for(int i = 0; i < src_size / 2; ++i){
-      Int src_addr = tsSrc + (i * sizeof(float));
-      if (tsContext[src_addr] == Ft_Double){
-        svs[i] = runGetTSVal(sbOut, src_addr);
-      } else {
-        IRExpr* loaded = runGetTSVal(sbOut, src_addr);
-        IRExpr* loadedNull = runZeroCheck64(sbOut, loaded);
-        IRExpr* valExpr = runGet64C(sbOut, src_addr);
-        IRExpr* freshSV = runMkShadowValG(sbOut, loadedNull,
-                                          Ft_Double, valExpr);
-        svs[i] = runITE(sbOut, loadedNull, freshSV, loaded);
+      addStoreTempNonFloat(sbOut, dest);
+    } else if (valType == Ft_Unshadowed){
+      addStoreTempUnshadowed(sbOut, dest);
+    } else if (valType == Ft_Single){
+      IRExpr* vals[2];
+      for(int i = 0; i < 2; ++i){
+        Int src_addr = tsSrc + (i * sizeof(float));
+        if (tsContext[src_addr] == Ft_Single){
+          vals[i] = runGetTSVal(sbOut, src_addr);
+        } else if (tsContext[src_addr] == Ft_Unknown){
+          IRExpr* loaded = runGetTSVal(sbOut, src_addr);
+          IRExpr* loadedNull = runZeroCheck64(sbOut, loaded);
+          IRExpr* valExpr = runF32toF64(sbOut, runGet64C(sbOut, src_addr));
+          IRExpr* freshSV = runMkShadowValG(sbOut, loadedNull,
+                                            Ft_Single, valExpr);
+          vals[i] = runITE(sbOut, loadedNull, freshSV, loaded);
+        } else {
+          IRExpr* valExpr =
+            runF32toF64(sbOut, runGet64C(sbOut, src_addr));
+          IRExpr* freshSV =
+            runMkShadowVal(sbOut, Ft_Single, valExpr);
+          vals[i] = freshSV;
+        }
       }
-    }
-    IRExpr* temp = runMkShadowTempValues(sbOut, src_size / 2, svs);
-    addStoreTemp(sbOut, temp,
-                 Ft_Double, dest, type);
-    if (print_temp_moves){
-      addPrint3("Getting %p from thread state %d ",
-                temp, mkU64(tsSrc));
-      addPrint2("into temp %d\n", mkU64(dest));
-    }
-  } else {
-    // This might not be safe? It's not looking at guest state, but
-    // it is looking at tool state which is not directly it's
-    // arguments.
-    IRExpr* temp;
-    if (src_size == 2){
-      temp = runPureCCall64_2(sbOut, dynamicGet64,
+      IRExpr* temp = runMkShadowTempValues(sbOut, 2, vals);
+      addStoreTemp(sbOut, temp, Ft_Single, dest);
+      if (print_temp_moves){
+        addPrint2("Moving two values from TS(%d) ", mkU64(tsSrc));
+        addPrint3("into t%d (%p)\n", mkU64(dest), temp);
+      }
+    } else if (valType == Ft_Double){
+      IRExpr* val = runGetTSVal(sbOut, tsSrc);
+      IRExpr* temp = runMkShadowTempValues(sbOut, 1, &val);
+      addStoreTemp(sbOut, temp, Ft_Double, dest);
+
+      if (print_temp_moves){
+        addPrint2("Moving value from TS(%d) ", mkU64(tsSrc));
+        addPrint3("into t%d (%p)\n", mkU64(dest), temp);
+      }
+    } else if (valType == Ft_Unknown){
+      IRExpr* temp = runPureCCall64_2(sbOut, dynamicGet64,
                                       mkU64(tsSrc),
                                       runGet64C(sbOut, tsSrc));
-    } else {
-      temp = runPureCCall64_3(sbOut, dynamicGet128,
-                              mkU64(tsSrc),
-                              runGet64C(sbOut, tsSrc),
-                              runGet64C(sbOut,
-                                        tsSrc + sizeof(UWord)));
+      addStoreTempUnknown(sbOut, temp, dest);
+      if (print_temp_moves){
+        IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, temp);
+        addPrintG2(loadedNonNull,
+                   "Moving value(s) from TS(%d) ", mkU64(tsSrc));
+        addPrintG3(loadedNonNull,
+                   " into t%d (%p)\n", mkU64(dest), temp);
+      }
     }
-    addStoreTemp(sbOut, temp,
-                 Ft_Unknown, dest, type);
-    if (print_temp_moves){
-      IRExpr* tempNonNull = runNonZeroCheck64(sbOut, temp);
-      addPrintG3(tempNonNull, "Getting %p from thread state %d ",
-                temp, mkU64(tsSrc));
-      addPrintG2(tempNonNull, "into temp %d\n", mkU64(dest));
+  } else if (src_size == 4){
+    return;
+    FloatType valTypes[2];
+    for(int i = 0; i < 2; ++i){
+      valTypes[i] = inferTSType64(tsSrc + (i * sizeof(double)));
+    }
+    FloatType valType;
+    if (valTypes[0] == Ft_Unknown){
+      valType = valTypes[1];
+    } else {
+      valType = valTypes[0];
+    }
+    if (valType == Ft_NonFloat){
+      addStoreTempNonFloat(sbOut, dest);
+    } else if (valType == Ft_Unshadowed){
+      addStoreTempUnshadowed(sbOut, dest);
+    } else
+    // For mismatched V128's, we're going to assume that the program
+    // is only going to use the bottom half, so that's all we'll
+    // load. This might not be sound, say if the user stores the
+    // result back to memory/threadstate with the values copied as
+    // part of the operation, so keep an eye out for this.
+    if (valType == Ft_Single){
+      IRExpr* vals[4];
+      for(int i = 0; i < 4; ++i){
+        Int src_addr = tsSrc + (i * sizeof(float));
+        if (tsContext[src_addr] == Ft_Single){
+          vals[i] = runGetTSVal(sbOut, src_addr);
+        } else if (tsContext[src_addr] == Ft_Unknown){
+          IRExpr* loaded = runGetTSVal(sbOut, src_addr);
+          IRExpr* loadedNull = runZeroCheck64(sbOut, loaded);
+          IRExpr* valExpr = runF32toF64(sbOut, runGet32C(sbOut, src_addr));
+          IRExpr* freshSV = runMkShadowValG(sbOut, loadedNull,
+                                            Ft_Single, valExpr);
+          vals[i] = runITE(sbOut, loadedNull, freshSV, loaded);
+        } else {
+          IRExpr* valExpr =
+            runF32toF64(sbOut, runGet32C(sbOut, src_addr));
+          vals[i] = runMkShadowVal(sbOut, Ft_Single, valExpr);
+        }
+      }
+      IRExpr* temp = runMkShadowTempValues(sbOut, 4, vals);
+      addStoreTemp(sbOut, temp, Ft_Single, dest);
+      if (print_temp_moves){
+        addPrint2("Moving values from TS(%d) ", mkU64(tsSrc));
+        addPrint3("into t%d (%p)\n", mkU64(dest), temp);
+      }
+    } else if (valType == Ft_Double){
+      IRExpr* vals[4];
+      for(int i = 0; i < 2; ++i){
+        Int src_addr = tsSrc + (i * sizeof(double));
+        if (tsContext[src_addr] == Ft_Double){
+          vals[i] = runGetTSVal(sbOut, src_addr);
+        } else if (tsContext[src_addr] == Ft_Unknown){
+          IRExpr* loaded = runGetTSVal(sbOut, src_addr);
+          IRExpr* loadedNull = runZeroCheck64(sbOut, loaded);
+          IRExpr* valExpr = runGet64C(sbOut, src_addr);
+          IRExpr* freshSV = runMkShadowValG(sbOut, loadedNull,
+                                            Ft_Double, valExpr);
+          vals[i] = runITE(sbOut, loadedNull, freshSV, loaded);
+        } else {
+          IRExpr* valExpr = runGet64C(sbOut, src_addr);
+          vals[i] = runMkShadowVal(sbOut, Ft_Double, valExpr);
+        }
+      }
+      IRExpr* temp = runMkShadowTempValues(sbOut, 2, vals);
+      addStoreTemp(sbOut, temp, Ft_Double, dest);
+      if (print_temp_moves){
+        addPrint2("Moving values from TS(%d) ", mkU64(tsSrc));
+        addPrint3("into t%d (%p)\n", mkU64(dest), temp);
+      }
+    } else if (valType == Ft_Unknown) {
+      IRExpr* loaded = runPureCCall64_3(sbOut, dynamicGet128,
+                                        mkU64(tsSrc),
+                                        runGet64C(sbOut, tsSrc),
+                                        runGet64C(sbOut, tsSrc + sizeof(double)));
+      addStoreTempUnknown(sbOut, loaded, dest);
+      if (print_temp_moves){
+        IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, loaded);
+        addPrintG2(loadedNonNull,
+                   "Moving value(s) from TS(%d) ", mkU64(tsSrc));
+        addPrintG3(loadedNonNull,
+                   " into t%d (%p)\n", mkU64(dest), loaded);
+      }
     }
   }
 }
@@ -714,6 +786,9 @@ IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
     addStoreIndex(sbOut, tempValues, ShadowValue, i, values[i]);
   }
   return temp;
+}
+IRExpr* runMkShadowVal(IRSB* sbOut, FloatType type, IRExpr* valExpr){
+  return runPureCCall64_2(sbOut, mkShadowValue, mkU64(type), valExpr);
 }
 IRExpr* runMkShadowValG(IRSB* sbOut, IRExpr* guard,
                         FloatType type, IRExpr* valExpr){
@@ -1022,7 +1097,11 @@ IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr){
 }
 
 int exprSize(IRTypeEnv* tyenv, IRExpr* expr){
-  switch (typeOfIRExpr(tyenv, expr)){
+  return typeSize(typeOfIRExpr(tyenv, expr));
+}
+
+int typeSize(IRType type){
+  switch (type){
   case Ity_I32:
   case Ity_F32:
     return 1;
@@ -1032,6 +1111,7 @@ int exprSize(IRTypeEnv* tyenv, IRExpr* expr){
   case Ity_V128:
     return 4;
   default:
+    ppIRType(type);
     tl_assert(0);
     return 0;
   }
@@ -1053,6 +1133,27 @@ Bool tsHasStaticShadow(Int tsAddr){
     return True;
   default:
     return False;
+  }
+}
+
+FloatType inferTSType64(Int tsAddr){
+  tl_assert2(tsContext[tsAddr + sizeof(float)] != Ft_Double,
+             "Mismatched float at TS(%d)!", tsAddr);
+  tl_assert2(tsContext[tsAddr] != Ft_NonFloat ||
+             tsContext[tsAddr + sizeof(float)] == Ft_NonFloat,
+             "Mismatched float at TS(%d)!", tsAddr);
+  tl_assert2(tsContext[tsAddr] != Ft_Double ||
+             tsContext[tsAddr + sizeof(float)] == Ft_NonFloat,
+             "Mismatched float at TS(%d)!", tsAddr);
+  tl_assert2(tsContext[tsAddr] != Ft_Single ||
+             tsContext[tsAddr + sizeof(float)] == Ft_Single ||
+             tsContext[tsAddr + sizeof(float)] == Ft_NonFloat ||
+             tsContext[tsAddr + sizeof(float)] == Ft_Unknown,
+             "Mismatched float at TS(%d)!", tsAddr);
+  if (tsContext[tsAddr] == Ft_Unknown){
+    return tsContext[tsAddr + sizeof(float)];
+  } else {
+    return tsContext[tsAddr];
   }
 }
 // Produce an expression to calculate (base + ((idx + bias) % len)),

@@ -79,6 +79,7 @@ void addClear(IRSB* sbOut, IRTemp shadowed_temp, int num_vals);
 
 IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
                               IRExpr** values);
+IRExpr* runMkShadowVal(IRSB* sbOut, FloatType type, IRExpr* valExpr);
 IRExpr* runMkShadowValG(IRSB* sbOut, IRExpr* guard,
                         FloatType type, IRExpr* valExpr);
 IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
@@ -109,6 +110,7 @@ void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx);
 void addStoreTempUnshadowed(IRSB* sbOut, int idx);
 Bool tempIsTyped(int idx);
 FloatType tempType(int idx);
+FloatType inferTSType64(Int tsAddr);
 Bool hasStaticShadow(IRExpr* expr);
 Bool canHaveShadow(IRTypeEnv* tyenv, IRExpr* expr);
 Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr);
@@ -117,6 +119,7 @@ IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr);
 int valueSize(IRSB* sbOut, int idx);
 int numTempValues(IRSB* sbOut, int idx);
 int exprSize(IRTypeEnv* tyenv, IRExpr* expr);
+int typeSize(IRType type);
 Bool tsAddrCanHoldShadow(Int tsAddr);
 Bool tsHasStaticShadow(Int tsAddr);
 IRExpr* mkArrayLookupExpr(IRSB* sbOut,
