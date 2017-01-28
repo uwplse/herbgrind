@@ -88,24 +88,25 @@ IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
                      FloatType type, int num_vals);
 
 IRExpr* runLoadTemp(IRSB* sbOut, int idx);
-void addStoreNonFloat(int idx);
-void addMarkUnknown(int idx);
-void addMarkUnshadowed(int idx);
 IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc);
 IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc);
 void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
                         IRExpr* newVal, FloatType floatType);
 void addSetTSValNonFloat(IRSB* sbOut, Int tsDest);
 void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest);
+void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal);
 void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal);
 void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal);
 void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
                   FloatType type,
-                  int idx, IRType size);
+                  int idx);
 void addStoreTempG(IRSB* sbOut, IRExpr* guard,
                    IRExpr* shadow_temp,
                    FloatType type,
-                   int idx, IRType size);
+                   int idx);
+void addStoreTempNonFloat(IRSB* sbOut, int idx);
+void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx);
+void addStoreTempUnshadowed(IRSB* sbOut, int idx);
 Bool tempIsTyped(int idx);
 FloatType tempType(int idx);
 Bool hasStaticShadow(IRExpr* expr);

@@ -84,7 +84,7 @@ void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src){
   addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowTempDirty));
   addStoreTempG(sbOut, tempNonNull,
                 IRExpr_RdTmp(newShadowTempCopy),
-                tempContext[src], dest, typeOfIRTemp(sbOut->tyenv, src));
+                tempContext[src], dest);
   if (print_temp_moves){
     addPrintG3(tempNonNull, "Copying shadow temp %p in %d ", newShadowTemp, mkU64(src));
     addPrintG3(tempNonNull, "to %p in %d\n",
@@ -750,8 +750,7 @@ IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
   }
   if (canStoreShadow(sbOut->tyenv, argExpr)){
     addStoreTemp(sbOut, result, valType,
-                 argExpr->Iex.RdTmp.tmp,
-                 typeOfIRExpr(sbOut->tyenv, argExpr));
+                 argExpr->Iex.RdTmp.tmp);
   }
   return result;
 }
@@ -793,21 +792,12 @@ IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
   }
   if (canStoreShadow(sbOut->tyenv, argExpr)){
     addStoreTempG(sbOut, guard, result, valType,
-                  argExpr->Iex.RdTmp.tmp, typeOfIRExpr(sbOut->tyenv, argExpr));
+                  argExpr->Iex.RdTmp.tmp);
   }
   return result;
 }
 IRExpr* runLoadTemp(IRSB* sbOut, int idx){
   return runLoad64C(sbOut, &(shadowTemps[idx]));
-}
-void addStoreNonFloat(int idx){
-  tempContext[idx] = Ft_NonFloat;
-}
-void addMarkUnknown(int idx){
-  tempContext[idx] = Ft_Unknown;
-}
-void addMarkUnshadowed(int idx){
-  tempContext[idx] = Ft_Unshadowed;
 }
 IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc){
   return runLoad64C(sbOut,
@@ -836,6 +826,10 @@ void addSetTSValNonFloat(IRSB* sbOut, Int tsDest){
 void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest){
   addSetTSVal(sbOut, tsDest, mkU64(0));
   tsContext[tsDest] = Ft_Unshadowed;
+}
+void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal){
+  addSetTSVal(sbOut, tsDest, newVal);
+  tsContext[tsDest] = Ft_Unknown;
 }
 void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal){
   if (print_value_moves){
@@ -867,7 +861,7 @@ void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal){
 }
 void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
                   FloatType type,
-                  int idx, IRType size){
+                  int idx){
   tl_assert2(tempContext[idx] == Ft_Unknown ||
              tempContext[idx] == Ft_Unshadowed,
              "Tried to set an already set temp %d!\n",
@@ -879,7 +873,7 @@ void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
 void addStoreTempG(IRSB* sbOut, IRExpr* guard,
                    IRExpr* shadow_temp,
                    FloatType type,
-                   int idx, IRType size){
+                   int idx){
   tl_assert2(tempContext[idx] == Ft_Unknown ||
              tempContext[idx] == Ft_NonFloat ||
              tempContext[idx] == Ft_Unshadowed ||
@@ -889,6 +883,17 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard,
              " type temp %d!\n", idx, type, tempContext[idx]);
   addStoreGC(sbOut, guard, shadow_temp, &(shadowTemps[idx]));
   cleanupAtEndOfBlock(sbOut, idx);
+}
+void addStoreTempNonFloat(IRSB* sbOut, int idx){
+  tempContext[idx] = Ft_NonFloat;
+}
+void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx){
+  tempContext[idx] = Ft_Unknown;
+  IRExpr* tempNonNull = runZeroCheck64(sbOut, shadow_temp_maybe);
+  addStoreTempG(sbOut, tempNonNull, shadow_temp_maybe, Ft_Unknown, idx);
+}
+void addStoreTempUnshadowed(IRSB* sbOut, int idx){
+  tempContext[idx] = Ft_Unshadowed;
 }
 Bool tempIsTyped(int idx){
   return tempContext[idx] == Ft_Single ||

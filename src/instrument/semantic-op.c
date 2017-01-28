@@ -71,8 +71,7 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
     addPrint3("Putting result of op, %p, in %d", shadowOutput, mkU64(dest));
     addPrint2(" (with %d values)\n", mkU64(numChannelsOut(op_code)));
   }
-  addStoreTemp(sbOut, shadowOutput, argPrecision(op_code),
-               dest, typeOfIRTemp(sbOut->tyenv, dest));
+  addStoreTemp(sbOut, shadowOutput, argPrecision(op_code), dest);
 
   for(int i = 0; i < nargs; ++i){
     if (!canStoreShadow(sbOut->tyenv, argExprs[i])){

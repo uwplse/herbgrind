@@ -106,7 +106,7 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr, Addr curAddr){
                            curAddr, dest);
     }
   } else {
-    addStoreNonFloat(dest);
+    addStoreTempNonFloat(sbOut, dest);
   }
 }
 Bool isSpecialOp(IROp op_code){
@@ -130,7 +130,7 @@ void handleSpecialOp(IRSB* sbOut, IROp op_code,
   case Iop_AndV128:
   case Iop_OrV128:
   case Iop_NotV128:
-    addMarkUnshadowed(dest);
+    addStoreTempUnshadowed(sbOut, dest);
     break;
   default:
     break;

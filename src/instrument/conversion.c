@@ -67,14 +67,14 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     int inputIndex = conversionInputArgIndex(op_code);
     if (!canHaveShadow(sbOut->tyenv, argExprs[inputIndex])){
       if (canBeFloat(sbOut->tyenv, argExprs[inputIndex])){
-        addMarkUnshadowed(dest);
+        addStoreTempUnshadowed(sbOut, dest);
       } else {
         if (print_types){
           VG_(printf)("Marking %d as non-float because the input ", dest);
           ppIRExpr(argExprs[0]);
           VG_(printf)(" cannot be a float.\n");
         }
-        addStoreNonFloat(dest);
+        addStoreTempNonFloat(sbOut, dest);
       }
       return;
     } else {
@@ -95,7 +95,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
         !canHaveShadow(sbOut->tyenv, argExprs[1])){
       if (canBeFloat(sbOut->tyenv, argExprs[0]) ||
           canBeFloat(sbOut->tyenv, argExprs[1])){
-        addMarkUnshadowed(dest);
+        addStoreTempUnshadowed(sbOut, dest);
       } else {
         if (print_types){
           VG_(printf)("Marking %d as non-float because the inputs ",
@@ -105,7 +105,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
           ppIRExpr(argExprs[1]);
           VG_(printf)(" can't be floats.\n");
         }
-        addStoreNonFloat(dest);
+        addStoreTempNonFloat(sbOut, dest);
       }
       return;
     } else if (hasStaticShadow(argExprs[0]) ||
@@ -492,16 +492,17 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     }
     addStoreTemp(sbOut, shadowOutput,
                  outputPrecision,
-                 dest, typeOfIRTemp(sbOut->tyenv, dest));
+                 dest);
   } else {
     if (print_temp_moves){
       addPrintOpG(inputPreexisting, op_code);
       addPrintG3(inputPreexisting, ": Putting converted temp %p in %d\n",
                  shadowOutput, mkU64(dest));
     }
+    tl_assert(inputPreexisting != NULL);
     addStoreTempG(sbOut, inputPreexisting, shadowOutput,
                   outputPrecision,
-                  dest, typeOfIRTemp(sbOut->tyenv, dest));
+                  dest);
   }
 
   // Finally, if we created inputs for constants, free them up, since
