@@ -1,9 +1,9 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie              hg_main.c ---*/
+/*--- Herbgrind: a valgrind tool for Herbie              hg_main.c ---*/
 /*--------------------------------------------------------------------*/
 
 /*
-   This file is part of HerbGrind, a valgrind tool for diagnosing
+   This file is part of Herbgrind, a valgrind tool for diagnosing
    floating point accuracy problems in binary programs and extracting
    problematic expressions.
 
@@ -61,7 +61,7 @@ static void hg_post_clo_init(void){
 // This is where we initialize everything
 static void hg_pre_clo_init(void)
 {
-   VG_(details_name)            ("HerbGrind");
+   VG_(details_name)            ("Herbgrind");
    VG_(details_version)         (NULL);
    VG_(details_description)     ("a valgrind tool for Herbie");
    VG_(details_copyright_author)("");
