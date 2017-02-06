@@ -199,7 +199,6 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
                           dest_addr);
             }
           } else {
-            addSetTSValUnshadowed(sbOut, dest_addr);
             IRExpr* value;
             if (i == 0){
               value = runLoad64(sbOut, values);
@@ -458,7 +457,6 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       }
     }
   } else if (src_size == 4){
-    return;
     FloatType valTypes[2];
     for(int i = 0; i < 2; ++i){
       valTypes[i] = inferTSType64(tsSrc + (i * sizeof(double)));
@@ -505,7 +503,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
         addPrint3("into t%d (%p)\n", mkU64(dest), temp);
       }
     } else if (valType == Ft_Double){
-      IRExpr* vals[4];
+      IRExpr* vals[2];
       for(int i = 0; i < 2; ++i){
         Int src_addr = tsSrc + (i * sizeof(double));
         if (tsContext[src_addr] == Ft_Double){

@@ -79,6 +79,9 @@ VG_REGPARM(2) void assertValValid(const char* label, ShadowValue* val){
 }
 VG_REGPARM(2) void assertTempValid(const char* label, ShadowTemp* temp){
   for(int i = 0; i < temp->num_vals; ++i){
+    tl_assert2(temp->values[i] != NULL,
+               "%s: Value %d of temp %p is NULL!",
+               label, i, temp);
     assertValValid(label, temp->values[i]);
   }
 }
