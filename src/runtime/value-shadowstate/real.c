@@ -66,14 +66,10 @@ double getDouble(Real real){
   #endif
 }
 
-Real copyReal(Real real){
-  Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
+void copyReal(Real src, Real dest){
   #ifdef USE_MPFR
-  mpfr_init2(result->mpfr_val, precision);
-  mpfr_set(result->mpfr_val, real->mpfr_val, MPFR_RNDN);
+  mpfr_set(dest->mpfr_val, src->mpfr_val, MPFR_RNDN);
   #else
-  mpf_init2(result->mpf_val, precision);
-  mpf_set(result->mpf_val, real->mpf_val);
+  mpf_set(dest->mpf_val, src->mpf_val);
   #endif
-  return result;
 }

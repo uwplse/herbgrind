@@ -278,7 +278,11 @@ StackNode* stack_pop_fast(Stack* s){
   s->head = oldHead->next;
   return oldHead;
 }
-
+ShadowValue* copyShadowValue(ShadowValue* val){
+  ShadowValue* copy = mkShadowValueBare(val->type);
+  copyReal(val->real, copy->real);
+  return copy;
+}
 inline
 ShadowValue* mkShadowValueBare(FloatType type){
   ShadowValue* result;

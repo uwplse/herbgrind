@@ -65,15 +65,6 @@ ShadowValue* newShadowValue(FloatType type){
   result->real = mkReal();
   return result;
 }
-ShadowValue* copyShadowValue(ShadowValue* val){
-  ShadowValue* result = VG_(malloc)("shadow value", sizeof(ShadowValue));
-  result->type = val->type;
-  result->ref_count = 1;
-  result->real = copyReal(val->real);
-  result->expr = val->expr;
-  result->influences = val->influences;
-  return result;
-}
 VG_REGPARM(2) void assertValValid(const char* label, ShadowValue* val){
   tl_assert2(val->real != NULL, "%s: value is %p", label, val);
 }

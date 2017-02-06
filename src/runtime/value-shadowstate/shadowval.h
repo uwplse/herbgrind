@@ -62,8 +62,6 @@ void changeSingleValueType(ShadowTemp* temp, FloatType type);
 
 UWord hashDouble(double val);
 ShadowValue* newShadowValue(FloatType type);
-VG_REGPARM(3)
-ShadowValue* copyShadowValue(ShadowValue* val);
 VG_REGPARM(2) void assertValValid(const char* label, ShadowValue* val);
 VG_REGPARM(2) void assertTempValid(const char* label, ShadowTemp* temp);
 

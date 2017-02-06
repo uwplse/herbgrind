@@ -54,6 +54,6 @@ void setReal(Real r, double bytes);
 double getDouble(Real real);
 
 void freeReal(Real real);
-Real copyReal(Real real);
+void copyReal(Real src, Real dest);
 
 #endif

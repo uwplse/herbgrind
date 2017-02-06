@@ -779,7 +779,7 @@ void addClear(IRSB* sbOut, IRTemp dest, int num_vals){
 IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
                               IRExpr** values){
   IRExpr* stackEmpty = runStackEmpty(sbOut, freedTemps[num_values-1]);
-  IRExpr* freshTemp = runDirtyG_1_1(sbOut, stackEmpty, newShadowTemp,
+  IRExpr* freshTemp = runDirtyG_1_1(sbOut, stackEmpty, mkShadowTemp,
                                     mkU64(num_values));
   IRExpr* poppedTemp = runStackPopG(sbOut,
                                     runUnop(sbOut, Iop_Not1, stackEmpty),
