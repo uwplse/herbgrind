@@ -1165,29 +1165,33 @@ FloatType inferTSType64(Int tsAddr){
 }
 // Produce an expression to calculate (base + ((idx + bias) % len)),
 // where base, bias, and len are fixed, and idx can vary at runtime.
-// The type of the resulting expression is Ity_I32.
 IRExpr* mkArrayLookupExpr(IRSB* sbOut,
                           Int base, IRExpr* idx,
                           Int bias, Int len,
                           IRType elemSize){
   // Set op the temps to hold all the different intermediary values.
+  IRExpr* added = runBinop(sbOut, Iop_Add64,
+                           runUnop(sbOut, Iop_32Uto64, idx),
+                           mkU64(bias < 0 ? bias + len : bias));
+  IRExpr* divmod = runBinop(sbOut,
+                            Iop_DivModU64to32,
+                            added,
+                            mkU32(len));
   IRExpr* index =
     runUnop(sbOut,
             Iop_32Uto64,
             runUnop(sbOut,
                     Iop_64HIto32,
-                    runBinop(sbOut,
-                             Iop_DivModU64to32,
-                             runBinop(sbOut,
-                                      Iop_Add64,
-                                      idx,
-                                      mkU64(bias)),
-                             mkU64(len))));
-  return runBinop(sbOut,
-                  Iop_Add64,
-                  mkU64(base),
-                  runBinop(sbOut,
-                           Iop_Mul64,
-                           mkU64(sizeofIRType(elemSize)),
-                           index));
+                    divmod));
+  IRExpr* ex1 =
+    runBinop(sbOut,
+             Iop_Mul64,
+             mkU64(sizeofIRType(elemSize)),
+             index);
+  IRExpr* lookupExpr =
+    runBinop(sbOut,
+             Iop_Add64,
+             mkU64(base),
+             ex1);
+  return lookupExpr;
 }
