@@ -165,22 +165,53 @@ ShadowTemp* setV128lo32(ShadowTemp* topThree, ShadowTemp* bottomOne){
 inline
 VG_REGPARM(2)
 ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
-  tl_assert2(top->num_vals == bottom->num_vals * 2,
-             "Wrong number of values! First argument %p has %d values, "
-             "and second argument %p has %d values.\n",
-             top, top->num_vals, bottom, bottom->num_vals);
-  ShadowTemp* result = copyShadowTemp(top);
-  for (int i = 0; i < bottom->num_vals; ++i){
-    result->values[i] = bottom->values[i];
-    ownShadowValue(result->values[i]);
-    if (print_value_moves){
-      VG_(printf)("Owning value %p (new ref count %lu) "
-                  "copied in setV128lo64\n",
-                  result->values[i],
-                  result->values[i]->ref_count);
+  /* tl_assert2(top->num_vals == bottom->num_vals * 2, */
+  /*            "Wrong number of values! First argument %p has %d values, " */
+  /*            "and second argument %p has %d values.\n", */
+  /*            top, top->num_vals, bottom, bottom->num_vals); */
+  if (top->num_vals == bottom->num_vals * 2){
+    ShadowTemp* result = copyShadowTemp(top);
+    for (int i = 0; i < bottom->num_vals; ++i){
+      result->values[i] = bottom->values[i];
+      ownShadowValue(result->values[i]);
+      if (print_value_moves){
+        VG_(printf)("Owning value %p (new ref count %lu) "
+                    "copied in setV128lo64\n",
+                    result->values[i],
+                    result->values[i]->ref_count);
+      }
+    }
+    return result;
+  } else {
+    // Mixed reads are a thing, and hopefully mean the program is only
+    // going to look at the bottom value, because otherwise all sane
+    // semantics are fucked.
+    if (top->num_vals == 4 && bottom->num_vals == 1){
+      ShadowTemp* result = mkShadowTemp(2);
+      result->values[0] = bottom->values[0];
+      float v3 = getDouble(top->values[3]->real);
+      float v4 = getDouble(top->values[4]->real);
+      // #suuuuupersketch
+      double combined;
+      VG_(memcpy)(&v3, &combined, sizeof(float));
+      VG_(memcpy)(&v4, (&combined) + sizeof(float), sizeof(float));
+      result->values[1] = mkShadowValue(Ft_Double, combined);
+      return result;
+    } else if (top->num_vals == 2 && bottom->num_vals == 2){
+      ShadowTemp* result = mkShadowTemp(4);
+      result->values[0] = bottom->values[0];
+      result->values[1] = bottom->values[1];
+      double combined = getDouble(top->values[1]->real);
+      float f3, f4;
+      VG_(memcpy)(&combined, &f3, sizeof(float));
+      VG_(memcpy)((&combined) + sizeof(float), &f4, sizeof(float));
+      result->values[2] = mkShadowValue(Ft_Single, f3);
+      result->values[3] = mkShadowValue(Ft_Single, f4);
+      return result;
+    } else {
+      tl_assert(0);
     }
   }
-  return result;
 }
 VG_REGPARM(3)
 ShadowTemp* setV128lo64Dynamic2(ShadowTemp* top,
