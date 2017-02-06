@@ -788,7 +788,7 @@ IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
   IRExpr* tempValues = runArrow(sbOut, temp, ShadowTemp, values);
   for(int i = 0; i < num_values; ++i){
     addSVOwnNonNull(sbOut, values[i]);
-    addStoreIndex(sbOut, tempValues, ShadowValue, i, values[i]);
+    addStoreIndex(sbOut, tempValues, ShadowValue*, i, values[i]);
   }
   return temp;
 }
