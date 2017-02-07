@@ -512,7 +512,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
   if (numConversionInputs(op_code) == 2){
     if (inputPreexisting == NULL){
       for (int i = 0; i < 2; ++i){
-        if (!canHaveShadow(sbOut->tyenv, argExprs[i])){
+        if (!canStoreShadow(sbOut->tyenv, argExprs[i])){
           if (argPrecision(op_code) == Ft_Unknown){
             addDynamicDisownNonNullDetached(sbOut, shadowInputs[i]);
           } else {
@@ -524,7 +524,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       }
     } else {
       for (int i = 0; i < 2; ++i){
-        if (!canHaveShadow(sbOut->tyenv, argExprs[i])){
+        if (!canStoreShadow(sbOut->tyenv, argExprs[i])){
           if (argPrecision(op_code) == Ft_Unknown){
             addDynamicDisown(sbOut, i);
           } else {

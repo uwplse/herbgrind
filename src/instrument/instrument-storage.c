@@ -969,7 +969,7 @@ void addStoreTempNonFloat(IRSB* sbOut, int idx){
 }
 void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx){
   tempContext[idx] = Ft_Unknown;
-  IRExpr* tempNonNull = runZeroCheck64(sbOut, shadow_temp_maybe);
+  IRExpr* tempNonNull = runNonZeroCheck64(sbOut, shadow_temp_maybe);
   addStoreTempG(sbOut, tempNonNull, shadow_temp_maybe, Ft_Unknown, idx);
 }
 void addStoreTempUnshadowed(IRSB* sbOut, int idx){

@@ -230,15 +230,15 @@ VG_REGPARM(1) ShadowTemp* dynamicGet128(Int tsSrc,
   ShadowTemp* result;
   if (firstHalf->num_vals == 1 && secondHalf->num_vals == 1){
     result = mkShadowTemp(2);
+    result->values[0] = firstHalf->values[0];
+    result->values[1] = secondHalf->values[0];
   } else {
+    tl_assert(firstHalf->num_vals == 2 &&
+              secondHalf->num_vals == 2);
     result = mkShadowTemp(4);
-  }
-  result->values[0] = firstHalf->values[0];
-  if (firstHalf->num_vals > 1){
+    result->values[0] = firstHalf->values[0];
     result->values[1] = firstHalf->values[1];
-  }
-  result->values[2] = secondHalf->values[0];
-  if (firstHalf->num_vals > 1){
+    result->values[2] = secondHalf->values[0];
     result->values[3] = secondHalf->values[1];
   }
   freeShadowTemp(firstHalf);
