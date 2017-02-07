@@ -189,7 +189,7 @@ IRExpr* runPureCCall(IRSB* sbOut, IRCallee* callee, IRType retty,
             runIndexAddr(sbOut,                             \
                          array_addr,                       \
                          element_type,                      \
-                         const_index)))
+                         const_index))
 #define runF32toF64(sbOut, f32)                                 \
   runUnop(sbOut, Iop_ReinterpF64asI64,                          \
           runUnop(sbOut, Iop_F32toF64,                          \

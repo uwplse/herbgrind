@@ -385,14 +385,18 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
         addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
       }
     } else if (valType == Ft_Unknown){
-      IRExpr* loaded = runGetTSVal(sbOut, tsSrc);
-      addStoreTempUnknown(sbOut, loaded, dest);
+      IRExpr* loadedVal = runGetTSVal(sbOut, tsSrc);
+      IRExpr* loadedValNonNull = runNonZeroCheck64(sbOut, loadedVal);
+      IRExpr* temp = runMkShadowTempValuesG(sbOut, loadedValNonNull, 1,
+                                            &loadedVal);
+      addStoreTempUnknown(sbOut, temp, dest);
       if (print_temp_moves){
-        IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, loaded);
+        IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, temp);
         addPrintG3(loadedNonNull,
                    "2. Making %p in %d ",
-                   loaded, mkU64(dest));
-        addPrintG2(loadedNonNull, "for value from TS(%d)\n", mkU64(tsSrc));
+                   temp, mkU64(dest));
+        addPrintG2(loadedNonNull, "for value from TS(%d)\n",
+                  mkU64(tsSrc));
       }
     }
   } else if (src_size == 2){
@@ -776,6 +780,27 @@ void addClear(IRSB* sbOut, IRTemp dest, int num_vals){
   addDisownNonNull(sbOut, oldShadowTemp, num_vals);
   addStoreC(sbOut, mkU64(0), &(shadowTemps[dest]));
 }
+IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
+                               int num_values,
+                               IRExpr** values){
+  IRExpr* stackEmpty = runStackEmpty(sbOut, freedTemps[num_values-1]);
+  IRExpr* shouldMake = runAnd(sbOut, guard, stackEmpty);
+  IRExpr* freshTemp = runDirtyG_1_1(sbOut, shouldMake, mkShadowTemp,
+                                    mkU64(num_values));
+  IRExpr* shouldPop = runAnd(sbOut, guard,
+                             runUnop(sbOut, Iop_Not1, stackEmpty));
+  IRExpr* poppedTemp = runStackPopG(sbOut,
+                                    shouldPop,
+                                    freedTemps[num_values-1]);
+  IRExpr* temp = runITE(sbOut, stackEmpty, freshTemp, poppedTemp);
+  IRExpr* tempValues = runArrowG(sbOut, guard, temp, ShadowTemp, values);
+  for(int i = 0; i < num_values; ++i){
+    addSVOwnNonNullG(sbOut, guard, values[i]);
+    addStoreIndexG(sbOut, guard, tempValues, ShadowValue*, i, values[i]);
+  }
+  IRExpr* result = runITE(sbOut, guard, temp, mkU64(0));
+  return result;
+}
 IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
                               IRExpr** values){
   IRExpr* stackEmpty = runStackEmpty(sbOut, freedTemps[num_values-1]);
@@ -968,9 +993,8 @@ void addStoreTempNonFloat(IRSB* sbOut, int idx){
   tempContext[idx] = Ft_NonFloat;
 }
 void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx){
-  tempContext[idx] = Ft_Unknown;
-  IRExpr* tempNonNull = runNonZeroCheck64(sbOut, shadow_temp_maybe);
-  addStoreTempG(sbOut, tempNonNull, shadow_temp_maybe, Ft_Unknown, idx);
+  /* IRExpr* tempNonNull = runNonZeroCheck64(sbOut, shadow_temp_maybe); */
+  addStoreTemp(sbOut/* , tempNonNull */, shadow_temp_maybe, Ft_Unknown, idx);
 }
 void addStoreTempUnshadowed(IRSB* sbOut, int idx){
   tempContext[idx] = Ft_Unshadowed;

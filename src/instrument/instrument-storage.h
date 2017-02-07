@@ -79,6 +79,9 @@ void addClear(IRSB* sbOut, IRTemp shadowed_temp, int num_vals);
 
 IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
                               IRExpr** values);
+IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
+                               int num_values,
+                               IRExpr** values);
 IRExpr* runMkShadowVal(IRSB* sbOut, FloatType type, IRExpr* valExpr);
 IRExpr* runMkShadowValG(IRSB* sbOut, IRExpr* guard,
                         FloatType type, IRExpr* valExpr);
