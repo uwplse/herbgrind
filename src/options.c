@@ -44,6 +44,7 @@ Bool print_value_moves = False;
 Bool print_semantic_ops = False;
 Bool print_conversions = False;
 Bool print_types = False;
+Bool print_allocs = False;
 Int precision = 1000;
 
 // Called to process each command line option.
@@ -57,6 +58,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-semantic-ops", print_semantic_ops, True) {}
   else if VG_XACT_CLO(arg, "--print-conversions", print_conversions, True) {}
   else if VG_XACT_CLO(arg, "--print-types", print_types, True) {}
+  else if VG_XACT_CLO(arg, "--print-allocs", print_allocs, True) {}
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else return False;
   return True;
@@ -87,5 +89,7 @@ void hg_print_debug_usage(void){
               " --print-conversions "
               "Prints each conversion op executed\n"
               " --print-types "
-              "Prints some type inferences\n");
+              "Prints some type inferences\n"
+              " --print-allocs "
+              "Prints for each major allocation.\n");
 }

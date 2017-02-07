@@ -41,6 +41,10 @@ VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
     ppIROp(opInfo->op_code);
     VG_(printf)(": Making value(s) ");
   }
+  if (print_temp_moves){
+    VG_(printf)("Making %p for result of shadow op.\n",
+                result);
+  }
   for(int i = 0; i < opInfo->exinfo.numSIMDOperands; ++i){
     ShadowValue* vals[opInfo->exinfo.nargs];
     for(int j = 0; j < opInfo->exinfo.nargs; ++j){

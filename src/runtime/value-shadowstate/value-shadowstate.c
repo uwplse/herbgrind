@@ -254,6 +254,10 @@ ShadowTemp* mkShadowTemp(UWord num_vals){
   ShadowTemp* result;
   if (stack_empty(freedTemps[num_vals - 1])){
     result = newShadowTemp(num_vals);
+    if (print_temp_moves || print_allocs){
+      VG_(printf)("Making fresh shadow temp %p with values %p\n",
+                  result, result->values);
+    }
   } else {
     result = (void*)stack_pop(freedTemps[num_vals - 1]);
   }
@@ -288,6 +292,9 @@ ShadowValue* mkShadowValueBare(FloatType type){
   ShadowValue* result;
   if (stack_empty(freedVals)){
     result = newShadowValue(type);
+    if (print_value_moves || print_allocs){
+      VG_(printf)("Alloced new shadow value %p\n", result);
+    }
   } else {
     result = (void*)stack_pop_fast(freedVals);
     result->type = type;

@@ -381,20 +381,18 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* temp = runMkShadowTempValues(sbOut, 1, &val);
       addStoreTemp(sbOut, temp, Ft_Single, dest);
       if (print_temp_moves){
-        addPrint2("Moving value from TS(%d) ", mkU64(tsSrc));
-        addPrint3("into t%d (%p)\n",
-                  mkU64(dest), temp);
+        addPrint3("1. Making %p in %d ", temp, mkU64(dest));
+        addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
       }
     } else if (valType == Ft_Unknown){
       IRExpr* loaded = runGetTSVal(sbOut, tsSrc);
       addStoreTempUnknown(sbOut, loaded, dest);
       if (print_temp_moves){
         IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, loaded);
-        addPrintG2(loadedNonNull,
-                   "Moving value from TS(%d) ", mkU64(tsSrc));
         addPrintG3(loadedNonNull,
-                   "into t%d (%p)\n",
-                   mkU64(dest), loaded);
+                   "2. Making %p in %d ",
+                   loaded, mkU64(dest));
+        addPrintG2(loadedNonNull, "for value from TS(%d)\n", mkU64(tsSrc));
       }
     }
   } else if (src_size == 2){
@@ -431,8 +429,8 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* temp = runMkShadowTempValues(sbOut, 2, vals);
       addStoreTemp(sbOut, temp, Ft_Single, dest);
       if (print_temp_moves){
-        addPrint2("Moving two values from TS(%d) ", mkU64(tsSrc));
-        addPrint3("into t%d (%p)\n", mkU64(dest), temp);
+        addPrint3("3. Making %p in %d ", temp, mkU64(dest));
+        addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
       }
     } else if (valType == Ft_Double){
       IRExpr* val = runGetTSVal(sbOut, tsSrc);
@@ -440,8 +438,8 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       addStoreTemp(sbOut, temp, Ft_Double, dest);
 
       if (print_temp_moves){
-        addPrint2("Moving value from TS(%d) ", mkU64(tsSrc));
-        addPrint3("into t%d (%p)\n", mkU64(dest), temp);
+        addPrint3("4. Making %p in %d ", temp, mkU64(dest));
+        addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
       }
     } else if (valType == Ft_Unknown){
       IRExpr* temp = runPureCCall64_2(sbOut, dynamicGet64,
@@ -450,10 +448,10 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       addStoreTempUnknown(sbOut, temp, dest);
       if (print_temp_moves){
         IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, temp);
-        addPrintG2(loadedNonNull,
-                   "Moving value(s) from TS(%d) ", mkU64(tsSrc));
         addPrintG3(loadedNonNull,
-                   " into t%d (%p)\n", mkU64(dest), temp);
+                   "5. Making %p in %d ",
+                   temp, mkU64(dest));
+        addPrintG2(loadedNonNull, "for value from TS(%d)\n", mkU64(tsSrc));
       }
     }
   } else if (src_size == 4){
@@ -499,8 +497,8 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* temp = runMkShadowTempValues(sbOut, 4, vals);
       addStoreTemp(sbOut, temp, Ft_Single, dest);
       if (print_temp_moves){
-        addPrint2("Moving values from TS(%d) ", mkU64(tsSrc));
-        addPrint3("into t%d (%p)\n", mkU64(dest), temp);
+        addPrint3("6. Making %p in %d ", temp, mkU64(dest));
+        addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
       }
     } else if (valType == Ft_Double){
       IRExpr* vals[2];
@@ -523,8 +521,8 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* temp = runMkShadowTempValues(sbOut, 2, vals);
       addStoreTemp(sbOut, temp, Ft_Double, dest);
       if (print_temp_moves){
-        addPrint2("Moving values from TS(%d) ", mkU64(tsSrc));
-        addPrint3("into t%d (%p)\n", mkU64(dest), temp);
+        addPrint3("7. Making %p in %d ", temp, mkU64(dest));
+        addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
       }
     } else if (valType == Ft_Unknown) {
       IRExpr* loaded = runPureCCall64_3(sbOut, dynamicGet128,
@@ -534,10 +532,10 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       addStoreTempUnknown(sbOut, loaded, dest);
       if (print_temp_moves){
         IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, loaded);
-        addPrintG2(loadedNonNull,
-                   "Moving value(s) from TS(%d) ", mkU64(tsSrc));
         addPrintG3(loadedNonNull,
-                   " into t%d (%p)\n", mkU64(dest), loaded);
+                   "8. Making %p in %d ",
+                   loaded, mkU64(dest));
+        addPrintG2(loadedNonNull, "for value from TS(%d)\n", mkU64(tsSrc));
       }
     }
   }
@@ -773,6 +771,8 @@ void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
 }
 void addClear(IRSB* sbOut, IRTemp dest, int num_vals){
   IRExpr* oldShadowTemp = runLoad64C(sbOut, &(shadowTemps[dest]));
+  addPrint3("Freeing value %p in %d early\n",
+            oldShadowTemp, mkU64(dest));
   addDisownNonNull(sbOut, oldShadowTemp, num_vals);
   addStoreC(sbOut, mkU64(0), &(shadowTemps[dest]));
 }
