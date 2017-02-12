@@ -92,12 +92,13 @@ VG_REGPARM(2) void dynamicPut(Int tsDest, ShadowTemp* st){
   for(int i = 0; i < st->num_vals; ++i){
     ShadowValue* val = st->values[i];
     int size = val->type == Ft_Single ? sizeof(float) : sizeof(double);
-    shadowThreadState[VG_(get_running_tid)()][tsDest + (i * size)] =
+    int dest_byte = tsDest + (i * size);
+    shadowThreadState[VG_(get_running_tid)()][dest_byte] =
       val;
     if (print_value_moves){
-      if (getTS(tsDest + (i * size)) != NULL || val != NULL){
-        VG_(printf)("Setting thread state %d to %p",
-                    (tsDest + (i * size)), val);
+      if (getTS(dest_byte) != NULL || val != NULL){
+        VG_(printf)("dynamicPut: Setting thread state %d to %p",
+                    dest_byte, val);
         if (val != NULL){
           VG_(printf)(" (type %d)\n", val->type);
         } else {
@@ -106,12 +107,13 @@ VG_REGPARM(2) void dynamicPut(Int tsDest, ShadowTemp* st){
       }
     }
     if (val->type == Ft_Double){
+      int second_byte = dest_byte + sizeof(float);
       shadowThreadState[VG_(get_running_tid)()]
-        [tsDest + ((i + 1) * size)] =
+        [second_byte] =
         NULL;
-      if (print_value_moves && getTS(tsDest + ((i + 1) * size))){
+      if (print_value_moves && getTS(second_byte)){
         VG_(printf)("Setting thread state %d to 0x0",
-                    (tsDest + ((i + 1) * size)));
+                    second_byte);
       }
     }
     ownShadowValue(val);
