@@ -123,7 +123,8 @@ int valueSize(IRSB* sbOut, int idx);
 int numTempValues(IRSB* sbOut, int idx);
 int exprSize(IRTypeEnv* tyenv, IRExpr* expr);
 int typeSize(IRType type);
-Bool tsAddrCanHoldShadow(Int tsAddr);
+Bool tsAddrCanHaveShadow(Int tsAddr);
+Bool tsAddrCanStoreShadow(Int tsAddr);
 Bool tsHasStaticShadow(Int tsAddr);
 IRExpr* mkArrayLookupExpr(IRSB* sbOut,
                           Int base, IRExpr* idx,

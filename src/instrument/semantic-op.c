@@ -100,7 +100,7 @@ IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
                                  VG_(fnptr_to_fnentry)(executeShadowOp)),
                       Ity_I64,
                       mkIRExprVec_2(mkU64((uintptr_t)info),
-                                    mkU64((uintptr_t)&shadowArgs)));
+                                    mkU64((uintptr_t)shadowArgs)));
 }
 
 IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
@@ -109,7 +109,7 @@ IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
              "Temp %d can't hold a float, "
              "but we're using it as an argument!\n",
              argExpr->Iex.RdTmp.tmp);
-  if (!canStoreShadow(sbOut->tyenv, argExpr)) {
+  if (!canHaveShadow(sbOut->tyenv, argExpr)) {
     IRExpr* result = runMakeInput(sbOut, argExpr, type, num_vals);
     if (print_temp_moves){
       addPrint3("Making temp %p for constant (with %d values).\n", result, mkU64(num_vals));
@@ -136,7 +136,6 @@ IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
                    loaded, mkU64(argExpr->Iex.RdTmp.tmp));
       }
       addNumValsAssertG(sbOut, shouldntMake, "loaded2", result, num_vals);
-
       return result;
     }
   }

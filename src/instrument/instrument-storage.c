@@ -785,7 +785,7 @@ IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
                                IRExpr** values){
   IRExpr* stackEmpty = runStackEmpty(sbOut, freedTemps[num_values-1]);
   IRExpr* shouldMake = runAnd(sbOut, guard, stackEmpty);
-  IRExpr* freshTemp = runDirtyG_1_1(sbOut, shouldMake, mkShadowTemp,
+  IRExpr* freshTemp = runDirtyG_1_1(sbOut, shouldMake, newShadowTemp,
                                     mkU64(num_values));
   IRExpr* shouldPop = runAnd(sbOut, guard,
                              runUnop(sbOut, Iop_Not1, stackEmpty));
@@ -804,7 +804,7 @@ IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
 IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
                               IRExpr** values){
   IRExpr* stackEmpty = runStackEmpty(sbOut, freedTemps[num_values-1]);
-  IRExpr* freshTemp = runDirtyG_1_1(sbOut, stackEmpty, mkShadowTemp,
+  IRExpr* freshTemp = runDirtyG_1_1(sbOut, stackEmpty, newShadowTemp,
                                     mkU64(num_values));
   IRExpr* poppedTemp = runStackPopG(sbOut,
                                     runUnop(sbOut, Iop_Not1, stackEmpty),
@@ -987,6 +987,7 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard,
              " temp (%d) to type %d already set with a different"
              " type temp %d!\n", idx, type, tempContext[idx]);
   addStoreGC(sbOut, guard, shadow_temp, &(shadowTemps[idx]));
+  tempContext[idx] = Ft_Unknown;
   cleanupAtEndOfBlock(sbOut, idx);
 }
 void addStoreTempNonFloat(IRSB* sbOut, int idx){
