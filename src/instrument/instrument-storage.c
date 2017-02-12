@@ -137,7 +137,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
     // (meaning it's been overwritten by a non-float this block), then
     // we don't need to bother trying to clear it or change it's
     // static info here
-    if (tsAddrCanHoldShadow(dest_addr)){
+    if (tsAddrCanHaveShadow(dest_addr)){
       IRExpr* oldVal = runGetTSVal(sbOut, dest_addr);
       // If we don't know whether or not it's a shadowed float at
       // runtime, we'll do a runtime check to see if there is a shadow
@@ -1146,7 +1146,17 @@ int typeSize(IRType type){
   }
 }
 
-Bool tsAddrCanHoldShadow(Int tsAddr){
+Bool tsAddrCanStoreShadow(Int tsAddr){
+  switch(tsContext[tsAddr]){
+  case Ft_NonFloat:
+    tl_assert2(0, "why are you even asking this?");
+    return False;
+  default:
+    return True;
+  }
+}
+
+Bool tsAddrCanHaveShadow(Int tsAddr){
   switch(tsContext[tsAddr]){
   case Ft_NonFloat:
   case Ft_Unshadowed:
