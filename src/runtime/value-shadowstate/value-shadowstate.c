@@ -88,7 +88,55 @@ inline
 ShadowValue* getTS(Int idx){
   return shadowThreadState[VG_(get_running_tid)()][idx];
 }
-VG_REGPARM(2) void dynamicPut(Int tsDest, ShadowTemp* st){
+VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
+  tl_assert(st->num_vals == 1 ||
+            st->num_vals == 2);
+  if (st->num_vals == 1){
+    tl_assert(st->values[0]->type == Ft_Double);
+    ShadowValue* val = st->values[0];
+    shadowThreadState[VG_(get_running_tid)()][tsDest] = val;
+    shadowThreadState[VG_(get_running_tid)()][tsDest + sizeof(float)] =
+      NULL;
+    ownShadowValue(val);
+    if (print_value_moves){
+      if (getTS(tsDest) != NULL || val != NULL){
+        VG_(printf)("dynamicPut64: Setting thread state %d to %p\n",
+                    tsDest, val);
+      }
+      if (val != NULL){
+        VG_(printf)(" (type ");
+        ppFloatType(val->type);
+        VG_(printf)(")\n");
+      }
+      if (getTS(tsDest + sizeof(float)) != NULL){
+        VG_(printf)("dynamicPut64: Overwriting TS(%lu) with NULL, "
+                    "due to double write at TS(%d)\n",
+                    tsDest + sizeof(float),
+                    tsDest);
+      }
+    }
+  } else {
+    for(int i = 0; i < 2; ++i){
+      int dest_addr = tsDest + i * sizeof(float);
+      tl_assert(st->values[i]->type == Ft_Single);
+      ShadowValue* val = st->values[i];
+      shadowThreadState[VG_(get_running_tid)()][dest_addr] = val;
+      ownShadowValue(val);
+      if (print_value_moves){
+        if (getTS(tsDest) != NULL || val != NULL){
+          VG_(printf)("dynamicPut64: Setting thread state %d to %p\n",
+                      tsDest, val);
+        }
+      }
+      if (val != NULL){
+        VG_(printf)(" (type ");
+        ppFloatType(val->type);
+        VG_(printf)(")\n");
+      }
+    }
+  }
+}
+VG_REGPARM(2) void dynamicPut128(Int tsDest, ShadowTemp* st){
   for(int i = 0; i < st->num_vals; ++i){
     ShadowValue* val = st->values[i];
     int size = val->type == Ft_Single ? sizeof(float) : sizeof(double);
@@ -181,7 +229,7 @@ VG_REGPARM(1) ShadowTemp* dynamicGet64(Int tsSrc, UWord tsBytes){
     return temp;
   }
 }
-VG_REGPARM(1) ShadowTemp* dynamicGet128(Int tsSrc,
+VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
                                         UWord bytes1,
                                         UWord bytes2){
   ShadowTemp* firstHalf = dynamicGet64(tsSrc, bytes1);
