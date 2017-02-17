@@ -189,6 +189,7 @@ ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
     if (top->num_vals == 4 && bottom->num_vals == 1){
       ShadowTemp* result = mkShadowTemp(2);
       result->values[0] = bottom->values[0];
+      ownShadowValue(result->values[0]);
       float v3 = getDouble(top->values[3]->real);
       float v4 = getDouble(top->values[4]->real);
       // #suuuuupersketch
@@ -201,6 +202,8 @@ ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
       ShadowTemp* result = mkShadowTemp(4);
       result->values[0] = bottom->values[0];
       result->values[1] = bottom->values[1];
+      ownShadowValue(result->values[0]);
+      ownShadowValue(result->values[1]);
       double combined = getDouble(top->values[1]->real);
       float f3, f4;
       VG_(memcpy)(&combined, &f3, sizeof(float));
