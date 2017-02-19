@@ -190,8 +190,8 @@ ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
       ShadowTemp* result = mkShadowTemp(2);
       result->values[0] = bottom->values[0];
       ownShadowValue(result->values[0]);
-      float v3 = getDouble(top->values[3]->real);
-      float v4 = getDouble(top->values[4]->real);
+      float v3 = getDouble(top->values[2]->real);
+      float v4 = getDouble(top->values[3]->real);
       // #suuuuupersketch
       double combined;
       VG_(memcpy)(&v3, &combined, sizeof(float));
