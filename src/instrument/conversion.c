@@ -333,13 +333,13 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       // have already constructed both inputs.
       if (inputsPreexistingStatic[0] == DefinitelyTrue ||
           inputsPreexistingStatic[1] == DefinitelyTrue){
+        tl_assert(shadowInputs[0]);
         tl_assert(shadowInputs[1]);
         shadowOutput =
           runPureCCall(sbOut,
                        mkIRCallee(2, "setV128lo64",
                                   VG_(fnptr_to_fnentry)(setV128lo64)),
-                       Ity_I64,
-                       mkIRExprVec_2(shadowInputs[0], shadowInputs[1]));
+                       Ity_I64, mkIRExprVec_2(shadowInputs[0], shadowInputs[1]));
       } else if (inputsPreexistingStatic[0] == DefinitelyFalse){
         tl_assert(inputsPreexistingDynamic[1]);
         addStoreC(sbOut, argExprs[0], computedArgs.argValues[0]);

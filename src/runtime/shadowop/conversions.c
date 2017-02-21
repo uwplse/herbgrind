@@ -171,6 +171,10 @@ ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
   /*            top, top->num_vals, bottom, bottom->num_vals); */
   if (top->num_vals == bottom->num_vals * 2){
     ShadowTemp* result = copyShadowTemp(top);
+    if (print_types){
+      VG_(printf)("Inferred result of setV128lo64 to have %d values, because top and bottom match.\n",
+                  top->num_vals);
+    }
     for (int i = 0; i < bottom->num_vals; ++i){
       result->values[i] = bottom->values[i];
       ownShadowValue(result->values[i]);
@@ -187,6 +191,11 @@ ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
     // going to look at the bottom value, because otherwise all sane
     // semantics are fucked.
     if (top->num_vals == 4 && bottom->num_vals == 1){
+      if (print_types){
+        VG_(printf)("Inferred result of setV128lo64 to have %d values, "
+                    "because it's a mixed read and the top has %d values.\n",
+                    top->num_vals, top->num_vals);
+      }
       ShadowTemp* result = mkShadowTemp(2);
       result->values[0] = bottom->values[0];
       ownShadowValue(result->values[0]);
@@ -197,8 +206,17 @@ ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
       VG_(memcpy)(&v3, &combined, sizeof(float));
       VG_(memcpy)(&v4, (&combined) + sizeof(float), sizeof(float));
       result->values[1] = mkShadowValue(Ft_Double, combined);
+      if (print_value_moves){
+        VG_(printf)("Made shadow value %p for reinterpreted bits of second half of V128\n",
+                    result->values[1]);
+      }
       return result;
     } else if (top->num_vals == 2 && bottom->num_vals == 2){
+      if (print_types){
+        VG_(printf)("Inferred result of setV128lo64 to have %d values, "
+                    "because it's a mixed read and the tope has %d values.\n",
+                    top->num_vals, top->num_vals);
+      }
       ShadowTemp* result = mkShadowTemp(4);
       result->values[0] = bottom->values[0];
       result->values[1] = bottom->values[1];
@@ -221,6 +239,10 @@ ShadowTemp* setV128lo64Dynamic2(ShadowTemp* top,
                                 IRTemp bottomIdx, UWord bottomVal){
   ShadowTemp* bottom;
   if (top->num_vals == 2){
+    if (print_types){
+      VG_(printf)("Inferred result of setV128lo64 to have %d values, because top has that many values.\n",
+                  top->num_vals);
+    }
     double val;
     VG_(memcpy)(&val, &bottomVal, sizeof(double));
     bottom = mkShadowTempOneDouble(val);
@@ -229,6 +251,10 @@ ShadowTemp* setV128lo64Dynamic2(ShadowTemp* top,
                   bottom, top);
     }
   } else {
+    if (print_types){
+      VG_(printf)("Inferred result of setV128lo64 to have %d values, because top has that many values.\n",
+                  top->num_vals);
+    }
     bottom = mkShadowTempTwoSingles(bottomVal);
     if (print_temp_moves){
       VG_(printf)("Made %p with two singles because "
@@ -250,12 +276,20 @@ ShadowTemp* setV128lo64Dynamic1(ShadowTemp* bottom,
                                 IRTemp topIdx, UWord* topVal){
   ShadowTemp* top;
   if (bottom->num_vals == 1){
+    if (print_types){
+      VG_(printf)("Inferred result of setV128lo64 to have %d values, because bottom has that many values.\n",
+                  bottom->num_vals);
+    }
     top = mkShadowTempTwoDoubles((double*)topVal);
     if (print_temp_moves){
       VG_(printf)("Made %p with two doubles because %p has one double.\n",
                   top, bottom);
     }
   } else {
+    if (print_types){
+      VG_(printf)("Inferred result of setV128lo64 to have %d values, because bottom has that many values.\n",
+                  bottom->num_vals);
+    }
     top = mkShadowTempFourSingles((float*)topVal);
     if (print_temp_moves){
       VG_(printf)("Made %p with four singles because "

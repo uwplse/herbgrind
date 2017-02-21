@@ -28,8 +28,10 @@
 */
 
 #include "instrument-util.h"
+#include "../runtime/value-shadowstate/value-shadowstate.h"
 #include "pub_tool_libcassert.h"
 #include "pub_tool_libcprint.h"
+#include "pub_tool_mallocfree.h"
 
 IRExpr* runLoad64(IRSB* sbOut, IRExpr* address){
   IRTemp dest = newIRTemp(sbOut->tyenv, Ity_I64);
@@ -135,4 +137,39 @@ IRExpr* runITE(IRSB* sbOut, IRExpr* cond,
                                                true_expr,
                                                false_expr)));
   return IRExpr_RdTmp(dest);
+}
+#define FSTRINGSIZE 1024
+void addPrintStore(IRSB* sbOut, IRExpr* val, const char* format, ...){
+  char* buffer = VG_(perm_malloc)(sizeof(char) * FSTRINGSIZE,
+                                  vg_alignof(char));
+  va_list vl;
+  va_start(vl, format);
+  VG_(vsnprintf)(buffer, FSTRINGSIZE, format, vl);
+  va_end(vl);
+  IRExpr* stExists = runNonZeroCheck64(sbOut, val);
+  addPrintG3(stExists, "%s = %p\n", mkU64((uintptr_t)buffer), val);
+}
+void addPrintStoreAlways(IRSB* sbOut, IRExpr* val, const char* format, ...){
+  char* buffer = VG_(perm_malloc)(sizeof(char) * FSTRINGSIZE,
+                                  vg_alignof(char));
+  va_list vl;
+  va_start(vl, format);
+  VG_(vsnprintf)(buffer, FSTRINGSIZE, format, vl);
+  va_end(vl);
+  addPrint3("%s = %p\n", mkU64((uintptr_t)buffer), val);
+}
+void addPrintStoreValue(IRSB* sbOut, IRExpr* val, const char* format, ...){
+  char* buffer = VG_(perm_malloc)(sizeof(char) * FSTRINGSIZE,
+                                  vg_alignof(char));
+  va_list vl;
+  va_start(vl, format);
+  VG_(vsnprintf)(buffer, FSTRINGSIZE, format, vl);
+  va_end(vl);
+  IRExpr* stExists = runNonZeroCheck64(sbOut, val);
+  addStmtToIRSB(sbOut, mkDirtyG_0_2(printStoreValue, mkU64((uintptr_t)buffer), val, stExists));
+}
+
+void addPrintStoreValueF1(IRSB* sbOut, IRExpr* val, const char* format, IRExpr* pval){
+  IRExpr* stExists = runNonZeroCheck64(sbOut, val);
+  addStmtToIRSB(sbOut, mkDirtyG_0_3(printStoreValueF, val, mkU64((uintptr_t)format), pval, stExists));
 }

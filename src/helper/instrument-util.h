@@ -87,6 +87,15 @@ IRStmt* mkDirtyG_0_N(int nargs, const char* fname, void* f,
 #define mkDirtyG_0_3(f, arg1, arg2, arg3, guard)    \
   mkDirtyG_0_N(3,#f,f, mkIRExprVec_3(arg1, arg2, arg3), guard)
 
+#define mkDirty_0_N(nargs, f, args)             \
+  IRStmt_Dirty(unsafeIRDirty_0_N(nargs, #f, VG_(fnptr_to_fnentry)(f), args))
+#define mkDirty_0_1(f, arg)                     \
+  mkDirty_0_N(1, f, mkIRExprVec_1(arg))
+#define mkDirty_0_2(f, arg1, arg2)              \
+  mkDirty_0_N(2, f, mkIRExprVec_2(arg1, arg2))
+#define mkDirty_0_3(f, arg1, arg2, arg3)        \
+  mkDirty_0_N(3, f, mkIRExprVec_3(arg1, arg2, arg3)
+
 IRExpr* runUnop(IRSB* sbOut, IROp op_code, IRExpr* arg);
 
 IRExpr* runBinop(IRSB* sbOut, IROp op_code, IRExpr* arg1, IRExpr* arg2);
@@ -106,6 +115,8 @@ IRExpr* runAndto64(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2);
   addStmtToIRSB(sbOut, mkDirtyG_0_1(VG_(fnptr_to_fnentry)(ppIROp), mkU64((uintptr_t)op_code), guard))
 #define addPrintTy(ty_code) \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "ppIRType", VG_(fnptr_to_fnentry)(ppIRType), mkIRExprVec_1(mkU64((uintptr_t)ty_code)))))
+#define addPrintExpr(expr) \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "ppIRExpr", VG_(fnptr_to_fnentry)(ppIRExpr), mkIRExprVec_1(mkU64((uintptr_t)expr)))))
 
 #define addPrint(string) \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "print", VG_(fnptr_to_fnentry)(VG_(printf)), mkIRExprVec_1(mkU64((uintptr_t)string)))))
@@ -194,4 +205,8 @@ IRExpr* runPureCCall(IRSB* sbOut, IRCallee* callee, IRType retty,
   runUnop(sbOut, Iop_ReinterpF64asI64,                          \
           runUnop(sbOut, Iop_F32toF64,                          \
                   runUnop(sbOut, Iop_ReinterpI32asF32, f32)))
+void addPrintStore(IRSB* sbOut, IRExpr* val, const char* format, ...);
+void addPrintStoreAlways(IRSB* sbOut, IRExpr* val, const char* format, ...);
+void addPrintStoreValue(IRSB* sbOut, IRExpr* val, const char* format, ...);
+void addPrintStoreValueF1(IRSB* sbOut, IRExpr* val, const char* format, IRExpr* pval);
 #endif

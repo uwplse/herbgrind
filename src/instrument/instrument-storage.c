@@ -138,30 +138,30 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
     // we don't need to bother trying to clear it or change it's
     // static info here
     if (tsAddrCanHaveShadow(dest_addr)){
+      if (print_types){
+        VG_(printf)("Types: Setting up a disown for %d because it's type is ",
+                    dest_addr);
+        ppFloatType(tsContext[dest_addr]);
+      }
       IRExpr* oldVal = runGetTSVal(sbOut, dest_addr);
       // If we don't know whether or not it's a shadowed float at
       // runtime, we'll do a runtime check to see if there is a shadow
       // value there, and disown it if there is.
       if (tsHasStaticShadow(dest_addr)){
         if (print_value_moves){
-          IRExpr* oldValRCount =
-            runArrow(sbOut, oldVal, ShadowValue, ref_count);
-          addPrint3("Disowning %p (old rc %d) "
-                    "from thread state overwrite.\n",
-                    oldVal, oldValRCount);
+          addPrint3("Disowning %p "
+                    "from thread state overwrite at %d (static)",
+                    oldVal, mkU64(dest_addr));
         }
         addSVDisownNonNull(sbOut, oldVal);
       } else {
         if (print_value_moves){
           IRExpr* oldValNonNull =
             runNonZeroCheck64(sbOut, oldVal);
-          IRExpr* oldValRCount =
-            runArrowG(sbOut, oldValNonNull, oldVal,
-                      ShadowValue, ref_count);
           addPrintG3(oldValNonNull,
-                     "Disowning %p (old rc %d) "
-                     "from thread state overwrite.\n",
-                     oldVal, oldValRCount);
+                     "Disowning %p "
+                     "from thread state overwrite at %d (dynamic)",
+                     oldVal, mkU64(tsDest));
         }
         addSVDisown(sbOut, oldVal);
       }
@@ -171,6 +171,11 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
     for(int i = 0; i < dest_size; ++i){
       Int dest_addr = tsDest + (i * sizeof(float));
       if (canBeFloat(sbOut->tyenv, data)){
+        if (print_types){
+          VG_(printf)("Setting TS(%d) to unshadowed, "
+                      "because %d can't contain a float.\n",
+                      dest_addr, data->Iex.RdTmp.tmp);
+        }
         addSetTSValUnshadowed(sbOut, dest_addr);
       } else {
         if (print_types){
@@ -193,7 +198,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
           if (i % 2 == 1){
             addSetTSValNonFloat(sbOut, dest_addr);
             if (print_types){
-              VG_(printf)("Setting TS(%d) to non-float, "
+              VG_(printf)("Types: Setting TS(%d) to non-float, "
                           "because we wrote a double "
                           "to the position before.\n",
                           dest_addr);
@@ -209,11 +214,8 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
             addSetTSValNonNull(sbOut, dest_addr, value, Ft_Double);
 
             if (print_value_moves){
-              IRExpr* valRCount = runArrow(sbOut, value, ShadowValue,
-                                           ref_count);
-              addPrint3("Owning %p (new rc %lu) "
-                        "as part of thread state put.\n",
-                        value, valRCount);
+              addPrint3("Setting TS(%d) to %p\n",
+                        mkU64(dest_addr), value);
             }
           }
         } else {
@@ -223,11 +225,8 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
           addSetTSValNonNull(sbOut, dest_addr, value, Ft_Single);
 
           if (print_value_moves){
-            IRExpr* valRCount = runArrow(sbOut, value, ShadowValue,
-                                         ref_count);
-            addPrint3("Owning %p (new rc %lu) "
-                      "as part of thread state put.\n",
-                      value, valRCount);
+            addPrint3("Setting TS(%d) to %p\n",
+                      mkU64(dest_addr), value);
           }
         }
       }
@@ -246,8 +245,11 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
         IRExpr* value = runLoadG64(sbOut, values, stExists);
 
         addSVOwnNonNullG(sbOut, stExists, value);
-        addSetTSVal(sbOut, tsDest, value);
-        tsContext[tsDest] = Ft_Unknown;
+        addSetTSValUnknown(sbOut, tsDest, value);
+        if (print_value_moves){
+          addPrint3("Setting TS(%d) to %p\n",
+                    mkU64(tsDest), value);
+        }
       } else {
         // If it's 128-bits, and we don't have static info about it,
         // then it could either be two doubles or four singles, so
@@ -256,6 +258,10 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
         // should be pretty rare.
         for(int i = 0; i < 4; ++i){
           Addr dest_addr = tsDest + (i * sizeof(float));
+          if (print_types){
+            VG_(printf)("2. Types (i-time): Setting %lu to unknown\n",
+                        dest_addr);
+          }
           tsContext[dest_addr] = Ft_Unknown;
         }
         IRDirty* putDirty =
@@ -379,6 +385,10 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       // unconditionally.
       IRExpr* val = runGetTSVal(sbOut, tsSrc);
       IRExpr* temp = runMkShadowTempValues(sbOut, 1, &val);
+      if (print_value_moves){
+        addPrint3("Getting val %p from TS(%d) ", val, mkU64(tsSrc));
+        addPrint2("into temp %p\n", temp);
+      }
       addStoreTemp(sbOut, temp, Ft_Single, dest);
       if (print_temp_moves){
         addPrint3("1. Making %p in %d ", temp, mkU64(dest));
@@ -389,6 +399,10 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* loadedValNonNull = runNonZeroCheck64(sbOut, loadedVal);
       IRExpr* temp = runMkShadowTempValuesG(sbOut, loadedValNonNull, 1,
                                             &loadedVal);
+      if (print_value_moves){
+        addPrintG3(loadedValNonNull, "Getting val %p from TS(%d) ", loadedVal, mkU64(tsSrc));
+        addPrintG2(loadedValNonNull, "into temp %p\n", temp);
+      }
       addStoreTempUnknown(sbOut, temp, dest);
       if (print_temp_moves){
         IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, temp);
@@ -439,6 +453,10 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
     } else if (valType == Ft_Double){
       IRExpr* val = runGetTSVal(sbOut, tsSrc);
       IRExpr* temp = runMkShadowTempValues(sbOut, 1, &val);
+      if (print_value_moves){
+        addPrint3("Got %p from TS(%d) into ", val, mkU64(tsSrc));
+        addPrint2("temp %p\n", temp);
+      }
       addStoreTemp(sbOut, temp, Ft_Double, dest);
 
       if (print_temp_moves){
@@ -707,6 +725,9 @@ void addSVOwnNonNull(IRSB* sbOut, IRExpr* sv){
     runArrow(sbOut, sv, ShadowValue, ref_count);
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Add64, prevRefCount, mkU64(1));
+  if (print_value_moves){
+    addPrint3("[3] Owning %p, new ref_count %d\n", sv, newRefCount);
+  }
   addStoreArrow(sbOut, sv, ShadowValue, ref_count, newRefCount);
 }
 void addSVDisown(IRSB* sbOut, IRExpr* sv){
@@ -723,9 +744,7 @@ void addSVDisown(IRSB* sbOut, IRExpr* sv){
 
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
-  IRExpr* shouldUpdateRefCount =
-    runBinop(sbOut, Iop_CmpLT64U, mkU64(1), prevRefCount);
-  addStoreArrowG(sbOut, shouldUpdateRefCount, sv, ShadowValue,
+  addStoreArrowG(sbOut, valueNonNull, sv, ShadowValue,
                  ref_count, newRefCount);
 }
 void addSVDisownNonNull(IRSB* sbOut, IRExpr* sv){
@@ -740,13 +759,13 @@ void addSVDisownNonNull(IRSB* sbOut, IRExpr* sv){
 
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
-  IRExpr* shouldUpdateRefCount = runUnop(sbOut, Iop_Not1, lastRef);
   if (print_value_moves){
-    addPrintG3(shouldUpdateRefCount,
+    IRExpr* shouldPrintUpdate = runUnop(sbOut, Iop_Not1, lastRef);
+    addPrintG3(shouldPrintUpdate,
                "[2] Disowning %p, new ref_count %d\n", sv, newRefCount);
   }
-  addStoreArrowG(sbOut, shouldUpdateRefCount, sv, ShadowValue,
-                 ref_count, newRefCount);
+  addStoreArrow(sbOut, sv, ShadowValue,
+                ref_count, newRefCount);
 }
 void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
   IRExpr* valueNonNull = runNonZeroCheck64(sbOut, sv);
@@ -754,23 +773,22 @@ void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
   IRExpr* prevRefCount =
     runArrowG(sbOut, shouldDoAnythingAtAll, sv, ShadowValue, ref_count);
   IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
-  IRExpr* shouldPush = runAnd(sbOut, shouldDoAnythingAtAll, lastRef);
   if (print_value_moves){
-    addPrintG2(shouldPush,
+    addPrintG2(lastRef,
                "Disowned last reference to %p! Freeing...\n", sv);
   }
-  addStackPushG(sbOut, shouldPush, freedVals, sv);
+  addStackPushG(sbOut, lastRef, freedVals, sv);
 
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
-  IRExpr* shouldUpdateRefCount =
-    runAnd(sbOut, shouldDoAnythingAtAll,
-           runUnop(sbOut, Iop_Not1, lastRef));
   if (print_value_moves){
-    addPrintG3(shouldUpdateRefCount,
+    IRExpr* nonLastRef = runBinop(sbOut, Iop_CmpLT64U,
+                                  mkU64(1), prevRefCount);
+    addPrintG3(nonLastRef,
                "[3] Disowning %p, new ref_count %d\n", sv, newRefCount);
   }
-  addStoreArrowG(sbOut, shouldUpdateRefCount, sv, ShadowValue,
+  addStoreArrowG(sbOut, shouldDoAnythingAtAll,
+                 sv, ShadowValue,
                  ref_count, newRefCount);
 }
 void addClear(IRSB* sbOut, IRTemp dest, int num_vals){
@@ -943,26 +961,32 @@ void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal){
     IRExpr* valueNonNull = runNonZeroCheck64(sbOut, newVal);
     IRExpr* shouldPrintAtAll = runOr(sbOut, overwriting, valueNonNull);
     addPrintG3(shouldPrintAtAll,
-               "Setting thread state %d to %p",
+               "addSetTSVal: Setting thread state TS(%d) to %p\n",
                mkU64(tsDest), newVal);
-    IRExpr* newValType = runArrowG(sbOut, valueNonNull,
-                                   newVal, ShadowValue, type);
-    addPrintG2(valueNonNull, " (type %d)\n", newValType);
-    addPrintG(runAnd(sbOut, shouldPrintAtAll,
-                     runUnop(sbOut, Iop_Not1, valueNonNull)),
-              "\n");
   }
   addStoreC(sbOut,
             newVal,
             &(shadowThreadState[VG_(get_running_tid)()][tsDest]));
 }
 void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal){
+  if (print_value_moves){
+    IRExpr* existing = runGetTSValDynamic(sbOut, tsDest);
+    IRExpr* overwriting = runNonZeroCheck64(sbOut, existing);
+    IRExpr* valueNonNull = runNonZeroCheck64(sbOut, newVal);
+    IRExpr* shouldPrintAtAll = runOr(sbOut, overwriting, valueNonNull);
+    addPrintG3(shouldPrintAtAll,
+               "addSetTSValDynamic: Setting thread state %d to %p\n",
+               tsDest, newVal);
+  }
   addStore(sbOut, newVal,
            runBinop(sbOut,
                     Iop_Add64,
                     mkU64((uintptr_t)shadowThreadState
                           [VG_(get_running_tid)()]),
-                    tsDest));
+                    runBinop(sbOut,
+                             Iop_Mul64,
+                             tsDest,
+                             mkU64(sizeof(ShadowValue*)))));
 }
 void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
                   FloatType type,
@@ -991,6 +1015,9 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard,
   cleanupAtEndOfBlock(sbOut, idx);
 }
 void addStoreTempNonFloat(IRSB* sbOut, int idx){
+  if (print_types){
+    VG_(printf)("Setting %d to non float.\n", idx);
+  }
   tempContext[idx] = Ft_NonFloat;
 }
 void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx){
@@ -999,6 +1026,9 @@ void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx){
 }
 void addStoreTempUnshadowed(IRSB* sbOut, int idx){
   tempContext[idx] = Ft_Unshadowed;
+  if (print_types){
+    VG_(printf)("Setting %d to unshadowed.\n", idx);
+  }
 }
 Bool tempIsTyped(int idx){
   return tempContext[idx] == Ft_Single ||

@@ -98,4 +98,6 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempTwoSingles(UWord values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSinglesG(UWord guard, float* values);
 ShadowValue* getTS(Int idx);
+VG_REGPARM(2) void printStoreValue(const char* dest_label, ShadowValue* val);
+void printStoreValueF(ShadowValue* val, const char* format, ...);
 #endif

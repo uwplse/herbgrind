@@ -45,17 +45,23 @@
 void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                           int nargs, IRExpr** argExprs,
                           Addr curAddr, IRTemp dest){
+  if (print_semantic_ops){
+    ppIROp(op_code);
+    VG_(printf)(" on ");
+    for(int i = 0; i < nargs; ++i){
+      ppIRExpr(argExprs[i]);
+      VG_(printf)(", ");
+    }
+    VG_(printf)("\n");
+    addPrintOp(op_code);
+    addPrint("\n");
+  }
   IRExpr* args[4];
   for(int i = 0; i < nargs; ++i){
-    if (isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[i]))){
-      if (print_temp_moves){
-        addPrintOp(op_code);
-        addPrint(": ");
-      }
-      args[i] =
-        runGetArg(sbOut, argExprs[i],
-                  argPrecision(op_code), numChannelsIn(op_code));
-    }
+    tl_assert(isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[i])));
+    args[i] =
+      runGetArg(sbOut, argExprs[i],
+                argPrecision(op_code), numChannelsIn(op_code));
   }
 
   if (print_semantic_ops){
@@ -112,7 +118,7 @@ IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
   if (!canHaveShadow(sbOut->tyenv, argExpr)) {
     IRExpr* result = runMakeInput(sbOut, argExpr, type, num_vals);
     if (print_temp_moves){
-      addPrint3("Making temp %p for constant (with %d values).\n", result, mkU64(num_vals));
+      addPrint3("Making temp %p for non-shadowed (with %d values).\n", result, mkU64(num_vals));
     }
     return result;
   } else {

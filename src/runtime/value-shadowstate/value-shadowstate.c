@@ -36,6 +36,7 @@
 #include "pub_tool_threadstate.h"
 
 #include "../../options.h"
+#include "../../helper/debug.h"
 
 ShadowTemp* shadowTemps[MAX_TEMPS];
 ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
@@ -240,6 +241,10 @@ VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
     switch(secondHalf->num_vals){
     case 1:
       {
+        if (print_types){
+          VG_(printf)("Inferred type Doublex2 because "
+                      "second half had a single double value.\n");
+        }
         double value;
         VG_(memcpy)(&bytes1, &value, sizeof(double));
         firstHalf = mkShadowTempOneDouble(value);
@@ -247,6 +252,10 @@ VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
       break;
     case 2:
       {
+        if (print_types){
+          VG_(printf)("Inferred type Singlex4 because "
+                      "second half had two single values.\n");
+        }
         firstHalf = mkShadowTempTwoSingles(bytes1);
       }
       break;
@@ -265,16 +274,34 @@ VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
         double value;
         VG_(memcpy)(&bytes2, &value, sizeof(double));
         secondHalf = mkShadowTempOneDouble(value);
+        if (print_types){
+          VG_(printf)("Inferred type Doublex2 because "
+                      "first half had a single double value.\n");
+        }
       }
       break;
     case 2:
       {
+        if (print_types){
+          VG_(printf)("Inferred type Singlex4 because "
+                      "second half had two single values.\n");
+        }
         secondHalf = mkShadowTempTwoSingles(bytes2);
       }
       break;
     default:
       tl_assert(0);
       return NULL;
+    }
+  } else {
+    if (print_types){
+      if (firstHalf->num_vals == 1){
+        VG_(printf)("Inferred type Doublex2 because "
+                    "first half had a single double value.\n");
+      } else {
+        VG_(printf)("Inferred type Singlex4 because "
+                    "second half had two single values.\n");
+      }
     }
   }
   ShadowTemp* result;
@@ -375,6 +402,10 @@ VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
   ShadowTemp* result = mkShadowTemp(temp->num_vals);
   for(int i = 0; i < temp->num_vals; ++i){
     result->values[i] = copyShadowValue(temp->values[i]);
+    if (print_value_moves){
+      VG_(printf)("Copying shadow value %p from temp %p to shadow value %p at temp %p\n",
+                  temp->values[i], temp, result->values[i], result);
+    }
   }
   return result;
 }
@@ -400,18 +431,27 @@ VG_REGPARM(1) void disownShadowTempDynamic(IRTemp idx){
 }
 void disownShadowValue(ShadowValue* val){
   if (val == NULL) return;
-  if (val->ref_count < 2){
+  tl_assert2(val->ref_count > 0,
+             "Trying to disown %p, but it's ref count is already %lu!\n",
+             val, val->ref_count);
+  val->ref_count--;
+  if (val->ref_count == 0){
     freeShadowValue(val);
     if (print_value_moves){
       VG_(printf)("Disowned last reference to %p! Freeing...\n", val);
     }
   } else {
-    (val->ref_count)--;
+    if (print_value_moves){
+      VG_(printf)("Disowning %p, new ref count %lu\n", val, val->ref_count);
+    }
   }
 }
 void ownShadowValue(ShadowValue* val){
   if (val == NULL) return;
   (val->ref_count)++;
+  if (print_value_moves){
+    VG_(printf)("Owning %p, new ref count %lu\n", val, val->ref_count);
+  }
 }
 
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value){
@@ -480,4 +520,19 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values){
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSinglesG(UWord guard, float* values){
   if (!guard) return NULL;
   return mkShadowTempFourSingles(values);
+}
+
+VG_REGPARM(2) void printStoreValue(const char* dest_label, ShadowValue* val){
+  VG_(printf)("%s = %p(%lu)\n", dest_label, val, val->ref_count);
+}
+
+#define FSTRINGSIZE 1024
+char buffer[FSTRINGSIZE];
+void printStoreValueF(ShadowValue* val, const char* format, ...){
+  if (val == NULL) return;
+  va_list vl;
+  va_start(vl, format);
+  VG_(vsnprintf)(buffer, FSTRINGSIZE, format, vl);
+  va_end(vl);
+  printStoreValue(buffer, val);
 }

@@ -93,6 +93,11 @@ ShadowValue* executeChannelShadowOp(int nargs,
                                     IROp op_code,
                                     ShadowValue** args){
   ShadowValue* result = mkShadowValueBare(type);
+  if (print_value_moves){
+    VG_(printf)("Getting new shadow value %p for result of op ", result);
+    ppIROp(op_code);
+    VG_(printf)("\n");
+  }
   execRealOp(op_code, &(result->real), args);
   return result;
 }

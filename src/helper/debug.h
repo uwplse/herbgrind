@@ -28,6 +28,10 @@
 */
 #include "pub_tool_libcassert.h"
 
+#define addValTypeAssert(sbOut, label, shadow_val_expr, val_type)     \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertValType", VG_(fnptr_to_fnentry)(assertValType), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_val_expr, mkU64(val_type)))))
+#define addValTypeAssertG(sbOut, guard, label, shadow_val_expr, val_type) \
+  addStmtToIRSB(sbOut, mkDirtyG_0_3(assertValType, mkU64((uintptr_t)label), shadow_val_expr, mkU64(val_type), guard))
 #define addNumValsAssert(sbOut, label, shadow_expr, num_vals)     \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumVals", VG_(fnptr_to_fnentry)(assertNumVals), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_expr, mkU64(num_vals)))))
 #define addNumValsAssertNot(sbOut, label, shadow_expr, num_vals)     \
@@ -55,6 +59,18 @@ static inline
 void assertEQ(char* message, int val1, int val2){
   tl_assert2(val1 == val2, "%s: %X vs. %X", message, val1, val2);
 }
+static inline
+void assertValOwned(char* message, ShadowValue* val){
+  tl_assert2(val == NULL || val->ref_count > 0, "%s: %p is freed!\n",
+             message, val);
+}
+
+static inline
+void assertTempValsOwned(char* message, ShadowTemp* temp){
+  for(int i = 0; i < temp->num_vals; ++i){
+    assertValOwned(message, temp->values[i]);
+  }
+}
 
 #define addAssertNEQ(sbOut, message, val1, val2) \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNEQ", \
@@ -66,6 +82,21 @@ void assertEQ(char* message, int val1, int val2){
 #define addAssertEQ(sbOut, message, val1, val2) \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertEQ", \
                                                       VG_(fnptr_to_fnentry)(assertEQ), mkIRExprVec_3(mkU64((uintptr_t)message), val1, val2))))
+#define addAssertValOwned(sbOut, message, val) \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(2, "assertValOwned", \
+                                                      VG_(fnptr_to_fnentry)(assertValOwned), mkIRExprVec_2(mkU64((uintptr_t)message), val))))
+#define addAssertValOwnedG(sbOut, guard, message, val)                  \
+  addStmtToIRSB(sbOut, mkDirtyG_0_2(assertValOwned, mkU64((uintptr_t)message), val, guard))
+#define addAssertTempValsOwned(sbOut, message, temp) \
+  addStmtToIRSB(sbOut, \
+    IRStmt_Dirty(unsafeIRDirty_0_N(2, "assertTempValsOwned",            \
+                                   VG_(fnptr_to_fnentry)(assertTempValsOwned), \
+                                   mkIRExprVec_2(mkU64((uintptr_t)message), val))))
+#define addAssertTempValsOwnedG(sbOut, guard, message, temp)            \
+  addStmtToIRSB(sbOut,                                                  \
+                mkDirtyG_0_2(assertTempValsOwned,                       \
+                             mkU64((uintptr_t)message), val, guard))
+
 static inline
 void fail(void){
   tl_assert(0);
@@ -73,3 +104,4 @@ void fail(void){
 #define addFail(sbOut) \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(0, "fail", VG_(fnptr_to_fnentry)(fail), mkIRExprVec_0())));
 
+/* #define DEBUG */
