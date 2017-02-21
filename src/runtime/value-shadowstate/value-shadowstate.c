@@ -423,10 +423,12 @@ void disownShadowTemp(ShadowTemp* temp){
 }
 VG_REGPARM(1) void disownShadowTempNonNullDynamic(IRTemp idx){
   disownShadowTemp(shadowTemps[idx]);
+  shadowTemps[idx] = NULL;
 }
 VG_REGPARM(1) void disownShadowTempDynamic(IRTemp idx){
   if (shadowTemps[idx] != NULL){
     disownShadowTemp(shadowTemps[idx]);
+    shadowTemps[idx] = NULL;
   }
 }
 void disownShadowValue(ShadowValue* val){

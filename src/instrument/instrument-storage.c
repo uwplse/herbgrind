@@ -250,6 +250,38 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
           addPrint3("Setting TS(%d) to %p\n",
                     mkU64(tsDest), value);
         }
+      } else if (dest_size == 2) {
+        // If it's 64-bits, and we don't have static info about it,
+        // then it could either be one double or two singles, so
+        // we're going to have to delay figuring out how to pull out
+        // the individual values until runtime. Hopefully this case
+        // should be pretty rare.
+        for(int i = 0; i < 2; ++i){
+          Addr dest_addr = tsDest + (i * sizeof(float));
+         if (print_types){
+            VG_(printf)("1. Types (i-time): Setting %lu to unknown\n",
+                        dest_addr);
+          }
+          // Even if the value is null at runtime, we still need to overwrite
+          // any old pointers still stuck in that thread state so they
+          // don't get picked up later.
+          addSetTSValNonFloat(sbOut, dest_addr);
+
+          tsContext[dest_addr] = Ft_Unknown;
+        }
+        IRDirty* putDirty =
+          unsafeIRDirty_0_N(2, "dynamicPut64",
+                            VG_(fnptr_to_fnentry)(dynamicPut64),
+                            mkIRExprVec_2(mkU64(tsDest), st));
+        // We don't have to bother going into C if the value is null
+        // at runtime.
+        putDirty->guard = stExists;
+        putDirty->mFx = Ifx_Modify;
+        putDirty->mAddr = mkU64((uintptr_t)&(shadowThreadState
+                                             [VG_(get_running_tid)()]
+                                             [tsDest]));
+        putDirty->mSize = sizeof(ShadowValue*) * 2;
+        addStmtToIRSB(sbOut, IRStmt_Dirty(putDirty));
       } else {
         // If it's 128-bits, and we don't have static info about it,
         // then it could either be two doubles or four singles, so
@@ -262,11 +294,15 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
             VG_(printf)("2. Types (i-time): Setting %lu to unknown\n",
                         dest_addr);
           }
+          // Even if the value is null at runtime, we still need to overwrite
+          // any old pointers still stuck in that thread state so they
+          // don't get picked up later.
+          addSetTSValNonFloat(sbOut, dest_addr);
           tsContext[dest_addr] = Ft_Unknown;
         }
         IRDirty* putDirty =
-          unsafeIRDirty_0_N(2, "dynamicPut",
-                            VG_(fnptr_to_fnentry)(dynamicPut),
+          unsafeIRDirty_0_N(2, "dynamicPut128",
+                            VG_(fnptr_to_fnentry)(dynamicPut128),
                             mkIRExprVec_2(mkU64(tsDest), st));
         // We don't have to bother going into C if the value is null
         // at runtime.
@@ -308,15 +344,12 @@ void instrumentPutI(IRSB* sbOut,
   for(int i = 0; i < dest_size; ++i){
     dest_addrs[i] =
       mkArrayLookupExpr(sbOut, arrayBase, varOffset,
-                        constOffset + i, numElems, elemType);
+                        constOffset + i, numElems, Ity_F32);
     IRExpr* oldVal = runGetTSValDynamic(sbOut, dest_addrs[i]);
     addSVDisown(sbOut, oldVal);
+    addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
   }
-  if (!canHaveShadow(sbOut->tyenv, data)){
-    for(int i = 0; i < dest_size; ++i){
-      addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
-    }
-  } else {
+  if (canHaveShadow(sbOut->tyenv, data)) {
     int tempIdx = data->Iex.RdTmp.tmp;
     IRExpr* st = runLoadTemp(sbOut, tempIdx);
     if (hasStaticShadow(data)){
@@ -345,17 +378,31 @@ void instrumentPutI(IRSB* sbOut,
         IRExpr* value = runLoadG64(sbOut, values, stExists);
         addSVOwnNonNullG(sbOut, stExists, value);
         addSetTSValDynamic(sbOut, dest_addrs[0], value);
-      } else {
+      } else if (dest_size == 2) {
         IRDirty* putDirty =
-          unsafeIRDirty_0_N(2, "dynamicPut",
-                            VG_(fnptr_to_fnentry)(dynamicPut),
+          unsafeIRDirty_0_N(2, "dynamicPut64",
+                            VG_(fnptr_to_fnentry)(dynamicPut64),
                             mkIRExprVec_2(dest_addrs[0], st));
         putDirty->guard = stExists;
         putDirty->mFx = Ifx_Modify;
         putDirty->mAddr = mkU64((uintptr_t)&(shadowThreadState
                                              [VG_(get_running_tid)()]
                                              [arrayBase]));
-        putDirty->mSize = numElems * sizeofIRType(elemType);
+        putDirty->mSize =
+          sizeof(ShadowValue*) * numElems * sizeofIRType(elemType);
+        addStmtToIRSB(sbOut, IRStmt_Dirty(putDirty));
+      } else {
+        IRDirty* putDirty =
+          unsafeIRDirty_0_N(2, "dynamicPut128",
+                            VG_(fnptr_to_fnentry)(dynamicPut128),
+                            mkIRExprVec_2(dest_addrs[0], st));
+        putDirty->guard = stExists;
+        putDirty->mFx = Ifx_Modify;
+        putDirty->mAddr = mkU64((uintptr_t)&(shadowThreadState
+                                             [VG_(get_running_tid)()]
+                                             [arrayBase]));
+        putDirty->mSize =
+          sizeof(ShadowValue*) * numElems * sizeofIRType(elemType);
         addStmtToIRSB(sbOut, IRStmt_Dirty(putDirty));
       }
     }
@@ -811,6 +858,7 @@ IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
                                     shouldPop,
                                     freedTemps[num_values-1]);
   IRExpr* temp = runITE(sbOut, stackEmpty, freshTemp, poppedTemp);
+  addStoreArrowG(sbOut, guard, temp, ShadowTemp, freed, mkU64(0));
   IRExpr* tempValues = runArrowG(sbOut, guard, temp, ShadowTemp, values);
   for(int i = 0; i < num_values; ++i){
     addSVOwnNonNullG(sbOut, guard, values[i]);
@@ -1215,11 +1263,11 @@ FloatType inferTSType64(Int tsAddr){
   tl_assert2(tsContext[tsAddr] != Ft_Double ||
              tsContext[tsAddr + sizeof(float)] == Ft_NonFloat,
              "Mismatched float at TS(%d)!", tsAddr);
-  tl_assert2(tsContext[tsAddr] != Ft_Single ||
-             tsContext[tsAddr + sizeof(float)] == Ft_Single ||
-             tsContext[tsAddr + sizeof(float)] == Ft_NonFloat ||
-             tsContext[tsAddr + sizeof(float)] == Ft_Unknown,
-             "Mismatched float at TS(%d)!", tsAddr);
+  /* tl_assert2(tsContext[tsAddr] != Ft_Single || */
+  /*            tsContext[tsAddr + sizeof(float)] == Ft_Single || */
+  /*            tsContext[tsAddr + sizeof(float)] == Ft_NonFloat || */
+  /*            tsContext[tsAddr + sizeof(float)] == Ft_Unknown, */
+  /*            "Mismatched float at TS(%d)!", tsAddr); */
   if (tsContext[tsAddr] == Ft_Unknown){
     return tsContext[tsAddr + sizeof(float)];
   } else {
