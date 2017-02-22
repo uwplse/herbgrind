@@ -610,12 +610,41 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
   }
 }
 void instrumentGetI(IRSB* sbOut, IRTemp dest,
-                    IRExpr* varoffset, int constoffset,
+                    IRExpr* varOffset, int constOffset,
                     Int arrayBase, Int numElems, IRType elemType){
-  if (!isFloat(sbOut->tyenv, dest)){
+  if (!canStoreShadow(sbOut->tyenv, IRExpr_RdTmp(dest))){
     return;
   }
-  tempContext[dest] = Ft_Unshadowed;
+  int src_size = typeSize(elemType);
+  IRExpr* src_addrs[4];
+
+  for(int i = 0; i < src_size; ++i){
+    src_addrs[i] =
+      mkArrayLookupExpr(sbOut, arrayBase, varOffset,
+                        constOffset + i, numElems, Ity_F32);
+  }
+  if (src_size == 1){
+    IRExpr* val = runGetTSValDynamic(sbOut, src_addrs[0]);
+    IRExpr* valNonNull = runNonZeroCheck64(sbOut, val);
+    IRExpr* temp = runMkShadowTempValuesG(sbOut, valNonNull, 1, &val);
+    addStoreTempUnknown(sbOut, temp, dest);
+  } else if (src_size == 2){
+    IRExpr* temp =
+      runPureCCall64_2(sbOut, dynamicGet64,
+                       src_addrs[0],
+                       runGetI64(sbOut, varOffset, constOffset,
+                                 arrayBase, numElems));
+    addStoreTempUnknown(sbOut, temp, dest);
+  } else if (src_size == 4){
+    IRExpr* temp =
+      runPureCCall64_3(sbOut, dynamicGet128,
+                       src_addrs[0],
+                       runGetI64(sbOut, varOffset, constOffset,
+                                 arrayBase, numElems),
+                       runGetI64(sbOut, varOffset, constOffset + 1,
+                                 arrayBase, numElems));
+    addStoreTempUnknown(sbOut, temp, dest);
+  }
 }
 void instrumentLoad(IRSB* sbOut, IRTemp dest,
                     IRExpr* addr, IRType type){

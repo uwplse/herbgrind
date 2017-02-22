@@ -60,6 +60,19 @@ IRExpr* runGetC(IRSB* sbOut, IRType type, Int address){
   return IRExpr_RdTmp(dest);
 }
 
+IRExpr* runGetI(IRSB* sbOut,
+                IRExpr* varOffset, int constOffset,
+                Int arrayBase, Int numElems, IRType elemType){
+  IRTemp dest = newIRTemp(sbOut->tyenv, elemType);
+  addStmtToIRSB(sbOut,
+                IRStmt_WrTmp(dest,
+                             IRExpr_GetI(mkIRRegArray(arrayBase,
+                                                      elemType,
+                                                      numElems),
+                                         varOffset, constOffset)));
+  return IRExpr_RdTmp(dest);
+}
+
 IRExpr* runUnop(IRSB* sbOut, IROp op_code, IRExpr* arg){
   IRType resultType;
   IRType argTypes[4];

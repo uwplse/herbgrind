@@ -65,10 +65,17 @@ IRExpr* runLoad128(IRSB* sbOut, IRExpr* address);
   addStoreG(sbOut, guard, src_expr, mkU64((uintptr_t)dest_addr_const))
 
 IRExpr* runGetC(IRSB* sbOut, IRType type, Int addr_const);
+IRExpr* runGetI(IRSB* sbOut,
+                IRExpr* varOffset, int constOffset,
+                Int arrayBase, Int numElems, IRType elemType);
 #define runGet64C(sbOut, addr_const)            \
   runGetC(sbOut, Ity_I64, addr_const)
 #define runGet32C(sbOut, addr_const)            \
   runGetC(sbOut, Ity_I32, addr_const)
+#define runGetI64(sbOut, varOffset, constOffset, arrayBase, numElems) \
+  runGetI(sbOut, varOffset, constOffset, arrayBase, numElems, Ity_I64)
+#define runGetI32(sbOut, varOffset, constOffset, arrayBase, numElems) \
+  runGetI(sbOut, varOffset, constOffset, arrayBase, numElems, Ity_I32)
 
 IRExpr* runDirtyG_1_N(IRSB* sbOut, int nargs, const char* fname, void* f,
                      IRExpr** args, IRExpr* guard);
