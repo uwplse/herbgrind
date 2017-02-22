@@ -858,7 +858,6 @@ IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
                                     shouldPop,
                                     freedTemps[num_values-1]);
   IRExpr* temp = runITE(sbOut, stackEmpty, freshTemp, poppedTemp);
-  addStoreArrowG(sbOut, guard, temp, ShadowTemp, freed, mkU64(0));
   IRExpr* tempValues = runArrowG(sbOut, guard, temp, ShadowTemp, values);
   for(int i = 0; i < num_values; ++i){
     addSVOwnNonNullG(sbOut, guard, values[i]);
