@@ -112,6 +112,7 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr, Addr curAddr){
 Bool isSpecialOp(IROp op_code){
   switch(op_code){
   case Iop_I32StoF64:
+  case Iop_I64StoF64:
   case Iop_XorV128:
   case Iop_AndV128:
   case Iop_OrV128:
@@ -126,6 +127,7 @@ void handleSpecialOp(IRSB* sbOut, IROp op_code,
                      IRExpr** argExprs, IRTemp dest){
   switch(op_code){
   case Iop_I32StoF64:
+  case Iop_I64StoF64:
   case Iop_XorV128:
   case Iop_AndV128:
   case Iop_OrV128:
