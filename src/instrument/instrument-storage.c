@@ -127,9 +127,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
   // and are always aligned to 4-byte boundries in thread state, we
   // can assume that all shadow values are 4-byte aligned in thread
   // state, and not touch the non-aligned bytes for anything.
-  if (!canBeFloat(sbOut->tyenv, data)) return;
   int dest_size = exprSize(sbOut->tyenv, data);
-
   // Now, we'll overwrite those bytes.
   for(int i = 0; i < dest_size; ++i){
     Int dest_addr = tsDest + (i * sizeof(float));
@@ -321,7 +319,9 @@ void instrumentPutI(IRSB* sbOut,
                     IRExpr* varOffset, Int constOffset,
                     Int arrayBase, Int numElems, IRType elemType,
                     IRExpr* data){
-  if (!canBeFloat(sbOut->tyenv, data)) return;
+  if (!canBeFloat(sbOut->tyenv, data)) {
+    return;
+  }
   int dest_size = exprSize(sbOut->tyenv, data);
   IRExpr* dest_addrs[4];
   // Because we don't know where in the fixed region of the array this
@@ -344,7 +344,8 @@ void instrumentPutI(IRSB* sbOut,
   for(int i = 0; i < dest_size; ++i){
     dest_addrs[i] =
       mkArrayLookupExpr(sbOut, arrayBase, varOffset,
-                        constOffset + i, numElems, Ity_F32);
+                        (constOffset * dest_size) + i,
+                        numElems, Ity_F32);
     IRExpr* oldVal = runGetTSValDynamic(sbOut, dest_addrs[i]);
     addSVDisown(sbOut, oldVal);
     addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
@@ -621,7 +622,7 @@ void instrumentGetI(IRSB* sbOut, IRTemp dest,
   for(int i = 0; i < src_size; ++i){
     src_addrs[i] =
       mkArrayLookupExpr(sbOut, arrayBase, varOffset,
-                        constOffset + i, numElems, Ity_F32);
+                        constOffset * src_size + i, numElems, Ity_F32);
   }
   if (src_size == 1){
     IRExpr* val = runGetTSValDynamic(sbOut, src_addrs[0]);
@@ -1247,9 +1248,7 @@ int typeSize(IRType type){
   case Ity_V128:
     return 4;
   default:
-    ppIRType(type);
-    tl_assert(0);
-    return 0;
+    return 1;
   }
 }
 
@@ -1285,9 +1284,9 @@ Bool tsHasStaticShadow(Int tsAddr){
 FloatType inferTSType64(Int tsAddr){
   tl_assert2(tsContext[tsAddr + sizeof(float)] != Ft_Double,
              "Mismatched float at TS(%d)!", tsAddr);
-  tl_assert2(tsContext[tsAddr] != Ft_NonFloat ||
-             tsContext[tsAddr + sizeof(float)] == Ft_NonFloat,
-             "Mismatched float at TS(%d)!", tsAddr);
+  /* tl_assert2(tsContext[tsAddr] != Ft_NonFloat || */
+  /*            tsContext[tsAddr + sizeof(float)] == Ft_NonFloat, */
+  /*            "Mismatched float at TS(%d)!", tsAddr); */
   tl_assert2(tsContext[tsAddr] != Ft_Double ||
              tsContext[tsAddr + sizeof(float)] == Ft_NonFloat,
              "Mismatched float at TS(%d)!", tsAddr);
