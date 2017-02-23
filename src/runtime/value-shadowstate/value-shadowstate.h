@@ -53,8 +53,6 @@
 
 #include "../../helper/stack.h"
 
-#define MAX_TEMPS 1000
-#define MAX_REGISTERS 1000
 #define MAX_THREADS 16
 
 extern ShadowTemp* shadowTemps[MAX_TEMPS];

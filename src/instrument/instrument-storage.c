@@ -33,23 +33,18 @@
 #include "../helper/instrument-util.h"
 #include "../helper/debug.h"
 #include "../options.h"
+#include "ownership.h"
 
 #include "pub_tool_libcprint.h"
-#include "pub_tool_machine.h"
 #include "pub_tool_libcassert.h"
 #include "pub_tool_mallocfree.h"
-#include "pub_tool_xarray.h"
 #include "pub_tool_libcbase.h"
 #include "pub_tool_threadstate.h"
 
-XArray* tempDebt;
-FloatType tempContext[MAX_TEMPS];
-FloatType tsContext[MAX_REGISTERS];
-
 void initInstrumentationState(void){
-  tempDebt = VG_(newXA)(VG_(malloc), "temp debt array",
-                        VG_(free), sizeof(IRTemp));
+  initOwnership();
   initValueShadowState();
+  initTypeState();
 }
 
 void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src){
@@ -256,7 +251,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
         // should be pretty rare.
         for(int i = 0; i < 2; ++i){
           Addr dest_addr = tsDest + (i * sizeof(float));
-         if (print_types){
+          if (print_types){
             VG_(printf)("1. Types (i-time): Setting %lu to unknown\n",
                         dest_addr);
           }
@@ -319,9 +314,6 @@ void instrumentPutI(IRSB* sbOut,
                     IRExpr* varOffset, Int constOffset,
                     Int arrayBase, Int numElems, IRType elemType,
                     IRExpr* data){
-  if (!canBeFloat(sbOut->tyenv, data)) {
-    return;
-  }
   int dest_size = exprSize(sbOut->tyenv, data);
   IRExpr* dest_addrs[4];
   // Because we don't know where in the fixed region of the array this
@@ -331,7 +323,7 @@ void instrumentPutI(IRSB* sbOut,
   // writing doubles, then we know there are no new floats in the odd
   // offsets.
   for(int i = 0; i < (numElems * dest_size); ++i){
-    Int dest = arrayBase + i * 4;
+    Int dest = arrayBase + i * sizeof(float);
     if (hasStaticShadow(data) &&
         tempType(data->Iex.RdTmp.tmp) == Ft_Double &&
         i % 2 == 1 &&
@@ -340,7 +332,6 @@ void instrumentPutI(IRSB* sbOut,
     }
     tsContext[dest] = Ft_Unknown;
   }
-
   for(int i = 0; i < dest_size; ++i){
     dest_addrs[i] =
       mkArrayLookupExpr(sbOut, arrayBase, varOffset,
@@ -672,208 +663,12 @@ void instrumentCAS(IRSB* sbOut,
                    IRCAS* details){
 }
 void finishInstrumentingBlock(IRSB* sbOut){
-  VG_(memset)(tempContext, 0, sizeof tempContext);
-  VG_(memset)(tsContext, 0, sizeof tsContext);
-  if (VG_(sizeXA)(tempDebt) == 0){
-    return;
-  }
-  IRTemp* curDebtContents =
-    VG_(perm_malloc)(sizeof(IRTemp) * VG_(sizeXA)(tempDebt),
-                     vg_alignof(IRTemp));
-  for(int i = 0; i < VG_(sizeXA)(tempDebt); ++i){
-    curDebtContents[i] = *(IRTemp*)VG_(indexXA)(tempDebt, i);
-  }
-  IRDirty* dynCleanupDirty =
-    unsafeIRDirty_0_N(2, "dynamicCleanup",
-                      VG_(fnptr_to_fnentry)(dynamicCleanup),
-                      mkIRExprVec_2(mkU64(VG_(sizeXA)(tempDebt)),
-                                    mkU64((uintptr_t)curDebtContents)));
-  dynCleanupDirty->mFx = Ifx_Modify;
-  dynCleanupDirty->mAddr = mkU64((uintptr_t)shadowTemps);
-  dynCleanupDirty->mSize = sizeof(ShadowTemp) * MAX_TEMPS;
-  addStmtToIRSB(sbOut, IRStmt_Dirty(dynCleanupDirty));
-  VG_(deleteXA)(tempDebt);
-  tempDebt = VG_(newXA)(VG_(malloc), "temp debt array", VG_(free),
-                        sizeof(IRTemp));
+  resetTypeState();
+  cleanupBlockOwnership(sbOut, mkU1(True));
+  resetOwnership(sbOut);
 }
 void addBlockCleanupG(IRSB* sbOut, IRExpr* guard){
-  IRTemp* curDebtContents =
-    VG_(perm_malloc)(sizeof(IRTemp) * VG_(sizeXA)(tempDebt),
-                     vg_alignof(IRTemp));
-  for(int i = 0; i < VG_(sizeXA)(tempDebt); ++i){
-    curDebtContents[i] = *(IRTemp*)VG_(indexXA)(tempDebt, i);
-  }
-  IRDirty* dynCleanupDirty =
-    unsafeIRDirty_0_N(2, "dynamicCleanup",
-                      VG_(fnptr_to_fnentry)(dynamicCleanup),
-                      mkIRExprVec_2(mkU64(VG_(sizeXA)(tempDebt)),
-                                    mkU64((uintptr_t)curDebtContents)));
-  dynCleanupDirty->guard = guard;
-  dynCleanupDirty->mFx = Ifx_Modify;
-  dynCleanupDirty->mAddr = mkU64((uintptr_t)shadowTemps);
-  dynCleanupDirty->mSize = sizeof(ShadowTemp) * MAX_TEMPS;
-  addStmtToIRSB(sbOut, IRStmt_Dirty(dynCleanupDirty));
-}
-void cleanupAtEndOfBlock(IRSB* sbOut, IRTemp shadowed_temp){
-  for(int i = 0; i < VG_(sizeXA)(tempDebt); ++i){
-    IRTemp* prevEntry = VG_(indexXA)(tempDebt, i);
-    if (*prevEntry == shadowed_temp){
-      return;
-    }
-  }
-  VG_(addToXA)(tempDebt, &shadowed_temp);
-}
-void addDynamicDisown(IRSB* sbOut, IRTemp idx){
-  IRDirty* disownDirty =
-    unsafeIRDirty_0_N(1, "disownShadowTempDynamic",
-                      VG_(fnptr_to_fnentry)(disownShadowTempDynamic),
-                      mkIRExprVec_1(mkU64(idx)));
-  disownDirty->mFx = Ifx_Modify;
-  disownDirty->mAddr = mkU64((uintptr_t)&(shadowTemps[idx]));
-  disownDirty->mSize = sizeof(ShadowTemp*);
-  addStmtToIRSB(sbOut, IRStmt_Dirty(disownDirty));
-}
-void addDynamicDisownNonNull(IRSB* sbOut, IRTemp idx){
-  IRDirty* disownDirty =
-    unsafeIRDirty_0_N(1, "disownShadowTempNonNullDynamic",
-                      VG_(fnptr_to_fnentry)(disownShadowTempNonNullDynamic),
-                      mkIRExprVec_1(mkU64(idx)));
-  disownDirty->mFx = Ifx_Modify;
-  disownDirty->mAddr = mkU64((uintptr_t)&(shadowTemps[idx]));
-  disownDirty->mSize = sizeof(ShadowTemp*);
-  addStmtToIRSB(sbOut, IRStmt_Dirty(disownDirty));
-}
-void addDynamicDisownNonNullDetached(IRSB* sbOut, IRExpr* st){
-  runPureCCall(sbOut,
-               mkIRCallee(1, "disownShadowTemp",
-                          VG_(fnptr_to_fnentry)(disownShadowTemp)),
-               Ity_I64,
-               mkIRExprVec_1(st));
-}
-void addDisownNonNull(IRSB* sbOut, IRExpr* shadow_temp, int num_vals){
-  IRExpr* valuesAddr = runArrow(sbOut, shadow_temp, ShadowTemp, values);
-  for(int i = 0; i < num_vals; ++i){
-    IRExpr* value = runIndex(sbOut, valuesAddr, ShadowValue*, i);
-    addSVDisown(sbOut, value);
-  }
-  addStackPush(sbOut, freedTemps[num_vals - 1], shadow_temp);
-}
-void addDisown(IRSB* sbOut, IRExpr* shadow_temp, int num_vals){
-  IRExpr* tempNonNull = runNonZeroCheck64(sbOut, shadow_temp);
-  IRExpr* valuesAddr =
-    runArrowG(sbOut, tempNonNull, shadow_temp, ShadowTemp, values);
-  for(int i = 0; i < num_vals; ++i){
-    IRExpr* value = runIndexG(sbOut, tempNonNull,
-                              valuesAddr,
-                              ShadowValue*, i);
-    addSVDisownG(sbOut, tempNonNull, value);
-  }
-  addStackPushG(sbOut, tempNonNull, freedTemps[num_vals - 1],
-                shadow_temp);
-}
-void addDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* shadow_temp, int num_vals){
-  IRExpr* valuesAddr =
-    runArrowG(sbOut, guard, shadow_temp, ShadowTemp, values);
-  for(int i = 0; i < num_vals; ++i){
-    IRExpr* value = runIndexG(sbOut, guard,
-                              valuesAddr,
-                              ShadowValue*, i);
-    addSVDisownG(sbOut, guard, value);
-  }
-  addStackPushG(sbOut, guard, freedTemps[num_vals - 1],
-                shadow_temp);
-}
-void addSVOwn(IRSB* sbOut, IRExpr* sv){
-  IRExpr* valueNonNull = runNonZeroCheck64(sbOut, sv);
-  addSVOwnNonNullG(sbOut, valueNonNull, sv);
-}
-void addSVOwnNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
-  IRExpr* prevRefCount =
-    runArrowG(sbOut, guard, sv, ShadowValue, ref_count);
-  IRExpr* newRefCount =
-    runBinop(sbOut, Iop_Add64, prevRefCount, mkU64(1));
-  addStoreArrowG(sbOut, guard, sv, ShadowValue, ref_count, newRefCount);
-  if (print_value_moves){
-    addPrintG3(guard, "[2] Owning %p, new ref_count %d\n", sv, newRefCount);
-  }
-}
-void addSVOwnNonNull(IRSB* sbOut, IRExpr* sv){
-  IRExpr* prevRefCount =
-    runArrow(sbOut, sv, ShadowValue, ref_count);
-  IRExpr* newRefCount =
-    runBinop(sbOut, Iop_Add64, prevRefCount, mkU64(1));
-  if (print_value_moves){
-    addPrint3("[3] Owning %p, new ref_count %d\n", sv, newRefCount);
-  }
-  addStoreArrow(sbOut, sv, ShadowValue, ref_count, newRefCount);
-}
-void addSVDisown(IRSB* sbOut, IRExpr* sv){
-  IRExpr* valueNonNull = runNonZeroCheck64(sbOut, sv);
-  IRExpr* prevRefCount =
-    runArrowG(sbOut, valueNonNull, sv, ShadowValue, ref_count);
-  IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
-  // If value is null, then preRefCount will be zero, so lastRef will be false.
-  addStackPushG(sbOut, lastRef, freedVals, sv);
-  if (print_value_moves){
-    addPrintG2(lastRef,
-               "Disowned last reference to %p! Freeing...\n", sv);
-  }
-
-  IRExpr* newRefCount =
-    runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
-  addStoreArrowG(sbOut, valueNonNull, sv, ShadowValue,
-                 ref_count, newRefCount);
-}
-void addSVDisownNonNull(IRSB* sbOut, IRExpr* sv){
-  IRExpr* prevRefCount =
-    runArrow(sbOut, sv, ShadowValue, ref_count);
-  IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
-  addStackPushG(sbOut, lastRef, freedVals, sv);
-  if (print_value_moves){
-    addPrintG2(lastRef,
-               "Disowned last reference to %p! Freeing...\n", sv);
-  }
-
-  IRExpr* newRefCount =
-    runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
-  if (print_value_moves){
-    IRExpr* shouldPrintUpdate = runUnop(sbOut, Iop_Not1, lastRef);
-    addPrintG3(shouldPrintUpdate,
-               "[2] Disowning %p, new ref_count %d\n", sv, newRefCount);
-  }
-  addStoreArrow(sbOut, sv, ShadowValue,
-                ref_count, newRefCount);
-}
-void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
-  IRExpr* valueNonNull = runNonZeroCheck64(sbOut, sv);
-  IRExpr* shouldDoAnythingAtAll = runAnd(sbOut, valueNonNull, guard);
-  IRExpr* prevRefCount =
-    runArrowG(sbOut, shouldDoAnythingAtAll, sv, ShadowValue, ref_count);
-  IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
-  if (print_value_moves){
-    addPrintG2(lastRef,
-               "Disowned last reference to %p! Freeing...\n", sv);
-  }
-  addStackPushG(sbOut, lastRef, freedVals, sv);
-
-  IRExpr* newRefCount =
-    runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
-  if (print_value_moves){
-    IRExpr* nonLastRef = runBinop(sbOut, Iop_CmpLT64U,
-                                  mkU64(1), prevRefCount);
-    addPrintG3(nonLastRef,
-               "[3] Disowning %p, new ref_count %d\n", sv, newRefCount);
-  }
-  addStoreArrowG(sbOut, shouldDoAnythingAtAll,
-                 sv, ShadowValue,
-                 ref_count, newRefCount);
-}
-void addClear(IRSB* sbOut, IRTemp dest, int num_vals){
-  IRExpr* oldShadowTemp = runLoad64C(sbOut, &(shadowTemps[dest]));
-  addPrint3("Freeing value %p in %d early\n",
-            oldShadowTemp, mkU64(dest));
-  addDisownNonNull(sbOut, oldShadowTemp, num_vals);
-  addStoreC(sbOut, mkU64(0), &(shadowTemps[dest]));
+  cleanupBlockOwnership(sbOut, guard);
 }
 IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
                                int num_values,
@@ -1098,113 +893,12 @@ void addStoreTempNonFloat(IRSB* sbOut, int idx){
   tempContext[idx] = Ft_NonFloat;
 }
 void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx){
-  /* IRExpr* tempNonNull = runNonZeroCheck64(sbOut, shadow_temp_maybe); */
-  addStoreTemp(sbOut/* , tempNonNull */, shadow_temp_maybe, Ft_Unknown, idx);
+  addStoreTemp(sbOut, shadow_temp_maybe, Ft_Unknown, idx);
 }
 void addStoreTempUnshadowed(IRSB* sbOut, int idx){
   tempContext[idx] = Ft_Unshadowed;
   if (print_types){
     VG_(printf)("Setting %d to unshadowed.\n", idx);
-  }
-}
-Bool tempIsTyped(int idx){
-  return tempContext[idx] == Ft_Single ||
-    tempContext[idx] == Ft_Double;
-}
-FloatType tempType(int idx){
-  tl_assert2(tempContext[idx] != Ft_NonFloat,
-             "Tried to get the type of temp %d, "
-             "but it hasn't been set yet this SB!\n",
-             idx);
-  return tempContext[idx];
-}
-int valueSize(IRSB* sbOut, int idx){
-  switch(typeOfIRTemp(sbOut->tyenv, idx)){
-  case Ity_I64:
-  case Ity_F64:
-    return sizeof(double);
-  case Ity_F32:
-  case Ity_I32:
-    return sizeof(float);
-  case Ity_V128:
-    if (tempType(idx) == Ft_Single){
-      return sizeof(float);
-    } else if (tempType(idx) == Ft_Double){
-      return sizeof(double);
-    }
-  default:
-    tl_assert(0);
-    return 0;
-  }
-}
-int numTempValues(IRSB* sbOut, int idx){
-  switch(typeOfIRTemp(sbOut->tyenv, idx)){
-  case Ity_I64:
-  case Ity_F64:
-  case Ity_I32:
-  case Ity_F32:
-    return 1;
-  case Ity_V128:
-    if (tempType(idx) == Ft_Single){
-      return 4;
-    } else if (tempType(idx) == Ft_Double){
-      return 2;
-    }
-  default:
-    VG_(printf)("%d\n", tempType(idx));
-    ppIRType(typeOfIRTemp(sbOut->tyenv, idx));
-    tl_assert(0);
-    return 0;
-  }
-}
-Bool hasStaticShadow(IRExpr* expr){
-  switch(expr->tag){
-  case Iex_Const:
-    return False;
-  case Iex_RdTmp:
-    return tempIsTyped(expr->Iex.RdTmp.tmp);
-  default:
-    VG_(printf)("Hey, what are you trying to pull here, man? "
-                "You can't check the shadow of a non-trivial "
-                "expression. It's got to be either a RdTmp or "
-                "a Const, not %p ", expr);
-    ppIRExpr(expr);
-    tl_assert(0);
-  }
-}
-Bool canHaveShadow(IRTypeEnv* typeEnv, IRExpr* expr){
-  if (expr->tag == Iex_Const){
-    return False;
-  } else if (!isFloatType(typeOfIRExpr(typeEnv, expr))){
-    return False;
-  } else if (tempContext[expr->Iex.RdTmp.tmp] == Ft_NonFloat ||
-             tempContext[expr->Iex.RdTmp.tmp] == Ft_Unshadowed) {
-    return False;
-  } else {
-    return True;
-  }
-}
-Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr){
-  if (!isFloatType(typeOfIRExpr(typeEnv, expr))){
-    return False;
-  } else if (expr->tag == Iex_Const){
-    return True;
-  } else if (tempContext[expr->Iex.RdTmp.tmp] == Ft_NonFloat){
-    return False;
-  } else {
-    return True;
-  }
-}
-Bool canStoreShadow(IRTypeEnv* typeEnv, IRExpr* expr){
-  if (expr->tag == Iex_Const){
-    return False;
-  } else if (!isFloatType(typeOfIRExpr(typeEnv, expr))){
-    return False;
-  } else if (tempContext[expr->Iex.RdTmp.tmp] == Ft_NonFloat){
-    tl_assert2(0, "Why are you even asking this?");
-    return False;
-  } else {
-    return True;
   }
 }
 IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr){
@@ -1233,74 +927,6 @@ IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr){
   return result;
 }
 
-int exprSize(IRTypeEnv* tyenv, IRExpr* expr){
-  return typeSize(typeOfIRExpr(tyenv, expr));
-}
-
-int typeSize(IRType type){
-  switch (type){
-  case Ity_I32:
-  case Ity_F32:
-    return 1;
-  case Ity_I64:
-  case Ity_F64:
-    return 2;
-  case Ity_V128:
-    return 4;
-  default:
-    return 1;
-  }
-}
-
-Bool tsAddrCanStoreShadow(Int tsAddr){
-  switch(tsContext[tsAddr]){
-  case Ft_NonFloat:
-    tl_assert2(0, "why are you even asking this?");
-    return False;
-  default:
-    return True;
-  }
-}
-
-Bool tsAddrCanHaveShadow(Int tsAddr){
-  switch(tsContext[tsAddr]){
-  case Ft_NonFloat:
-  case Ft_Unshadowed:
-    return False;
-  default:
-    return True;
-  }
-}
-Bool tsHasStaticShadow(Int tsAddr){
-  switch(tsContext[tsAddr]){
-  case Ft_Single:
-  case Ft_Double:
-    return True;
-  default:
-    return False;
-  }
-}
-
-FloatType inferTSType64(Int tsAddr){
-  tl_assert2(tsContext[tsAddr + sizeof(float)] != Ft_Double,
-             "Mismatched float at TS(%d)!", tsAddr);
-  /* tl_assert2(tsContext[tsAddr] != Ft_NonFloat || */
-  /*            tsContext[tsAddr + sizeof(float)] == Ft_NonFloat, */
-  /*            "Mismatched float at TS(%d)!", tsAddr); */
-  tl_assert2(tsContext[tsAddr] != Ft_Double ||
-             tsContext[tsAddr + sizeof(float)] == Ft_NonFloat,
-             "Mismatched float at TS(%d)!", tsAddr);
-  /* tl_assert2(tsContext[tsAddr] != Ft_Single || */
-  /*            tsContext[tsAddr + sizeof(float)] == Ft_Single || */
-  /*            tsContext[tsAddr + sizeof(float)] == Ft_NonFloat || */
-  /*            tsContext[tsAddr + sizeof(float)] == Ft_Unknown, */
-  /*            "Mismatched float at TS(%d)!", tsAddr); */
-  if (tsContext[tsAddr] == Ft_Unknown){
-    return tsContext[tsAddr + sizeof(float)];
-  } else {
-    return tsContext[tsAddr];
-  }
-}
 // Produce an expression to calculate (base + ((idx + bias) % len)),
 // where base, bias, and len are fixed, and idx can vary at runtime.
 IRExpr* mkArrayLookupExpr(IRSB* sbOut,

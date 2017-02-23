@@ -34,11 +34,13 @@
 #include "pub_tool_libcassert.h"
 #include "pub_tool_libcprint.h"
 #include "pub_tool_mallocfree.h"
-#include "instrument-storage.h"
 
+#include "instrument-storage.h"
+#include "ownership.h"
 #include "../runtime/value-shadowstate/value-shadowstate.h"
 #include "../runtime/shadowop/shadowop.h"
 #include "../helper/debug.h"
+#include "../helper/ir-info.h"
 
 typedef enum {
   Uncertain,

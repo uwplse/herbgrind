@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie   instrument-storage.c ---*/
+/*--- HerbGrind: a valgrind tool for Herbie   instrument-storage.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -31,7 +31,8 @@
 
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
-#include "../helper/ir-info.h"
+
+#include "floattypes.h"
 
 void initInstrumentationState(void);
 void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src);
@@ -62,20 +63,6 @@ void instrumentCAS(IRSB* sbOut,
                    IRCAS* details);
 void finishInstrumentingBlock(IRSB* sbOut);
 void addBlockCleanupG(IRSB* sbOut, IRExpr* guard);
-void cleanupAtEndOfBlock(IRSB* sbOut, IRTemp shadowed_temp);
-void addDynamicDisown(IRSB* sbOut, IRTemp idx);
-void addDynamicDisownNonNull(IRSB* sbOut, IRTemp idx);
-void addDynamicDisownNonNullDetached(IRSB* sbOut, IRExpr* st);
-void addDisownNonNull(IRSB* sbOut, IRExpr* shadow_temp, int num_vals);
-void addDisown(IRSB* sbOut, IRExpr* shadow_temp, int num_vals);
-void addDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* shadow_temp, int num_vals);
-void addSVDisown(IRSB* sbOut, IRExpr* sv);
-void addSVDisownNonNull(IRSB* sbOut, IRExpr* sv);
-void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv);
-void addSVOwn(IRSB* sbOut, IRExpr* sv);
-void addSVOwnNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv);
-void addSVOwnNonNull(IRSB* sbOut, IRExpr* sv);
-void addClear(IRSB* sbOut, IRTemp shadowed_temp, int num_vals);
 
 IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
                               IRExpr** values);
@@ -111,21 +98,7 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard,
 void addStoreTempNonFloat(IRSB* sbOut, int idx);
 void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx);
 void addStoreTempUnshadowed(IRSB* sbOut, int idx);
-Bool tempIsTyped(int idx);
-FloatType tempType(int idx);
-FloatType inferTSType64(Int tsAddr);
-Bool hasStaticShadow(IRExpr* expr);
-Bool canHaveShadow(IRTypeEnv* tyenv, IRExpr* expr);
-Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr);
-Bool canStoreShadow(IRTypeEnv* typeEnv, IRExpr* expr);
 IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr);
-int valueSize(IRSB* sbOut, int idx);
-int numTempValues(IRSB* sbOut, int idx);
-int exprSize(IRTypeEnv* tyenv, IRExpr* expr);
-int typeSize(IRType type);
-Bool tsAddrCanHaveShadow(Int tsAddr);
-Bool tsAddrCanStoreShadow(Int tsAddr);
-Bool tsHasStaticShadow(Int tsAddr);
 IRExpr* mkArrayLookupExpr(IRSB* sbOut,
                           Int base, IRExpr* idx,
                           Int bias, Int len,

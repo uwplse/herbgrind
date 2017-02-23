@@ -36,11 +36,13 @@
 
 #include "../helper/instrument-util.h"
 #include "../helper/debug.h"
+#include "../helper/ir-info.h"
 
 #include "../runtime/op-shadowstate/shadowop-info.h"
 #include "../runtime/shadowop/shadowop.h"
 
 #include "instrument-storage.h"
+#include "ownership.h"
 
 void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                           int nargs, IRExpr** argExprs,

@@ -30,7 +30,8 @@ runtime/op-shadowstate/shadowop-info.c runtime/shadowop/shadowop.c	\
 runtime/shadowop/realop.c runtime/shadowop/conversions.c options.c	\
 instrument/instrument.c instrument/instrument-op.c			\
 instrument/instrument-storage.c instrument/conversion.c			\
-instrument/semantic-op.c
+instrument/semantic-op.c instrument/floattypes.c			\
+instrument/ownership.c
 
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_SOURCES      = \
 	$(HERBGRIND_SOURCES_COMMON)

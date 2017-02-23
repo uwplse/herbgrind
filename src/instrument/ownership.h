@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie              ir-info.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie            ownership.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -26,16 +26,31 @@
 
    The GNU General Public License is contained in the file COPYING.
 */
-
-#ifndef _IR_INFO_H
-#define _IR_INFO_H
+#ifndef _OWNERSHIP_H
+#define _OWNERSHIP_H
 
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
+#include "pub_tool_xarray.h"
 
-int numChannelsIn(IROp op_code);
-int numChannelsOut(IROp op_code);
-int numSIMDOperands(IROp op_code);
-int inferOtherNumChannels(int inferIndex, IRExpr* arg, IROp op_code);
+extern XArray* tempDebt;
+
+void initOwnership(void);
+void cleanupBlockOwnership(IRSB* sbOut, IRExpr* guard);
+void resetOwnership(IRSB* sbOut);
+void cleanupAtEndOfBlock(IRSB* sbOut, IRTemp shadowed_temp);
+void addDynamicDisown(IRSB* sbOut, IRTemp idx);
+void addDynamicDisownNonNull(IRSB* sbOut, IRTemp idx);
+void addDynamicDisownNonNullDetached(IRSB* sbOut, IRExpr* st);
+void addDisownNonNull(IRSB* sbOut, IRExpr* shadow_temp, int num_vals);
+void addDisown(IRSB* sbOut, IRExpr* shadow_temp, int num_vals);
+void addDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* shadow_temp, int num_vals);
+void addSVDisown(IRSB* sbOut, IRExpr* sv);
+void addSVDisownNonNull(IRSB* sbOut, IRExpr* sv);
+void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv);
+void addSVOwn(IRSB* sbOut, IRExpr* sv);
+void addSVOwnNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv);
+void addSVOwnNonNull(IRSB* sbOut, IRExpr* sv);
+void addClear(IRSB* sbOut, IRTemp shadowed_temp, int num_vals);
 
 #endif
