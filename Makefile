@@ -51,7 +51,7 @@ src/runtime/shadowop/shadowop.c src/runtime/shadowop/conversions.c	\
 src/runtime/shadowop/realop.c src/instrument/instrument.c		\
 src/instrument/instrument-op.c src/instrument/instrument-storage.c	\
 src/instrument/conversion.c src/instrument/semantic-op.c		\
-src/instrument/ownership.h src/instrument/floattypes.h
+src/instrument/ownership.c src/instrument/floattypes.c
 
 all: compile
 

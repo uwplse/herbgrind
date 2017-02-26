@@ -37,7 +37,7 @@
 #include "../../instrument/floattypes.h"
 
 typedef struct _ShadowValue {
-  // For the shadow temp stacks.
+  // For the various data structures that will hold these values.
   struct _ShadowValue* next;
 
   UWord ref_count;

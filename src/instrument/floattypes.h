@@ -51,6 +51,7 @@ extern VgHashTable* memContext;
 
 void initTypeState(void);
 void resetTypeState(void);
+void addClearMemTypes(void);
 
 FloatType argPrecision(IROp op_code);
 FloatType resultPrecision(IROp op_code);
@@ -73,6 +74,8 @@ FloatType inferTSType64(Int tsAddr);
 Bool tsAddrCanHaveShadow(Int tsAddr);
 Bool tsHasStaticShadow(Int tsAddr);
 
+void addClearMemType(void);
+void setMemType(ULong addr, FloatType type);
 FloatType lookupMemType(ULong addr);
 Bool memAddrCanHaveShadow(ULong memAddr);
 Bool memAddrHasStaticShadow(ULong mmAddr);

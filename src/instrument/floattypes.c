@@ -32,29 +32,31 @@
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_libcassert.h"
 #include "pub_tool_libcprint.h"
+#include "../helper/stack.h"
 
 FloatType tempContext[MAX_TEMPS];
 FloatType tsContext[MAX_REGISTERS];
 VgHashTable* memContext = NULL;
+Stack* typeEntries = NULL;
 
 void initTypeState(void){
   memContext = VG_(HT_construct)("mem context");
+  typeEntries = mkStack();
 }
 void resetTypeState(void){
   VG_(memset)(tempContext, 0, sizeof tempContext);
   VG_(memset)(tsContext, 0, sizeof tsContext);
-  VG_(HT_destruct)(memContext, VG_(free));
-  memContext = VG_(HT_construct)("mem context");
+  addClearMemTypes();
 }
 Bool tempIsTyped(int idx){
   return tempContext[idx] == Ft_Single ||
     tempContext[idx] == Ft_Double;
 }
 FloatType tempType(int idx){
-  tl_assert2(tempContext[idx] != Ft_NonFloat,
-             "Tried to get the type of temp %d, "
-             "but it hasn't been set yet this SB!\n",
-             idx);
+  /* tl_assert2(tempContext[idx] != Ft_NonFloat, */
+  /*            "Tried to get the type of temp %d, " */
+  /*            "but it hasn't been set yet this SB!\n", */
+  /*            idx); */
   return tempContext[idx];
 }
 int valueSize(IRSB* sbOut, int idx){
@@ -190,6 +192,31 @@ typedef struct _memTypeEntry {
 
   FloatType type;
 } MemTypeEntry;
+
+void pushEntry(void* entry);
+void pushEntry(void* entry){
+  stack_push(typeEntries, entry);
+}
+
+void addClearMemTypes(void){
+  VG_(HT_destruct)(memContext, pushEntry);
+  memContext = VG_(HT_construct)("mem context");
+}
+void setMemType(ULong addr, FloatType type){
+  MemTypeEntry* entry = VG_(HT_lookup)(memContext, (UWord)addr);
+  if (entry != NULL){
+    entry->type = type;
+  } else if (!stack_empty(typeEntries)){
+    if (stack_empty(typeEntries)){
+      entry = VG_(malloc)("entry", sizeof(MemTypeEntry));
+    } else {
+      entry = (void*)stack_pop(typeEntries);
+    }
+    entry->addr = addr;
+    entry->type = type;
+    VG_(HT_add_node)(memContext, entry);
+  }
+}
 
 FloatType lookupMemType(ULong addr){
   // This cast might not be safe? Should be on 64-bit platforms, but

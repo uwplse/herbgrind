@@ -34,6 +34,7 @@
 #include "pub_tool_libcassert.h"
 #include "pub_tool_libcbase.h"
 #include "pub_tool_threadstate.h"
+#include "pub_tool_mallocfree.h"
 
 #include "../../options.h"
 #include "../../helper/debug.h"
@@ -44,12 +45,15 @@ VgHashTable* shadowMemory = NULL;
 
 Stack* freedTemps[MAX_TEMP_SHADOWS];
 Stack* freedVals;
+Stack* memEntries;
 
 void initValueShadowState(void){
   for(int i = 0; i < MAX_TEMP_SHADOWS; ++i){
     freedTemps[i] = mkStack();
   }
   freedVals = mkStack();
+  memEntries = mkStack();
+  shadowMemory = VG_(HT_construct)("shadow memory");
 }
 
 VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
@@ -321,6 +325,42 @@ VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
   freeShadowTemp(firstHalf);
   freeShadowTemp(secondHalf);
   return result;
+}
+
+VG_REGPARM(3) void setMemShadow(UWord memDest,
+                                UWord size,
+                                ShadowTemp* st){
+  for(int i = 0; i < size; ++i){
+    UWord addr = memDest + i * sizeof(float);
+    removeMemShadow(addr);
+    if (st != NULL &&
+        !(st->values[i/2]->type == Ft_Double && i % 2 == 1)){
+      addMemShadow(addr, st->values[i/2]);
+    }
+  }
+}
+VG_REGPARM(1) ShadowValue* getMemShadow(UWord memSrc){
+  ShadowMemEntry* entry = VG_(HT_lookup)(shadowMemory, memSrc);
+  if (entry == NULL) return NULL;
+  else return entry->val;
+}
+void removeMemShadow(UWord addr){
+  ShadowMemEntry* oldEntry = VG_(HT_remove)(shadowMemory, addr);
+  if (oldEntry == NULL) return;
+  disownShadowValue(oldEntry->val);
+  stack_push(memEntries, (void*)oldEntry);
+}
+void addMemShadow(UWord addr, ShadowValue* val){
+  ShadowMemEntry* newEntry;
+  if (stack_empty(memEntries)){
+    newEntry = VG_(malloc)("memEntry", sizeof(ShadowMemEntry));
+  } else {
+    newEntry = (void*)stack_pop(memEntries);
+  }
+  newEntry->addr = addr;
+  newEntry->val = val;
+  ownShadowValue(val);
+  VG_(HT_add_node)(shadowMemory, val);
 }
 void freeShadowTemp(ShadowTemp* temp){
   stack_push(freedTemps[temp->num_vals - 1], (void*)temp);

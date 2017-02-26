@@ -655,6 +655,43 @@ void instrumentLoadG(IRSB* sbOut, IRTemp dest,
 }
 void instrumentStore(IRSB* sbOut, IRExpr* addr,
                      IRExpr* data){
+  int dest_size = exprSize(sbOut->tyenv, data);
+  if (addr->tag == Iex_Const){
+    tl_assert(addr->Iex.Const.con->tag == Ico_U64);
+    ULong const_addr = addr->Iex.Const.con->Ico.U64;
+    Bool someShadow = False;
+    for(int i = 0; i < dest_size; ++i){
+      ULong chunk_addr = const_addr + (i * sizeof(float));
+      someShadow = someShadow || memAddrCanHaveShadow(chunk_addr);
+    }
+    IRExpr* st;
+    FloatType type;
+    if (data->tag == Iex_RdTmp){
+      int idx = data->Iex.RdTmp.tmp;
+      st = runLoadTemp(sbOut, idx);
+      type = tempType(idx);
+    } else {
+      st=mkU64(0);
+      type = Ft_NonFloat;
+    }
+    if (someShadow){
+      addSetMem(sbOut, mkU1(True), dest_size, addr, st);
+    } else {
+      IRExpr* stExists = runNonZeroCheck64(sbOut, st);
+      addSetMem(sbOut, stExists, dest_size, addr, st);
+    }
+    setMemType(const_addr, type);
+  } else {
+    return;
+    IRExpr* st;
+    if (data->tag == Iex_RdTmp){
+      int idx = data->Iex.RdTmp.tmp;
+      st = runLoadTemp(sbOut, idx);
+    } else {
+      st = mkU64(0);
+    }
+    addSetMem(sbOut, mkU1(True), dest_size, addr, st);
+  }
 }
 void instrumentStoreG(IRSB* sbOut, IRExpr* addr,
                       IRExpr* guard, IRExpr* data){
@@ -900,6 +937,21 @@ void addStoreTempUnshadowed(IRSB* sbOut, int idx){
   if (print_types){
     VG_(printf)("Setting %d to unshadowed.\n", idx);
   }
+}
+IRExpr* runGetMemVal(IRSB* sbOut, IRExpr* memSrc){
+  return runPureCCall64(sbOut, getMemShadow, memSrc);
+}
+void addSetMem(IRSB* sbOut, IRExpr* guard, int size,
+               IRExpr* memDest, IRExpr* newTemp){
+  IRDirty* storeDirty =
+    unsafeIRDirty_0_N(3, "setMemShadow",
+                      VG_(fnptr_to_fnentry)(setMemShadow),
+                      mkIRExprVec_3(memDest, mkU64(size), newTemp));
+  storeDirty->guard = guard;
+  storeDirty->mFx = Ifx_Modify;
+  storeDirty->mAddr = mkU64((uintptr_t)&shadowMemory);
+  storeDirty->mSize = sizeof(VgHashTable*);
+  addStmtToIRSB(sbOut, IRStmt_Dirty(storeDirty));
 }
 IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr){
   IRExpr* result;
