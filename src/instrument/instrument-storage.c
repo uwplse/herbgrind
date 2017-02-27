@@ -648,9 +648,6 @@ void instrumentLoad(IRSB* sbOut, IRTemp dest,
   if (addr->tag == Iex_Const){
     tl_assert(addr->Iex.Const.con->tag == Ico_U64);
     ULong const_addr = addr->Iex.Const.con->Ico.U64;
-    if (!memBlockCanHaveShadow(const_addr, dest_size)){
-      return;
-    }
     FloatType fType = inferMemType(const_addr, dest_size);
     if (fType == Ft_NonFloat){
       addStoreTempNonFloat(sbOut, dest);
@@ -671,7 +668,18 @@ void instrumentLoadG(IRSB* sbOut, IRTemp dest,
   if (!isFloat(sbOut->tyenv, dest)){
     return;
   }
-  tempContext[dest] = Ft_Unshadowed;
+  int dest_size = loadConversionSize(conversion);
+  IRExpr* st = runGetMem(sbOut, guard, dest_size, addr);
+  IRExpr* stAlt;
+  if (altValue->tag == Iex_Const){
+    stAlt = mkU64(0);
+  } else {
+    tl_assert(altValue->tag == Iex_RdTmp);
+    stAlt = runLoadTemp(sbOut, altValue->Iex.RdTmp.tmp);
+  }
+  addStoreTempUnknown(sbOut,
+                      runITE(sbOut, guard, st, stAlt),
+                      dest);
 }
 void instrumentStore(IRSB* sbOut, IRExpr* addr,
                      IRExpr* data){

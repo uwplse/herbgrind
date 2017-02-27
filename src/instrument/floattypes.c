@@ -167,6 +167,19 @@ int typeSize(IRType type){
     return 1;
   }
 }
+int loadConversionSize(IRLoadGOp conversion){
+  switch(conversion){
+  case ILGop_IdentV128:
+    return 4;
+  case ILGop_Ident64:
+    return 2;
+  case ILGop_Ident32:
+    return 1;
+  default:
+    tl_assert(0);
+    return 0;
+  }
+}
 
 Bool tsAddrCanHaveShadow(Int tsAddr){
   switch(tsContext[tsAddr]){
