@@ -151,6 +151,7 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){
       case Iex_ITE:
         instrumentITE(sbOut,
                       stmt->Ist.WrTmp.tmp,
+                      expr->Iex.ITE.cond,
                       expr->Iex.ITE.iftrue,
                       expr->Iex.ITE.iffalse);
         break;

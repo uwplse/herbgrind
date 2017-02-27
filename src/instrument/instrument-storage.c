@@ -64,38 +64,36 @@ void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src){
 
   // Copy across the new temp and increment it's ref count.
   // Increment the ref count of the new temp
-  IRTemp newShadowTempCopy = newIRTemp(sbOut->tyenv, Ity_I64);
-  IRDirty* copyShadowTempDirty =
-    unsafeIRDirty_1_N(newShadowTempCopy,
-                      1, "copyShadowTemp",
-                      VG_(fnptr_to_fnentry)(&copyShadowTemp),
-                      mkIRExprVec_1(newShadowTemp));
-  copyShadowTempDirty->mFx = Ifx_Read;
-  copyShadowTempDirty->mAddr = newShadowTemp;
-  copyShadowTempDirty->mSize = sizeof(ShadowTemp);
-
-  IRExpr* tempNonNull = runNonZeroCheck64(sbOut, newShadowTemp);
-  copyShadowTempDirty->guard = tempNonNull;
-  addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowTempDirty));
-  addStoreTempG(sbOut, tempNonNull,
-                IRExpr_RdTmp(newShadowTempCopy),
-                tempContext[src], dest);
-  if (print_temp_moves){
-    addPrintG3(tempNonNull, "Copying shadow temp %p in %d ", newShadowTemp, mkU64(src));
-    addPrintG3(tempNonNull, "to %p in %d\n",
-               IRExpr_RdTmp(newShadowTempCopy), mkU64(dest));
-  }
+  addStoreTempCopy(sbOut, newShadowTemp, dest, tempContext[src]);
 }
 void instrumentWriteConst(IRSB* sbOut, IRTemp dest,
                           IRConst* con){
   tempContext[dest] = Ft_Unshadowed;
 }
 void instrumentITE(IRSB* sbOut, IRTemp dest,
+                   IRExpr* cond,
                    IRExpr* trueExpr, IRExpr* falseExpr){
   if (!isFloat(sbOut->tyenv, dest)){
     return;
   }
-  tempContext[dest] = Ft_Unshadowed;
+  IRExpr* trueSt;
+  IRExpr* falseSt;
+  if (trueExpr->tag == Iex_Const){
+    trueSt = mkU64(0);
+  } else {
+    tl_assert(trueExpr->tag == Iex_RdTmp);
+    trueSt = runLoadTemp(sbOut, trueExpr->Iex.RdTmp.tmp);
+  }
+  if (falseExpr->tag == Iex_Const){
+    falseSt = mkU64(0);
+  } else {
+    tl_assert(falseExpr->tag == Iex_RdTmp);
+    falseSt = runLoadTemp(sbOut, falseExpr->Iex.RdTmp.tmp);
+  }
+
+  IRExpr* resultSt =
+    runITE(sbOut, cond, trueSt, falseSt);
+  addStoreTempCopy(sbOut, resultSt, dest, Ft_Unknown);
 }
 void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
   // This procedure adds instrumentation to sbOut which shadows the
@@ -1077,4 +1075,21 @@ IRExpr* mkArrayLookupExpr(IRSB* sbOut,
              mkU64(base),
              ex1);
   return lookupExpr;
+}
+
+void addStoreTempCopy(IRSB* sbOut, IRExpr* original, IRTemp dest, FloatType type){
+  IRTemp newShadowTempCopy = newIRTemp(sbOut->tyenv, Ity_I64);
+  IRExpr* originalNonNull = runNonZeroCheck64(sbOut, original);
+  IRDirty* copyShadowTempDirty =
+    unsafeIRDirty_1_N(newShadowTempCopy,
+                      1, "copyShadowTemp",
+                      VG_(fnptr_to_fnentry)(&copyShadowTemp),
+                      mkIRExprVec_1(original));
+  copyShadowTempDirty->mFx = Ifx_Read;
+  copyShadowTempDirty->mAddr = original;
+  copyShadowTempDirty->mSize = sizeof(ShadowTemp);
+  copyShadowTempDirty->guard = originalNonNull;
+  addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowTempDirty));
+  addStoreTempG(sbOut, originalNonNull, IRExpr_RdTmp(newShadowTempCopy),
+                type, dest);
 }

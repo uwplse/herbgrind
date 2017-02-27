@@ -39,6 +39,7 @@ void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src);
 void instrumentWriteConst(IRSB* sbOut, IRTemp dest,
                           IRConst* con);
 void instrumentITE(IRSB* sbOut, IRTemp dest,
+                   IRExpr* cond,
                    IRExpr* trueExpr, IRExpr* falseExpr);
 void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data);
 void instrumentPutI(IRSB* sbOut,
@@ -99,6 +100,8 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard,
 void addStoreTempNonFloat(IRSB* sbOut, int idx);
 void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx);
 void addStoreTempUnshadowed(IRSB* sbOut, int idx);
+void addStoreTempCopy(IRSB* sbOut, IRExpr* original,
+                      IRTemp dest, FloatType type);
 
 IRExpr* runGetMem(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc);
 void addSetMem(IRSB* sbOut, IRExpr* guard, int size,
