@@ -100,7 +100,7 @@ void addStoreTempNonFloat(IRSB* sbOut, int idx);
 void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx);
 void addStoreTempUnshadowed(IRSB* sbOut, int idx);
 
-IRExpr* runGetMemVal(IRSB* sbOut, IRExpr* memSrc);
+IRExpr* runGetMem(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc);
 void addSetMem(IRSB* sbOut, IRExpr* guard, int size,
                IRExpr* memDest, IRExpr* newTemp);
 

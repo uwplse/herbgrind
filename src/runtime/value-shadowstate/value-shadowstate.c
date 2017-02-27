@@ -327,9 +327,9 @@ VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
   return result;
 }
 
-VG_REGPARM(3) void setMemShadow(UWord memDest,
-                                UWord size,
-                                ShadowTemp* st){
+VG_REGPARM(3) void setMemShadowTemp(UWord memDest,
+                                    UWord size,
+                                    ShadowTemp* st){
   for(int i = 0; i < size; ++i){
     UWord addr = memDest + i * sizeof(float);
     removeMemShadow(addr);
@@ -338,6 +338,23 @@ VG_REGPARM(3) void setMemShadow(UWord memDest,
       addMemShadow(addr, st->values[i/2]);
     }
   }
+}
+VG_REGPARM(2) ShadowTemp* getMemShadowTemp(UWord memSrc,
+                                           UWord size){
+  ShadowTemp* newTemp = mkShadowTemp(size);
+  Bool allNull = True;
+  for(int i = 0; i < size; ++i){
+    UWord addr = memSrc + i * sizeof(float);
+    newTemp->values[i] = getMemShadow(addr);
+    if (newTemp->values[i] != NULL){
+      allNull = False;
+      ownShadowValue(newTemp->values[i]);
+    }
+  }
+  if (allNull){
+    return NULL;
+  }
+  return newTemp;
 }
 VG_REGPARM(1) ShadowValue* getMemShadow(UWord memSrc){
   ShadowMemEntry* entry = VG_(HT_lookup)(shadowMemory, memSrc);

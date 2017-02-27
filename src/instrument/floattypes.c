@@ -217,6 +217,14 @@ void setMemType(ULong addr, FloatType type){
     VG_(HT_add_node)(memContext, entry);
   }
 }
+FloatType getMemType(ULong addr){
+  MemTypeEntry* entry = VG_(HT_lookup)(memContext, (UWord)addr);
+  if (entry != NULL){
+    return entry->type;
+  } else {
+    return Ft_Unknown;
+  }
+}
 
 FloatType lookupMemType(ULong addr){
   // This cast might not be safe? Should be on 64-bit platforms, but
@@ -245,6 +253,25 @@ Bool memAddrHasStaticShadow(ULong memAddr){
   default:
     return False;
   }
+}
+Bool memBlockCanHaveShadow(ULong blockStart, int block_len){
+  Bool someShadow = False;
+  for(int i = 0; i < block_len; ++i){
+    ULong chunk_addr = blockStart + (i * sizeof(float));
+    someShadow = someShadow || memAddrCanHaveShadow(chunk_addr);
+  }
+  return someShadow;
+}
+
+FloatType inferMemType(ULong addr, int size){
+  for(int i = 0; i < size; ++i){
+    ULong chunk_addr = addr + (i * sizeof(float));
+    FloatType chunk_type = getMemType(chunk_addr);
+    if (chunk_type != Ft_Unknown){
+      return chunk_type;
+    }
+  }
+  return Ft_Unknown;
 }
 
 FloatType inferTSType64(Int tsAddr){

@@ -74,11 +74,15 @@ FloatType inferTSType64(Int tsAddr);
 Bool tsAddrCanHaveShadow(Int tsAddr);
 Bool tsHasStaticShadow(Int tsAddr);
 
+FloatType inferMemType(ULong addr, int size);
 void addClearMemType(void);
 void setMemType(ULong addr, FloatType type);
+FloatType getMemType(ULong addr);
 FloatType lookupMemType(ULong addr);
 Bool memAddrCanHaveShadow(ULong memAddr);
-Bool memAddrHasStaticShadow(ULong mmAddr);
+Bool memAddrHasStaticShadow(ULong memAddr);
+// Keep in mind this block len is in chunks (aka 4-byte units)
+Bool memBlockCanHaveShadow(ULong blockStart, int block_len);
 
 int valueSize(IRSB* sbOut, int idx);
 int numTempValues(IRSB* sbOut, int idx);
