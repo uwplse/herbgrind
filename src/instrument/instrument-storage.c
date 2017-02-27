@@ -78,13 +78,13 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
   }
   IRExpr* trueSt;
   IRExpr* falseSt;
-  if (trueExpr->tag == Iex_Const){
+  if (!canHaveShadow(trueExpr)){
     trueSt = mkU64(0);
   } else {
     tl_assert(trueExpr->tag == Iex_RdTmp);
     trueSt = runLoadTemp(sbOut, trueExpr->Iex.RdTmp.tmp);
   }
-  if (falseExpr->tag == Iex_Const){
+  if (!canHaveShadow(falseExpr)){
     falseSt = mkU64(0);
   } else {
     tl_assert(falseExpr->tag == Iex_RdTmp);
@@ -93,7 +93,26 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
 
   IRExpr* resultSt =
     runITE(sbOut, cond, trueSt, falseSt);
-  addStoreTempCopy(sbOut, resultSt, dest, Ft_Unknown);
+  // Figure out the types
+  FloatType type;
+  if (!canHaveShadow(trueExpr) && !canHaveShadow(falseExpr)){
+    if (!canBeFloat(trueExpr) && !canBeFloat(falseExpr)){
+      addStoreTempNonFloat(sbOut, dest);
+    } else {
+      addStoreTempUnshadowed(sbOut, dest);
+    }
+  } else if (hasStaticShadow(trueExpr) && hasStaticShadow(falseExpr)){
+    FloatType trueType = tempType(trueExpr->Iex.RdTmp.tmp);
+    FloatType falseType = tempType(falseExpr->Iex.RdTmp.tmp);
+    if (trueType == falseType){
+      addStoreTemp(sbOut, resultSt, trueType, dest);
+    } else {
+      // This is a weakness in our type system, might want to fix it.
+      addStoreTempCopy(sbOut, resultSt, dest, Ft_Unknown);
+    }
+  } else {
+    addStoreTempCopy(sbOut, resultSt, dest, Ft_Unknown);
+  }
 }
 void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
   // This procedure adds instrumentation to sbOut which shadows the
