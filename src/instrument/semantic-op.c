@@ -74,7 +74,7 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
   }
 
   IRExpr* shadowOutput =
-    runShadowOp(sbOut, op_code, curAddr, args, nargs);
+    runShadowOp(sbOut, op_code, curAddr, args, nargs, dest);
   if (print_temp_moves){
     addPrint3("Putting result of op, %p, in %d", shadowOutput, mkU64(dest));
     addPrint2(" (with %d values)\n", mkU64(numChannelsOut(op_code)));
@@ -90,7 +90,8 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
 
 IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
                     Addr curAddr,
-                    IRExpr** args, int nargs){
+                    IRExpr** args, int nargs,
+                    IRTemp dest){
   ShadowOpInfo* info =
     VG_(perm_malloc)(sizeof(ShadowOpInfo), vg_alignof(ShadowOpInfo));
   info->op_code = op_code;
@@ -102,13 +103,12 @@ IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
   for(int i = 0; i < nargs; ++i){
     addStoreC(sbOut, args[i], (&shadowArgs[i]));
   }
+  addStoreC(sbOut, IRExpr_RdTmp(dest), &computedResult);
   tl_assert(info->op_code < Iop_LAST);
-  return runPureCCall(sbOut,
-                      mkIRCallee(2, "executeShadowOp",
-                                 VG_(fnptr_to_fnentry)(executeShadowOp)),
-                      Ity_I64,
-                      mkIRExprVec_2(mkU64((uintptr_t)info),
-                                    mkU64((uintptr_t)shadowArgs)));
+  return runPureCCall64_2(sbOut,
+                          executeShadowOp,
+                          mkU64((uintptr_t)info),
+                          mkU64((uintptr_t)shadowArgs));
 }
 
 IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,

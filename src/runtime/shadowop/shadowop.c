@@ -32,8 +32,9 @@
 #include "realop.h"
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcassert.h"
+#include "error.h"
 
-VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
+VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                                           ShadowTemp** args){
   tl_assert(opInfo->op_code < Iop_LAST);
   ShadowTemp* result = mkShadowTemp(opInfo->exinfo.numChannels);
@@ -55,6 +56,10 @@ VG_REGPARM(2) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                              opInfo->exinfo.argPrecision,
                              opInfo->op_code,
                              vals);
+    updateError(&(opInfo->eagg), opInfo->op_addr, opInfo->op_code,
+                result->values[i]->real,
+                (opInfo->exinfo.argPrecision == Ft_Single ?
+                 computedResult.f[i] : computedResult.d[i]));
     if (print_value_moves){
       if (i == 0){
         VG_(printf)("%p", result->values[i]);

@@ -29,6 +29,8 @@
 
 #include "shadowop-info.h"
 #include "pub_tool_mallocfree.h"
+#include "pub_tool_debuginfo.h"
+#include "pub_tool_libcprint.h"
 
 ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr,
                              int numSIMDOperands, int nargs,
@@ -45,4 +47,17 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr,
   result->exinfo.nargs = nargs;
   result->exinfo.argPrecision = argPrecision;
   return result;
+}
+
+void printOpInfo(Addr op_addr, IROp op_code){
+  ppIROp(op_code);
+  const HChar* src_filename;
+  const HChar* fnname;
+  UInt src_line;
+  if (VG_(get_filename_linenum)(op_addr, &src_filename,
+                                NULL, &src_line)){
+    VG_(get_fnname)(op_addr, &fnname);
+    VG_(printf)(" at %s:%u in %s (addr %lX)",
+                src_filename, src_line, fnname, op_addr);
+  }
 }

@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie             shadowop.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie                error.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,31 +27,15 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _SHADOWOP_H
-#define _SHADOWOP_H
+#ifndef _ERROR_H
+#define _ERROR_H
 
-#include "pub_tool_basics.h"
-#include "pub_tool_tooliface.h"
-#include "pub_tool_xarray.h"
-#include "../value-shadowstate/shadowval.h"
+#include "../value-shadowstate/real.h"
 #include "../op-shadowstate/shadowop-info.h"
 
-union {
-  float argValuesF[4][8];
-  double argValues[4][4];
-} computedArgs;
+void updateError(ErrorAggregate* aggr, Addr op_addr, IROp op_code,
+                 Real realVal, double computedVal);
+double emulate_log2(double input);
+ULong ulpd(double val1, double val2);
 
-union {
-  float f[8];
-  double d[4];
-} computedResult;
-
-ShadowValue* shadowArgs[4];
-
-VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
-                                          ShadowTemp** args);
-ShadowValue* executeChannelShadowOp(int nargs,
-                                    FloatType precision,
-                                    IROp op_code,
-                                    ShadowValue** args);
 #endif

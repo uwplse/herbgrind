@@ -62,5 +62,6 @@ typedef struct _ShadowOpInfo {
 ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr,
                              int numSIMDOperands, int nargs,
                              FloatType argPrecision);
+void printOpInfo(Addr op_addr, IROp op_code);
 
 #endif
