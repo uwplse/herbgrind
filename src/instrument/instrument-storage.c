@@ -661,7 +661,6 @@ void instrumentLoad(IRSB* sbOut, IRTemp dest,
     return;
   }
   int dest_size = typeSize(type);
-  IRExpr* st = runGetMem(sbOut, mkU1(True), dest_size, addr);
   if (addr->tag == Iex_Const){
     tl_assert(addr->Iex.Const.con->tag == Ico_U64);
     ULong const_addr = addr->Iex.Const.con->Ico.U64;
@@ -671,11 +670,14 @@ void instrumentLoad(IRSB* sbOut, IRTemp dest,
     } else if (fType == Ft_Unshadowed){
       addStoreTempUnshadowed(sbOut, dest);
     } else if (fType == Ft_Unknown){
+      IRExpr* st = runGetMem(sbOut, mkU1(True), dest_size, addr);
       addStoreTempUnknown(sbOut, st, dest);
     } else {
+      IRExpr* st = runGetMem(sbOut, mkU1(True), dest_size, addr);
       addStoreTemp(sbOut, st, type, dest);
     }
   } else {
+    IRExpr* st = runGetMem(sbOut, mkU1(True), dest_size, addr);
     addStoreTempUnknown(sbOut, st, dest);
   }
 }
