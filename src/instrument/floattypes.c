@@ -505,6 +505,7 @@ FloatType resultPrecision(IROp op_code){
   case Iop_MSubF64r32:
   case Iop_ZeroHI96ofV128:
   case Iop_V128to32:
+  case Iop_32UtoV128:
   case Iop_RoundF32toInt:
   case Iop_SetV128lo32:
   case Iop_RoundF64toF32:
