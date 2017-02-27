@@ -352,6 +352,7 @@ VG_REGPARM(2) ShadowTemp* getMemShadowTemp(UWord memSrc,
     }
   }
   if (allNull){
+    freeShadowTemp(newTemp);
     return NULL;
   }
   return newTemp;
