@@ -78,13 +78,13 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
   }
   IRExpr* trueSt;
   IRExpr* falseSt;
-  if (!canHaveShadow(trueExpr)){
+  if (!canHaveShadow(sbOut->tyenv, trueExpr)){
     trueSt = mkU64(0);
   } else {
     tl_assert(trueExpr->tag == Iex_RdTmp);
     trueSt = runLoadTemp(sbOut, trueExpr->Iex.RdTmp.tmp);
   }
-  if (!canHaveShadow(falseExpr)){
+  if (!canHaveShadow(sbOut->tyenv, falseExpr)){
     falseSt = mkU64(0);
   } else {
     tl_assert(falseExpr->tag == Iex_RdTmp);
@@ -94,9 +94,8 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
   IRExpr* resultSt =
     runITE(sbOut, cond, trueSt, falseSt);
   // Figure out the types
-  FloatType type;
-  if (!canHaveShadow(trueExpr) && !canHaveShadow(falseExpr)){
-    if (!canBeFloat(trueExpr) && !canBeFloat(falseExpr)){
+  if (!canHaveShadow(sbOut->tyenv, trueExpr) && !canHaveShadow(sbOut->tyenv, falseExpr)){
+    if (!canBeFloat(sbOut->tyenv, trueExpr) && !canBeFloat(sbOut->tyenv, falseExpr)){
       addStoreTempNonFloat(sbOut, dest);
     } else {
       addStoreTempUnshadowed(sbOut, dest);
