@@ -47,6 +47,7 @@ extern Bool print_conversions;
 extern Bool print_types;
 extern Bool print_allocs;
 extern Bool print_errors;
+extern Bool running;
 extern Int precision;
 
 /* #define USE_MPFR */

@@ -46,6 +46,7 @@ Bool print_conversions = False;
 Bool print_types = False;
 Bool print_allocs = False;
 Bool print_errors = False;
+Bool running = True;
 Int precision = 1000;
 
 // Called to process each command line option.
@@ -61,6 +62,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-types", print_types, True) {}
   else if VG_XACT_CLO(arg, "--print-allocs", print_allocs, True) {}
   else if VG_XACT_CLO(arg, "--print-errors", print_errors, True) {}
+  else if VG_XACT_CLO(arg, "--start-off", running, False) {}
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else return False;
   return True;

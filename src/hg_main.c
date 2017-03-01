@@ -41,6 +41,12 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
     return False;
   }
   switch(arg[0]) {
+  case VG_USERREQ__BEGIN:
+    running = True;
+    break;
+  case VG_USERREQ__END:
+    running = False;
+    break;
   default:
     return False;
   }
