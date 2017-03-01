@@ -50,7 +50,7 @@
 #define DEF3(f) \
   int mpfr_##f(mpfr_t res, mpfr_t arg1, mpfr_t arg2, mpfr_t arg3, \
                mpfr_rnd_t round)
-#define GETD(f)                                 \
+#define GETD(v)                                 \
   mpfr_get_d(v, MPFR_RNDN)
 #define RET return
 #else
