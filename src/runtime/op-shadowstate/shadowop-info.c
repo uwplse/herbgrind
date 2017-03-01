@@ -50,7 +50,11 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr,
 }
 
 void printOpInfo(Addr op_addr, IROp op_code){
-  ppIROp(op_code);
+  if (op_code == 0){
+    VG_(printf)("WRP");
+  } else {
+    ppIROp(op_code);
+  }
   const HChar* src_filename;
   const HChar* fnname;
   UInt src_line;

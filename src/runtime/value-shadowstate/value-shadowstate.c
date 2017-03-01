@@ -35,6 +35,7 @@
 #include "pub_tool_libcbase.h"
 #include "pub_tool_threadstate.h"
 #include "pub_tool_mallocfree.h"
+#include "../shadowop/mathreplace.h"
 
 #include "../../options.h"
 #include "../../helper/debug.h"
@@ -54,6 +55,7 @@ void initValueShadowState(void){
   freedVals = mkStack();
   memEntries = mkStack();
   shadowMemory = VG_(HT_construct)("shadow memory");
+  callToOpInfoMap = VG_(HT_construct)("call map");
 }
 
 VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
