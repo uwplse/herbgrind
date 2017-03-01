@@ -50,7 +50,7 @@ extern Bool print_errors;
 extern Bool running;
 extern Int precision;
 
-/* #define USE_MPFR */
+#define USE_MPFR
 
 Bool hg_process_cmd_line_option(const HChar* arg);
 
