@@ -34,15 +34,15 @@ src/runtime/op-shadowstate/shadowop-info.h				\
 src/runtime/op-shadowstate/mark-info.h					\
 src/runtime/shadowop/shadowop.h src/runtime/shadowop/conversions.h	\
 src/runtime/shadowop/realop.h src/runtime/shadowop/error.h		\
-src/instrument/instrument.h src/instrument/instrument-op.h		\
-src/instrument/instrument-storage.h src/instrument/conversion.h		\
-src/instrument/semantic-op.h src/instrument/ownership.h			\
-src/instrument/floattypes.h
+src/runtime/shadowop/mathreplace.h src/instrument/instrument.h		\
+src/instrument/instrument-op.h src/instrument/instrument-storage.h	\
+src/instrument/conversion.h src/instrument/semantic-op.h		\
+src/instrument/ownership.h src/instrument/floattypes.h
 
-SOURCES=src/hg_main.c src/mathwrap.c src/include/mk-mathreplace.py	\
-src/helper/mpfr-valgrind-glue.c src/helper/stack.c			\
-src/helper/instrument-util.c src/helper/ir-info.c src/options.c		\
-src/runtime/value-shadowstate/shadowval.c				\
+SOURCES=src/hg_main.c src/helper/mathwrap.c				\
+src/include/mk-mathreplace.py src/helper/mpfr-valgrind-glue.c		\
+src/helper/stack.c src/helper/instrument-util.c src/helper/ir-info.c	\
+src/options.c src/runtime/value-shadowstate/shadowval.c			\
 src/runtime/value-shadowstate/value-shadowstate.c			\
 src/runtime/value-shadowstate/shadowval.c				\
 src/runtime/value-shadowstate/exprs.c					\
@@ -50,10 +50,10 @@ src/runtime/value-shadowstate/real.c					\
 src/runtime/op-shadowstate/shadowop-info.c				\
 src/runtime/shadowop/shadowop.c src/runtime/shadowop/conversions.c	\
 src/runtime/shadowop/realop.c src/runtime/shadowop/error.c		\
-src/instrument/instrument.c src/instrument/instrument-op.c		\
-src/instrument/instrument-storage.c src/instrument/conversion.c		\
-src/instrument/semantic-op.c src/instrument/ownership.c			\
-src/instrument/floattypes.c
+src/runtime/shadowop/mathreplace.c src/instrument/instrument.c		\
+src/instrument/instrument-op.c src/instrument/instrument-storage.c	\
+src/instrument/conversion.c src/instrument/semantic-op.c		\
+src/instrument/ownership.c src/instrument/floattypes.c
 
 all: compile
 

@@ -43,8 +43,8 @@ class Op(object):
 
 def write_mathreplace_funcs(ops, fname):
     with open(fname, "w") as f:
-        f.write("#ifndef _HG_MATHREPLACE_FUNCS\n")
-        f.write("#define _HG_MATHREPLACE_FUNCS\n")
+        f.write("#ifndef _MATHREPLACE_FUNCS_H\n")
+        f.write("#define _MATHREPLACE_FUNCS_H\n")
         f.write("\n")
         f.write("// This monstrosity of a file sets up a lot of the machinery to\n")
         f.write("// replace libm functions called by client programs with a call into\n")
@@ -86,108 +86,67 @@ def write_mathreplace_funcs(ops, fname):
                 f.write("   OP_{}, \\\n".format(op.func.upper()))
         f.write("\n")
 
-        f.write("// A bunch of case statements for each unary op whose mpfr function\n")
-        f.write("// doesn't need a rounding mode, used in runtime/hg_mathreplace.c\n")
+        f.write("// A bunch of case statements for each unary op whose mpfr function\n"
+                "// doesn't need a rounding mode, used in runtime/hg_mathreplace.c\n")
+        f.write("// The formatting of the following might seem a little weird,\n"
+                "// but we leave off the first \"case\" and the last \":\"\n"
+                "// because it makes it easier to use the macro on the clientside.\n");
         f.write("#define UNARY_OPS_ROUND_CASES \\\n")
-        for op in ops:
-            if (op.nargs == 1 and op.needsround == True):
-                f.write("  case OP_{}: \\\n".format(op.func.upper()))
-        f.write("\n")
+        u_ops_round = [op for op in ops
+                       if op.nargs == 1 and op.needsround]
+        write_labels(f, u_ops_round)
 
         f.write("// Same as above, but for those that don't need a rounding mode.\n")
         f.write("#define UNARY_OPS_NOROUND_CASES \\\n")
-        for op in ops:
-            if (op.nargs == 1 and op.needsround == False):
-                f.write("  case OP_{}: \\\n".format(op.func.upper()))
-        f.write("\n")
+        u_ops_noround = [op for op in ops
+                         if op.nargs == 1 and not op.needsround]
+        write_labels(f, u_ops_noround)
 
         f.write("// For places where we don't care about the rounding mode.\n")
         f.write("#define UNARY_OPS_CASES                         \\\n")
-        f.write("  UNARY_OPS_ROUND_CASES                         \\\n")
-        f.write("  UNARY_OPS_NOROUND_CASES\n")
+        f.write("       UNARY_OPS_ROUND_CASES:                     \\\n")
+        f.write("  case UNARY_OPS_NOROUND_CASES\n")
         f.write("\n")
 
         f.write("// The binary operation cases, used in runtime/hg_mathreplace.c\n")
         f.write("#define BINARY_OPS_CASES \\\n")
-        for op in ops:
-            if (op.nargs == 2):
-                f.write("  case OP_{}: \\\n".format(op.func.upper()))
-        f.write("\n")
+        b_ops = [op for op in ops
+                 if op.nargs == 2]
+        write_labels(f, b_ops)
 
         f.write("// The ternary operation cases, used in runtime/hg_mathreplace.c\n")
         f.write("#define TERNARY_OPS_CASES \\\n")
-        for op in ops:
-            if (op.nargs == 3):
-                f.write("  case OP_{}: \\\n".format(op.func.upper()))
-        f.write("\n")
+        t_ops = [op for op in ops
+                 if op.nargs == 3]
+        write_labels(f, t_ops)
 
-        f.write("// A switch statement to populate the static information for the\n")
-        f.write("// operations, plain_opname and op_symbol.\n")
-        f.write("#define GET_OP_STATIC_INFO(op) \\\n")
-        f.write("  switch(op){ \\\n")
-        for op in ops:
-            f.write("    case OP_{}: \\\n".format(op.func.upper()))
-            f.write("      plain_opname = \"{}\"; \\\n".format(op.plain_name))
-            f.write("      op_symbol = \"{}\"; \\\n".format(op.func))
-            f.write("      op_precision = {}; \\\n".format(op.precision))
-            f.write("      break; \\\n")
-        f.write("    default: \\\n")
-        f.write("      return; \\\n")
-        f.write("  }\n")
-        f.write("\n")
+        f.write("// The single precision cases\n")
+        f.write("#define SINGLE_CASES \\\n")
+        single_ops = [op for op in ops
+                      if op.precision == 32]
+        write_labels(f, single_ops)
 
-        f.write("// A switch statement to populate the plain_opname, op_symbol, and\n")
-        f.write("// mpfr_func for all the unary ops that need a rounding mode.\n")
-        f.write("#define GET_UNARY_OPS_ROUND_INFO(op) \\\n")
-        f.write("  switch(op){ \\\n")
-        for op in ops:
-            if (op.nargs == 1 and op.needsround == True):
-                f.write("    case OP_{}: \\\n".format(op.func.upper()))
-                f.write("      mpfr_func = {}; \\\n".format(op.mpfr_func))
-                f.write("      break; \\\n")
-        f.write("    default: \\\n")
-        f.write("      return; \\\n")
-        f.write("  }\n")
-        f.write("\n")
+        f.write("// The double precision cases\n")
+        f.write("#define DOUBLE_CASES \\\n")
+        double_ops = [op for op in ops
+                      if op.precision == 64]
+        write_labels(f, double_ops)
+
+        f.write("// A switch statement to get the mpfr function for each op.\n")
+        f.write("#define GET_UNARY_OPS_ROUND_F(fvar, op) \\\n")
+        write_switch_funcs(f, u_ops_round)
 
         f.write("// Same as above, but for those that don't need a rounding mode.\n")
-        f.write("#define GET_UNARY_OPS_NOROUND_INFO(op) \\\n")
-        f.write("  switch(op){ \\\n")
-        for op in ops:
-            if (op.nargs == 1 and op.needsround == False):
-                f.write("    case OP_{}: \\\n".format(op.func.upper()))
-                f.write("      mpfr_func = {}; \\\n".format(op.mpfr_func))
-                f.write("      break; \\\n")
-        f.write("    default: \\\n")
-        f.write("      return; \\\n")
-        f.write("  }\n")
-        f.write("\n")
+        f.write("#define GET_UNARY_OPS_NOROUND_F(fvar, op) \\\n")
+        write_switch_funcs(f, u_ops_noround)
 
         f.write("// Same as above, but binary ops\n")
-        f.write("#define GET_BINARY_OPS_INFO(op) \\\n")
-        f.write("  switch(op){ \\\n")
-        for op in ops:
-            if (op.nargs == 2):
-                f.write("    case OP_{}: \\\n".format(op.func.upper()))
-                f.write("      mpfr_func = {}; \\\n".format(op.mpfr_func))
-                f.write("      break; \\\n")
-        f.write("    default: \\\n")
-        f.write("      return; \\\n")
-        f.write("  }\n")
-        f.write("\n")
+        f.write("#define GET_BINARY_OPS_F(fvar, op) \\\n")
+        write_switch_funcs(f, b_ops)
 
         f.write("// Same as above, but ternary ops\n")
-        f.write("#define GET_TERNARY_OPS_INFO(op) \\\n")
-        f.write("  switch(op){ \\\n")
-        for op in ops:
-            if (op.nargs == 3):
-                f.write("    case OP_{}: \\\n".format(op.func.upper()))
-                f.write("      mpfr_func = {}; \\\n".format(op.mpfr_func))
-                f.write("      break; \\\n")
-        f.write("    default: \\\n")
-        f.write("      return; \\\n")
-        f.write("  }\n")
-        f.write("\n")
+        f.write("#define GET_TERNARY_OPS_F(fvar, op) \\\n")
+        write_switch_funcs(f, t_ops)
 
         f.write("// Call the wrapping macro, defined at the call site in hg_mathwrap.c,\n")
         f.write("// to wrap each function we support.\n")
@@ -244,11 +203,32 @@ def addOp(name, plain_name, nargs,
                       needsround=needsRound,
                       precision=32))
 
+def write_labels(f, l):
+    for i, op in enumerate(l):
+        if i == 0:
+            f.write("       OP_{}: \\\n".format(op.func.upper()))
+        elif i != len(l) - 1:
+            f.write("  case OP_{}: \\\n".format(op.func.upper()))
+        else:
+            f.write("  case OP_{}".format(op.func.upper()))
+    f.write("\n")
+
+def write_switch_funcs(f, l):
+    f.write("  switch(op){ \\\n")
+    for op in l:
+        f.write("    case OP_{}: \\\n".format(op.func.upper()))
+        f.write("      fvar = {}; \\\n".format(op.mpfr_func))
+        f.write("      break; \\\n")
+    f.write("    default: \\\n")
+    f.write("      break; \\\n")
+    f.write("  }\n")
+    f.write("\n")
+
 addOp("sqrt", "square root", 1)
 addOp("cbrt", "cube root", 1)
 
 addOp("fabs", "absolute value", 1, mpfr_func="mpfr_abs")
-addOp("logb", "get exponent", 1, mpfr_func="hiprec_logb")
+addOp("logb", "get exponent", 1)
 addOp("rint", "round to nearest integer", 1)
 
 addOp("ceil", "ceiling", 1, needsRound=False)
@@ -266,7 +246,7 @@ addOp("log2", "log base two", 1)
 
 addOp("erf", "error function", 1)
 addOp("erfc", "complementary error function", 1)
-addOp("lgamma", "log gamma function", 1, mpfr_func="hiprec_lgamma")
+addOp("lgamma", "log gamma function", 1, mpfr_func="mpfr_lgamma2")
 addOp("tgamma", "gamma function", 1, mpfr_func="mpfr_gamma")
 addOp("j0", "order zero first kind bessel function", 1)
 addOp("j1", "order one first kind bessel function", 1)

@@ -44,11 +44,14 @@
 #define CALL3(f, result, arg1, arg2, arg3) \
   mpfr_##f(result, arg1, arg2, arg3, MPFR_RNDN)
 #define DEF1(f) \
-  int mpfr_##f(mpfr_t res, mpfr_t arg, mpfr_rnd_t round)
+  int mpfr_##f(mpfr_t res, mpfr_srcptr arg, mpfr_rnd_t round)
 #define DEF2(f) \
-  int mpfr_##f(mpfr_t res, mpfr_t arg1, mpfr_t arg2, mpfr_rnd_t round)
+  int mpfr_##f(mpfr_t res, \
+               mpfr_srcptr arg1, mpfr_srcptr arg2, \
+               mpfr_rnd_t round)
 #define DEF3(f) \
-  int mpfr_##f(mpfr_t res, mpfr_t arg1, mpfr_t arg2, mpfr_t arg3, \
+  int mpfr_##f(mpfr_t res, \
+               mpfr_srcptr arg1, mpfr_srcptr arg2, mpfr_srcptr arg3,   \
                mpfr_rnd_t round)
 #define GETD(v)                                 \
   mpfr_get_d(v, MPFR_RNDN)
@@ -83,6 +86,8 @@ DEF1(recp_exp);
 DEF2(yl2x);
 DEF2(yl2xp);
 DEF2(scale);
+DEF1(logb);
+DEF1(lgamma2);
 #else
 DEF3(fma);
 DEF3(fms);

@@ -300,6 +300,14 @@ DEF2(scale){
   CALL1(exp2, res, res);
   return CALL2(mul, res, arg1, res);
 }
+DEF1(logb){
+  mpfr_set_ui(res, mpfr_get_exp(arg), round);
+  return 0;
+}
+DEF1(lgamma2){
+  int _x;
+  return mpfr_lgamma(res, &_x, arg, round);
+}
 #else
 DEF3(fma){
   mpf_mul(res, arg1, arg2);
