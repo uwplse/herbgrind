@@ -56,7 +56,7 @@ void updateError(ErrorAggregate* aggr, Addr op_addr, IROp op_code,
 
 double emulate_log2(double input){
   mpfr_t mi, mr;
-  mpfr_inits2(53, mi, mr, NULL);
+  mpfr_inits2(52, mi, mr, NULL);
   mpfr_set_d(mi, input, MPFR_RNDN);
   mpfr_log2(mr, mi, MPFR_RNDN);
   double result = mpfr_get_d(mr, MPFR_RNDN);
