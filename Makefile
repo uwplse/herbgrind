@@ -19,7 +19,7 @@ ARCH_SEC=
 ifdef ARCH_SEC
 DEPS = deps/gmp-64/README deps/mpfr-64/README deps/gmp-32/README deps/mpfr-32/README
 else
-DEPS = deps/gmp-64/README deps/mpfr-64/README
+DEPS = deps/gmp-64/README deps/mpfr-64/README deps/openlibm-64/README.md
 endif
 
 HEADERS=src/include/herbgrind.h src/helper/mpfr-valgrind-glue.h		\
@@ -133,6 +133,13 @@ deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz setup/patch_gmp.sh
 		./configure --prefix=$(shell pwd)/deps/gmp-$*/$(HG_LOCAL_INSTALL_NAME)
 	$(MAKE) -C deps/gmp-$*
 	$(MAKE) -C deps/gmp-$* install
+
+deps/openlibm-%/README.md: setup/openlibm-$(OPENLIBM_VERSION).tar.gz
+	tar xf setup/openlibm-$(OPENLIBM_VERSION).tar.gz
+	mkdir -p deps
+	mv openlibm-$(OPENLIBM_VERSION) deps/openlibm-$*
+	touch deps/openlibm-$*/README.md
+	$(MAKE) -C deps/openlibm-$*
 
 # Adding this flag ensures that MPFR doesn't allocate any of it's
 # variables as thread local. This is important because valgrind moves

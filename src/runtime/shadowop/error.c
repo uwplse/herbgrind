@@ -31,13 +31,14 @@
 
 #include "mpfr.h"
 #include "pub_tool_libcprint.h"
+#include <math.h>
 
 void updateError(ErrorAggregate* aggr, Addr op_addr, IROp op_code,
                  Real realVal, double computedVal){
   double shadowRounded = getDouble(realVal);
   ULong ulpsError = ulpd(shadowRounded, computedVal);
 
-  double bitsError = emulate_log2(ulpsError + 1);
+  double bitsError = log2(ulpsError + 1);
   if (bitsError > aggr->max_total_error){
     aggr->max_total_error = bitsError;
   }
@@ -52,16 +53,6 @@ void updateError(ErrorAggregate* aggr, Addr op_addr, IROp op_code,
                 shadowRounded, computedVal,
                 bitsError, ulpsError);
   }
-}
-
-double emulate_log2(double input){
-  mpfr_t mi, mr;
-  mpfr_inits2(52, mi, mr, NULL);
-  mpfr_set_d(mi, input, MPFR_RNDN);
-  mpfr_log2(mr, mi, MPFR_RNDN);
-  double result = mpfr_get_d(mr, MPFR_RNDN);
-  mpfr_clears(mi, mr, NULL);
-  return result;
 }
 
 ULong ulpd(double x, double y){

@@ -35,7 +35,6 @@
 
 void updateError(ErrorAggregate* aggr, Addr op_addr, IROp op_code,
                  Real realVal, double computedVal);
-double emulate_log2(double input);
 ULong ulpd(double val1, double val2);
 
 #endif

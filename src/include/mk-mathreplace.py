@@ -148,6 +148,10 @@ def write_mathreplace_funcs(ops, fname):
         f.write("#define GET_TERNARY_OPS_F(fvar, op) \\\n")
         write_switch_funcs(f, t_ops)
 
+        f.write("// Running the libm version of the op.\n")
+        f.write("#define RUN(result, op, args) \\\n")
+        write_switch_run(f, ops)
+
         f.write("// Call the wrapping macro, defined at the call site in hg_mathwrap.c,\n")
         f.write("// to wrap each function we support.\n")
         f.write("#define WRAP_UNARY_OPS \\\n")
@@ -213,14 +217,30 @@ def write_labels(f, l):
             f.write("  case OP_{}".format(op.func.upper()))
     f.write("\n")
 
+def write_switch_run(f, l):
+    f.write("  switch(op){ \\\n")
+    for op in l:
+        f.write("  case OP_{}: \\\n".format(op.func.upper()))
+        if op.nargs == 1:
+            f.write("    result = {}(args[0]); \\\n".format(op.func))
+        elif op.nargs == 2:
+            f.write("    result = {}(args[0], args[1]); \\\n".format(op.func))
+        elif op.nargs == 3:
+            f.write("    result = {}(args[0], args[1], args[2]); \\\n".format(op.func))
+    f.write("  default: \\\n")
+    f.write("    result = 0.0; \\\n")
+    f.write("    break; \\\n")
+    f.write("  }\n")
+    f.write("\n");
+
 def write_switch_funcs(f, l):
     f.write("  switch(op){ \\\n")
     for op in l:
-        f.write("    case OP_{}: \\\n".format(op.func.upper()))
-        f.write("      fvar = {}; \\\n".format(op.mpfr_func))
-        f.write("      break; \\\n")
-    f.write("    default: \\\n")
-    f.write("      break; \\\n")
+        f.write("  case OP_{}: \\\n".format(op.func.upper()))
+        f.write("    fvar = {}; \\\n".format(op.mpfr_func))
+        f.write("    break; \\\n")
+    f.write("  default: \\\n")
+    f.write("    break; \\\n")
     f.write("  }\n")
     f.write("\n")
 
