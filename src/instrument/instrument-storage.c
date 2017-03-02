@@ -1014,11 +1014,39 @@ void addStoreTempUnshadowed(IRSB* sbOut, int idx){
 }
 IRExpr* runGetMem(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc){
   IRTemp result = newIRTemp(sbOut->tyenv, Ity_I64);
-  IRDirty* loadDirty =
-    unsafeIRDirty_1_N(result,
-                      2, "getMemShadowTemp",
-                      VG_(fnptr_to_fnentry)(getMemShadowTemp),
-                      mkIRExprVec_2(memSrc, mkU64(size)));
+  IRDirty* loadDirty;
+  switch(size){
+  case 1:
+    loadDirty =
+      unsafeIRDirty_1_N(result,
+                        1, "dynamicLoad32",
+                        VG_(fnptr_to_fnentry)(dynamicLoad32),
+                        mkIRExprVec_1(memSrc));
+    break;
+  case 2:
+    loadDirty =
+      unsafeIRDirty_1_N(result,
+                        2, "dynamicLoad64",
+                        VG_(fnptr_to_fnentry)(dynamicLoad64),
+                        mkIRExprVec_2(memSrc, runLoad64(sbOut, memSrc)));
+    break;
+  case 4:
+    loadDirty =
+      unsafeIRDirty_1_N(result,
+                        3, "dynamicLoad128",
+                        VG_(fnptr_to_fnentry)(dynamicLoad128),
+                        mkIRExprVec_3(memSrc,
+                                      runLoad64(sbOut, memSrc),
+                                      runLoad64(sbOut,
+                                                runBinop(sbOut,
+                                                         Iop_Add64,
+                                                         memSrc,
+                                                         mkU64(sizeof(double))))));
+    break;
+  default:
+    tl_assert(0);
+    return NULL;
+  }
   loadDirty->guard = guard;
   loadDirty->mFx = Ifx_Read;
   loadDirty->mAddr = mkU64((uintptr_t)&shadowMemory);
