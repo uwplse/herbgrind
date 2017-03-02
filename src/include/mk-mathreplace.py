@@ -227,6 +227,7 @@ def write_switch_run(f, l):
             f.write("    result = {}(args[0], args[1]); \\\n".format(op.func))
         elif op.nargs == 3:
             f.write("    result = {}(args[0], args[1], args[2]); \\\n".format(op.func))
+        f.write("    break; \\\n");
     f.write("  default: \\\n")
     f.write("    result = 0.0; \\\n")
     f.write("    break; \\\n")

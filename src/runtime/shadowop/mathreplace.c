@@ -75,9 +75,6 @@ Addr getCallAddr(void){
 }
 
 void performWrappedOp(OpType type, double* resLoc, double* args){
-  if (type == OP_SQRT){
-    VG_(printf)("sqrt arg is %f\n", args[0]);
-  }
 #ifndef USE_MPFR
   tl_assert2(0, "Can't wrap math ops in GMP mode!\n");
 #endif
