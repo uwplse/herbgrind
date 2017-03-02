@@ -39,6 +39,7 @@ extern VgHashTable* callToOpInfoMap;
 void performWrappedOp(OpType type, double* args, double* resLoc);
 int getWrappedNumArgs(OpType type);
 FloatType getWrappedPrecision(OpType type);
+const char* getWrappedName(OpType type);
 ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs);
 double runEmulatedWrappedOp(OpType type, double* args);
 

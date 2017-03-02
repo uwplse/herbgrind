@@ -49,19 +49,22 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr,
   return result;
 }
 
-void printOpInfo(Addr op_addr, IROp op_code){
-  if (op_code == 0){
-    VG_(printf)("WRP");
+void printOpInfo(ShadowOpInfo* opinfo){
+  if (opinfo->op_code == 0){
+    VG_(printf)("%s", opinfo->name);
   } else {
-    ppIROp(op_code);
+    ppIROp(opinfo->op_code);
   }
   const HChar* src_filename;
   const HChar* fnname;
   UInt src_line;
-  if (VG_(get_filename_linenum)(op_addr, &src_filename,
+  if (VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
                                 NULL, &src_line)){
-    VG_(get_fnname)(op_addr, &fnname);
+    VG_(get_fnname)(opinfo->op_addr, &fnname);
     VG_(printf)(" at %s:%u in %s (addr %lX)",
-                src_filename, src_line, fnname, op_addr);
+                src_filename, src_line, fnname, opinfo->op_addr);
+  } else {
+    VG_(printf)(" at addr %lX)",
+                opinfo->op_addr);
   }
 }

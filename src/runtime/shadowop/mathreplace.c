@@ -98,7 +98,8 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
   if (entry == NULL){
     ShadowOpInfo* callInfo =
       mkShadowOpInfo(0x0, callAddr, 1, nargs, op_precision);
-    updateError(&(callInfo->eagg), callInfo->op_addr, callInfo->op_code,
+    callInfo->name = getWrappedName(type);
+    updateError(callInfo,
                 shadowResult->real,
                 *resLoc);
   }
@@ -128,6 +129,12 @@ FloatType getWrappedPrecision(OpType type){
     tl_assert(0);
     return 0;
   }
+}
+
+const char* getWrappedName(OpType type){
+  const char* namevar;
+  GET_OP_NAMES(namevar, type);
+  return namevar;
 }
 
 ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs){

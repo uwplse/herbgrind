@@ -33,7 +33,7 @@
 #include "../value-shadowstate/real.h"
 #include "../op-shadowstate/shadowop-info.h"
 
-void updateError(ErrorAggregate* aggr, Addr op_addr, IROp op_code,
+void updateError(ShadowOpInfo* opinfo,
                  Real realVal, double computedVal);
 ULong ulpd(double val1, double val2);
 

@@ -56,7 +56,7 @@ VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                              opInfo->exinfo.argPrecision,
                              opInfo->op_code,
                              vals);
-    updateError(&(opInfo->eagg), opInfo->op_addr, opInfo->op_code,
+    updateError(opInfo,
                 result->values[i]->real,
                 (opInfo->exinfo.argPrecision == Ft_Single ?
                  computedResult.f[i] : computedResult.d[i]));

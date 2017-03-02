@@ -148,6 +148,10 @@ def write_mathreplace_funcs(ops, fname):
         f.write("#define GET_TERNARY_OPS_F(fvar, op) \\\n")
         write_switch_funcs(f, t_ops)
 
+        f.write("// Getting a string name of the op.\n")
+        f.write("#define GET_OP_NAMES(namevar, op)\\\n")
+        write_switch_names(f, ops)
+
         f.write("// Running the libm version of the op.\n")
         f.write("#define RUN(result, op, args) \\\n")
         write_switch_run(f, ops)
@@ -244,6 +248,17 @@ def write_switch_funcs(f, l):
     f.write("    break; \\\n")
     f.write("  }\n")
     f.write("\n")
+
+def write_switch_names(f, l):
+    f.write("  switch(op){ \\\n")
+    for op in l:
+        f.write("  case OP_{}: \\\n".format(op.func.upper()))
+        f.write("    namevar = \"{}\"; \\\n".format(op.func))
+        f.write("    break;\\\n")
+    f.write("  default: \\\n"
+            "    break; \\\n"
+            "  }\n"
+            "\n")
 
 addOp("sqrt", "square root", 1)
 addOp("cbrt", "cube root", 1)

@@ -52,7 +52,9 @@ typedef struct _ExtraInfo {
 } ExtraInfo;
 
 typedef struct _ShadowOpInfo {
+  // These two are mutually exclusive.
   IROp op_code;
+  const char* name;
   Addr op_addr;
   ErrorAggregate eagg;
   SymbExpr* expr;
@@ -62,6 +64,6 @@ typedef struct _ShadowOpInfo {
 ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr,
                              int numSIMDOperands, int nargs,
                              FloatType argPrecision);
-void printOpInfo(Addr op_addr, IROp op_code);
+void printOpInfo(ShadowOpInfo* opinfo);
 
 #endif
