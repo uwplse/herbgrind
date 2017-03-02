@@ -79,8 +79,8 @@ void printReal(Real real){
   char* shadowValStr;
   mpfr_exp_t shadowValExpt;
 
-  shadowValStr = mpfr_get_str(NULL, &shadowValExpt, 10, 15, real->mpfr_val, MPFR_RNDN);
-  VG_(printf)("%c.%se%ld", shadowValStr[0], shadowValStr+1, shadowValExpt);
+  shadowValStr = mpfr_get_str(NULL, &shadowValExpt, 10, longprint_len, real->mpfr_val, MPFR_RNDN);
+  VG_(printf)("%c.%se%ld", shadowValStr[0], shadowValStr+1, shadowValExpt-1);
   mpfr_free_str(shadowValStr);
   #else
   tl_assert2(0, "Can't print GMP vals!\n");

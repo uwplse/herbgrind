@@ -50,6 +50,7 @@ extern Bool print_allocs;
 extern Bool print_errors;
 extern Bool print_errors_long;
 extern Bool running;
+extern Int longprint_len;
 extern Int precision;
 
 #define USE_MPFR
