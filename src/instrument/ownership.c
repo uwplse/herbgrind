@@ -148,7 +148,7 @@ void addSVOwnNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Add64, prevRefCount, mkU64(1));
   addStoreArrowG(sbOut, guard, sv, ShadowValue, ref_count, newRefCount);
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     addPrintG3(guard, "[2] Owning %p, new ref_count %d\n", sv, newRefCount);
   }
 }
@@ -157,7 +157,7 @@ void addSVOwnNonNull(IRSB* sbOut, IRExpr* sv){
     runArrow(sbOut, sv, ShadowValue, ref_count);
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Add64, prevRefCount, mkU64(1));
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     addPrint3("[3] Owning %p, new ref_count %d\n", sv, newRefCount);
   }
   addStoreArrow(sbOut, sv, ShadowValue, ref_count, newRefCount);
@@ -169,7 +169,7 @@ void addSVDisown(IRSB* sbOut, IRExpr* sv){
   IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
   // If value is null, then preRefCount will be zero, so lastRef will be false.
   addStackPushG(sbOut, lastRef, freedVals, sv);
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     addPrintG2(lastRef,
                "Disowned last reference to %p! Freeing...\n", sv);
   }
@@ -184,14 +184,14 @@ void addSVDisownNonNull(IRSB* sbOut, IRExpr* sv){
     runArrow(sbOut, sv, ShadowValue, ref_count);
   IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
   addStackPushG(sbOut, lastRef, freedVals, sv);
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     addPrintG2(lastRef,
                "Disowned last reference to %p! Freeing...\n", sv);
   }
 
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     IRExpr* shouldPrintUpdate = runUnop(sbOut, Iop_Not1, lastRef);
     addPrintG3(shouldPrintUpdate,
                "[2] Disowning %p, new ref_count %d\n", sv, newRefCount);
@@ -205,7 +205,7 @@ void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
   IRExpr* prevRefCount =
     runArrowG(sbOut, shouldDoAnythingAtAll, sv, ShadowValue, ref_count);
   IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     addPrintG2(lastRef,
                "Disowned last reference to %p! Freeing...\n", sv);
   }
@@ -213,7 +213,7 @@ void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
 
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     IRExpr* nonLastRef = runBinop(sbOut, Iop_CmpLT64U,
                                   mkU64(1), prevRefCount);
     addPrintG3(nonLastRef,

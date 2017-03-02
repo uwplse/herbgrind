@@ -58,4 +58,5 @@ Bool hg_process_cmd_line_option(const HChar* arg);
 
 void hg_print_usage(void);
 void hg_print_debug_usage(void);
+#define PRINT_VALUE_MOVES (print_value_moves && running)
 #endif

@@ -79,7 +79,7 @@ VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
     ShadowTemp* temp = shadowTemps[entries[i]];
     if (temp == NULL) continue;
     for(int j = 0; j < temp->num_vals; ++j){
-      if (print_value_moves){
+      if (PRINT_VALUE_MOVES){
         VG_(printf)("Cleaning up value %p (old rc %lu) "
                     "from temp %p at end of block.\n",
                     temp->values[j], temp->values[j]->ref_count,
@@ -105,7 +105,7 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
     shadowThreadState[VG_(get_running_tid)()][tsDest + sizeof(float)] =
       NULL;
     ownShadowValue(val);
-    if (print_value_moves){
+    if (PRINT_VALUE_MOVES){
       if (getTS(tsDest) != NULL || val != NULL){
         VG_(printf)("dynamicPut64: Setting thread state %d to %p\n",
                     tsDest, val);
@@ -129,7 +129,7 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
       ShadowValue* val = st->values[i];
       shadowThreadState[VG_(get_running_tid)()][dest_addr] = val;
       ownShadowValue(val);
-      if (print_value_moves){
+      if (PRINT_VALUE_MOVES){
         if (getTS(tsDest) != NULL || val != NULL){
           VG_(printf)("dynamicPut64: Setting thread state %d to %p\n",
                       tsDest, val);
@@ -150,7 +150,7 @@ VG_REGPARM(2) void dynamicPut128(Int tsDest, ShadowTemp* st){
     int dest_byte = tsDest + (i * size);
     shadowThreadState[VG_(get_running_tid)()][dest_byte] =
       val;
-    if (print_value_moves){
+    if (PRINT_VALUE_MOVES){
       if (getTS(dest_byte) != NULL || val != NULL){
         VG_(printf)("dynamicPut: Setting thread state %d to %p",
                     dest_byte, val);
@@ -166,7 +166,7 @@ VG_REGPARM(2) void dynamicPut128(Int tsDest, ShadowTemp* st){
       shadowThreadState[VG_(get_running_tid)()]
         [second_byte] =
         NULL;
-      if (print_value_moves && getTS(second_byte)){
+      if (PRINT_VALUE_MOVES && getTS(second_byte)){
         VG_(printf)("Setting thread state %d to 0x0",
                     second_byte);
       }
@@ -185,14 +185,14 @@ VG_REGPARM(1) ShadowTemp* dynamicGet64(Int tsSrc, UWord tsBytes){
     float firstValueBytes;
     VG_(memcpy)(&firstValueBytes, &tsBytes, sizeof(float));
     firstValue = mkShadowValue(Ft_Single, firstValueBytes);
-    if (print_value_moves){
+    if (PRINT_VALUE_MOVES){
       VG_(printf)("Making value %p as part of dynamicGet64\n",
                   firstValue);
     }
     temp->values[0] = firstValue;
     temp->values[1] = secondValue;
     ownShadowValue(secondValue);
-    if (print_value_moves){
+    if (PRINT_VALUE_MOVES){
       VG_(printf)("Owning %p (new rc %lu) as part of dynamic get.\n",
                   secondValue, secondValue->ref_count);
     }
@@ -201,7 +201,7 @@ VG_REGPARM(1) ShadowTemp* dynamicGet64(Int tsSrc, UWord tsBytes){
     ShadowTemp* temp = mkShadowTemp(1);
     temp->values[0] = firstValue;
     ownShadowValue(firstValue);
-    if (print_value_moves){
+    if (PRINT_VALUE_MOVES){
       VG_(printf)("Owning %p (new rc %lu) as part of dynamic get.\n",
                   firstValue, firstValue->ref_count);
     }
@@ -213,19 +213,19 @@ VG_REGPARM(1) ShadowTemp* dynamicGet64(Int tsSrc, UWord tsBytes){
       VG_(memcpy)(&secondValueBytes, (&tsBytes) + sizeof(float),
                   sizeof(float));
       secondValue = mkShadowValue(Ft_Single, secondValueBytes);
-      if (print_value_moves){
+      if (PRINT_VALUE_MOVES){
         VG_(printf)("Making value %p as part of dynamicGet64\n",
                     secondValue);
       }
     } else {
       ownShadowValue(secondValue);
-      if (print_value_moves){
+      if (PRINT_VALUE_MOVES){
         VG_(printf)("Owning %p (new rc %lu) as part of dynamic get.\n",
                     secondValue, secondValue->ref_count);
       }
     }
     ownShadowValue(firstValue);
-    if (print_value_moves){
+    if (PRINT_VALUE_MOVES){
       VG_(printf)("Owning %p (new rc %lu) as part of dynamic get.\n",
                   firstValue, firstValue->ref_count);
     }
@@ -523,7 +523,7 @@ ShadowValue* mkShadowValueBare(FloatType type){
   ShadowValue* result;
   if (stack_empty(freedVals)){
     result = newShadowValue(type);
-    if (print_value_moves || print_allocs){
+    if (PRINT_VALUE_MOVES || print_allocs){
       VG_(printf)("Alloced new shadow value %p\n", result);
     }
   } else {
@@ -545,7 +545,7 @@ VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
   for(int i = 0; i < temp->num_vals; ++i){
     ownShadowValue(temp->values[i]);
     result->values[i] = temp->values[i];
-    if (print_value_moves){
+    if (PRINT_VALUE_MOVES){
       VG_(printf)("Copying %p to new temp %p\n", temp->values[i],
                   result);
     }
@@ -556,7 +556,7 @@ VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
   ShadowTemp* result = mkShadowTemp(temp->num_vals);
   for(int i = 0; i < temp->num_vals; ++i){
     result->values[i] = copyShadowValue(temp->values[i]);
-    if (print_value_moves){
+    if (PRINT_VALUE_MOVES){
       VG_(printf)("Copying shadow value %p from temp %p to shadow value %p at temp %p\n",
                   temp->values[i], temp, result->values[i], result);
     }
@@ -566,7 +566,7 @@ VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
 inline
 void disownShadowTemp(ShadowTemp* temp){
   for(int i = 0; i < temp->num_vals; ++i){
-    if (print_value_moves){
+    if (PRINT_VALUE_MOVES){
       VG_(printf)("Disowning %p (rc %lu) as part of disowning temp %p\n",
                   temp->values[i], temp->values[i]->ref_count, temp);
     }
@@ -593,11 +593,11 @@ void disownShadowValue(ShadowValue* val){
   val->ref_count--;
   if (val->ref_count == 0){
     freeShadowValue(val);
-    if (print_value_moves){
+    if (PRINT_VALUE_MOVES){
       VG_(printf)("Disowned last reference to %p! Freeing...\n", val);
     }
   } else {
-    if (print_value_moves){
+    if (PRINT_VALUE_MOVES){
       VG_(printf)("Disowning %p, new ref count %lu\n", val, val->ref_count);
     }
   }
@@ -605,7 +605,7 @@ void disownShadowValue(ShadowValue* val){
 void ownShadowValue(ShadowValue* val){
   if (val == NULL) return;
   (val->ref_count)++;
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     VG_(printf)("Owning %p, new ref count %lu\n", val, val->ref_count);
   }
 }
@@ -613,7 +613,7 @@ void ownShadowValue(ShadowValue* val){
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value){
   ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = mkShadowValue(Ft_Double, value);
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     VG_(printf)("Making value %p as one double temp %p\n",
                 result->values[0], result);
   }
@@ -625,7 +625,7 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values){
     mkShadowValue(Ft_Double, values[0]);
   result->values[1] =
     mkShadowValue(Ft_Double, values[1]);
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     VG_(printf)("Making values %p and %p as part of two double temp %p\n",
                 result->values[0], result->values[1], result);
   }
@@ -634,7 +634,7 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values){
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(double value){
   ShadowTemp* result = mkShadowTemp(1);
   result->values[0] = mkShadowValue(Ft_Single, value);
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     VG_(printf)("Making value %p as part of one single temp %p\n",
                 result->values[0], result);
   }
@@ -646,7 +646,7 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempTwoSingles(UWord values){
   VG_(memcpy)(floatValues, &values, sizeof(floatValues));
   result->values[0] = mkShadowValue(Ft_Single, floatValues[0]);
   result->values[1] = mkShadowValue(Ft_Single, floatValues[1]);
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     VG_(printf)("Making values %p and %p "
                 "as part of two singles temp %p\n",
                 result->values[0], result->values[1], result);
@@ -664,7 +664,7 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values){
     mkShadowValue(Ft_Single, values[2]);
   result->values[3] =
     mkShadowValue(Ft_Single, values[3]);
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     VG_(printf)("Making values %p, %p, %p, and %p "
                 "as part of four single temp %p\n",
                 result->values[0], result->values[1],

@@ -157,14 +157,14 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
       // runtime, we'll do a runtime check to see if there is a shadow
       // value there, and disown it if there is.
       if (tsHasStaticShadow(dest_addr)){
-        if (print_value_moves){
+        if (PRINT_VALUE_MOVES){
           addPrint3("Disowning %p "
                     "from thread state overwrite at %d (static)",
                     oldVal, mkU64(dest_addr));
         }
         addSVDisownNonNull(sbOut, oldVal);
       } else {
-        if (print_value_moves){
+        if (PRINT_VALUE_MOVES){
           IRExpr* oldValNonNull =
             runNonZeroCheck64(sbOut, oldVal);
           addPrintG3(oldValNonNull,
@@ -222,7 +222,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
             }
             addSetTSValNonNull(sbOut, dest_addr, value, Ft_Double);
 
-            if (print_value_moves){
+            if (PRINT_VALUE_MOVES){
               addPrint3("Setting TS(%d) to %p\n",
                         mkU64(dest_addr), value);
             }
@@ -233,7 +233,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
             runIndex(sbOut, values, ShadowValue*, i);
           addSetTSValNonNull(sbOut, dest_addr, value, Ft_Single);
 
-          if (print_value_moves){
+          if (PRINT_VALUE_MOVES){
             addPrint3("Setting TS(%d) to %p\n",
                       mkU64(dest_addr), value);
           }
@@ -255,7 +255,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
 
         addSVOwnNonNullG(sbOut, stExists, value);
         addSetTSValUnknown(sbOut, tsDest, value);
-        if (print_value_moves){
+        if (PRINT_VALUE_MOVES){
           addPrint3("Setting TS(%d) to %p\n",
                     mkU64(tsDest), value);
         }
@@ -440,7 +440,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       // unconditionally.
       IRExpr* val = runGetTSVal(sbOut, tsSrc);
       IRExpr* temp = runMkShadowTempValues(sbOut, 1, &val);
-      if (print_value_moves){
+      if (PRINT_VALUE_MOVES){
         addPrint3("Getting val %p from TS(%d) ", val, mkU64(tsSrc));
         addPrint2("into temp %p\n", temp);
       }
@@ -454,7 +454,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* loadedValNonNull = runNonZeroCheck64(sbOut, loadedVal);
       IRExpr* temp = runMkShadowTempValuesG(sbOut, loadedValNonNull, 1,
                                             &loadedVal);
-      if (print_value_moves){
+      if (PRINT_VALUE_MOVES){
         addPrintG3(loadedValNonNull, "Getting val %p from TS(%d) ", loadedVal, mkU64(tsSrc));
         addPrintG2(loadedValNonNull, "into temp %p\n", temp);
       }
@@ -508,7 +508,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
     } else if (valType == Ft_Double){
       IRExpr* val = runGetTSVal(sbOut, tsSrc);
       IRExpr* temp = runMkShadowTempValues(sbOut, 1, &val);
-      if (print_value_moves){
+      if (PRINT_VALUE_MOVES){
         addPrint3("Got %p from TS(%d) into ", val, mkU64(tsSrc));
         addPrint2("temp %p\n", temp);
       }
@@ -938,7 +938,7 @@ void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal){
   tsContext[tsDest] = Ft_Unknown;
 }
 void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal){
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     IRExpr* existing = runGetTSVal(sbOut, tsDest);
     IRExpr* overwriting = runNonZeroCheck64(sbOut, existing);
     IRExpr* valueNonNull = runNonZeroCheck64(sbOut, newVal);
@@ -952,7 +952,7 @@ void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal){
             &(shadowThreadState[VG_(get_running_tid)()][tsDest]));
 }
 void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal){
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     IRExpr* existing = runGetTSValDynamic(sbOut, tsDest);
     IRExpr* overwriting = runNonZeroCheck64(sbOut, existing);
     IRExpr* valueNonNull = runNonZeroCheck64(sbOut, newVal);

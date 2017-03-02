@@ -38,7 +38,7 @@ VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                                           ShadowTemp** args){
   tl_assert(opInfo->op_code < Iop_LAST);
   ShadowTemp* result = mkShadowTemp(opInfo->exinfo.numChannels);
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     ppIROp(opInfo->op_code);
     VG_(printf)(": Making value(s) ");
   }
@@ -60,7 +60,7 @@ VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                 result->values[i]->real,
                 (opInfo->exinfo.argPrecision == Ft_Single ?
                  computedResult.f[i] : computedResult.d[i]));
-    if (print_value_moves){
+    if (PRINT_VALUE_MOVES){
       if (i == 0){
         VG_(printf)("%p", result->values[i]);
       } else {
@@ -69,7 +69,7 @@ VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
     }
   }
   if (opInfo->exinfo.numSIMDOperands < opInfo->exinfo.numChannels &&
-      print_value_moves){
+      PRINT_VALUE_MOVES){
     VG_(printf)(" and copying shadow value(s) ");
   }
   for(int i = opInfo->exinfo.numSIMDOperands;
@@ -78,12 +78,12 @@ VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
     // values should be copied from the first operand.
     result->values[i] = args[0]->values[i];
     ownShadowValue(result->values[i]);
-    if (print_value_moves){
+    if (PRINT_VALUE_MOVES){
       VG_(printf)("%p (new rc %lu), ",
                   result->values[i], result->values[i]->ref_count);
     }
   }
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     if (opInfo->exinfo.numSIMDOperands < opInfo->exinfo.numChannels){
       VG_(printf)("from %p to %p\n", args[0], result);
     } else {
@@ -98,7 +98,7 @@ ShadowValue* executeChannelShadowOp(int nargs,
                                     IROp op_code,
                                     ShadowValue** args){
   ShadowValue* result = mkShadowValueBare(type);
-  if (print_value_moves){
+  if (PRINT_VALUE_MOVES){
     VG_(printf)("Getting new shadow value %p for result of op ", result);
     ppIROp(op_code);
     VG_(printf)("\n");
