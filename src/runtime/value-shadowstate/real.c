@@ -73,3 +73,16 @@ void copyReal(Real src, Real dest){
   mpf_set(dest->mpf_val, src->mpf_val);
   #endif
 }
+
+void printReal(Real real){
+  #ifdef USE_MPFR
+  char* shadowValStr;
+  mpfr_exp_t shadowValExpt;
+
+  shadowValStr = mpfr_get_str(NULL, &shadowValExpt, 10, 15, real->mpfr_val, MPFR_RNDN);
+  VG_(printf)("%c.%se%ld", shadowValStr[0], shadowValStr+1, shadowValExpt);
+  mpfr_free_str(shadowValStr);
+  #else
+  tl_assert2(0, "Can't print GMP vals!\n");
+  #endif
+}

@@ -40,6 +40,7 @@ extern Bool print_in_blocks;
 extern Bool print_out_blocks;
 extern Bool print_block_boundries;
 extern Bool print_run_blocks;
+
 extern Bool print_temp_moves;
 extern Bool print_value_moves;
 extern Bool print_semantic_ops;
@@ -47,6 +48,7 @@ extern Bool print_conversions;
 extern Bool print_types;
 extern Bool print_allocs;
 extern Bool print_errors;
+extern Bool print_errors_long;
 extern Bool running;
 extern Int precision;
 

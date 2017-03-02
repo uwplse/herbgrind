@@ -45,13 +45,18 @@ void updateError(ErrorAggregate* aggr, Addr op_addr, IROp op_code,
   aggr->total_total_error += bitsError;
   aggr->num_evals += 1;
 
-  if (print_errors){
+  if (print_errors_long || print_errors){
     printOpInfo(op_addr, op_code);
-    VG_(printf)(":\n"
-                "The rounded shadow value is %f, but %f was computed.\n"
+    VG_(printf)(":\n");
+    if (print_errors_long){
+      VG_(printf)("The shadow value is ");
+      printReal(realVal);
+    } else {
+      VG_(printf)("The rounded shadow value is %f", shadowRounded);
+    }
+    VG_(printf)(", but %f was computed.\n"
                 "%f bits error (%llu ulps)\n",
-                shadowRounded, computedVal,
-                bitsError, ulpsError);
+                computedVal, bitsError, ulpsError);
   }
 }
 

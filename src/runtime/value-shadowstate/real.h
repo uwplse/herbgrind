@@ -55,5 +55,6 @@ double getDouble(Real real);
 
 void freeReal(Real real);
 void copyReal(Real src, Real dest);
+void printReal(Real real);
 
 #endif
