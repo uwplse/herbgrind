@@ -335,29 +335,123 @@ VG_REGPARM(3) void setMemShadowTemp(UWord memDest,
   for(int i = 0; i < size; ++i){
     UWord addr = memDest + i * sizeof(float);
     removeMemShadow(addr);
-    if (st != NULL &&
-        !(st->values[i/2]->type == Ft_Double && i % 2 == 1)){
-      addMemShadow(addr, st->values[i/2]);
+    if (st != NULL){
+      if (st->values[i/2]->type == Ft_Double){
+        if (i % 2 == 0){
+          addMemShadow(addr, st->values[i/2]);
+        }
+      } else {
+        addMemShadow(addr, st->values[i]);
+      }
     }
   }
 }
-VG_REGPARM(2) ShadowTemp* getMemShadowTemp(UWord memSrc,
-                                           UWord size){
-  ShadowTemp* newTemp = mkShadowTemp(size);
-  Bool allNull = True;
-  for(int i = 0; i < size; ++i){
-    UWord addr = memSrc + i * sizeof(float);
-    newTemp->values[i] = getMemShadow(addr);
-    if (newTemp->values[i] != NULL){
-      allNull = False;
-      ownShadowValue(newTemp->values[i]);
-    }
-  }
-  if (allNull){
-    freeShadowTemp(newTemp);
+VG_REGPARM(2) ShadowTemp* dynamicLoad32(Int memSrc){
+  ShadowValue* val = getMemShadow(memSrc);
+  if (val != NULL){
+    ShadowTemp* newTemp = mkShadowTemp(1);
+    newTemp->values[0] = val;
+    return newTemp;
+  } else {
     return NULL;
   }
-  return newTemp;
+}
+VG_REGPARM(2) ShadowTemp* dynamicLoad64(Int memSrc, UWord memBytes){
+  ShadowValue* firstValue = getMemShadow(memSrc);
+  if (firstValue == NULL){
+    ShadowValue* secondValue = getMemShadow(memSrc + sizeof(float));
+    if (secondValue == NULL || secondValue->type != Ft_Single){
+      return NULL;
+    }
+    ShadowTemp* temp = mkShadowTemp(2);
+    float firstValueBytes;
+    VG_(memcpy)(&firstValueBytes, &memBytes, sizeof(float));
+    firstValue = mkShadowValue(Ft_Single, firstValueBytes);
+    temp->values[0] = firstValue;
+    temp->values[1] = secondValue;
+    ownShadowValue(secondValue);
+    return temp;
+  } else if (firstValue->type == Ft_Double){
+    ShadowTemp* temp = mkShadowTemp(1);
+    temp->values[0] = firstValue;
+    ownShadowValue(firstValue);
+    return temp;
+  } else {
+    ShadowValue* secondValue = getMemShadow(memSrc + sizeof(float));
+    if (secondValue == NULL || secondValue->type != Ft_Single){
+      float secondValueBytes;
+      VG_(memcpy)(&secondValueBytes, (&memBytes) + sizeof(float),
+                  sizeof(float));
+      secondValue = mkShadowValue(Ft_Single, secondValueBytes);
+    } else {
+      ownShadowValue(secondValue);
+    }
+    ownShadowValue(firstValue);
+    tl_assert(secondValue->type == Ft_Single);
+    ShadowTemp* temp = mkShadowTemp(2);
+    temp->values[0] = firstValue;
+    temp->values[1] = secondValue;
+    return temp;
+  }
+}
+VG_REGPARM(3) ShadowTemp* dynamicLoad128(Int memSrc, UWord bytes1, UWord bytes2){
+  ShadowTemp* firstHalf = dynamicLoad64(memSrc, bytes1);
+  ShadowTemp* secondHalf = dynamicLoad64(memSrc + sizeof(double), bytes2);
+  if (firstHalf == NULL && secondHalf == NULL){
+    return NULL;
+  } else if (firstHalf == NULL){
+    switch(secondHalf->num_vals){
+    case 1: {
+      double value;
+      VG_(memcpy)(&bytes1, &value, sizeof(double));
+      firstHalf = mkShadowTempOneDouble(value);
+    }
+      break;
+    case 2: {
+      firstHalf = mkShadowTempTwoSingles(bytes1);
+    }
+      break;
+    default:
+      tl_assert(0);
+      return NULL;
+    }
+  } else if (secondHalf == NULL ||
+             secondHalf->num_vals != firstHalf->num_vals){
+    if (secondHalf != NULL){
+      disownShadowTemp(secondHalf);
+    }
+    switch(firstHalf->num_vals){
+    case 1: {
+      double value;
+      VG_(memcpy)(&bytes2, &value, sizeof(double));
+      secondHalf = mkShadowTempOneDouble(value);
+    }
+      break;
+    case 2: {
+      secondHalf = mkShadowTempTwoSingles(bytes2);
+    }
+    default:
+      tl_assert(0);
+      return NULL;
+    }
+  }
+  ShadowTemp* result;
+  if (firstHalf->num_vals == 1 && secondHalf->num_vals == 1){
+    result = mkShadowTemp(2);
+    result->values[0] = firstHalf->values[0];
+    result->values[1] = secondHalf->values[0];
+  } else {
+    tl_assert(firstHalf->num_vals == 2 &&
+              secondHalf->num_vals == 2);
+    result = mkShadowTemp(4);
+    result->values[0] = firstHalf->values[0];
+    result->values[1] = firstHalf->values[1];
+    result->values[2] = secondHalf->values[0];
+    result->values[3] = secondHalf->values[1];
+  }
+  freeShadowTemp(firstHalf);
+  freeShadowTemp(secondHalf);
+  return result;
 }
 VG_REGPARM(1) ShadowValue* getMemShadow(UWord memSrc){
   ShadowMemEntry* entry = VG_(HT_lookup)(shadowMemory, memSrc);
@@ -380,7 +474,7 @@ void addMemShadow(UWord addr, ShadowValue* val){
   newEntry->addr = addr;
   newEntry->val = val;
   ownShadowValue(val);
-  VG_(HT_add_node)(shadowMemory, val);
+  VG_(HT_add_node)(shadowMemory, newEntry);
 }
 void freeShadowTemp(ShadowTemp* temp){
   stack_push(freedTemps[temp->num_vals - 1], (void*)temp);
