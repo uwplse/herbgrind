@@ -523,16 +523,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       }
     }
   } else if (src_size == 4){
-    FloatType valTypes[2];
-    for(int i = 0; i < 2; ++i){
-      valTypes[i] = inferTSType64(tsSrc + (i * sizeof(double)));
-    }
-    FloatType valType;
-    if (valTypes[0] == Ft_Unknown){
-      valType = valTypes[1];
-    } else {
-      valType = valTypes[0];
-    }
+    FloatType valType = inferTSType64(tsSrc);
     if (valType == Ft_NonFloat){
       addStoreTempNonFloat(sbOut, dest);
     } else if (valType == Ft_Unshadowed){

@@ -40,6 +40,7 @@
 #include "realop.h"
 #include "error.h"
 #include <math.h>
+#include <inttypes.h>
 
 VgHashTable* callToOpInfoMap = NULL;
 typedef struct _opInfoEntry {
@@ -90,8 +91,8 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
   }
   ShadowValue* shadowResult = runWrappedShadowOp(type, shadowArgs);
   *resLoc = runEmulatedWrappedOp(type, args);
-  removeMemShadow((UWord)resLoc);
-  addMemShadow((UWord)resLoc, shadowResult);
+  removeMemShadow((UWord)(uintptr_t)resLoc);
+  addMemShadow((UWord)(uintptr_t)resLoc, shadowResult);
 
   Addr callAddr = getCallAddr();
   OpInfoEntry* entry = VG_(HT_lookup)(callToOpInfoMap, callAddr);

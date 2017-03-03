@@ -329,34 +329,18 @@ VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
   return result;
 }
 
-VG_REGPARM(3) void setMemShadowTemp(UWord memDest,
-                                    UWord size,
-                                    ShadowTemp* st){
-  for(int i = 0; i < size; ++i){
-    UWord addr = memDest + i * sizeof(float);
-    removeMemShadow(addr);
-    if (st != NULL){
-      if (st->values[i/2]->type == Ft_Double){
-        if (i % 2 == 0){
-          addMemShadow(addr, st->values[i/2]);
-        }
-      } else {
-        addMemShadow(addr, st->values[i]);
-      }
-    }
-  }
-}
-VG_REGPARM(2) ShadowTemp* dynamicLoad32(Int memSrc){
+VG_REGPARM(2) ShadowTemp* dynamicLoad32(UWord memSrc){
   ShadowValue* val = getMemShadow(memSrc);
   if (val != NULL){
     ShadowTemp* newTemp = mkShadowTemp(1);
     newTemp->values[0] = val;
+    ownShadowValue(val);
     return newTemp;
   } else {
     return NULL;
   }
 }
-VG_REGPARM(2) ShadowTemp* dynamicLoad64(Int memSrc, UWord memBytes){
+VG_REGPARM(2) ShadowTemp* dynamicLoad64(UWord memSrc, UWord memBytes){
   ShadowValue* firstValue = getMemShadow(memSrc);
   if (firstValue == NULL){
     ShadowValue* secondValue = getMemShadow(memSrc + sizeof(float));
@@ -394,7 +378,7 @@ VG_REGPARM(2) ShadowTemp* dynamicLoad64(Int memSrc, UWord memBytes){
     return temp;
   }
 }
-VG_REGPARM(3) ShadowTemp* dynamicLoad128(Int memSrc, UWord bytes1, UWord bytes2){
+VG_REGPARM(3) ShadowTemp* dynamicLoad128(UWord memSrc, UWord bytes1, UWord bytes2){
   ShadowTemp* firstHalf = dynamicLoad64(memSrc, bytes1);
   ShadowTemp* secondHalf = dynamicLoad64(memSrc + sizeof(double), bytes2);
   if (firstHalf == NULL && secondHalf == NULL){
@@ -458,6 +442,26 @@ VG_REGPARM(1) ShadowValue* getMemShadow(UWord memSrc){
   if (entry == NULL) return NULL;
   else return entry->val;
 }
+VG_REGPARM(3) void setMemShadowTemp(Addr64 memDest,
+                                    UWord size,
+                                    ShadowTemp* st){
+  if (PRINT_VALUE_MOVES){
+    VG_(printf)("Setting at %llX\n", memDest);
+  }
+  for(int i = 0; i < size; ++i){
+    UWord addr = memDest + i * sizeof(float);
+    removeMemShadow(addr);
+    if (st != NULL){
+      if (st->values[i/2]->type == Ft_Double){
+        if (i % 2 == 0){
+          addMemShadow(addr, st->values[i/2]);
+        }
+      } else {
+        addMemShadow(addr, st->values[i]);
+      }
+    }
+  }
+}
 void removeMemShadow(UWord addr){
   ShadowMemEntry* oldEntry = VG_(HT_remove)(shadowMemory, addr);
   if (oldEntry == NULL) return;
@@ -467,7 +471,7 @@ void removeMemShadow(UWord addr){
   disownShadowValue(oldEntry->val);
   stack_push(memEntries, (void*)oldEntry);
 }
-void addMemShadow(UWord addr, ShadowValue* val){
+void addMemShadow(Addr64 addr, ShadowValue* val){
   ShadowMemEntry* newEntry;
   if (stack_empty(memEntries)){
     newEntry = VG_(malloc)("memEntry", sizeof(ShadowMemEntry));
@@ -479,7 +483,7 @@ void addMemShadow(UWord addr, ShadowValue* val){
   ownShadowValue(val);
   VG_(HT_add_node)(shadowMemory, newEntry);
   if (PRINT_VALUE_MOVES){
-    VG_(printf)("Setting %lX to %p\n", addr, val);
+    VG_(printf)("Setting %llX to %p\n", addr, val);
   }
 }
 void freeShadowTemp(ShadowTemp* temp){

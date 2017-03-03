@@ -72,15 +72,15 @@ VG_REGPARM(2) ShadowTemp* dynamicGet64(Int tsSrc,
                                        UWord tsBytes);
 VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
                                         UWord bytes1, UWord bytes2);
-VG_REGPARM(2) ShadowTemp* dynamicLoad32(Int memSrc);
-VG_REGPARM(2) ShadowTemp* dynamicLoad64(Int memSrc, UWord memBytes);
-VG_REGPARM(3) ShadowTemp* dynamicLoad128(Int memSrc,
+VG_REGPARM(2) ShadowTemp* dynamicLoad32(UWord memSrc);
+VG_REGPARM(2) ShadowTemp* dynamicLoad64(UWord memSrc, UWord memBytes);
+VG_REGPARM(3) ShadowTemp* dynamicLoad128(UWord memSrc,
                                          UWord bytes1, UWord bytes2);
-VG_REGPARM(3) void setMemShadowTemp(UWord memDest, UWord size,
+VG_REGPARM(3) void setMemShadowTemp(Addr64 memDest, UWord size,
                                     ShadowTemp* st);
 VG_REGPARM(1) ShadowValue* getMemShadow(UWord memSrc);
 void removeMemShadow(UWord addr);
-void addMemShadow(UWord addr, ShadowValue* val);
+void addMemShadow(Addr64 addr, ShadowValue* val);
 
 VG_REGPARM(1) void disownShadowTempNonNull(ShadowTemp* temp);
 VG_REGPARM(1) void disownShadowTemp(ShadowTemp* temp);
