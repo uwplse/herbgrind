@@ -54,11 +54,11 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
                      IRType gWordTy, IRType hWordTy) {
   IRSB* sbOut = deepCopyIRSBExceptStmts(sbIn);
 
-  if (print_in_blocks && running){
+  if (PRINT_IN_BLOCKS){
     VG_(printf)("Instrumenting block at %p:\n", (void*)closure->readdr);
     printSuperBlock(sbIn);
   }
-  if (print_run_blocks && running){
+  if (PRINT_RUN_BLOCKS){
     char* blockMessage = VG_(perm_malloc)(35, 1);
     VG_(snprintf)(blockMessage, 35,
                   "Running block at %p\n", (void*)closure->readdr);
@@ -71,17 +71,18 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
     if (stmt->tag == Ist_IMark){
       curAddr = stmt->Ist.IMark.addr;
     }
-    if (curAddr)
+    if (curAddr){
       preInstrumentStatement(sbOut, stmt, curAddr);
+    }
     addStmtToIRSB(sbOut, stmt);
     if (curAddr)
       instrumentStatement(sbOut, stmt, curAddr);
   }
   finishInstrumentingBlock(sbOut);
-  if (print_block_boundries && running){
+  if (PRINT_BLOCK_BOUNDRIES){
     addPrint("\n+++++\n");
   }
-  if (print_out_blocks && running){
+  if (PRINT_OUT_BLOCKS){
     VG_(printf)("Printing out block:\n");
     printSuperBlock(sbOut);
   }

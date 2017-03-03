@@ -48,6 +48,7 @@ Bool print_allocs = False;
 Bool print_errors = False;
 Bool print_errors_long = False;
 Bool running = True;
+Bool always_on = False;
 Int longprint_len = 15;
 Int precision = 1000;
 
@@ -66,6 +67,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-errors", print_errors, True) {}
   else if VG_XACT_CLO(arg, "--print-errors-long", print_errors_long, True) {}
   else if VG_XACT_CLO(arg, "--start-off", running, False) {}
+  else if VG_XACT_CLO(arg, "--always-on", always_on, True) {}
   else if VG_BINT_CLO(arg, "--longprint-len", longprint_len, 1, 1000) {}
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else return False;
@@ -103,7 +105,12 @@ void hg_print_debug_usage(void){
               " --print-errors "
               "Prints the error of the result of each operation.\n"
               " --print-errors-long "
-              "Prints the error of the result of each operation, with long mpfr values.\n"
+              "Prints the error of the result of each operation, "
+              "with long mpfr values.\n"
+              " --start-off "
+              "Start's the analysis with the running flag set to off\n"
+              " --always-on "
+              "Ignore calls to HERBGRIND_END()\n"
               " --longprint-len=length "
               "How many digits of long real values to print.\n");
 }

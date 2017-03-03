@@ -50,6 +50,7 @@ extern Bool print_allocs;
 extern Bool print_errors;
 extern Bool print_errors_long;
 extern Bool running;
+extern Bool always_on;
 extern Int longprint_len;
 extern Int precision;
 
@@ -59,5 +60,11 @@ Bool hg_process_cmd_line_option(const HChar* arg);
 
 void hg_print_usage(void);
 void hg_print_debug_usage(void);
-#define PRINT_VALUE_MOVES (print_value_moves && running)
+#define PRINT_VALUE_MOVES (print_value_moves && (running || always_on))
+#define PRINT_IN_BLOCKS (print_in_blocks && (running || always_on))
+#define PRINT_OUT_BLOCKS (print_out_blocks && (running || always_on))
+#define PRINT_IN_VEXST (print_in_vexst && (running || always_on))
+#define PRINT_RUN_BLOCKS (print_run_blocks && (running || always_on))
+#define PRINT_BLOCK_BOUNDRIES (print_block_boundries && (running || always_on))
+#define PRINT_TYPES (print_types && (running || always_on))
 #endif

@@ -147,7 +147,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
     // we don't need to bother trying to clear it or change it's
     // static info here
     if (tsAddrCanHaveShadow(dest_addr)){
-      if (print_types){
+      if (PRINT_TYPES){
         VG_(printf)("Types: Setting up a disown for %d because it's type is ",
                     dest_addr);
         ppFloatType(tsContext[dest_addr]);
@@ -181,14 +181,14 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
     for(int i = 0; i < dest_size; ++i){
       Int dest_addr = tsDest + (i * sizeof(float));
       if (canBeFloat(sbOut->tyenv, data)){
-        if (print_types){
+        if (PRINT_TYPES){
           VG_(printf)("Setting TS(%d) to unshadowed, "
                       "because %d can't contain a float.\n",
                       dest_addr, data->Iex.RdTmp.tmp);
         }
         addSetTSValUnshadowed(sbOut, dest_addr);
       } else {
-        if (print_types){
+        if (PRINT_TYPES){
           VG_(printf)("Setting TS(%d) to non-float, "
                       "because %d can't contain a float.\n",
                       dest_addr, data->Iex.RdTmp.tmp);
@@ -207,7 +207,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
         if (tempType(idx) == Ft_Double){
           if (i % 2 == 1){
             addSetTSValNonFloat(sbOut, dest_addr);
-            if (print_types){
+            if (PRINT_TYPES){
               VG_(printf)("Types: Setting TS(%d) to non-float, "
                           "because we wrote a double "
                           "to the position before.\n",
@@ -258,7 +258,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
         // should be pretty rare.
         for(int i = 0; i < 2; ++i){
           Addr dest_addr = tsDest + (i * sizeof(float));
-          if (print_types){
+          if (PRINT_TYPES){
             VG_(printf)("1. Types (i-time): Setting %lu to unknown\n",
                         dest_addr);
           }
@@ -290,7 +290,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
         // should be pretty rare.
         for(int i = 0; i < 4; ++i){
           Addr dest_addr = tsDest + (i * sizeof(float));
-          if (print_types){
+          if (PRINT_TYPES){
             VG_(printf)("2. Types (i-time): Setting %lu to unknown\n",
                         dest_addr);
           }
@@ -419,7 +419,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
     tl_assert(valType != Ft_Double);
     // If it's not a float propagate that information.
     if (valType == Ft_NonFloat){
-      if (print_types){
+      if (PRINT_TYPES){
         VG_(printf)("Marking %d as nonfloat because TS(%d) is nonfloat.\n",
                     dest, tsSrc);
       }
@@ -462,7 +462,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
   } else if (src_size == 2){
     FloatType valType = inferTSType64(tsSrc);
     if (valType == Ft_NonFloat){
-      if (print_types){
+      if (PRINT_TYPES){
         VG_(printf)("Marking %d as nonfloat because TS(%d) is nonfloat.\n",
                     dest, tsSrc);
       }
@@ -989,7 +989,7 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard,
   cleanupAtEndOfBlock(sbOut, idx);
 }
 void addStoreTempNonFloat(IRSB* sbOut, int idx){
-  if (print_types){
+  if (PRINT_TYPES){
     VG_(printf)("Setting %d to non float.\n", idx);
   }
   tempContext[idx] = Ft_NonFloat;
@@ -999,7 +999,7 @@ void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx){
 }
 void addStoreTempUnshadowed(IRSB* sbOut, int idx){
   tempContext[idx] = Ft_Unshadowed;
-  if (print_types){
+  if (PRINT_TYPES){
     VG_(printf)("Setting %d to unshadowed.\n", idx);
   }
 }
