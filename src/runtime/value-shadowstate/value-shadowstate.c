@@ -81,9 +81,9 @@ VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
     for(int j = 0; j < temp->num_vals; ++j){
       if (PRINT_VALUE_MOVES){
         VG_(printf)("Cleaning up value %p (old rc %lu) "
-                    "from temp %p at end of block.\n",
+                    "from temp %p in %d at end of block.\n",
                     temp->values[j], temp->values[j]->ref_count,
-                    temp);
+                    temp, entries[i]);
       }
       disownShadowValue(temp->values[j]);
     }
@@ -107,14 +107,14 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
     ownShadowValue(val);
     if (PRINT_VALUE_MOVES){
       if (getTS(tsDest) != NULL || val != NULL){
-        VG_(printf)("dynamicPut64: Setting thread state %d to %p\n",
+        VG_(printf)("dynamicPut64: Setting thread state %d to %p",
                     tsDest, val);
       }
       if (val != NULL){
         VG_(printf)(" (type ");
         ppFloatType(val->type);
-        VG_(printf)(")\n");
       }
+      VG_(printf)(")\n");
       if (getTS(tsDest + sizeof(float)) != NULL){
         VG_(printf)("dynamicPut64: Overwriting TS(%lu) with NULL, "
                     "due to double write at TS(%d)\n",
@@ -461,6 +461,9 @@ VG_REGPARM(1) ShadowValue* getMemShadow(UWord memSrc){
 void removeMemShadow(UWord addr){
   ShadowMemEntry* oldEntry = VG_(HT_remove)(shadowMemory, addr);
   if (oldEntry == NULL) return;
+  if (PRINT_VALUE_MOVES){
+    VG_(printf)("Clearing %lX\n", addr);
+  }
   disownShadowValue(oldEntry->val);
   stack_push(memEntries, (void*)oldEntry);
 }
@@ -475,6 +478,9 @@ void addMemShadow(UWord addr, ShadowValue* val){
   newEntry->val = val;
   ownShadowValue(val);
   VG_(HT_add_node)(shadowMemory, newEntry);
+  if (PRINT_VALUE_MOVES){
+    VG_(printf)("Setting %lX to %p\n", addr, val);
+  }
 }
 void freeShadowTemp(ShadowTemp* temp){
   stack_push(freedTemps[temp->num_vals - 1], (void*)temp);

@@ -151,6 +151,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
         VG_(printf)("Types: Setting up a disown for %d because it's type is ",
                     dest_addr);
         ppFloatType(tsContext[dest_addr]);
+        VG_(printf)("\n");
       }
       IRExpr* oldVal = runGetTSVal(sbOut, dest_addr);
       // If we don't know whether or not it's a shadowed float at
@@ -159,7 +160,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
       if (tsHasStaticShadow(dest_addr)){
         if (PRINT_VALUE_MOVES){
           addPrint3("Disowning %p "
-                    "from thread state overwrite at %d (static)",
+                    "from thread state overwrite at %d (static)\n",
                     oldVal, mkU64(dest_addr));
         }
         addSVDisownNonNull(sbOut, oldVal);
@@ -169,7 +170,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
             runNonZeroCheck64(sbOut, oldVal);
           addPrintG3(oldValNonNull,
                      "Disowning %p "
-                     "from thread state overwrite at %d (dynamic)",
+                     "from thread state overwrite at %d (dynamic)\n",
                      oldVal, mkU64(tsDest));
         }
         addSVDisown(sbOut, oldVal);
@@ -221,22 +222,12 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
                 runIndex(sbOut, values, ShadowValue*, i / 2);
             }
             addSetTSValNonNull(sbOut, dest_addr, value, Ft_Double);
-
-            if (PRINT_VALUE_MOVES){
-              addPrint3("Setting TS(%d) to %p\n",
-                        mkU64(dest_addr), value);
-            }
           }
         } else {
           tl_assert(tempType(idx) == Ft_Single);
           IRExpr* value =
             runIndex(sbOut, values, ShadowValue*, i);
           addSetTSValNonNull(sbOut, dest_addr, value, Ft_Single);
-
-          if (PRINT_VALUE_MOVES){
-            addPrint3("Setting TS(%d) to %p\n",
-                      mkU64(dest_addr), value);
-          }
         }
       }
     } else {
