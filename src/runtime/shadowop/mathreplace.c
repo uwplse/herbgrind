@@ -81,8 +81,7 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
 #endif
   int nargs = getWrappedNumArgs(type);
   FloatType op_precision = getWrappedPrecision(type);
-  ShadowValue** shadowArgs =
-    VG_(malloc)("wrapped shadow args", sizeof(ShadowValue*) * nargs);
+  ShadowValue* shadowArgs[MAX_WRAPPED_ARGS];
   for(int i = 0; i < nargs; ++i){
     shadowArgs[i] = getMemShadow((UWord)&(args[i]));
     if (shadowArgs[i] == NULL){
@@ -103,6 +102,9 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
     updateError(callInfo,
                 shadowResult->real,
                 *resLoc);
+    entry = VG_(malloc)("replaced op info entry", sizeof(OpInfoEntry));
+    entry->call_addr = callAddr;
+    entry->info = callInfo;
   }
 }
 
