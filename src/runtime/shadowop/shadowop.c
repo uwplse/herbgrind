@@ -52,6 +52,10 @@ VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                              opInfo->exinfo.argPrecision,
                              opInfo,
                              vals);
+    if (print_errors){
+      ppConcExpr(result->values[i]->expr);
+      VG_(printf)("\n");
+    }
     updateError(opInfo, result->values[i]->real,
                 (opInfo->exinfo.argPrecision == Ft_Single ?
                  computedResult.f[i] : computedResult.d[i]));

@@ -105,6 +105,10 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
     entry->info = callInfo;
   }
   execSymbolicOp(entry->info, &(shadowResult->expr), shadowResult->real, shadowArgs);
+  if (print_errors){
+    ppConcExpr(shadowResult->expr);
+    VG_(printf)("\n");
+  }
   updateError(entry->info,
               shadowResult->real,
               *resLoc);
