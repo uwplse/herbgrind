@@ -515,7 +515,7 @@ void freeShadowValue(ShadowValue* val){
     VG_(deleteXA)(val->influences);
     val->influences = NULL;
   }
-  disownExpr(val->expr);
+  disownConcExpr(val->expr);
   stack_push_fast(freedVals, (void*)val);
 }
 
@@ -551,7 +551,7 @@ inline
 ShadowValue* mkShadowValue(FloatType type, double value){
   ShadowValue* result = mkShadowValueBare(type);
   setReal(result->real, value);
-  result->expr = mkLeafExpr(value);
+  result->expr = mkLeafConcExpr(value);
   return result;
 }
 

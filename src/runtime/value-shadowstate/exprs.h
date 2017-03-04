@@ -71,10 +71,39 @@ typedef struct {
   int len;
 } NodePos;
 
+typedef struct _NodeMapEntry {
+  struct _NodeMapEntry* next;
+  UWord positionHash;
+  NodePos position;
+  UWord groupIdx;
+} NodeMapEntry;
+
 void initExprAllocator(void);
-ConcExpr* mkLeafExpr(double value);
-ConcExpr* mkBranchExpr(double value, ShadowOpInfo* op, int nargs, ConcExpr** args);
-void disownExpr(ConcExpr* expr);
+ConcExpr* mkLeafConcExpr(double value);
+ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op, int nargs, ConcExpr** args);
+void disownConcExpr(ConcExpr* expr);
 void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result, Real real, ShadowValue** args);
+void generalizeSymbolicExpr(SymbExpr** symexpr, ConcExpr* cexpr);
+SymbExpr* concreteToSymbolic(ConcExpr* cexpr);
+VgHashTable* getConcExprEquivalences(ConcExpr* cexpr);
+
+int lookupPos(VgHashTable* varmap, NodePos pos);
+UWord hashPosition(NodePos node);
+Word cmp_position(const void* node1, const void* node2);
+NodePos appendPos(NodePos orig, int argIdx);
+void freePos(NodePos pos);
+#define NULL_POS (NodePos){.len = 0, .data = NULL}
+
+const char* opSym(ShadowOpInfo* op);
 void ppConcExpr(ConcExpr* expr);
+void ppSymbExpr(SymbExpr* expr);
+
+// Free this when you're done with it.
+char* symbExprToString(SymbExpr* expr);
+int symbExprPrintLen(SymbExpr* expr, VgHashTable* varmap,
+                     NodePos curPos);
+// Returns the number of bytes written
+int writeSymbExprToString(char* buf, SymbExpr* expr,
+                          NodePos curpos, VgHashTable* varmap);
+int floatPrintLen(double f);
 #endif

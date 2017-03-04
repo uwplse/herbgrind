@@ -98,8 +98,6 @@ void freeShadowValue(ShadowValue* val);
 ShadowValue* copyShadowValue(ShadowValue* val);
 ShadowValue* mkShadowValueBare(FloatType type);
 ShadowValue* mkShadowValue(FloatType type, double value);
-void disownExpr(ConcExpr* expr);
-void ownExpr(ConcExpr* expr);
 
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value);
 VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values);
