@@ -50,6 +50,9 @@ void disownExpr(ConcExpr* expr){
     if (expr->type == Node_Leaf){
       stack_push(leafCExprs, (void*)expr);
     } else {
+      for(int i = 0; i < expr->branch.nargs; ++i){
+        disownExpr(expr->branch.args[i]);
+      }
       stack_push(branchCExprs[expr->branch.nargs], (void*)expr);
     }
   }
