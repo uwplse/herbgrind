@@ -56,6 +56,7 @@ void initValueShadowState(void){
   memEntries = mkStack();
   shadowMemory = VG_(HT_construct)("shadow memory");
   callToOpInfoMap = VG_(HT_construct)("call map");
+  initExprAllocator();
 }
 
 VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
@@ -514,6 +515,7 @@ void freeShadowValue(ShadowValue* val){
     VG_(deleteXA)(val->influences);
     val->influences = NULL;
   }
+  disownExpr(val->expr);
   stack_push_fast(freedVals, (void*)val);
 }
 
@@ -526,6 +528,8 @@ StackNode* stack_pop_fast(Stack* s){
 ShadowValue* copyShadowValue(ShadowValue* val){
   ShadowValue* copy = mkShadowValueBare(val->type);
   copyReal(val->real, copy->real);
+  copy->expr = val->expr;
+  (copy->expr->ref_count)++;
   return copy;
 }
 inline
@@ -547,6 +551,7 @@ inline
 ShadowValue* mkShadowValue(FloatType type, double value){
   ShadowValue* result = mkShadowValueBare(type);
   setReal(result->real, value);
+  result->expr = mkLeafExpr(value);
   return result;
 }
 

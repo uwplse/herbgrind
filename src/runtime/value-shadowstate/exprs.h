@@ -43,6 +43,7 @@ typedef enum {
 } NodeType;
 
 struct _ConcExpr {
+  struct _ConcExpr* next;
   int ref_count;
   NodeType type;
   double value;
@@ -70,7 +71,10 @@ typedef struct {
   int len;
 } NodePos;
 
-VG_REGPARM(1) ConcExpr* mkLeafExpr(double value);
-VG_REGPARM(1) ConcExpr* mkLeafExprF(float value);
-void freeExpr(ConcExpr* expr);
+void initExprAllocator(void);
+ConcExpr* mkLeafExpr(double value);
+ConcExpr* mkBranchExpr(double value, ShadowOpInfo* op, int nargs, ConcExpr** args);
+void disownExpr(ConcExpr* expr);
+void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result, Real real, ShadowValue** args);
+void ppConcExpr(ConcExpr* expr);
 #endif

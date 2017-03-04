@@ -50,6 +50,7 @@ typedef struct _opInfoEntry {
 } OpInfoEntry;
 
 #define NCALLFRAMES 5
+#define MAX_WRAPPED_ARGS 3
 
 Addr getCallAddr(void);
 Addr getCallAddr(void){
@@ -99,13 +100,14 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
     ShadowOpInfo* callInfo =
       mkShadowOpInfo(0x0, callAddr, 1, nargs, op_precision);
     callInfo->name = getWrappedName(type);
-    updateError(callInfo,
-                shadowResult->real,
-                *resLoc);
     entry = VG_(malloc)("replaced op info entry", sizeof(OpInfoEntry));
     entry->call_addr = callAddr;
     entry->info = callInfo;
   }
+  execSymbolicOp(entry->info, &(shadowResult->expr), shadowResult->real, shadowArgs);
+  updateError(entry->info,
+              shadowResult->real,
+              *resLoc);
 }
 
 int getWrappedNumArgs(OpType type){

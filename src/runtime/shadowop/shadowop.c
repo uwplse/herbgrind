@@ -50,10 +50,9 @@ VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
     result->values[i] =
       executeChannelShadowOp(opInfo->exinfo.nargs,
                              opInfo->exinfo.argPrecision,
-                             opInfo->op_code,
+                             opInfo,
                              vals);
-    updateError(opInfo,
-                result->values[i]->real,
+    updateError(opInfo, result->values[i]->real,
                 (opInfo->exinfo.argPrecision == Ft_Single ?
                  computedResult.f[i] : computedResult.d[i]));
   }
@@ -91,9 +90,10 @@ VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
 }
 ShadowValue* executeChannelShadowOp(int nargs,
                                     FloatType type,
-                                    IROp op_code,
+                                    ShadowOpInfo* opinfo,
                                     ShadowValue** args){
   ShadowValue* result = mkShadowValueBare(type);
-  execRealOp(op_code, &(result->real), args);
+  execRealOp(opinfo->op_code, &(result->real), args);
+  execSymbolicOp(opinfo, &(result->expr), result->real, args);
   return result;
 }

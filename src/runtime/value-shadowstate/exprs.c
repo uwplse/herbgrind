@@ -29,17 +29,85 @@
 
 #include "exprs.h"
 #include "pub_tool_mallocfree.h"
+#include "pub_tool_libcprint.h"
+#include "../../helper/stack.h"
+#include "../../helper/ir-info.h"
 
-void freeExpr(ConcExpr* expr){
-  if (expr->type == Node_Branch){
-    VG_(free)(expr->branch.args);
+#define MAX_BRANCH_ARGS 3
+
+Stack* leafCExprs;
+Stack* branchCExprs[MAX_BRANCH_ARGS];
+
+void initExprAllocator(void){
+  leafCExprs = mkStack();
+  for(int i = 0; i < MAX_BRANCH_ARGS; ++i){
+    branchCExprs[i] = mkStack();
   }
-  VG_(free)(expr);
+}
+void disownExpr(ConcExpr* expr){
+  (expr->ref_count)--;
+  if (expr->ref_count == 0){
+    if (expr->type == Node_Leaf){
+      stack_push(leafCExprs, (void*)expr);
+    } else {
+      stack_push(branchCExprs[expr->branch.nargs], (void*)expr);
+    }
+  }
 }
 ConcExpr* mkLeafExpr(double value){
-  ConcExpr* result = VG_(malloc)("expr", sizeof(ConcExpr));
+  ConcExpr* result;
+  if (stack_empty(leafCExprs)){
+    result = VG_(malloc)("expr", sizeof(ConcExpr));
+    result->type = Node_Leaf;
+  } else {
+    result = (void*)stack_pop(leafCExprs);
+  }
   result->ref_count = 1;
-  result->type = Node_Leaf;
   result->value = value;
   return result;
+}
+
+ConcExpr* mkBranchExpr(double value, ShadowOpInfo* op, int nargs, ConcExpr** args){
+  ConcExpr* result;
+  if (stack_empty(branchCExprs[nargs])){
+    result = VG_(malloc)("expr", sizeof(ConcExpr));
+    result->branch.args = VG_(malloc)("expr args", sizeof(ConcExpr*) * nargs);
+    result->branch.nargs = nargs;
+    result->type = Node_Branch;
+  } else {
+    result = (void*)stack_pop(branchCExprs[nargs]);
+  }
+  result->ref_count = 1;
+  result->value = value;
+  result->branch.op = op;
+
+  for(int i = 0; i < nargs; ++i){
+    result->branch.args[i] = args[i];
+    (args[i]->ref_count)++;
+  }
+  return result;
+}
+
+void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result, Real real, ShadowValue** args){
+  ConcExpr* exprArgs[MAX_BRANCH_ARGS];
+  for(int i = 0; i < opinfo->exinfo.nargs; ++i){
+    exprArgs[i] = args[i]->expr;
+  }
+  *result = mkBranchExpr(getDouble(real), opinfo, opinfo->exinfo.nargs, exprArgs);
+}
+void ppConcExpr(ConcExpr* expr){
+  if (expr->type == Node_Leaf){
+    VG_(printf)("%f", expr->value);
+  } else {
+    if (expr->branch.op->op_code == 0x0){
+      VG_(printf)("(%s", expr->branch.op->name);
+    } else {
+      VG_(printf)("(%s", getOpcodeSymbol(expr->branch.op->op_code));
+    }
+    for (int i = 0; i < expr->branch.nargs; ++i){
+      VG_(printf)(" ");
+      ppConcExpr(expr->branch.args[i]);
+    }
+    VG_(printf)(")");
+  }
 }
