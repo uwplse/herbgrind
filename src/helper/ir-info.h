@@ -37,5 +37,6 @@ int numChannelsIn(IROp op_code);
 int numChannelsOut(IROp op_code);
 int numSIMDOperands(IROp op_code);
 int inferOtherNumChannels(int inferIndex, IRExpr* arg, IROp op_code);
+const char* getOpcodeSymbol(IROp op_code);
 
 #endif
