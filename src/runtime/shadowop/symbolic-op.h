@@ -70,6 +70,7 @@ UWord hashPosition(NodePos node);
 Word cmp_position(const void* node1, const void* node2);
 NodePos appendPos(NodePos orig, int argIdx);
 void freePos(NodePos pos);
+NodePos copyPos(NodePos pos);
 #define NULL_POS (NodePos){.len = 0, .data = NULL}
 
 #endif

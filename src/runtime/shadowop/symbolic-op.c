@@ -32,6 +32,7 @@
 #include "pub_tool_libcassert.h"
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_libcbase.h"
+#include "pub_tool_xarray.h"
 
 void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
                     Real real, ShadowValue** args){
@@ -83,18 +84,59 @@ void intersectEqualities(SymbExpr* symbexpr, ConcExpr* concExpr){
   // TODO
 }
 
-GroupList getConcExprEquivGroups(ConcExpr* cexpr){
+void getGrouped(XArray* groupArr, VgHashTable* valMap,
+                ConcExpr* cexpr, NodePos curPos){
   // TODO
-  return NULL;
+}
+
+GroupList getConcExprEquivGroups(ConcExpr* cexpr){
+  XArray* groupArr = VG_(newXA)(VG_(malloc), "group array",
+                                VG_(free), sizeof(Group));
+  VgHashTable* valMap = VG_(HT_construct)("val map");
+  getGrouped(groupArr, valMap, cexpr, NULL_POS);
+  GroupList groupList = NULL;
+  for(int i = 0; i < VG_(sizeXA)(groupArr); ++i){
+    lpush(GroupList)(&groupList, *(Group*)VG_(indexXA)(groupArr, i));
+  }
+  VG_(deleteXA)(groupArr);
+  VG_(HT_destruct)(valMap);
+  return groupList;
 }
 VarMap* mkVarMap(GroupList groups){
-  // TODO
-  return NULL;
+  VarMap* map = VG_(malloc)("var map", sizeof(VarMap));
+  map->existingEntries = VG_(HT_construct)("var map table");
+  map->nextVarIdx = 0;
+  for(GroupList curLNode = groups; curLNode != NULL;
+      curLNode = curLNode->next){
+    int curVarIdx = map->nextVarIdx;
+    map->nextVarIdx++;
+    for(Group curNode = curLNode->item; curNode != NULL;
+        curNode = curNode->next){
+      VarMapEntry* entry = VG_(malloc)("var map entry",
+                                       sizeof(VarMapEntry));
+      entry->positionHash = hashPosition(curNode->item);
+      entry->position = curNode->item;
+      entry->varIdx = curVarIdx;
+    }
+  }
+  return map;
 }
 
 int lookupVar(VarMap* map, NodePos pos){
-  // TODO
-  return 0;
+  VarMapEntry key = {.position = pos,
+                     .positionHash = hashPosition(pos)};
+  VarMapEntry* entry =
+    VG_(HT_gen_lookup)(map->existingEntries, &key, cmp_position);
+  if (entry == NULL){
+    entry = VG_(malloc)("var map entry", sizeof(VarMapEntry));
+    entry->position = copyPos(pos);
+    entry->positionHash = key.positionHash;
+    entry->varIdx = map->nextVarIdx;
+    VG_(HT_add_node)(map->existingEntries, entry);
+    (map->nextVarIdx)++;
+  }
+
+  return entry->varIdx;
 }
 
 void freeVarMapEntry(void* entry);
@@ -137,4 +179,10 @@ NodePos appendPos(NodePos orig, int argIdx){
 }
 void freePos(NodePos pos){
   VG_(free)(pos.data);
+}
+NodePos copyPos(NodePos pos){
+  NodePos new = {.len = pos.len};
+  new.data = VG_(malloc)("pos data", pos.len * sizeof(int));
+  VG_(memcpy)(pos.data, new.data, pos.len);
+  return new;
 }

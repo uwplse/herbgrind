@@ -58,4 +58,5 @@
     return item;                                                        \
   }
 
-    
+// This way you can almost pretend it's real polymorphism
+#define lpop(type) lpop_##type
