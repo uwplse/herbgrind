@@ -92,14 +92,8 @@ IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
                     Addr curAddr,
                     IRExpr** args, int nargs,
                     IRTemp dest){
-  ShadowOpInfo* info =
-    VG_(perm_malloc)(sizeof(ShadowOpInfo), vg_alignof(ShadowOpInfo));
-  info->op_code = op_code;
-  info->op_addr = curAddr;
-  info->exinfo.numSIMDOperands = numSIMDOperands(op_code);
-  info->exinfo.numChannels = numChannelsOut(op_code);
-  info->exinfo.nargs = nargs;
-  info->exinfo.argPrecision = argPrecision(op_code);
+  ShadowOpInfo* info = mkShadowOpInfo(op_code, cur_addr,
+                                      block_addr, nargs);
   for(int i = 0; i < nargs; ++i){
     addStoreC(sbOut, args[i], (&shadowArgs[i]));
   }

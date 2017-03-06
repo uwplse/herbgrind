@@ -32,9 +32,8 @@
 #include "pub_tool_debuginfo.h"
 #include "pub_tool_libcprint.h"
 
-ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr,
-                             int numSIMDOperands, int nargs,
-                             FloatType argPrecision){
+ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
+                             int nargs){
   ShadowOpInfo* result = VG_(perm_malloc)(sizeof(ShadowOpInfo), vg_alignof(ShadowOpInfo));
   result->op_code = op_code;
   result->op_addr = op_addr;
@@ -43,9 +42,10 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr,
   result->eagg.max_local_error = -1;
   result->eagg.total_local_error = 0;
   result->expr = NULL;
-  result->exinfo.numSIMDOperands = numSIMDOperands;
+  result->exinfo.numSIMDOperands = numSIMDOperands(op_code);
+  result->exinfo.numChannels = numChannelsOut(op_code);
   result->exinfo.nargs = nargs;
-  result->exinfo.argPrecision = argPrecision;
+  result->exinfo.argPrecision = argPrecision(op_code);
   return result;
 }
 
