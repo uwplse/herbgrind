@@ -46,7 +46,8 @@
 
 void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                           int nargs, IRExpr** argExprs,
-                          Addr curAddr, IRTemp dest){
+                          Addr curAddr, Addr blockAddr,
+                          IRTemp dest){
   if (print_semantic_ops){
     ppIROp(op_code);
     VG_(printf)(" on ");
@@ -74,7 +75,8 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
   }
 
   IRExpr* shadowOutput =
-    runShadowOp(sbOut, op_code, curAddr, args, nargs, dest);
+    runShadowOp(sbOut, op_code, curAddr, blockAddr,
+                args, nargs, dest);
   if (print_temp_moves){
     addPrint3("Putting result of op, %p, in %d", shadowOutput, mkU64(dest));
     addPrint2(" (with %d values)\n", mkU64(numChannelsOut(op_code)));
@@ -89,7 +91,7 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
 }
 
 IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
-                    Addr curAddr,
+                    Addr curAddr, Addr block_addr,
                     IRExpr** args, int nargs,
                     IRTemp dest){
   ShadowOpInfo* info = mkShadowOpInfo(op_code, cur_addr,

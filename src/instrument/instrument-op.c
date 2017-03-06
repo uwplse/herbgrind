@@ -43,7 +43,8 @@
 #include "../runtime/value-shadowstate/shadowval.h"
 #include "../runtime/value-shadowstate/real.h"
 
-void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr, Addr curAddr){
+void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
+                  Addr curAddr, Addr blockAddr){
   // Get the IROp value, the number of args, and the argument
   // expressions out of the structure based on whether it's a Unop, a
   // Binop, or a Triop.
@@ -103,7 +104,7 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr, Addr curAddr){
       instrumentConversion(sbOut, op_code, argExprs, dest);
     } else {
       instrumentSemanticOp(sbOut, op_code, nargs, argExprs,
-                           curAddr, dest);
+                           curAddr, blockAddr, dest);
     }
   } else {
     addStoreTempNonFloat(sbOut, dest);

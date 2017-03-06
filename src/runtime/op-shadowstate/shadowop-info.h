@@ -56,12 +56,13 @@ typedef struct _ShadowOpInfo {
   IROp op_code;
   const char* name;
   Addr op_addr;
+  Addr block_addr;
   ErrorAggregate eagg;
   SymbExpr* expr;
   ExtraInfo exinfo;
 } ShadowOpInfo;
 
-ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr,
+ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
                              int numSIMDOperands, int nargs,
                              FloatType argPrecision);
 void printOpInfo(ShadowOpInfo* opinfo);

@@ -76,7 +76,7 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
     }
     addStmtToIRSB(sbOut, stmt);
     if (curAddr)
-      instrumentStatement(sbOut, stmt, curAddr);
+      instrumentStatement(sbOut, stmt, curAddr, closure->readdr);
   }
   finishInstrumentingBlock(sbOut);
   if (PRINT_BLOCK_BOUNDRIES){

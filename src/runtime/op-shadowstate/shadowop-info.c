@@ -37,6 +37,7 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
   ShadowOpInfo* result = VG_(perm_malloc)(sizeof(ShadowOpInfo), vg_alignof(ShadowOpInfo));
   result->op_code = op_code;
   result->op_addr = op_addr;
+  result->block_addr = block_addr;
   result->eagg.max_total_error = -1;
   result->eagg.total_total_error = 0;
   result->eagg.max_local_error = -1;
