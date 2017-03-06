@@ -32,6 +32,8 @@
 
 #include "exprs.hh"
 
+#include "../../helper/list.h"
+
 #include "../op-shadowstate/shadowop-info.h"
 
 #include "pub_tool_basics.h"
@@ -41,6 +43,11 @@ typedef enum {
   Node_Branch,
   Node_Leaf
 } NodeType;
+
+typedef struct {
+  int* data;
+  int len;
+} NodePos;
 
 struct _ConcExpr {
   struct _ConcExpr* next;
@@ -54,6 +61,10 @@ struct _ConcExpr {
   } branch;
 };
 
+List(SymbExpr*, Group);
+List(Group, GroupList);
+List(SymbExpr*, GraftList);
+
 struct _SymbExpr {
   NodeType type;
   double constVal;
@@ -62,7 +73,8 @@ struct _SymbExpr {
     ShadowOpInfo* op;
     int nargs;
     SymbExpr** args;
-    VgHashTable* equiv_map;
+    GroupList groups;
+    GraftList grafts;
   } branch;
 };
 

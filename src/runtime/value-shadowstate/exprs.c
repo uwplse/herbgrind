@@ -126,12 +126,13 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
   result->constVal = cexpr->value;
   if (cexpr->type == Node_Leaf){
     result->type = Node_Leaf;
-    result->branch.equiv_map = NULL;
+    result->branch.groups = NULL;
+    result->branch.grafts = NULL;
   } else {
     result->type = Node_Branch;
     result->branch.op = cexpr->branch.op;
     result->branch.nargs = cexpr->branch.nargs;
-    result->branch.equiv_map = getConcExprEquivalences(cexpr);
+    result->branch.groups = getConcExprEquivGroups(cexpr);
     result->branch.args =
       VG_(malloc)("symbolic expr args",
                   sizeof(SymbExpr*) * cexpr->branch.nargs);
@@ -219,10 +220,10 @@ char* symbExprToString(SymbExpr* expr){
     VG_(memcpy)(buf, varnames[0], len);
     return buf;
   }
-  int len = symbExprPrintLen(expr, expr->branch.equiv_map,
-                             NULL_POS);
+  VgHashTable* varMap = mkVarMap(expr->branch.groups);
+  int len = symbExprPrintLen(expr, varMap, NULL_POS);
   char* buf = VG_(malloc)("expr string", len + 1);
-  writeSymbExprToString(buf, expr, NULL_POS, expr->branch.equiv_map);
+  writeSymbExprToString(buf, expr, NULL_POS, varMap);
   return buf;
 }
 int floatPrintLen(double f){
