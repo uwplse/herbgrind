@@ -27,10 +27,35 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#define List(Type, name)     \
-  typedef struct _##name     \
-  {                          \
-    struct _##name* next;    \
-    Type item;               \
-  }* name;                    \
+#include "pub_tool_libcassert.h"
+
+#define List(Type, name)                \
+  typedef struct _##name                \
+  {                                     \
+    struct _##name* next;               \
+    Type item;                          \
+  }* name;                              \
+  name unused_nodes;                    \
+                                        \
+  void lpush_##name(name* l, Type item){                                \
+    name newnode;                                                       \
+    if (unused_nodes == NULL){                                          \
+      newnode = VG_(malloc)(#name"node", sizeof(struct _##name));       \
+    } else {                                                            \
+      newnode = unused_nodes;                                           \
+      unused_nodes = unused_nodes->next;                                \
+      newnode->next = *l;                                               \
+    }                                                                   \
+    *l = newnode;                                                       \
+  }                                                                     \
+  Type lpop_##name(name* l){                                            \
+    tl_assert2(*l, "Tried to pop from an empty stack!\n");              \
+    Type item = (*l)->item;                                             \
+    name newhead = (*l)->next;                                          \
+    (*l)->next = unused_nodes;                                          \
+    unused_nodes = (*l);                                                \
+    (*l) = newhead;                                                     \
+    return item;                                                        \
+  }
+
     
