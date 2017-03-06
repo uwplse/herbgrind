@@ -39,6 +39,7 @@
 #include "../value-shadowstate/value-shadowstate.h"
 #include "realop.h"
 #include "error.h"
+#include "symbolic-op.h"
 #include <math.h>
 #include <inttypes.h>
 

@@ -33,6 +33,7 @@
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcassert.h"
 #include "error.h"
+#include "symbolic-op.h"
 
 VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                                           ShadowTemp** args){
