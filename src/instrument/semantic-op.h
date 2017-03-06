@@ -37,12 +37,13 @@
 
 void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                           int nargs, IRExpr** argExprs,
-                          Addr curAddr, IRTemp dest);
+                          Addr curAddr, Addr blockAddr,
+                          IRTemp dest);
 
 IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
                   FloatType type, int num_vals);
 IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
-                    Addr curAddr,
+                    Addr curAddr, Addr blockAddr,
                     IRExpr** args, int nargs,
                     IRTemp dest);
 #endif

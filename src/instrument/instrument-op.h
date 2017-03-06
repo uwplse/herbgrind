@@ -33,7 +33,8 @@
 #include "pub_tool_tooliface.h"
 #include "../runtime/value-shadowstate/shadowval.h"
 
-void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr, Addr curAddr);
+void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
+                  Addr curAddr, Addr blockAddr);
 
 Bool isSpecialOp(IROp op_code);
 void handleSpecialOp(IRSB* sbOut, IROp op_code,

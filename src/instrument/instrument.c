@@ -105,7 +105,8 @@ void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){
   }
 }
 
-void instrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){
+void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
+                         Addr stAddr, Addr blockAddr){
   switch(stmt->tag){
   case Ist_NoOp:
   case Ist_IMark:
@@ -169,7 +170,7 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){
         instrumentOp(sbOut,
                      stmt->Ist.WrTmp.tmp,
                      expr,
-                     stAddr);
+                     stAddr, blockAddr);
         break;
       case Iex_Const:
         instrumentWriteConst(sbOut,

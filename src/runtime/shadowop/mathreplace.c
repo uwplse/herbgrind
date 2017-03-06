@@ -99,7 +99,7 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
   OpInfoEntry* entry = VG_(HT_lookup)(callToOpInfoMap, callAddr);
   if (entry == NULL){
     ShadowOpInfo* callInfo =
-      mkShadowOpInfo(0x0, callAddr, callAddr, 1, nargs, op_precision);
+      mkShadowOpInfo(0x0, callAddr, callAddr, nargs);
     callInfo->name = getWrappedName(type);
     entry = VG_(malloc)("replaced op info entry", sizeof(OpInfoEntry));
     entry->call_addr = callAddr;

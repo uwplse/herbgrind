@@ -31,6 +31,7 @@
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_debuginfo.h"
 #include "pub_tool_libcprint.h"
+#include "../../helper/ir-info.h"
 
 ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
                              int nargs){
@@ -43,10 +44,13 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
   result->eagg.max_local_error = -1;
   result->eagg.total_local_error = 0;
   result->expr = NULL;
-  result->exinfo.numSIMDOperands = numSIMDOperands(op_code);
-  result->exinfo.numChannels = numChannelsOut(op_code);
+  result->exinfo.numSIMDOperands =
+    op_code == 0x0 ? 1 : numSIMDOperands(op_code);
+  result->exinfo.numChannels =
+    op_code == 0x0 ? 1 : numChannelsOut(op_code);
   result->exinfo.nargs = nargs;
-  result->exinfo.argPrecision = argPrecision(op_code);
+  result->exinfo.argPrecision =
+    op_code == 0x0 ? Ft_Double : argPrecision(op_code);
   return result;
 }
 

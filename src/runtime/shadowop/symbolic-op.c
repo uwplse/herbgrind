@@ -47,12 +47,12 @@ void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
   }
 }
 
-void generalizeSymbolicExpr(SymbExpr** symexpr, ConcExpr* cexpr){
-  if (*symexpr == NULL){
-    *symexpr = concreteToSymbolic(cexpr);
+void generalizeSymbolicExpr(SymbExpr** symbexpr, ConcExpr* cexpr){
+  if (*symbexpr == NULL){
+    *symbexpr = concreteToSymbolic(cexpr);
   } else {
-    generalizeStructure(*symbExpr, cexpr);
-    intersectEqualities(*symbExpr, cexpr);
+    generalizeStructure(*symbexpr, cexpr);
+    intersectEqualities(*symbexpr, cexpr);
   }
 }
 
@@ -92,12 +92,19 @@ VarMap* mkVarMap(GroupList groups){
   return NULL;
 }
 
-int lookupVar(NodePos pos){
+int lookupVar(VarMap* map, NodePos pos){
   // TODO
+  return 0;
+}
+
+void freeVarMapEntry(void* entry);
+void freeVarMapEntry(void* entry){
+  freePos(((VarMapEntry*)entry)->position);
 }
 
 void freeVarMap(VarMap* map){
-  // TODO
+  VG_(HT_destruct)(map->existingEntries, freeVarMapEntry);
+  VG_(free)(map);
 }
 
 UWord hashPosition(NodePos node){
@@ -108,8 +115,8 @@ UWord hashPosition(NodePos node){
   return hash;
 }
 Word cmp_position(const void* node1, const void* node2){
-  const NodeMapEntry* entry1 = (const NodeMapEntry*)node1;
-  const NodeMapEntry* entry2 = (const NodeMapEntry*)node2;
+  const VarMapEntry* entry1 = (const VarMapEntry*)node1;
+  const VarMapEntry* entry2 = (const VarMapEntry*)node2;
   if (entry1->position.len != entry2->position.len){
     return 1;
   }

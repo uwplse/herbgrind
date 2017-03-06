@@ -40,7 +40,8 @@ void init_instrumentation(void);
 
 void finish_instrumentation(void);
 
-void instrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr);
+void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
+                         Addr stAddr, Addr block_addr);
 void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr);
 
 void printSuperBlock(IRSB* superblock);

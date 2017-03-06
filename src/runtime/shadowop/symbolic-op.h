@@ -36,12 +36,12 @@
 #include "pub_tool_basics.h"
 #include "pub_tool_hashtable.h"
 
-typedef struct _nodeMapEntry {
-  struct _nodeMapEntry* next;
+typedef struct _varMapEntry {
+  struct _varMapEntry* next;
   UWord positionHash;
   NodePos position;
-  UWord groupIdx;
-} NodeMapEntry;
+  UWord varIdx;
+} VarMapEntry;
 
 typedef struct _valMapEntry {
   struct _valMapEntry* next;
@@ -58,7 +58,7 @@ void intersectEqualities(SymbExpr* symbexpr, ConcExpr* concExpr);
 GroupList getConcExprEquivGroups(ConcExpr* cexpr);
 
 VarMap* mkVarMap(GroupList groups);
-int lookupVar(NodePos pos);
+int lookupVar(VarMap* map, NodePos pos);
 void freeVarMap(VarMap* map);
 
 int lookupVal(VgHashTable* valmap, double val);

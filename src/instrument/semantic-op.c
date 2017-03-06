@@ -94,7 +94,7 @@ IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
                     Addr curAddr, Addr block_addr,
                     IRExpr** args, int nargs,
                     IRTemp dest){
-  ShadowOpInfo* info = mkShadowOpInfo(op_code, cur_addr,
+  ShadowOpInfo* info = mkShadowOpInfo(op_code, curAddr,
                                       block_addr, nargs);
   for(int i = 0; i < nargs; ++i){
     addStoreC(sbOut, args[i], (&shadowArgs[i]));

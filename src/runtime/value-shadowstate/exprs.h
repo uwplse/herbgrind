@@ -95,11 +95,11 @@ void ppSymbExpr(SymbExpr* expr);
 
 // Free this when you're done with it.
 char* symbExprToString(SymbExpr* expr);
-int symbExprPrintLen(SymbExpr* expr, VgHashTable* varmap,
+int symbExprPrintLen(SymbExpr* expr, VarMap* varmap,
                      NodePos curPos);
 // Returns the number of bytes written
 int writeSymbExprToString(char* buf, SymbExpr* expr,
-                          NodePos curpos, VgHashTable* varmap);
+                          NodePos curpos, VarMap* varmap);
 int floatPrintLen(double f);
 #define MAX_BRANCH_ARGS 3
 #endif
