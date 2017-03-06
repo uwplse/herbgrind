@@ -78,6 +78,11 @@ struct _SymbExpr {
   } branch;
 };
 
+typedef struct _varMap {
+  VgHashTable* existingEntries;
+  int nextVarIdx;
+} VarMap;
+
 void initExprAllocator(void);
 ConcExpr* mkLeafConcExpr(double value);
 ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op, int nargs, ConcExpr** args);

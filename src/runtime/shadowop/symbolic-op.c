@@ -51,8 +51,8 @@ void generalizeSymbolicExpr(SymbExpr** symexpr, ConcExpr* cexpr){
   if (*symexpr == NULL){
     *symexpr = concreteToSymbolic(cexpr);
   } else {
-    tl_assert2(0,
-               "We don't support updating symbolic expressions yet!\n");
+    generalizeStructure(*symbExpr, cexpr);
+    intersectEqualities(*symbExpr, cexpr);
   }
 }
 
@@ -75,13 +75,29 @@ Word cmp_value(const void* node1, const void* node2){
   return entry1->val == entry2->val;
 }
 
+void generalizeStructure(SymbExpr* symbexpr, ConcExpr* concExpr){
+  // TODO
+}
+
+void intersectEqualities(SymbExpr* symbexpr, ConcExpr* concExpr){
+  // TODO
+}
+
 GroupList getConcExprEquivGroups(ConcExpr* cexpr){
   // TODO
   return NULL;
 }
-VgHashTable* mkVarMap(GroupList groups){
+VarMap* mkVarMap(GroupList groups){
   // TODO
   return NULL;
+}
+
+int lookupVar(NodePos pos){
+  // TODO
+}
+
+void freeVarMap(VarMap* map){
+  // TODO
 }
 
 UWord hashPosition(NodePos node){
@@ -103,13 +119,6 @@ Word cmp_position(const void* node1, const void* node2){
     }
   }
   return 0;
-}
-int lookupPos(VgHashTable* varmap, NodePos pos){
-  NodeMapEntry key = {.position = pos,
-                      .positionHash = hashPosition(pos)};
-  NodeMapEntry* entry = VG_(HT_gen_lookup)(varmap, &key, cmp_position);
-  tl_assert(entry != NULL);
-  return entry->groupIdx;
 }
 NodePos appendPos(NodePos orig, int argIdx){
   NodePos newPos;

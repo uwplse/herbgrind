@@ -153,16 +153,17 @@ char* symbExprToString(SymbExpr* expr){
     VG_(memcpy)(buf, varnames[0], len);
     return buf;
   }
-  VgHashTable* varMap = mkVarMap(expr->branch.groups);
+  VarMap* varMap = mkVarMap(expr->branch.groups);
   int len = symbExprPrintLen(expr, varMap, NULL_POS);
   char* buf = VG_(malloc)("expr string", len + 1);
   writeSymbExprToString(buf, expr, NULL_POS, varMap);
+  freeVarMap(varMap);
   return buf;
 }
 int floatPrintLen(double f){
   return ((int)log10(f)) + 8;
 }
-int symbExprPrintLen(SymbExpr* expr, VgHashTable* varmap,
+int symbExprPrintLen(SymbExpr* expr, VarMap* varmap,
                      NodePos curPos){
   if (expr->type == Node_Leaf){
     if (expr->isConst){
@@ -172,7 +173,7 @@ int symbExprPrintLen(SymbExpr* expr, VgHashTable* varmap,
         return floatPrintLen(expr->constVal);
       }
     } else {
-      return VG_(strlen)(varnames[lookupPos(varmap, curPos)]);
+      return VG_(strlen)(varnames[lookupVar(varmap, curPos)]);
     }
   } else {
     int count = 2 + VG_(strlen)(opSym(expr->branch.op));
@@ -186,7 +187,7 @@ int symbExprPrintLen(SymbExpr* expr, VgHashTable* varmap,
   }
 }
 int writeSymbExprToString(char* buf, SymbExpr* expr,
-                          NodePos curpos, VgHashTable* varmap){
+                          NodePos curpos, VarMap* varmap){
   if (expr->type == Node_Leaf){
     if (expr->isConst){
       if (isnan(expr->constVal)){
@@ -195,7 +196,7 @@ int writeSymbExprToString(char* buf, SymbExpr* expr,
         return VG_(sprintf)(buf, "%f", expr->constVal);
       }
     } else {
-      return VG_(sprintf)(buf, "%s", varnames[lookupPos(varmap, curpos)]);
+      return VG_(sprintf)(buf, "%s", varnames[lookupVar(varmap, curpos)]);
     }
   } else {
     int count = VG_(sprintf)(buf, "(%s", opSym(expr->branch.op));

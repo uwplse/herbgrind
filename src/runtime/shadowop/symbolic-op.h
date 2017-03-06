@@ -53,8 +53,14 @@ typedef struct _valMapEntry {
 void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result, Real real, ShadowValue** args);
 void generalizeSymbolicExpr(SymbExpr** symexpr, ConcExpr* cexpr);
 
+void generalizeStructure(SymbExpr* symbexpr, ConcExpr* concExpr);
+void intersectEqualities(SymbExpr* symbexpr, ConcExpr* concExpr);
 GroupList getConcExprEquivGroups(ConcExpr* cexpr);
-VgHashTable* mkVarMap(GroupList groups);
+
+VarMap* mkVarMap(GroupList groups);
+int lookupVar(NodePos pos);
+void freeVarMap(VarMap* map);
+
 int lookupVal(VgHashTable* valmap, double val);
 UWord hashValue(double val);
 Word cmp_value(const void* node1, const void* node2);
