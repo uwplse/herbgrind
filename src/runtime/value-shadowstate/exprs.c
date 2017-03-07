@@ -107,18 +107,52 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
   if (cexpr->type == Node_Leaf){
     result->type = Node_Leaf;
     result->branch.groups = NULL;
+
     result->branch.grafts = NULL;
+    result->branch.ngrafts = 0;
   } else {
     result->type = Node_Branch;
     result->branch.op = cexpr->branch.op;
     result->branch.nargs = cexpr->branch.nargs;
-    result->branch.groups = getConcExprEquivGroups(cexpr);
     result->branch.args =
       VG_(malloc)("symbolic expr args",
                   sizeof(SymbExpr*) * cexpr->branch.nargs);
     for(int i = 0; i < cexpr->branch.nargs; ++i){
       result->branch.args[i] = concreteToSymbolic(cexpr->branch.args[i]);
     }
+
+    result->branch.ngrafts = 0;
+    for(int i = 0; i < cexpr->branch.nargs; ++i){
+      if (cexpr->branch.args[i]->type == Node_Leaf){
+        result->branch.ngrafts += 1;
+      } else if (cexpr->branch.args[i]->branch.op->block_addr ==
+                 cexpr->branch.op->block_addr){
+        result->branch.ngrafts += result->branch.args[i]->branch.ngrafts;
+      } else {
+        result->branch.ngrafts += 1;
+      }
+    }
+    result->branch.grafts =
+      VG_(perm_malloc)(sizeof(Graft), vg_alignof(Graft));
+    int nextGraftIdx = 0;
+    for(int i = 0; i < cexpr->branch.nargs; ++i){
+      if (cexpr->branch.args[i]->type == Node_Leaf){
+        result->branch.grafts[nextGraftIdx++] =
+          ((Graft){.graftParent = result->branch.args[i],
+            .graftIndex = -1});
+      } else if (cexpr->branch.args[i]->branch.op->block_addr ==
+                 cexpr->branch.op->block_addr){
+        VG_(memcpy)(&(result->branch.grafts[nextGraftIdx++]),
+                    result->branch.args[i]->branch.grafts,
+                    sizeof(Graft) *
+                    result->branch.args[i]->branch.ngrafts);
+      } else {
+        result->branch.grafts[nextGraftIdx++] =
+          ((Graft){.graftParent = result,
+              .graftIndex = i});
+      }
+    }
+    result->branch.groups = getSymbExprEquivGroups(result);
   }
   return result;
 }

@@ -85,15 +85,17 @@ void intersectEqualities(SymbExpr* symbexpr, ConcExpr* concExpr){
 }
 
 void getGrouped(XArray* groupArr, VgHashTable* valMap,
-                ConcExpr* cexpr, NodePos curPos){
+                SymbExpr* cexpr, NodePos curPos);
+void getGrouped(XArray* groupArr, VgHashTable* valMap,
+                SymbExpr* cexpr, NodePos curPos){
   // TODO
 }
 
-GroupList getConcExprEquivGroups(ConcExpr* cexpr){
+GroupList getSymbExprEquivGroups(SymbExpr* symbexpr){
   XArray* groupArr = VG_(newXA)(VG_(malloc), "group array",
                                 VG_(free), sizeof(Group));
   VgHashTable* valMap = VG_(HT_construct)("val map");
-  getGrouped(groupArr, valMap, cexpr, NULL_POS);
+  getGrouped(groupArr, valMap, symbexpr, NULL_POS);
   GroupList groupList = NULL;
   for(int i = 0; i < VG_(sizeXA)(groupArr); ++i){
     lpush(GroupList)(&groupList, *(Group*)VG_(indexXA)(groupArr, i));

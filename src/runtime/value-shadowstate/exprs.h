@@ -61,6 +61,10 @@ struct _ConcExpr {
   } branch;
 };
 
+typedef struct _Graft {
+  SymbExpr* graftParent;
+  int graftIndex;
+} Graft;
 
 List_H(NodePos, Group);
 List_H(Group, GroupList);
@@ -73,8 +77,9 @@ struct _SymbExpr {
     ShadowOpInfo* op;
     int nargs;
     SymbExpr** args;
+    int ngrafts;
+    Graft* grafts;
     GroupList groups;
-    GraftList grafts;
   } branch;
 };
 

@@ -55,7 +55,7 @@ void generalizeSymbolicExpr(SymbExpr** symexpr, ConcExpr* cexpr);
 
 void generalizeStructure(SymbExpr* symbexpr, ConcExpr* concExpr);
 void intersectEqualities(SymbExpr* symbexpr, ConcExpr* concExpr);
-GroupList getConcExprEquivGroups(ConcExpr* cexpr);
+GroupList getSymbExprEquivGroups(SymbExpr* cexpr);
 
 VarMap* mkVarMap(GroupList groups);
 int lookupVar(VarMap* map, NodePos pos);
