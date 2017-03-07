@@ -28,35 +28,42 @@
 */
 
 #include "pub_tool_libcassert.h"
+#include "pub_tool_mallocfree.h"
 
-#define List(Type, name)                \
+#define List_H(Type, name)              \
   typedef struct _##name                \
   {                                     \
     struct _##name* next;               \
     Type item;                          \
   }* name;                              \
-  name unused_nodes;                    \
+  void lpush_##name(name* list_loc, Type list_item);    \
+  Type lpop_##name(name* list_loc);                     \
+  extern name unused_nodes_##name;
+#define List_Impl(Type, name)           \
+  name unused_nodes_##name;             \
                                         \
-  void lpush_##name(name* l, Type item){                                \
+  void lpush_##name(name* list_loc, Type list_item){                    \
     name newnode;                                                       \
-    if (unused_nodes == NULL){                                          \
+    if (unused_nodes_##name == NULL){                                   \
       newnode = VG_(malloc)(#name"node", sizeof(struct _##name));       \
     } else {                                                            \
-      newnode = unused_nodes;                                           \
-      unused_nodes = unused_nodes->next;                                \
-      newnode->next = *l;                                               \
+      newnode = unused_nodes_##name;                                    \
+      unused_nodes_##name = unused_nodes_##name->next;                  \
+      newnode->next = *list_loc;                                        \
     }                                                                   \
-    *l = newnode;                                                       \
+    newnode->item = list_item;                                          \
+    *list_loc = newnode;                                                \
   }                                                                     \
-  Type lpop_##name(name* l){                                            \
-    tl_assert2(*l, "Tried to pop from an empty stack!\n");              \
-    Type item = (*l)->item;                                             \
-    name newhead = (*l)->next;                                          \
-    (*l)->next = unused_nodes;                                          \
-    unused_nodes = (*l);                                                \
-    (*l) = newhead;                                                     \
+  Type lpop_##name(name* list_loc){                                     \
+    tl_assert2(*list_loc, "Tried to pop from an empty stack!\n");       \
+    Type item = (*list_loc)->item;                                      \
+    name newhead = (*list_loc)->next;                                   \
+    (*list_loc)->next = unused_nodes_##name;                            \
+    unused_nodes_##name = (*list_loc);                                  \
+    (*list_loc) = newhead;                                              \
     return item;                                                        \
-  }
+  }                                                                     \
 
 // This way you can almost pretend it's real polymorphism
 #define lpop(type) lpop_##type
+#define lpush(type) lpush_##type

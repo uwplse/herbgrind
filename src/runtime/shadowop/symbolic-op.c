@@ -99,7 +99,7 @@ GroupList getConcExprEquivGroups(ConcExpr* cexpr){
     lpush(GroupList)(&groupList, *(Group*)VG_(indexXA)(groupArr, i));
   }
   VG_(deleteXA)(groupArr);
-  VG_(HT_destruct)(valMap);
+  VG_(HT_destruct)(valMap, VG_(free));
   return groupList;
 }
 VarMap* mkVarMap(GroupList groups){

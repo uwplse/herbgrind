@@ -43,6 +43,9 @@ Stack* branchCExprs[MAX_BRANCH_ARGS];
 const char* varnames[] = {"x", "y", "z", "a", "b", "c",
                           "i", "j", "k", "l", "m", "n"};
 
+List_Impl(NodePos, Group);
+List_Impl(Group, GroupList);
+
 void initExprAllocator(void){
   leafCExprs = mkStack();
   for(int i = 0; i < MAX_BRANCH_ARGS; ++i){

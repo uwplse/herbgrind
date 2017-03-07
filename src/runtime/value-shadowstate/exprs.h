@@ -61,9 +61,9 @@ struct _ConcExpr {
   } branch;
 };
 
-List(NodePos, Group);
-List(Group, GroupList);
-List(NodePos, GraftList);
+
+List_H(NodePos, Group);
+List_H(Group, GroupList);
 
 struct _SymbExpr {
   NodeType type;
