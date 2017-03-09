@@ -39,17 +39,41 @@
 
 Stack* leafCExprs;
 Stack* branchCExprs[MAX_BRANCH_ARGS];
+Xarray_H(Stack*, StackArray);
+Xarray_Impl(Stack*, StackArray);
+StackArray concGraftStacks;
 
 const char* varnames[] = {"x", "y", "z", "a", "b", "c",
                           "i", "j", "k", "l", "m", "n"};
 
 List_Impl(NodePos, Group);
-List_Impl(Group, GroupList);
+Xarray_Impl(Group, GroupList);
 
 void initExprAllocator(void){
   leafCExprs = mkStack();
+  concGraftStacks = mkXA(StackArray)();
   for(int i = 0; i < MAX_BRANCH_ARGS; ++i){
     branchCExprs[i] = mkStack();
+  }
+}
+void pushConcGraftStack(ConcGraft* graft, int count){
+  while(concGraftStacks->size < count){
+    Stack* newGStack = mkStack();
+    XApush(StackArray)(concGraftStacks, newGStack);
+  }
+  tl_assert(count - 1 < concGraftStacks->size);
+  Stack* curStack = concGraftStacks->data[count - 1];
+  stack_push(curStack, (void*)graft);
+}
+ConcGraft* popConcGraftStack(int count){
+  if (concGraftStacks->size < count){
+    return NULL;
+  } else {
+    Stack* curStack = concGraftStacks->data[count - 1];
+    if (stack_empty(curStack)){
+      return NULL;
+    }
+    return (void*)stack_pop(curStack);
   }
 }
 void disownConcExpr(ConcExpr* expr){
@@ -62,6 +86,7 @@ void disownConcExpr(ConcExpr* expr){
         disownConcExpr(expr->branch.args[i]);
       }
       stack_push(branchCExprs[expr->branch.nargs], (void*)expr);
+      pushConcGraftStack(expr->grafts, expr->ngrafts);
     }
   }
 }
@@ -75,6 +100,10 @@ ConcExpr* mkLeafConcExpr(double value){
   }
   result->ref_count = 1;
   result->value = value;
+
+  // Grafts
+  result->ngrafts = 0;
+  result->grafts = NULL;
   return result;
 }
 
@@ -97,62 +126,103 @@ ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
     result->branch.args[i] = args[i];
     (args[i]->ref_count)++;
   }
+
+  // Grafts
+  result->ngrafts = 0;
+  for(int i = 0; i < nargs; ++i){
+    ConcExpr* child = result->branch.args[i];
+    if (child->type == Node_Leaf ||
+               child->branch.op->block_addr !=
+               result->branch.op->block_addr){
+      result->ngrafts += 1;
+    } else {
+      result->ngrafts += child->ngrafts;
+    }
+  }
+  result->grafts = popConcGraftStack(result->ngrafts);
+  if (result->grafts == NULL){
+    result->grafts =
+      VG_(perm_malloc)(sizeof(ConcGraft) * result->ngrafts,
+                       vg_alignof(ConcGraft));
+  }
+  int grafti = 0;
+  for(int i = 0; i < nargs; ++i){
+    ConcExpr* child = result->branch.args[i];
+    if (child->type == Node_Leaf ||
+               child->branch.op->block_addr !=
+               result->branch.op->block_addr){
+      result->grafts[grafti].parent = result;
+      result->grafts[grafti].childIndex = i;
+      grafti++;
+    } else {
+      VG_(memcpy)(result->grafts + grafti,
+                  child->grafts,
+                  sizeof(ConcGraft) * child->ngrafts);
+      grafti += child->ngrafts;
+    }
+  }
+  return result;
+}
+
+SymbExpr* mkFreshSymbolicLeaf(Bool isConst, double constVal){
+  SymbExpr* result = VG_(perm_malloc)(sizeof(SymbExpr),
+                                      vg_alignof(SymbExpr));
+
+  result->isConst = isConst;
+  result->constVal = constVal;
+  result->type = Node_Leaf;
+  result->branch.groups = NULL;
+  result->ngrafts = 0;
+  result->grafts = NULL;
   return result;
 }
 
 SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
-  SymbExpr* result = VG_(malloc)("symbolic expr", sizeof(SymbExpr));
+  // This is only necessarily sound if you are updating expr trees
+  // with every operation, not if you only pick some, like the
+  // erroneous operations. Because, you might be going down your tree,
+  // see a node that was already created, and use it, when actually it
+  // mismatches your concrete expression farther down, because it
+  // wasn't updated recently.
+  if (cexpr->type == Node_Branch &&
+      cexpr->branch.op->expr != NULL){
+    return cexpr->branch.op->expr;
+  }
+
+  SymbExpr* result = VG_(perm_malloc)(sizeof(SymbExpr),
+                                      vg_alignof(SymbExpr));
+  if (cexpr->type == Node_Branch){
+    cexpr->branch.op->expr = result;
+  }
+
   result->isConst = True;
   result->constVal = cexpr->value;
   if (cexpr->type == Node_Leaf){
     result->type = Node_Leaf;
     result->branch.groups = NULL;
 
-    result->branch.grafts = NULL;
-    result->branch.ngrafts = 0;
+    result->ngrafts = 0;
+    result->grafts = NULL;
   } else {
     result->type = Node_Branch;
     result->branch.op = cexpr->branch.op;
     result->branch.nargs = cexpr->branch.nargs;
     result->branch.args =
-      VG_(malloc)("symbolic expr args",
-                  sizeof(SymbExpr*) * cexpr->branch.nargs);
+      VG_(perm_malloc)(sizeof(SymbExpr*) * cexpr->branch.nargs,
+                       vg_alignof(SymbExpr*));
     for(int i = 0; i < cexpr->branch.nargs; ++i){
       result->branch.args[i] = concreteToSymbolic(cexpr->branch.args[i]);
     }
-
-    result->branch.ngrafts = 0;
-    for(int i = 0; i < cexpr->branch.nargs; ++i){
-      if (cexpr->branch.args[i]->type == Node_Leaf){
-        result->branch.ngrafts += 1;
-      } else if (cexpr->branch.args[i]->branch.op->block_addr ==
-                 cexpr->branch.op->block_addr){
-        result->branch.ngrafts += result->branch.args[i]->branch.ngrafts;
-      } else {
-        result->branch.ngrafts += 1;
-      }
+    result->ngrafts = cexpr->ngrafts;
+    result->grafts =
+      VG_(perm_malloc)(sizeof(SymbGraft) * cexpr->ngrafts,
+                       vg_alignof(SymbGraft));
+    for(int i = 0; i < cexpr->ngrafts; ++i){
+      result->grafts[i].parent =
+        concreteToSymbolic(cexpr->grafts[i].parent);
+      result->grafts[i].childIndex = cexpr->grafts[i].childIndex;
     }
-    result->branch.grafts =
-      VG_(perm_malloc)(sizeof(Graft), vg_alignof(Graft));
-    int nextGraftIdx = 0;
-    for(int i = 0; i < cexpr->branch.nargs; ++i){
-      if (cexpr->branch.args[i]->type == Node_Leaf){
-        result->branch.grafts[nextGraftIdx++] =
-          ((Graft){.graftParent = result->branch.args[i],
-            .graftIndex = -1});
-      } else if (cexpr->branch.args[i]->branch.op->block_addr ==
-                 cexpr->branch.op->block_addr){
-        VG_(memcpy)(&(result->branch.grafts[nextGraftIdx++]),
-                    result->branch.args[i]->branch.grafts,
-                    sizeof(Graft) *
-                    result->branch.args[i]->branch.ngrafts);
-      } else {
-        result->branch.grafts[nextGraftIdx++] =
-          ((Graft){.graftParent = result,
-              .graftIndex = i});
-      }
-    }
-    result->branch.groups = getSymbExprEquivGroups(result);
+    result->branch.groups = getConcExprEquivGroups(cexpr);
   }
   return result;
 }
@@ -190,7 +260,9 @@ char* symbExprToString(SymbExpr* expr){
     VG_(memcpy)(buf, varnames[0], len);
     return buf;
   }
-  VarMap* varMap = mkVarMap(expr->branch.groups);
+  GroupList trimmedGroups =
+    groupsWithoutNonLeaves(expr, expr->branch.groups);
+  VarMap* varMap = mkVarMap(trimmedGroups);
   int len = symbExprPrintLen(expr, varMap, NULL_POS);
   char* buf = VG_(malloc)("expr string", len + 1);
   writeSymbExprToString(buf, expr, NULL_POS, varMap);

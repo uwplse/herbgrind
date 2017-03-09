@@ -25,8 +25,8 @@ endif
 
 HEADERS=src/include/herbgrind.h src/helper/mpfr-valgrind-glue.h		\
 src/helper/stack.h src/helper/instrument-util.h src/helper/ir-info.h	\
-src/helper/debug.h src/options.h					\
-src/runtime/value-shadowstate/shadowval.h				\
+src/helper/debug.h src/helper/list.h src/helper/xarray.h		\
+src/options.h src/runtime/value-shadowstate/shadowval.h			\
 src/runtime/value-shadowstate/value-shadowstate.h			\
 src/runtime/value-shadowstate/exprs.h					\
 src/runtime/value-shadowstate/exprs.hh					\

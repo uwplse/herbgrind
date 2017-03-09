@@ -54,22 +54,26 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
   return result;
 }
 
+void ppAddr(Addr addr){
+  const HChar* src_filename;
+  const HChar* fnname;
+  UInt src_line;
+  if (VG_(get_filename_linenum)(addr, &src_filename,
+                                NULL, &src_line)){
+    VG_(get_fnname)(addr, &fnname);
+    VG_(printf)("%s:%u in %s (addr %lX)",
+                src_filename, src_line, fnname, addr);
+  } else {
+    VG_(printf)("addr %lX", addr);
+  }
+}
+
 void printOpInfo(ShadowOpInfo* opinfo){
   if (opinfo->op_code == 0){
     VG_(printf)("%s", opinfo->name);
   } else {
     ppIROp(opinfo->op_code);
   }
-  const HChar* src_filename;
-  const HChar* fnname;
-  UInt src_line;
-  if (VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
-                                NULL, &src_line)){
-    VG_(get_fnname)(opinfo->op_addr, &fnname);
-    VG_(printf)(" at %s:%u in %s (addr %lX)",
-                src_filename, src_line, fnname, opinfo->op_addr);
-  } else {
-    VG_(printf)(" at addr %lX)",
-                opinfo->op_addr);
-  }
+  VG_(printf)(" at ");
+  ppAddr(opinfo->op_addr);
 }

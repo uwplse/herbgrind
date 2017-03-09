@@ -33,6 +33,7 @@
 #include "exprs.hh"
 
 #include "../../helper/list.h"
+#include "../../helper/xarray.h"
 
 #include "../op-shadowstate/shadowop-info.h"
 
@@ -49,11 +50,19 @@ typedef struct {
   int len;
 } NodePos;
 
+typedef struct _ConcGraft {
+  struct _Graft* next;
+  ConcExpr* parent;
+  int childIndex;
+} ConcGraft;
+
 struct _ConcExpr {
   struct _ConcExpr* next;
   int ref_count;
   NodeType type;
   double value;
+  int ngrafts;
+  ConcGraft* grafts;
   struct {
     ShadowOpInfo* op;
     int nargs;
@@ -61,24 +70,24 @@ struct _ConcExpr {
   } branch;
 };
 
-typedef struct _Graft {
-  SymbExpr* graftParent;
-  int graftIndex;
-} Graft;
+typedef struct _SymbGraft {
+  SymbExpr* parent;
+  int childIndex;
+} SymbGraft;
 
 List_H(NodePos, Group);
-List_H(Group, GroupList);
+Xarray_H(Group, GroupList);
 
 struct _SymbExpr {
   NodeType type;
   double constVal;
   Bool isConst;
+  int ngrafts;
+  SymbGraft* grafts;
   struct {
     ShadowOpInfo* op;
     int nargs;
     SymbExpr** args;
-    int ngrafts;
-    Graft* grafts;
     GroupList groups;
   } branch;
 };
@@ -92,7 +101,11 @@ void initExprAllocator(void);
 ConcExpr* mkLeafConcExpr(double value);
 ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op, int nargs, ConcExpr** args);
 void disownConcExpr(ConcExpr* expr);
+SymbExpr* mkFreshSymbolicLeaf(Bool isConst, double constVal);
 SymbExpr* concreteToSymbolic(ConcExpr* cexpr);
+
+void pushConcGraftStack(ConcGraft* graft, int count);
+ConcGraft* popConcGraftStack(int count);
 
 const char* opSym(ShadowOpInfo* op);
 void ppConcExpr(ConcExpr* expr);

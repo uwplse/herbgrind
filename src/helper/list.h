@@ -26,6 +26,8 @@
 
    The GNU General Public License is contained in the file COPYING.
 */
+#ifndef _LIST_H
+#define _LIST_H
 
 #include "pub_tool_libcassert.h"
 #include "pub_tool_mallocfree.h"
@@ -38,6 +40,8 @@
   }* name;                              \
   void lpush_##name(name* list_loc, Type list_item);    \
   Type lpop_##name(name* list_loc);                     \
+  int  length_##name(name* list_loc);                   \
+  Type* getIdxLoc_##name(name* list_loc, int idx);      \
   extern name unused_nodes_##name;
 #define List_Impl(Type, name)           \
   name unused_nodes_##name;             \
@@ -49,8 +53,8 @@
     } else {                                                            \
       newnode = unused_nodes_##name;                                    \
       unused_nodes_##name = unused_nodes_##name->next;                  \
-      newnode->next = *list_loc;                                        \
     }                                                                   \
+    newnode->next = *list_loc;                                          \
     newnode->item = list_item;                                          \
     *list_loc = newnode;                                                \
   }                                                                     \
@@ -63,7 +67,29 @@
     (*list_loc) = newhead;                                              \
     return item;                                                        \
   }                                                                     \
+  int length_##name(name* list_loc){                                   \
+    int result = 0;                                                     \
+    for(name curNode = *list_loc; curNode != NULL;                      \
+        curNode = curNode->next){                                       \
+      result++;                                                         \
+    }                                                                   \
+    return result;                                                      \
+  }                                                                     \
+  Type* getIdxLoc_##name(name* list_loc, int idx){                      \
+    name curNode = *list_loc;                                           \
+    for(int i = 0; i < idx; i++){                                       \
+      curNode = curNode->next;                                          \
+      if (curNode == NULL){                                             \
+        return NULL;                                                    \
+      }                                                                 \
+    }                                                                   \
+    return &(curNode->item);                                            \
+  }
 
 // This way you can almost pretend it's real polymorphism
 #define lpop(type) lpop_##type
 #define lpush(type) lpush_##type
+#define length(type) length_##type
+#define getIdxLoc(type) getIdxLoc_##type
+
+#endif

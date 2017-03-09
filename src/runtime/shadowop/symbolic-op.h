@@ -55,22 +55,28 @@ void generalizeSymbolicExpr(SymbExpr** symexpr, ConcExpr* cexpr);
 
 void generalizeStructure(SymbExpr* symbexpr, ConcExpr* concExpr);
 void intersectEqualities(SymbExpr* symbexpr, ConcExpr* concExpr);
-GroupList getSymbExprEquivGroups(SymbExpr* cexpr);
+GroupList getConcExprEquivGroups(ConcExpr* concExpr);
+GroupList pruneSingletonGroups(GroupList list);
+GroupList groupsWithoutNonLeaves(SymbExpr* structure, GroupList list);
 
 VarMap* mkVarMap(GroupList groups);
 int lookupVar(VarMap* map, NodePos pos);
 void freeVarMap(VarMap* map);
 
+void ppEquivGroups(GroupList groups);
+void addValEntry(VgHashTable* valmap, double val, int groupIdx);
 int lookupVal(VgHashTable* valmap, double val);
 UWord hashValue(double val);
 Word cmp_value(const void* node1, const void* node2);
 
-int lookupPos(VgHashTable* varmap, NodePos pos);
+ConcExpr* concGraftPosGet(ConcExpr* expr, NodePos pos);
+SymbExpr* symbGraftPosGet(SymbExpr* expr, NodePos pos);
 UWord hashPosition(NodePos node);
 Word cmp_position(const void* node1, const void* node2);
 NodePos appendPos(NodePos orig, int argIdx);
 void freePos(NodePos pos);
 NodePos copyPos(NodePos pos);
+void ppNodePos(NodePos pos);
 #define NULL_POS (NodePos){.len = 0, .data = NULL}
 
 #endif

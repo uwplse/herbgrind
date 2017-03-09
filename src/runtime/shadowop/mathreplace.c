@@ -104,6 +104,7 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
     entry = VG_(malloc)("replaced op info entry", sizeof(OpInfoEntry));
     entry->call_addr = callAddr;
     entry->info = callInfo;
+    VG_(HT_add_node)(callToOpInfoMap, entry);
   }
   execSymbolicOp(entry->info, &(shadowResult->expr), shadowResult->real, shadowArgs);
   updateError(entry->info,
@@ -166,7 +167,6 @@ ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs){
     break;
   case BINARY_OPS_CASES:
     {
-      VG_(printf)("get here.\n");
       int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
       GET_BINARY_OPS_F(mpfr_func, type);
       
