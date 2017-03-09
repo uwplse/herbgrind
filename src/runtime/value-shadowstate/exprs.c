@@ -270,7 +270,11 @@ char* symbExprToString(SymbExpr* expr){
   return buf;
 }
 int floatPrintLen(double f){
-  return ((int)log10(f)) + 8;
+  int wholeDigits = ((int)log10(f));
+  if (wholeDigits < 0){
+    wholeDigits = 0;
+  }
+  return wholeDigits + 8;
 }
 int symbExprPrintLen(SymbExpr* expr, VarMap* varmap,
                      NodePos curPos){
