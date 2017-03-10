@@ -67,13 +67,6 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                 argPrecision(op_code), numChannelsIn(op_code));
   }
 
-  if (print_semantic_ops){
-    ppIROp(op_code);
-    VG_(printf)("\n");
-    addPrintOp(op_code);
-    addPrint("\n");
-  }
-
   IRExpr* shadowOutput =
     runShadowOp(sbOut, op_code, curAddr, blockAddr,
                 args, nargs, dest);

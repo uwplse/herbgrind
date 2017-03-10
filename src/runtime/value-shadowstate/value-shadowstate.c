@@ -135,11 +135,11 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
           VG_(printf)("dynamicPut64: Setting thread state %d to %p\n",
                       tsDest, val);
         }
-      }
-      if (val != NULL){
-        VG_(printf)(" (type ");
-        ppFloatType(val->type);
-        VG_(printf)(")\n");
+        if (val != NULL){
+          VG_(printf)(" (type ");
+          ppFloatType(val->type);
+          VG_(printf)(")\n");
+        }
       }
     }
   }
