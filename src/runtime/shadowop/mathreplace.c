@@ -36,7 +36,6 @@
 #include "pub_tool_debuginfo.h"
 #include "pub_tool_libcbase.h"
 #include "../../include/mathreplace-funcs.h"
-#include "../value-shadowstate/value-shadowstate.h"
 #include "realop.h"
 #include "error.h"
 #include "symbolic-op.h"
@@ -47,6 +46,7 @@ VgHashTable* callToOpInfoMap = NULL;
 typedef struct _opInfoEntry {
   struct _opInfoEntry* next;
   UWord call_addr;
+  const char* name;
   ShadowOpInfo* info;
 } OpInfoEntry;
 
@@ -96,20 +96,28 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
   addMemShadow((UWord)(uintptr_t)resLoc, shadowResult);
 
   Addr callAddr = getCallAddr();
-  OpInfoEntry* entry = VG_(HT_lookup)(callToOpInfoMap, callAddr);
+  ShadowOpInfo* info = getOpInfo(callAddr, getWrappedName(type), nargs);
+  execSymbolicOp(info, &(shadowResult->expr),
+                 shadowResult->real, shadowArgs);
+  updateError(info, shadowResult->real, *resLoc);
+}
+
+ShadowOpInfo* getOpInfo(Addr callAddr, const char* name, int nargs){
+  OpInfoEntry key = {.call_addr = callAddr, .name = name};
+  OpInfoEntry* entry =
+    VG_(HT_gen_lookup)(callToOpInfoMap, &key, cmp_op_entry_by_name);
   if (entry == NULL){
     ShadowOpInfo* callInfo =
       mkShadowOpInfo(0x0, callAddr, callAddr, nargs);
-    callInfo->name = getWrappedName(type);
-    entry = VG_(malloc)("replaced op info entry", sizeof(OpInfoEntry));
+    callInfo->name = name;
+    entry = VG_(perm_malloc)(sizeof(OpInfoEntry),
+                             vg_alignof(OpInfoEntry));
     entry->call_addr = callAddr;
     entry->info = callInfo;
+    entry->name = name;
     VG_(HT_add_node)(callToOpInfoMap, entry);
   }
-  execSymbolicOp(entry->info, &(shadowResult->expr), shadowResult->real, shadowArgs);
-  updateError(entry->info,
-              shadowResult->real,
-              *resLoc);
+  return entry->info;
 }
 
 int getWrappedNumArgs(OpType type){
@@ -198,4 +206,10 @@ double runEmulatedWrappedOp(OpType type, double* args){
   double result;
   RUN(result, type, args);
   return result;
+}
+
+Word cmp_op_entry_by_name(const void* node1, const void* node2){
+  const OpInfoEntry* entry1 = (const OpInfoEntry*)node1;
+  const OpInfoEntry* entry2 = (const OpInfoEntry*)node2;
+  return VG_(strcmp)(entry1->name, entry2->name);
 }

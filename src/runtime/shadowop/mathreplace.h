@@ -34,13 +34,16 @@
 #include "../../instrument/floattypes.h"
 #include "../value-shadowstate/shadowval.h"
 #include "../../include/mathreplace-funcs.h"
+#include "../value-shadowstate/value-shadowstate.h"
 
 extern VgHashTable* callToOpInfoMap;
 void performWrappedOp(OpType type, double* args, double* resLoc);
+ShadowOpInfo* getOpInfo(Addr callAddr, const char* name, int nargs);
 int getWrappedNumArgs(OpType type);
 FloatType getWrappedPrecision(OpType type);
 const char* getWrappedName(OpType type);
 ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs);
 double runEmulatedWrappedOp(OpType type, double* args);
+Word cmp_op_entry_by_name(const void* node1, const void* node2);
 
 #endif
