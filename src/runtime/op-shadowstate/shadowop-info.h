@@ -55,6 +55,7 @@ typedef struct _ShadowOpInfo {
   // These two are mutually exclusive.
   IROp op_code;
   const char* name;
+
   Addr op_addr;
   Addr block_addr;
   ErrorAggregate eagg;

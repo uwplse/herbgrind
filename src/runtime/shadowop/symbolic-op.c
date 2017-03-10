@@ -58,10 +58,6 @@ void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
   *result = mkBranchConcExpr(getDouble(real), opinfo,
                              opinfo->exinfo.nargs, exprArgs);
   generalizeSymbolicExpr(&(opinfo->expr), *result);
-  if (print_errors){
-    ppSymbExpr(opinfo->expr);
-    VG_(printf)("\n");
-  }
 }
 
 void generalizeSymbolicExpr(SymbExpr** symbexpr, ConcExpr* cexpr){

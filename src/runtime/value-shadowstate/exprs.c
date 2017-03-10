@@ -61,7 +61,6 @@ void pushConcGraftStack(ConcGraft* graft, int count){
     Stack* newGStack = mkStack();
     XApush(StackArray)(concGraftStacks, newGStack);
   }
-  tl_assert(count - 1 < concGraftStacks->size);
   Stack* curStack = concGraftStacks->data[count - 1];
   stack_push(curStack, (void*)graft);
 }
@@ -132,8 +131,10 @@ ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
   for(int i = 0; i < nargs; ++i){
     ConcExpr* child = result->branch.args[i];
     if (child->type == Node_Leaf ||
-               child->branch.op->block_addr !=
-               result->branch.op->block_addr){
+        child->branch.op->block_addr !=
+        result->branch.op->block_addr ||
+        child->branch.op->op_addr >=
+        result->branch.op->op_addr){
       result->ngrafts += 1;
     } else {
       result->ngrafts += child->ngrafts;
@@ -149,13 +150,15 @@ ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
   for(int i = 0; i < nargs; ++i){
     ConcExpr* child = result->branch.args[i];
     if (child->type == Node_Leaf ||
-               child->branch.op->block_addr !=
-               result->branch.op->block_addr){
+        child->branch.op->block_addr !=
+        result->branch.op->block_addr ||
+        child->branch.op->op_addr >=
+        result->branch.op->op_addr){
       result->grafts[grafti].parent = result;
       result->grafts[grafti].childIndex = i;
       grafti++;
     } else {
-      VG_(memcpy)(result->grafts + grafti,
+      VG_(memcpy)(&(result->grafts[grafti]),
                   child->grafts,
                   sizeof(ConcGraft) * child->ngrafts);
       grafti += child->ngrafts;
