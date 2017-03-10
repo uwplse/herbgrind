@@ -46,7 +46,7 @@ typedef enum {
 } NodeType;
 
 typedef struct {
-  int* data;
+  unsigned char* data;
   int len;
 } NodePos;
 

@@ -73,7 +73,7 @@ ConcExpr* concGraftPosGet(ConcExpr* expr, NodePos pos);
 SymbExpr* symbGraftPosGet(SymbExpr* expr, NodePos pos);
 UWord hashPosition(NodePos node);
 Word cmp_position(const void* node1, const void* node2);
-NodePos appendPos(NodePos orig, int argIdx);
+NodePos appendPos(NodePos orig, unsigned char argIdx);
 void freePos(NodePos pos);
 NodePos copyPos(NodePos pos);
 void ppNodePos(NodePos pos);

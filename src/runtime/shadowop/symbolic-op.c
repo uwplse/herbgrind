@@ -199,7 +199,7 @@ void intersectEqualities(SymbExpr* symbexpr, ConcExpr* concExpr){
 void ppNodePos(NodePos pos){
   VG_(printf)("[");
   for(int i = 0; i < pos.len; ++i){
-    VG_(printf)(" %d", pos.data[i]);
+    VG_(printf)(" %d", (int)pos.data[i]);
   }
   VG_(printf)(" ]");
 }
@@ -385,11 +385,11 @@ Word cmp_position(const void* node1, const void* node2){
   }
   return 0;
 }
-NodePos appendPos(NodePos orig, int argIdx){
+NodePos appendPos(NodePos orig, unsigned char argIdx){
   NodePos newPos;
   newPos.len = orig.len + 1;
-  newPos.data = VG_(malloc)("pos data", newPos.len * sizeof(int));
-  VG_(memcpy)(newPos.data, orig.data, orig.len * sizeof(int));
+  newPos.data = VG_(malloc)("pos data", newPos.len * sizeof(unsigned char));
+  VG_(memcpy)(newPos.data, orig.data, orig.len * sizeof(unsigned char));
   newPos.data[newPos.len - 1] = argIdx;
   return newPos;
 }
@@ -398,7 +398,7 @@ void freePos(NodePos pos){
 }
 NodePos copyPos(NodePos pos){
   NodePos new = {.len = pos.len};
-  new.data = VG_(malloc)("pos data", pos.len * sizeof(int));
-  VG_(memcpy)(new.data, pos.data, pos.len * sizeof(int));
+  new.data = VG_(malloc)("pos data", pos.len * sizeof(unsigned char));
+  VG_(memcpy)(new.data, pos.data, pos.len * sizeof(unsigned char));
   return new;
 }
