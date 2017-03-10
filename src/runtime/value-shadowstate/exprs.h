@@ -120,4 +120,5 @@ int writeSymbExprToString(char* buf, SymbExpr* expr,
                           NodePos curpos, VarMap* varmap);
 int floatPrintLen(double f);
 #define MAX_BRANCH_ARGS 3
+#define MAX_EXPR_BLOCK_DEPTH 4
 #endif

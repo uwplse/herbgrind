@@ -218,9 +218,9 @@ void ppEquivGroups(GroupList groups){
 }
 
 void getGrouped(GroupList groupList, VgHashTable* valMap,
-                ConcExpr* symbexpr, NodePos curPos);
+                ConcExpr* symbexpr, NodePos curPos, int maxDepth);
 void getGrouped(GroupList groupList, VgHashTable* valMap,
-                ConcExpr* symbexpr, NodePos curPos){
+                ConcExpr* symbexpr, NodePos curPos, int maxDepth){
   tl_assert(groupList);
   tl_assert(symbexpr->type == Node_Branch);
   for(int i = 0; i < symbexpr->ngrafts; ++i){
@@ -245,10 +245,10 @@ void getGrouped(GroupList groupList, VgHashTable* valMap,
 
     if (curNode->type == Node_Branch &&
         curNode->branch.args[curGraft.childIndex]->type ==
-        Node_Branch){
+        Node_Branch && maxDepth > 0){
       getGrouped(groupList, valMap,
                  curNode->branch.args[curGraft.childIndex],
-                 graftPos);
+                 graftPos, maxDepth - 1);
     }
   }
 }
@@ -284,7 +284,7 @@ GroupList groupsWithoutNonLeaves(SymbExpr* structure, GroupList list){
 GroupList getConcExprEquivGroups(ConcExpr* concExpr){
   GroupList groupList = mkXA(GroupList)();
   VgHashTable* valMap = VG_(HT_construct)("val map");
-  getGrouped(groupList, valMap, concExpr, NULL_POS);
+  getGrouped(groupList, valMap, concExpr, NULL_POS, MAX_EXPR_BLOCK_DEPTH);
   VG_(HT_destruct)(valMap, VG_(free));
   GroupList prunedGroups = pruneSingletonGroups(groupList);
   return prunedGroups;
