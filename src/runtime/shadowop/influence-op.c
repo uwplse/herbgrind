@@ -32,15 +32,14 @@
 
 List_Impl(ShadowOpInfo*, InfluenceList);
 
-InfluenceList execInfluencesOp(ShadowOpInfo* info, ShadowValue** args){
-  InfluenceList res = NULL;
+void execInfluencesOp(ShadowOpInfo* info,
+                      InfluenceList* res, ShadowValue** args){
   for(int i = 0; i < info->exinfo.nargs; ++i){
     for(InfluenceList curNode = args[i]->influences;
         curNode != NULL; curNode = curNode->next){
-      lpush(InfluenceList)(&res, curNode->item);
+      lpush(InfluenceList)(res, curNode->item);
     }
   }
-  return res;
 }
 
 void trackOpAsInfluence(ShadowOpInfo* info, ShadowValue* value){

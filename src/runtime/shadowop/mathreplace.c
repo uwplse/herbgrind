@@ -41,6 +41,8 @@
 #include "realop.h"
 #include "error.h"
 #include "symbolic-op.h"
+#include "influence-op.h"
+#include "local-op.h"
 #include <math.h>
 #include <inttypes.h>
 
@@ -69,9 +71,28 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
   ShadowOpInfo* info = getWrappedOpInfo(callAddr, type, nargs);
   execSymbolicOp(info, &(shadowResult->expr),
                  shadowResult->real, shadowArgs);
+  execLocalOp(info, shadowResult->real, shadowResult, shadowArgs);
+  execInfluencesOp(info, &(shadowResult->influences), shadowArgs);
   if (print_errors_long || print_errors){
     printOpInfo(info);
     VG_(printf)(":\n");
+  }
+  if (print_semantic_ops){
+    VG_(printf)("%p = %s", shadowResult, getWrappedName(type));
+    switch(nargs){
+    case 0:
+      tl_assert(0);
+      return;
+    case 1:
+      VG_(printf)("(%p)\n", shadowArgs[0]);
+      break;
+    default:
+      VG_(printf)("(%p,", shadowArgs[0]);
+      for(int i = 1; i < nargs; ++i){
+        VG_(printf)(" %p", shadowArgs[i]);
+      }
+      VG_(printf)(")\n");
+    }
   }
   updateError(&(info->eagg), shadowResult->real, *resLoc);
 }

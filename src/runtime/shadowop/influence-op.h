@@ -33,6 +33,7 @@
 #include "../value-shadowstate/shadowval.h"
 
 void trackOpAsInfluence(ShadowOpInfo* info, ShadowValue* value);
-InfluenceList execInfluencesOp(ShadowOpInfo* info, ShadowValue** args);
+void execInfluencesOp(ShadowOpInfo* info,
+                      InfluenceList* res, ShadowValue** args);
 
 #endif

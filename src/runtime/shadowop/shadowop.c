@@ -103,6 +103,24 @@ ShadowValue* executeChannelShadowOp(int nargs,
   execRealOp(opinfo->op_code, &(result->real), args);
   execSymbolicOp(opinfo, &(result->expr), result->real, args);
   execLocalOp(opinfo, result->real, result, args);
-  result->influences = execInfluencesOp(opinfo, args);
+  execInfluencesOp(opinfo, &(result->influences), args);
+  if (print_semantic_ops){
+    VG_(printf)("%p = ", result);
+    ppIROp(opinfo->op_code);
+    switch(opinfo->exinfo.nargs){
+    case 0:
+      tl_assert(0);
+      return NULL;
+    case 1:
+      VG_(printf)("(%p)\n", args[0]);
+      break;
+    default:
+      VG_(printf)("(%p,", args[0]);
+      for(int i = 1; i < opinfo->exinfo.nargs; ++i){
+        VG_(printf)(" %p", args[i]);
+      }
+      VG_(printf)(")\n");
+    }
+  }
   return result;
 }
