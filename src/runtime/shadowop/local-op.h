@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie                error.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie             local-op.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,14 +27,14 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _ERROR_H
-#define _ERROR_H
+#ifndef _LOCAL_OP_H
+#define _LOCAL_OP_H
 
 #include "../value-shadowstate/real.h"
+#include "../value-shadowstate/shadowval.h"
 #include "../op-shadowstate/shadowop-info.h"
 
-double updateError(ErrorAggregate* eagg,
-                   Real realVal, double computedVal);
-ULong ulpd(double val1, double val2);
+void execLocalOp(ShadowOpInfo* info, Real realVal,
+                 ShadowValue* res, ShadowValue** args);
 
 #endif

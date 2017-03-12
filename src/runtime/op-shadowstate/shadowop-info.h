@@ -32,15 +32,19 @@
 
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
+#include "pub_tool_hashtable.h"
 
 #include "../value-shadowstate/exprs.hh"
-#include "../value-shadowstate/shadowval.h"
+#include "../../instrument/floattypes.h"
+#include "../../include/mathreplace-funcs.h"
+
+extern VgHashTable* mathreplaceOpInfoMap;
+extern VgHashTable* semanticOpInfoMap;
+extern VgHashTable* markMap;
 
 typedef struct _ErrorAggregate {
-  double max_total_error;
-  double total_total_error;
-  double max_local_error;
-  double total_local_error;
+  double max_error;
+  double total_error;
   long long int num_evals;
 } ErrorAggregate;
 
@@ -54,15 +58,31 @@ typedef struct _ExtraInfo {
 typedef struct _ShadowOpInfo {
   // These two are mutually exclusive.
   IROp op_code;
-  const char* name;
+  OpType op_type;
 
   Addr op_addr;
   Addr block_addr;
   ErrorAggregate eagg;
+  ErrorAggregate local_eagg;
   SymbExpr* expr;
   ExtraInfo exinfo;
 } ShadowOpInfo;
 
+typedef struct _mrOpInfoEntry {
+  struct _mrOpInfoEntry* next;
+  UWord call_addr;
+  OpType type;
+  ShadowOpInfo* info;
+} MrOpInfoEntry;
+typedef struct _semOpInfoEntry {
+  struct _semOpInfoEntry* next;
+  UWord call_addr;
+  IROp op_code;
+  ShadowOpInfo* info;
+} SemOpInfoEntry;
+
+
+void initOpShadowState(void);
 ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
                              int nargs);
 void printOpInfo(ShadowOpInfo* opinfo);

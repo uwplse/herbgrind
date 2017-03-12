@@ -60,6 +60,7 @@ void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
   generalizeSymbolicExpr(&(opinfo->expr), *result);
 }
 
+int numExprs = 0;
 void generalizeSymbolicExpr(SymbExpr** symbexpr, ConcExpr* cexpr){
   if (*symbexpr == NULL){
     *symbexpr = concreteToSymbolic(cexpr);
@@ -281,6 +282,16 @@ GroupList groupsWithoutNonLeaves(SymbExpr* structure, GroupList list){
   return newGroupList;
 }
 
+int numTrackedNodes(GroupList glist);
+int numTrackedNodes(GroupList glist){
+  int count = 0;
+  for(int i = 0; i < glist->size; ++i){
+    count += length(Group)(&(glist->data[i]));
+  }
+  return count;
+}
+
+int groupsGetTimes=0;
 GroupList getConcExprEquivGroups(ConcExpr* concExpr){
   GroupList groupList = mkXA(GroupList)();
   VgHashTable* valMap = VG_(HT_construct)("val map");

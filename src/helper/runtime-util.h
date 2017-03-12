@@ -1,9 +1,9 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie            mark-info.h ---*/
+/*--- Herbgrind: a valgrind tool for Herbie           runtime-util ---*/
 /*--------------------------------------------------------------------*/
 
 /*
-   This file is part of HerbGrind, a valgrind tool for diagnosing
+   This file is part of Herbgrind, a valgrind tool for diagnosing
    floating point accuracy problems in binary programs and extracting
    problematic expressions.
 
@@ -26,18 +26,12 @@
 
    The GNU General Public License is contained in the file COPYING.
 */
-#ifndef _MARK_INFO_H
-#define _MARK_INFO_H
+
+#ifndef _RUNTIME_UTIL_H
+#define _RUNTIME_UTIL_H
 
 #include "pub_tool_basics.h"
-#include "pub_tool_xarray.h"
 
-#include "shadowop-info.h"
-
-typedef struct _MarkInfo {
-  Addr addr;
-  XArray* influences;
-  ErrorAggregate eagg;
-}
+Addr getCallAddr(void);
 
 #endif

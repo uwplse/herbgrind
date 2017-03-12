@@ -29,6 +29,7 @@
 
 #include "instrument-storage.h"
 #include "../runtime/value-shadowstate/value-shadowstate.h"
+#include "../runtime/op-shadowstate/shadowop-info.h"
 #include "../runtime/shadowop/shadowop.h"
 #include "../helper/instrument-util.h"
 #include "../helper/debug.h"
@@ -44,6 +45,7 @@
 void initInstrumentationState(void){
   initOwnership();
   initValueShadowState();
+  initOpShadowState();
   initTypeState();
 }
 

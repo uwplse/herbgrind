@@ -34,6 +34,8 @@
 #include "pub_tool_libcassert.h"
 #include "error.h"
 #include "symbolic-op.h"
+#include "local-op.h"
+#include "influence-op.h"
 
 VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                                           ShadowTemp** args){
@@ -53,7 +55,11 @@ VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
                              opInfo->exinfo.argPrecision,
                              opInfo,
                              vals);
-    updateError(opInfo, result->values[i]->real,
+    if (print_errors_long || print_errors){
+      printOpInfo(opInfo);
+      VG_(printf)(":\n");
+    }
+    updateError(&(opInfo->eagg), result->values[i]->real,
                 (opInfo->exinfo.argPrecision == Ft_Single ?
                  computedResult.f[i] : computedResult.d[i]));
   }
@@ -96,5 +102,7 @@ ShadowValue* executeChannelShadowOp(int nargs,
   ShadowValue* result = mkShadowValueBare(type);
   execRealOp(opinfo->op_code, &(result->real), args);
   execSymbolicOp(opinfo, &(result->expr), result->real, args);
+  execLocalOp(opinfo, result->real, result, args);
+  result->influences = execInfluencesOp(opinfo, args);
   return result;
 }

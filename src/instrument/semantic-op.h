@@ -34,6 +34,7 @@
 #include "pub_tool_tooliface.h"
 
 #include "../runtime/value-shadowstate/shadowval.h"
+#include "../runtime/op-shadowstate/shadowop-info.h"
 
 void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                           int nargs, IRExpr** argExprs,
@@ -46,4 +47,6 @@ IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
                     Addr curAddr, Addr blockAddr,
                     IRExpr** args, int nargs,
                     IRTemp dest);
+ShadowOpInfo* getSemanticOpInfo(Addr callAddr, Addr block_addr, IROp op_code, int nargs);
+Word cmp_sem_entry_by_code(const void* node1, const void* node2);
 #endif

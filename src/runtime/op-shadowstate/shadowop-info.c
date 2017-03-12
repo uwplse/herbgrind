@@ -32,6 +32,16 @@
 #include "pub_tool_debuginfo.h"
 #include "pub_tool_libcprint.h"
 #include "../../helper/ir-info.h"
+#include "../shadowop/mathreplace.h"
+
+VgHashTable* mathreplaceOpInfoMap = NULL;
+VgHashTable* semanticOpInfoMap = NULL;
+
+void initOpShadowState(void){
+  mathreplaceOpInfoMap = VG_(HT_construct)("call map mathreplace");
+  semanticOpInfoMap = VG_(HT_construct)("call map semantic op");
+  markMap = VG_(HT_construct)("mark map");
+}
 
 ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
                              int nargs){
@@ -39,10 +49,12 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
   result->op_code = op_code;
   result->op_addr = op_addr;
   result->block_addr = block_addr;
-  result->eagg.max_total_error = -1;
-  result->eagg.total_total_error = 0;
-  result->eagg.max_local_error = -1;
-  result->eagg.total_local_error = 0;
+  result->eagg.max_error = -1;
+  result->eagg.total_error = 0;
+  result->eagg.num_evals = 0;
+  result->local_eagg.max_error = -1;
+  result->local_eagg.total_error = 0;
+  result->local_eagg.num_evals = 0;
   result->expr = NULL;
   result->exinfo.numSIMDOperands =
     op_code == 0x0 ? 1 : numSIMDOperands(op_code);
@@ -70,7 +82,7 @@ void ppAddr(Addr addr){
 
 void printOpInfo(ShadowOpInfo* opinfo){
   if (opinfo->op_code == 0){
-    VG_(printf)("%s", opinfo->name);
+    VG_(printf)("%s", getWrappedName(opinfo->op_type));
   } else {
     ppIROp(opinfo->op_code);
   }

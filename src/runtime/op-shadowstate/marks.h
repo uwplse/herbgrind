@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie                error.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie                marks.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -26,15 +26,31 @@
 
    The GNU General Public License is contained in the file COPYING.
 */
+#ifndef _MARKS_H
+#define _MARKS_H
 
-#ifndef _ERROR_H
-#define _ERROR_H
+#include "pub_tool_basics.h"
+#include "../../helper/list.h"
 
-#include "../value-shadowstate/real.h"
-#include "../op-shadowstate/shadowop-info.h"
+#include "shadowop-info.h"
+#include "../value-shadowstate/value-shadowstate.h"
+#include "../value-shadowstate/shadowval.h"
 
-double updateError(ErrorAggregate* eagg,
-                   Real realVal, double computedVal);
-ULong ulpd(double val1, double val2);
+typedef struct _markInfo {
+  // So we can store it in a hash table easily.
+  struct _markInfo* next;
+
+  Addr addr;
+  InfluenceList influences;
+  ErrorAggregate eagg;
+} MarkInfo;
+
+List_H(MarkInfo, MarkList);
+
+void markImportant(Addr varAddr);
+MarkInfo* getMarkInfo(Addr callAddr);
+void addInfluencesToMark(MarkInfo* info, InfluenceList influences);
+void addInfluenceToMarkIfNotAlreadyThere(MarkInfo* info, ShadowOpInfo* influence);
+void printMarkInfo(MarkInfo* info);
 
 #endif

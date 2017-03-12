@@ -24,18 +24,21 @@ DEPS = deps/gmp-64/README deps/mpfr-64/README deps/openlibm-64/README.md
 endif
 
 HEADERS=src/include/herbgrind.h src/helper/mpfr-valgrind-glue.h		\
-src/helper/stack.h src/helper/instrument-util.h src/helper/ir-info.h	\
-src/helper/debug.h src/helper/list.h src/helper/xarray.h		\
-src/options.h src/runtime/value-shadowstate/shadowval.h			\
+src/helper/stack.h src/helper/instrument-util.h				\
+src/helper/runtime-util.h src/helper/ir-info.h src/helper/debug.h	\
+src/helper/list.h src/helper/xarray.h src/options.h			\
+src/runtime/value-shadowstate/shadowval.h				\
 src/runtime/value-shadowstate/value-shadowstate.h			\
 src/runtime/value-shadowstate/exprs.h					\
 src/runtime/value-shadowstate/exprs.hh					\
 src/runtime/value-shadowstate/real.h					\
 src/runtime/op-shadowstate/shadowop-info.h				\
-src/runtime/op-shadowstate/mark-info.h					\
-src/runtime/shadowop/shadowop.h src/runtime/shadowop/conversions.h	\
-src/runtime/shadowop/realop.h src/runtime/shadowop/error.h		\
-src/runtime/shadowop/mathreplace.h src/runtime/shadowop/symbolic-op.h	\
+src/runtime/op-shadowstate/marks.h					\
+src/runtime/op-shadowstate/output.h src/runtime/shadowop/shadowop.h	\
+src/runtime/shadowop/conversions.h src/runtime/shadowop/realop.h	\
+src/runtime/shadowop/error.h src/runtime/shadowop/mathreplace.h		\
+src/runtime/shadowop/symbolic-op.h					\
+src/runtime/shadowop/influence-op.h src/runtime/shadowop/local-op.h	\
 src/instrument/instrument.h src/instrument/instrument-op.h		\
 src/instrument/instrument-storage.h src/instrument/conversion.h		\
 src/instrument/semantic-op.h src/instrument/ownership.h			\
@@ -43,16 +46,20 @@ src/instrument/floattypes.h
 
 SOURCES=src/hg_main.c src/helper/mathwrap.c				\
 src/include/mk-mathreplace.py src/helper/mpfr-valgrind-glue.c		\
-src/helper/stack.c src/helper/instrument-util.c src/helper/ir-info.c	\
-src/options.c src/runtime/value-shadowstate/shadowval.c			\
+src/helper/stack.c src/helper/instrument-util.c				\
+src/helper/runtime-util.c src/helper/ir-info.c src/options.c		\
+src/runtime/value-shadowstate/shadowval.c				\
 src/runtime/value-shadowstate/value-shadowstate.c			\
 src/runtime/value-shadowstate/shadowval.c				\
 src/runtime/value-shadowstate/exprs.c					\
 src/runtime/value-shadowstate/real.c					\
 src/runtime/op-shadowstate/shadowop-info.c				\
-src/runtime/shadowop/shadowop.c src/runtime/shadowop/conversions.c	\
-src/runtime/shadowop/realop.c src/runtime/shadowop/error.c		\
-src/runtime/shadowop/mathreplace.c src/runtime/shadowop/symbolic-op.c	\
+src/runtime/op-shadowstate/marks.c					\
+src/runtime/op-shadowstate/output.c src/runtime/shadowop/shadowop.c	\
+src/runtime/shadowop/conversions.c src/runtime/shadowop/realop.c	\
+src/runtime/shadowop/error.c src/runtime/shadowop/mathreplace.c		\
+src/runtime/shadowop/symbolic-op.c					\
+src/runtime/shadowop/influence-op.c src/runtime/shadowop/local-op.c	\
 src/instrument/instrument.c src/instrument/instrument-op.c		\
 src/instrument/instrument-storage.c src/instrument/conversion.c		\
 src/instrument/semantic-op.c src/instrument/ownership.c			\
@@ -192,6 +199,8 @@ deps/mpfr-%/README: setup/mpfr-$(MPFR_VERSION).tar.xz setup/patch_mpfr.sh
 
 wc:
 	wc $(SOURCES) $(HEADERS)
+loc:
+	sloccount $(SOURCES) $(HEADERS)
 
 clean-deps:
 	rm -rf valgrind/ deps/

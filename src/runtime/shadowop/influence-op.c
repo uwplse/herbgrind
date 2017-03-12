@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie                error.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie         influence-op.c ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,14 +27,22 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _ERROR_H
-#define _ERROR_H
+#include "influence-op.h"
+#include "pub_tool_libcprint.h"
 
-#include "../value-shadowstate/real.h"
-#include "../op-shadowstate/shadowop-info.h"
+List_Impl(ShadowOpInfo*, InfluenceList);
 
-double updateError(ErrorAggregate* eagg,
-                   Real realVal, double computedVal);
-ULong ulpd(double val1, double val2);
+InfluenceList execInfluencesOp(ShadowOpInfo* info, ShadowValue** args){
+  InfluenceList res = NULL;
+  for(int i = 0; i < info->exinfo.nargs; ++i){
+    for(InfluenceList curNode = args[i]->influences;
+        curNode != NULL; curNode = curNode->next){
+      lpush(InfluenceList)(&res, curNode->item);
+    }
+  }
+  return res;
+}
 
-#endif
+void trackOpAsInfluence(ShadowOpInfo* info, ShadowValue* value){
+  lpush(InfluenceList)(&(value->influences), info);
+}

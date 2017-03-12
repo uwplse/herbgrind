@@ -35,6 +35,7 @@
 #include "../../helper/stack.h"
 #include "../../helper/ir-info.h"
 #include "../shadowop/symbolic-op.h"
+#include "../shadowop/mathreplace.h"
 #include <math.h>
 
 Stack* leafCExprs;
@@ -231,7 +232,7 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
 }
 const char* opSym(ShadowOpInfo* op){
   if (op->op_code == 0x0){
-    return op->name;
+    return getWrappedName(op->op_type);
   } else {
     return getOpcodeSymbol(op->op_code);
   }

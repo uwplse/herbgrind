@@ -32,7 +32,8 @@
 #include "include/mathreplace-funcs.h"
 #include "options.h"
 #include "instrument/instrument.h"
-#include "runtime/shadowop/mathreplace.c"
+#include "runtime/shadowop/mathreplace.h"
+#include "runtime/op-shadowstate/marks.h"
 
 #include "helper/mpfr-valgrind-glue.h"
 
@@ -51,6 +52,9 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
     break;
   case VG_USERREQ__PERFORM_OP:
     performWrappedOp((OpType)arg[1], (double*)arg[2], (double*)arg[3]);
+    break;
+  case VG_USERREQ__MARK_IMPORTANT:
+    markImportant((Addr)arg[1]);
     break;
   default:
     return False;

@@ -36,46 +36,16 @@
 #include "pub_tool_debuginfo.h"
 #include "pub_tool_libcbase.h"
 #include "../../include/mathreplace-funcs.h"
+#include "../../helper/runtime-util.h"
+#include "../value-shadowstate/value-shadowstate.h"
 #include "realop.h"
 #include "error.h"
 #include "symbolic-op.h"
 #include <math.h>
 #include <inttypes.h>
 
-VgHashTable* callToOpInfoMap = NULL;
-typedef struct _opInfoEntry {
-  struct _opInfoEntry* next;
-  UWord call_addr;
-  const char* name;
-  ShadowOpInfo* info;
-} OpInfoEntry;
-
 #define NCALLFRAMES 5
 #define MAX_WRAPPED_ARGS 3
-
-Addr getCallAddr(void);
-Addr getCallAddr(void){
-  Addr trace[NCALLFRAMES];
-  UInt nframes = VG_(get_StackTrace)(VG_(get_running_tid)(),
-                                     trace, NCALLFRAMES, // Is this right?
-                                     NULL, NULL,
-                                     0);
-  for(int i = 0; i < nframes; ++i){
-    Addr addr = trace[i];
-    // Basically, this whole block discards addresses which are part
-    // of the redirection process or internal to the replacement
-    // function, and are "below" the location of the call in the calls
-    // stack. Currently it looks like we really only have to look at
-    // the second frame up, but screw it, this probably isn't the
-    // performance bottleneck, and it might be nice to have the
-    // robustness somewhere down the line.
-    const HChar* filename;
-    if (!VG_(get_filename)(addr, &filename)) continue;
-    if (VG_(strcmp)(filename, "mathwrap.c") == 0) continue;
-    return addr;
-  }
-  return 0;
-}
 
 void performWrappedOp(OpType type, double* resLoc, double* args){
 #ifndef USE_MPFR
@@ -96,26 +66,30 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
   addMemShadow((UWord)(uintptr_t)resLoc, shadowResult);
 
   Addr callAddr = getCallAddr();
-  ShadowOpInfo* info = getOpInfo(callAddr, getWrappedName(type), nargs);
+  ShadowOpInfo* info = getWrappedOpInfo(callAddr, type, nargs);
   execSymbolicOp(info, &(shadowResult->expr),
                  shadowResult->real, shadowArgs);
-  updateError(info, shadowResult->real, *resLoc);
+  if (print_errors_long || print_errors){
+    printOpInfo(info);
+    VG_(printf)(":\n");
+  }
+  updateError(&(info->eagg), shadowResult->real, *resLoc);
 }
 
-ShadowOpInfo* getOpInfo(Addr callAddr, const char* name, int nargs){
-  OpInfoEntry key = {.call_addr = callAddr, .name = name};
-  OpInfoEntry* entry =
-    VG_(HT_gen_lookup)(callToOpInfoMap, &key, cmp_op_entry_by_name);
+ShadowOpInfo* getWrappedOpInfo(Addr callAddr, OpType opType, int nargs){
+  MrOpInfoEntry key = {.call_addr = callAddr, .type = opType};
+  MrOpInfoEntry* entry =
+    VG_(HT_gen_lookup)(mathreplaceOpInfoMap, &key, cmp_op_entry_by_type);
   if (entry == NULL){
     ShadowOpInfo* callInfo =
       mkShadowOpInfo(0x0, callAddr, callAddr, nargs);
-    callInfo->name = name;
-    entry = VG_(perm_malloc)(sizeof(OpInfoEntry),
-                             vg_alignof(OpInfoEntry));
+    callInfo->op_type = opType;
+    entry = VG_(perm_malloc)(sizeof(MrOpInfoEntry),
+                             vg_alignof(MrOpInfoEntry));
     entry->call_addr = callAddr;
     entry->info = callInfo;
-    entry->name = name;
-    VG_(HT_add_node)(callToOpInfoMap, entry);
+    entry->type = opType;
+    VG_(HT_add_node)(mathreplaceOpInfoMap, entry);
   }
   return entry->info;
 }
@@ -208,8 +182,8 @@ double runEmulatedWrappedOp(OpType type, double* args){
   return result;
 }
 
-Word cmp_op_entry_by_name(const void* node1, const void* node2){
-  const OpInfoEntry* entry1 = (const OpInfoEntry*)node1;
-  const OpInfoEntry* entry2 = (const OpInfoEntry*)node2;
-  return VG_(strcmp)(entry1->name, entry2->name);
+Word cmp_op_entry_by_type(const void* node1, const void* node2){
+  const MrOpInfoEntry* entry1 = (const MrOpInfoEntry*)node1;
+  const MrOpInfoEntry* entry2 = (const MrOpInfoEntry*)node2;
+  return !(entry1->type == entry2->type);
 }

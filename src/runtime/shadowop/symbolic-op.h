@@ -32,6 +32,7 @@
 
 #include "../value-shadowstate/exprs.h"
 #include "../op-shadowstate/shadowop-info.h"
+#include "../value-shadowstate/shadowval.h"
 
 #include "pub_tool_basics.h"
 #include "pub_tool_hashtable.h"

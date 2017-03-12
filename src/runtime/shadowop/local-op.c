@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie                error.h ---*/
+/*--- HerbGrind: a valgrind tool for Herbie             local-op.c ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,14 +27,32 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _ERROR_H
-#define _ERROR_H
+#include "local-op.h"
+#include "mathreplace.h"
+#include "../../helper/ir-info.h"
+#include "error.h"
+#include "influence-op.h"
+#include "../../options.h"
 
-#include "../value-shadowstate/real.h"
-#include "../op-shadowstate/shadowop-info.h"
+void execLocalOp(ShadowOpInfo* info, Real realVal,
+                 ShadowValue* res, ShadowValue** args){
+  int nargs = info->exinfo.nargs;
+  double exactRoundedArgs[4];
+  for(int i = 0; i < nargs; ++i){
+    exactRoundedArgs[i] = getDouble(args[i]->real);
+  }
+  double locallyApproximateResult;
+  if (info->op_code == 0x0){
+    locallyApproximateResult =
+      runEmulatedWrappedOp(info->op_type, exactRoundedArgs);
+  } else {
+    locallyApproximateResult =
+      runEmulatedOp(info->op_code, exactRoundedArgs);
+  }
+  double bitsLocalError =
+    updateError(&(info->local_eagg), realVal, locallyApproximateResult);
 
-double updateError(ErrorAggregate* eagg,
-                   Real realVal, double computedVal);
-ULong ulpd(double val1, double val2);
-
-#endif
+  if (bitsLocalError > error_threshold){
+    trackOpAsInfluence(info, res);
+  }
+}

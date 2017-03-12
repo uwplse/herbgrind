@@ -35,6 +35,10 @@
 #include "exprs.hh"
 #include "real.h"
 #include "../../instrument/floattypes.h"
+#include "../../helper/list.h"
+#include "../op-shadowstate/shadowop-info.h"
+
+List_H(ShadowOpInfo*, InfluenceList);
 
 typedef struct _ShadowValue {
   // For the various data structures that will hold these values.
@@ -43,7 +47,7 @@ typedef struct _ShadowValue {
   UWord ref_count;
   Real real;
   ConcExpr* expr;
-  XArray* influences;
+  InfluenceList influences;
   FloatType type;
 } ShadowValue;
 

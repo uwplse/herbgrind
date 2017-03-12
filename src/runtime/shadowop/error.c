@@ -33,21 +33,19 @@
 #include "pub_tool_libcprint.h"
 #include <math.h>
 
-void updateError(ShadowOpInfo* opinfo,
-                 Real realVal, double computedVal){
+double updateError(ErrorAggregate* eagg,
+                   Real realVal, double computedVal){
   double shadowRounded = getDouble(realVal);
   ULong ulpsError = ulpd(shadowRounded, computedVal);
 
   double bitsError = log2(ulpsError + 1);
-  if (bitsError > opinfo->eagg.max_total_error){
-    opinfo->eagg.max_total_error = bitsError;
+  if (bitsError > eagg->max_error){
+    eagg->max_error = bitsError;
   }
-  opinfo->eagg.total_total_error += bitsError;
-  opinfo->eagg.num_evals += 1;
+  eagg->total_error += bitsError;
+  eagg->num_evals += 1;
 
   if (print_errors_long || print_errors){
-    printOpInfo(opinfo);
-    VG_(printf)(":\n");
     if (print_errors_long){
       VG_(printf)("The shadow value is ");
       printReal(realVal);
@@ -58,6 +56,7 @@ void updateError(ShadowOpInfo* opinfo,
                 "%f bits error (%llu ulps)\n",
                 computedVal, bitsError, ulpsError);
   }
+  return bitsError;
 }
 
 ULong ulpd(double x, double y){

@@ -100,6 +100,23 @@ IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
                           mkU64((uintptr_t)shadowArgs));
 }
 
+ShadowOpInfo* getSemanticOpInfo(Addr callAddr, Addr block_addr, IROp op_code, int nargs){
+  SemOpInfoEntry key = {.call_addr = callAddr, .op_code = op_code};
+  SemOpInfoEntry* entry =
+    VG_(HT_gen_lookup)(semanticOpInfoMap, &key, cmp_sem_entry_by_code);
+  if (entry == NULL){
+    ShadowOpInfo* callInfo =
+      mkShadowOpInfo(op_code, callAddr, block_addr, nargs);
+    entry = VG_(perm_malloc)(sizeof(SemOpInfoEntry),
+                             vg_alignof(SemOpInfoEntry));
+    entry->call_addr = callAddr;
+    entry->info = callInfo;
+    entry->op_code = op_code;
+    VG_(HT_add_node)(mathreplaceOpInfoMap, entry);
+  }
+  return entry->info;
+}
+
 IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
                   FloatType type, int num_vals){
   tl_assert2(canBeFloat(sbOut->tyenv, argExpr),
@@ -136,4 +153,10 @@ IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
       return result;
     }
   }
+}
+
+Word cmp_sem_entry_by_code(const void* node1, const void* node2){
+  const SemOpInfoEntry* entry1 = (const SemOpInfoEntry*)node1;
+  const SemOpInfoEntry* entry2 = (const SemOpInfoEntry*)node2;
+  return !(entry1->op_code == entry2->op_code);
 }

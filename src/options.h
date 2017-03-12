@@ -54,6 +54,8 @@ extern Bool running;
 extern Bool always_on;
 extern Int longprint_len;
 extern Int precision;
+extern double error_threshold;
+const char* output_filename;
 
 #define USE_MPFR
 

@@ -35,7 +35,6 @@
 #include "pub_tool_libcbase.h"
 #include "pub_tool_threadstate.h"
 #include "pub_tool_mallocfree.h"
-#include "../shadowop/mathreplace.h"
 
 #include "../../options.h"
 #include "../../helper/debug.h"
@@ -55,7 +54,6 @@ void initValueShadowState(void){
   freedVals = mkStack();
   memEntries = mkStack();
   shadowMemory = VG_(HT_construct)("shadow memory");
-  callToOpInfoMap = VG_(HT_construct)("call map");
   initExprAllocator();
 }
 
@@ -511,9 +509,8 @@ void stack_push_fast(Stack* s, StackNode* item_node){
   s->head = item_node;
 }
 void freeShadowValue(ShadowValue* val){
-  if (val->influences != NULL){
-    VG_(deleteXA)(val->influences);
-    val->influences = NULL;
+  while(val->influences != NULL){
+    (void)lpop(InfluenceList)(&(val->influences));
   }
   disownConcExpr(val->expr);
   stack_push_fast(freedVals, (void*)val);
