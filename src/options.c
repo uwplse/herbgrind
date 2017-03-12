@@ -50,6 +50,7 @@ Bool print_errors_long = False;
 Bool print_expr_updates = False;
 Bool running = True;
 Bool always_on = False;
+Bool output_sexp = False;
 Int longprint_len = 15;
 Int precision = 1000;
 double error_threshold = 5.0;
@@ -72,6 +73,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-expr-updates", print_expr_updates, True) {}
   else if VG_XACT_CLO(arg, "--start-off", running, False) {}
   else if VG_XACT_CLO(arg, "--always-on", always_on, True) {}
+  else if VG_XACT_CLO(arg, "--output-sexp", output_sexp, True) {}
   else if VG_BINT_CLO(arg, "--longprint-len", longprint_len, 1, 1000) {}
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else if VG_DBL_CLO(arg, "--error-threshold", error_threshold) {}
@@ -89,6 +91,8 @@ void hg_print_usage(void){
               "--outfile=name "
               "The name of the file to write out. If no name is "
               "specified, will use <executable-name>.gh.\n"
+              "--output-sexp "
+              "Output in an easy-to-parse s-expression based format.\n"
               );
 }
 void hg_print_debug_usage(void){

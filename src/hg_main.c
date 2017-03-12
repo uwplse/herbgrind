@@ -34,6 +34,7 @@
 #include "instrument/instrument.h"
 #include "runtime/shadowop/mathreplace.h"
 #include "runtime/op-shadowstate/marks.h"
+#include "runtime/op-shadowstate/output.h"
 
 #include "helper/mpfr-valgrind-glue.h"
 
@@ -66,6 +67,7 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
 // This is called after the program exits, for cleanup and such.
 static void hg_fini(Int exitcode){
   finish_instrumentation();
+  writeOutput();
 }
 // This does any initialization that needs to be done after command
 // line processing.

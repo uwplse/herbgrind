@@ -273,6 +273,41 @@ char* symbExprToString(SymbExpr* expr){
   freeVarMap(varMap);
   return buf;
 }
+char* symbExprVarString(SymbExpr* expr){
+  char* buf = NULL;
+  GroupList trimmedGroups =
+    groupsWithoutNonLeaves(expr, expr->branch.groups);
+  int numVars =
+    trimmedGroups->size;
+  tl_assert(numVars <= sizeof(varnames));
+  freeXA(GroupList)(trimmedGroups);
+  switch(numVars){
+  case 0:{
+    char noVars[] = "()";
+    buf = VG_(malloc)("var string", sizeof(noVars));
+  }
+    break;
+  case 1:{
+    int buflen = VG_(strlen)(varnames[0] + 3);
+    buf = VG_(malloc)("var string", sizeof(char) * buflen);
+    VG_(snprintf)(buf, buflen, "(%s)", varnames[0]);
+  }
+    break;
+  default:{
+    int buflen = 2 * numVars + 2;
+    buf = VG_(malloc)("var string", buflen * sizeof(char));
+    tl_assert(VG_(strlen)(varnames[0]) == 1);
+    int count = 0;
+    count += VG_(snprintf)(buf, buflen - count, "(%s ", varnames[0]);
+    for(int i = 0; i < numVars - 1; ++i){
+      count += VG_(snprintf)(buf + count, buflen - count, "%s ", varnames[i]);
+    }
+    VG_(snprintf)(buf + count, buflen - count, "%s)", varnames[numVars - 1]);
+  }
+    break;
+  }
+  return buf;
+}
 int floatPrintLen(double f){
   int wholeDigits = ((int)log10(f));
   if (wholeDigits < 0){

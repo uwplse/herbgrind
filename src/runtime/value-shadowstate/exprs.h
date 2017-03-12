@@ -113,6 +113,7 @@ void ppSymbExpr(SymbExpr* expr);
 
 // Free this when you're done with it.
 char* symbExprToString(SymbExpr* expr);
+char* symbExprVarString(SymbExpr* expr);
 int symbExprPrintLen(SymbExpr* expr, VarMap* varmap,
                      NodePos curPos);
 // Returns the number of bytes written

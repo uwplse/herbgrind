@@ -52,6 +52,7 @@ extern Bool print_errors_long;
 extern Bool print_expr_updates;
 extern Bool running;
 extern Bool always_on;
+extern Bool output_sexp;
 extern Int longprint_len;
 extern Int precision;
 extern double error_threshold;
