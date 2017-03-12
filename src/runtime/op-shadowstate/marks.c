@@ -31,6 +31,7 @@
 #include "../../helper/runtime-util.h"
 #include "../value-shadowstate/shadowval.h"
 #include "../shadowop/error.h"
+#include "../shadowop/influence-op.h"
 #include "pub_tool_libcprint.h"
 
 List_Impl(MarkInfo, MarkList);
@@ -64,18 +65,10 @@ MarkInfo* getMarkInfo(Addr callAddr){
 }
 
 void addInfluencesToMark(MarkInfo* info, InfluenceList influences){
-  for(InfluenceList curNode = influences; curNode != NULL; curNode = curNode->next){
-    addInfluenceToMarkIfNotAlreadyThere(info, curNode->item);
+  for(InfluenceList curNode = influences; curNode != NULL;
+      curNode = curNode->next){
+    dedupAddInfluenceToList(&(info->influences), curNode->item);
   }
-}
-
-void addInfluenceToMarkIfNotAlreadyThere(MarkInfo* info, ShadowOpInfo* influence){
-  for(InfluenceList curNode = info->influences; curNode != NULL; curNode = curNode->next){
-    if (curNode->item == influence){
-      return;
-    }
-  }
-  lpush(InfluenceList)(&(info->influences), influence);
 }
 
 void printMarkInfo(MarkInfo* info){

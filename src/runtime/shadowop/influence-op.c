@@ -37,11 +37,22 @@ void execInfluencesOp(ShadowOpInfo* info,
   for(int i = 0; i < info->exinfo.nargs; ++i){
     for(InfluenceList curNode = args[i]->influences;
         curNode != NULL; curNode = curNode->next){
-      lpush(InfluenceList)(res, curNode->item);
+      dedupAddInfluenceToList(res, curNode->item);
     }
   }
 }
 
 void trackOpAsInfluence(ShadowOpInfo* info, ShadowValue* value){
-  lpush(InfluenceList)(&(value->influences), info);
+  dedupAddInfluenceToList(&(value->influences), info);
+}
+
+void dedupAddInfluenceToList(InfluenceList* influences,
+                             ShadowOpInfo* influence){
+  for(InfluenceList curNode = *influences; curNode != NULL;
+      curNode = curNode->next){
+    if (curNode->item == influence){
+      return;
+    }
+  }
+  lpush(InfluenceList)(influences, influence);
 }

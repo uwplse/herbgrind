@@ -50,7 +50,6 @@ List_H(MarkInfo, MarkList);
 void markImportant(Addr varAddr);
 MarkInfo* getMarkInfo(Addr callAddr);
 void addInfluencesToMark(MarkInfo* info, InfluenceList influences);
-void addInfluenceToMarkIfNotAlreadyThere(MarkInfo* info, ShadowOpInfo* influence);
 void printMarkInfo(MarkInfo* info);
 
 #endif

@@ -35,5 +35,7 @@
 void trackOpAsInfluence(ShadowOpInfo* info, ShadowValue* value);
 void execInfluencesOp(ShadowOpInfo* info,
                       InfluenceList* res, ShadowValue** args);
+void dedupAddInfluenceToList(InfluenceList* influences,
+                             ShadowOpInfo* influence);
 
 #endif
