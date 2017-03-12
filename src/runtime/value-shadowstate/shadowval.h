@@ -7,7 +7,7 @@
    floating point accuracy problems in binary programs and extracting
    problematic expressions.
 
-   Copyright (C) 2016 Alex Sanchez-Stern
+   Copyright (C) 2016-2017Alex Sanchez-Stern
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
