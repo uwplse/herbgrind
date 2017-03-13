@@ -55,7 +55,7 @@
 
 #define MAX_THREADS 16
 
-#define LARGE_PRIME 1973
+#define LARGE_PRIME 104729
 
 typedef struct _shadowMemEntry {
   struct _shadowMemEntry* next;
