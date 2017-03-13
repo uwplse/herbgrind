@@ -103,9 +103,22 @@ void addStoreTempUnshadowed(IRSB* sbOut, int idx);
 void addStoreTempCopy(IRSB* sbOut, IRExpr* original,
                       IRTemp dest, FloatType type);
 
-IRExpr* runGetMem(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc);
-void addSetMem(IRSB* sbOut, IRExpr* guard, int size,
-               IRExpr* memDest, IRExpr* newTemp);
+IRExpr* runGetMemUnknown(IRSB* sbOut, int size, IRExpr* memSrc);
+IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
+                          int size, IRExpr* memSrc);
+IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc);
+void addSetMemNonNull(IRSB* sbOut, int size,
+                      IRExpr* memDest, IRExpr* newTemp);
+void addSetMemG(IRSB* sbOut, IRExpr* guard, int size,
+                IRExpr* memDest, IRExpr* newTemp);
+void addSetMemNull(IRSB* sbOut, int size,
+                   IRExpr* memDest);
+void addSetMemNullG(IRSB* sbOut, IRExpr* guard, int size,
+                    IRExpr* memDest, IRExpr* st);
+void addSetMemUnknown(IRSB* sbOut, int size,
+                      IRExpr* memDest, IRExpr* st);
+void addSetMemUnknownG(IRSB* sbOut, IRExpr* guard, int size,
+                       IRExpr* memDest, IRExpr* st);
 
 IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr);
 IRExpr* mkArrayLookupExpr(IRSB* sbOut,

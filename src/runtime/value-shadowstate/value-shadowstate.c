@@ -41,7 +41,7 @@
 
 ShadowTemp* shadowTemps[MAX_TEMPS];
 ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
-VgHashTable* shadowMemory = NULL;
+ShadowMemEntry* shadowMemTable[LARGE_PRIME];
 
 Stack* freedTemps[MAX_TEMP_SHADOWS];
 Stack* freedVals;
@@ -53,7 +53,6 @@ void initValueShadowState(void){
   }
   freedVals = mkStack();
   memEntries = mkStack();
-  shadowMemory = VG_(HT_construct)("shadow memory");
   initExprAllocator();
 }
 
@@ -436,10 +435,15 @@ VG_REGPARM(3) ShadowTemp* dynamicLoad128(UWord memSrc, UWord bytes1, UWord bytes
   freeShadowTemp(secondHalf);
   return result;
 }
-VG_REGPARM(1) ShadowValue* getMemShadow(UWord memSrc){
-  ShadowMemEntry* entry = VG_(HT_lookup)(shadowMemory, memSrc);
-  if (entry == NULL) return NULL;
-  else return entry->val;
+VG_REGPARM(1) ShadowValue* getMemShadow(Addr64 addr){
+  int key = addr % LARGE_PRIME;
+  for(ShadowMemEntry* node = shadowMemTable[key];
+      node != NULL; node = node->next){
+    if (node->addr == addr){
+      return node->val;
+    }
+  }
+  return NULL;
 }
 VG_REGPARM(3) void setMemShadowTemp(Addr64 memDest,
                                     UWord size,
@@ -461,14 +465,27 @@ VG_REGPARM(3) void setMemShadowTemp(Addr64 memDest,
     }
   }
 }
-void removeMemShadow(UWord addr){
-  ShadowMemEntry* oldEntry = VG_(HT_remove)(shadowMemory, addr);
-  if (oldEntry == NULL) return;
-  if (PRINT_VALUE_MOVES){
-    VG_(printf)("Clearing %lX\n", addr);
+void removeMemShadow(Addr64 addr){
+  int key = addr % LARGE_PRIME;
+  ShadowMemEntry* prevEntry = NULL;
+  for(ShadowMemEntry* node = shadowMemTable[key];
+      node != NULL; node = node->next){
+    if (node->addr == addr){
+      if (prevEntry == NULL){
+        shadowMemTable[key] = node->next;
+      } else {
+        prevEntry->next = node->next;
+      }
+
+      if (PRINT_VALUE_MOVES){
+        VG_(printf)("Clearing %llX\n", addr);
+      }
+      disownShadowValue(node->val);
+      stack_push(memEntries, (void*)node);
+      break;
+    }
+    prevEntry = node;
   }
-  disownShadowValue(oldEntry->val);
-  stack_push(memEntries, (void*)oldEntry);
 }
 void addMemShadow(Addr64 addr, ShadowValue* val){
   ShadowMemEntry* newEntry;
@@ -480,7 +497,10 @@ void addMemShadow(Addr64 addr, ShadowValue* val){
   newEntry->addr = addr;
   newEntry->val = val;
   ownShadowValue(val);
-  VG_(HT_add_node)(shadowMemory, newEntry);
+
+  int key = addr % LARGE_PRIME;
+  newEntry->next = shadowMemTable[key];
+  shadowMemTable[key] = newEntry;
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Setting %llX to %p\n", addr, val);
   }

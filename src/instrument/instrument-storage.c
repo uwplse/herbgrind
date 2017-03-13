@@ -653,14 +653,14 @@ void instrumentLoad(IRSB* sbOut, IRTemp dest,
     } else if (fType == Ft_Unshadowed){
       addStoreTempUnshadowed(sbOut, dest);
     } else if (fType == Ft_Unknown){
-      IRExpr* st = runGetMem(sbOut, mkU1(True), dest_size, addr);
+      IRExpr* st = runGetMemUnknown(sbOut, dest_size, addr);
       addStoreTempUnknown(sbOut, st, dest);
     } else {
-      IRExpr* st = runGetMem(sbOut, mkU1(True), dest_size, addr);
+      IRExpr* st = runGetMemUnknown(sbOut, dest_size, addr);
       addStoreTemp(sbOut, st, type, dest);
     }
   } else {
-    IRExpr* st = runGetMem(sbOut, mkU1(True), dest_size, addr);
+    IRExpr* st = runGetMemUnknown(sbOut, dest_size, addr);
     addStoreTempUnknown(sbOut, st, dest);
   }
 }
@@ -671,7 +671,7 @@ void instrumentLoadG(IRSB* sbOut, IRTemp dest,
     return;
   }
   int dest_size = loadConversionSize(conversion);
-  IRExpr* st = runGetMem(sbOut, guard, dest_size, addr);
+  IRExpr* st = runGetMemUnknownG(sbOut, guard, dest_size, addr);
   IRExpr* stAlt;
   if (altValue->tag == Iex_Const){
     stAlt = mkU64(0);
@@ -686,72 +686,23 @@ void instrumentLoadG(IRSB* sbOut, IRTemp dest,
 void instrumentStore(IRSB* sbOut, IRExpr* addr,
                      IRExpr* data){
   int dest_size = exprSize(sbOut->tyenv, data);
-  if (addr->tag == Iex_Const){
-    tl_assert(addr->Iex.Const.con->tag == Ico_U64);
-    ULong const_addr = addr->Iex.Const.con->Ico.U64;
-    Bool someShadow = memBlockCanHaveShadow(const_addr, dest_size);
-    IRExpr* st;
-    FloatType type;
-    if (data->tag == Iex_RdTmp){
-      int idx = data->Iex.RdTmp.tmp;
-      st = runLoadTemp(sbOut, idx);
-      type = tempType(idx);
-    } else {
-      st=mkU64(0);
-      type = Ft_NonFloat;
-    }
-    if (someShadow){
-      addSetMem(sbOut, mkU1(True), dest_size, addr, st);
-    } else {
-      IRExpr* stExists = runNonZeroCheck64(sbOut, st);
-      addSetMem(sbOut, stExists, dest_size, addr, st);
-    }
-    setMemType(const_addr, type);
+  if (data->tag == Iex_RdTmp){
+    int idx = data->Iex.RdTmp.tmp;
+    IRExpr* st = runLoadTemp(sbOut, idx);
+    addSetMemUnknown(sbOut, dest_size, addr, st);
   } else {
-    IRExpr* st;
-    if (data->tag == Iex_RdTmp){
-      int idx = data->Iex.RdTmp.tmp;
-      st = runLoadTemp(sbOut, idx);
-    } else {
-      st = mkU64(0);
-    }
-    addSetMem(sbOut, mkU1(True), dest_size, addr, st);
+    addSetMemNull(sbOut, dest_size, addr);
   }
 }
 void instrumentStoreG(IRSB* sbOut, IRExpr* addr,
                       IRExpr* guard, IRExpr* data){
   int dest_size = exprSize(sbOut->tyenv, data);
-  if (addr->tag == Iex_Const){
-    tl_assert(addr->Iex.Const.con->tag == Ico_U64);
-    ULong const_addr = addr->Iex.Const.con->Ico.U64;
-    Bool someShadow = memBlockCanHaveShadow(const_addr, dest_size);
-    IRExpr* st;
-    FloatType type;
-    if (data->tag == Iex_RdTmp){
-      int idx = data->Iex.RdTmp.tmp;
-      st = runLoadTemp(sbOut, idx);
-      type = tempType(idx);
-    } else {
-      st=mkU64(0);
-      type = Ft_NonFloat;
-    }
-    if (someShadow){
-      addSetMem(sbOut, guard, dest_size, addr, st);
-    } else {
-      IRExpr* stExists = runNonZeroCheck64(sbOut, st);
-      addSetMem(sbOut, runAnd(sbOut, guard, stExists),
-                dest_size, addr, st);
-    }
-    setMemType(const_addr, type);
+  if (data->tag == Iex_RdTmp){
+    int idx = data->Iex.RdTmp.tmp;
+    IRExpr* st = runLoadTemp(sbOut, idx);
+    addSetMemUnknownG(sbOut, guard, dest_size, addr, st);
   } else {
-    IRExpr* st;
-    if (data->tag == Iex_RdTmp){
-      int idx = data->Iex.RdTmp.tmp;
-      st = runLoadTemp(sbOut, idx);
-    } else {
-      st = mkU64(0);
-    }
-    addSetMem(sbOut, guard, dest_size, addr, st);
+    addSetMemNullG(sbOut, guard, dest_size, addr, mkU64(0));
   }
 }
 void instrumentCAS(IRSB* sbOut,
@@ -996,7 +947,44 @@ void addStoreTempUnshadowed(IRSB* sbOut, int idx){
     VG_(printf)("Setting %d to unshadowed.\n", idx);
   }
 }
-IRExpr* runGetMem(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc){
+IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
+                         int size, IRExpr* memSrc){
+  IRExpr* hasExistingShadow = mkU1(False);
+  for(int i = 0; i < size; ++i){
+    IRExpr* valDest = runBinop(sbOut, Iop_Add64, memSrc, mkU64(i));
+    IRExpr* srcBucket = runMod(sbOut, valDest, mkU32(LARGE_PRIME));
+    IRExpr* srcBucketAddr =
+      runBinop(sbOut, Iop_Add64,
+               mkU64((uintptr_t)shadowMemTable),
+               runBinop(sbOut, Iop_Mul64,
+                        srcBucket,
+                        mkU64(sizeof(ShadowMemEntry*))));
+    IRExpr* memEntry = runLoad64(sbOut, srcBucketAddr);
+    hasExistingShadow = runOr(sbOut, hasExistingShadow,
+                              runNonZeroCheck64(sbOut, memEntry));
+  }
+  return runGetMemG(sbOut,
+                    runAnd(sbOut, guard, hasExistingShadow),
+                    size, memSrc);
+}
+IRExpr* runGetMemUnknown(IRSB* sbOut, int size, IRExpr* memSrc){
+  IRExpr* hasExistingShadow = mkU1(False);
+  for(int i = 0; i < size; ++i){
+    IRExpr* valDest = runBinop(sbOut, Iop_Add64, memSrc, mkU64(i));
+    IRExpr* srcBucket = runMod(sbOut, valDest, mkU32(LARGE_PRIME));
+    IRExpr* srcBucketAddr =
+      runBinop(sbOut, Iop_Add64,
+               mkU64((uintptr_t)shadowMemTable),
+               runBinop(sbOut, Iop_Mul64,
+                        srcBucket,
+                        mkU64(sizeof(ShadowMemEntry*))));
+    IRExpr* memEntry = runLoad64(sbOut, srcBucketAddr);
+    hasExistingShadow = runOr(sbOut, hasExistingShadow,
+                              runNonZeroCheck64(sbOut, memEntry));
+  }
+  return runGetMemG(sbOut, hasExistingShadow, size, memSrc);
+}
+IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc){
   IRTemp result = newIRTemp(sbOut->tyenv, Ity_I64);
   IRDirty* loadDirty;
   switch(size){
@@ -1033,21 +1021,59 @@ IRExpr* runGetMem(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc){
   }
   loadDirty->guard = guard;
   loadDirty->mFx = Ifx_Read;
-  loadDirty->mAddr = mkU64((uintptr_t)&shadowMemory);
-  loadDirty->mSize = sizeof(VgHashTable*);
+  loadDirty->mAddr = mkU64((uintptr_t)shadowMemTable);
+  loadDirty->mSize = sizeof(ShadowMemEntry) * LARGE_PRIME;
   addStmtToIRSB(sbOut, IRStmt_Dirty(loadDirty));
-  return IRExpr_RdTmp(result);
+  return runITE(sbOut, guard, IRExpr_RdTmp(result), mkU64(0));
 }
-void addSetMem(IRSB* sbOut, IRExpr* guard, int size,
-               IRExpr* memDest, IRExpr* newTemp){
+void addSetMemNull(IRSB* sbOut, int size,
+                   IRExpr* memDest){
+  addSetMemNullG(sbOut, mkU1(False), size, memDest, mkU64(0));
+}
+// Triggers if there is something to overwrite, or guard is true.
+void addSetMemNullG(IRSB* sbOut, IRExpr* guard, int size, 
+                    IRExpr* memDest, IRExpr* st){
+  IRExpr* hasExistingShadow = guard;
+  for(int i = 0; i < size; ++i){
+    IRExpr* valDest = runBinop(sbOut, Iop_Add64, memDest, mkU64(i));
+    IRExpr* destBucket = runMod(sbOut, valDest, mkU32(LARGE_PRIME));
+    IRExpr* destBucketAddr =
+      runBinop(sbOut, Iop_Add64,
+               mkU64((uintptr_t)shadowMemTable),
+               runBinop(sbOut, Iop_Mul64,
+                        destBucket,
+                        mkU64(sizeof(ShadowMemEntry*))));
+    IRExpr* memEntry = runLoad64(sbOut, destBucketAddr);
+    hasExistingShadow = runOr(sbOut, hasExistingShadow,
+                              runNonZeroCheck64(sbOut, memEntry));
+  }
+  addSetMemG(sbOut,  hasExistingShadow, size,
+             memDest, st);
+}
+void addSetMemUnknownG(IRSB* sbOut, IRExpr* guard, int size,
+                      IRExpr* memDest, IRExpr* st){
+  addSetMemNullG(sbOut,
+                 runAnd(sbOut, guard, runNonZeroCheck64(sbOut, st)),
+                 size, memDest, st);
+}
+void addSetMemUnknown(IRSB* sbOut, int size,
+                      IRExpr* memDest, IRExpr* st){
+  addSetMemNullG(sbOut, runNonZeroCheck64(sbOut, st), size, memDest, st);
+}
+void addSetMemNonNull(IRSB* sbOut, int size,
+                      IRExpr* memDest, IRExpr* newTemp){
+  addSetMemG(sbOut, mkU1(True), size, memDest, newTemp);
+}
+void addSetMemG(IRSB* sbOut, IRExpr* guard, int size,
+                IRExpr* memDest, IRExpr* newTemp){
   IRDirty* storeDirty =
     unsafeIRDirty_0_N(3, "setMemShadowTemp",
                       VG_(fnptr_to_fnentry)(setMemShadowTemp),
                       mkIRExprVec_3(memDest, mkU64(size), newTemp));
   storeDirty->guard = guard;
   storeDirty->mFx = Ifx_Modify;
-  storeDirty->mAddr = mkU64((uintptr_t)&shadowMemory);
-  storeDirty->mSize = sizeof(VgHashTable*);
+  storeDirty->mAddr = mkU64((uintptr_t)shadowMemTable);
+  storeDirty->mSize = sizeof(ShadowMemEntry) * LARGE_PRIME;
   addStmtToIRSB(sbOut, IRStmt_Dirty(storeDirty));
 }
 IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr){

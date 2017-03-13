@@ -220,4 +220,10 @@ void addPrintStore(IRSB* sbOut, IRExpr* val, const char* format, ...);
 void addPrintStoreAlways(IRSB* sbOut, IRExpr* val, const char* format, ...);
 void addPrintStoreValue(IRSB* sbOut, IRExpr* val, const char* format, ...);
 void addPrintStoreValueF1(IRSB* sbOut, IRExpr* val, const char* format, IRExpr* pval);
+
+#define runMod(sbOut, x, y)                             \
+  runUnop(sbOut, Iop_32Uto64,                           \
+          runUnop(sbOut, Iop_64HIto32,                  \
+                  runBinop(sbOut, Iop_DivModU64to32,    \
+                           x, y)))
 #endif
