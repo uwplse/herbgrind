@@ -283,7 +283,13 @@ GroupList groupsWithoutNonLeaves(SymbExpr* structure, GroupList list){
   for(int i = 0; i < list->size; ++i){
     for(Group curNode = list->data[i]; curNode != NULL;
         curNode = curNode->next){
-      if (symbGraftPosGet(structure, curNode->item)->type == Node_Leaf){
+      SymbExpr* target = symbGraftPosGet(structure, curNode->item);
+      // So the position could possibly be invalid, because of the
+      // fact that expressions share structure, and prunings, but
+      // don't share their equivalence maps, so those might get out of
+      // date if a child expression decides to prune.
+      if (target != NULL && target->type == Node_Leaf){
+        VG_(printf)("It's a leaf! Adding group to groups\n");
         XApush(GroupList)(newGroupList, list->data[i]);
         break;
       }
