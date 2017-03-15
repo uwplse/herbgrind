@@ -256,7 +256,24 @@ void ppSymbExpr(SymbExpr* expr){
   VG_(printf)("%s", stringRep);
   VG_(free)(stringRep);
 }
+void ppSymbExprNoVars(SymbExpr* expr){
+  char* stringRep = symbExprToStringNoVars(expr);
+  VG_(printf)("%s", stringRep);
+  VG_(free)(stringRep);
+}
 
+char* symbExprToStringNoVars(SymbExpr* expr){
+  if (expr->type == Node_Leaf && !(expr->isConst)){
+    int len = VG_(strlen)(varnames[0]);
+    char* buf = VG_(malloc)("expr string", len);
+    VG_(memcpy)(buf, varnames[0], len);
+    return buf;
+  }
+  int len = symbExprNoVarsPrintLen(expr, NULL_POS);
+  char* buf = VG_(malloc)("expr string", len + 1);
+  writeSymbExprToStringNoVars(buf, expr, NULL_POS);
+  return buf;
+}
 char* symbExprToString(SymbExpr* expr){
   if (expr->type == Node_Leaf && !(expr->isConst)){
     int len = VG_(strlen)(varnames[0]);
@@ -314,6 +331,78 @@ int floatPrintLen(double f){
     wholeDigits = 0;
   }
   return wholeDigits + 8;
+}
+int symbExprNoVarsPrintLen(SymbExpr* expr,
+                           NodePos curPos){
+  if (expr->type == Node_Leaf){
+    if (expr->isConst){
+      if (isnan(expr->constVal)){
+        return 3;
+      } else {
+        return floatPrintLen(expr->constVal);
+      }
+    } else {
+      return 1;
+    }
+  } else {
+    int count = 2 + VG_(strlen)(opSym(expr->branch.op));
+    for(int i = 0; i < expr->branch.nargs; ++i){
+      NodePos newPos = appendPos(curPos, i);
+      SymbExpr* childNode = expr->branch.args[i];
+      int childPrintLen =
+        symbExprNoVarsPrintLen(expr->branch.args[i], newPos);
+      if (childNode->type == Node_Leaf ||
+          childNode->branch.op->block_addr !=
+          expr->branch.op->block_addr ||
+          childNode->branch.op->op_addr >=
+          expr->branch.op->op_addr){
+        count += childPrintLen + 3;
+      } else {
+        count += childPrintLen + 1;
+      }
+      freePos(newPos);
+    }
+    return count;
+  }
+}
+int writeSymbExprToStringNoVars(char* buf, SymbExpr* expr,
+                                NodePos curpos){
+  if (expr->type == Node_Leaf){
+    if (expr->isConst){
+      if (isnan(expr->constVal)){
+        return VG_(sprintf)(buf, "NaN");
+      } else {
+        return VG_(sprintf)(buf, "%f", expr->constVal);
+      }
+    } else {
+      return VG_(sprintf)(buf, "_");
+    }
+  } else {
+    int count = VG_(sprintf)(buf, "(%s", opSym(expr->branch.op));
+    for(int i = 0; i < expr->branch.nargs; ++i){
+      count += VG_(sprintf)(buf + count, " ");
+      NodePos newPos = appendPos(curpos, i);
+      SymbExpr* childNode = expr->branch.args[i];
+      if (childNode->type == Node_Leaf ||
+          childNode->branch.op->block_addr !=
+          expr->branch.op->block_addr ||
+          childNode->branch.op->op_addr >=
+          expr->branch.op->op_addr){
+        buf[count++] = '[';
+        count += writeSymbExprToStringNoVars(buf + count,
+                                             expr->branch.args[i],
+                                             newPos);
+        buf[count++] = ']';
+      } else {
+        count += writeSymbExprToStringNoVars(buf + count,
+                                             expr->branch.args[i],
+                                             newPos);
+      }
+      freePos(newPos);
+    }
+    count += VG_(sprintf)(buf + count, ")");
+    return count;
+  }
 }
 int symbExprPrintLen(SymbExpr* expr, VarMap* varmap,
                      NodePos curPos){

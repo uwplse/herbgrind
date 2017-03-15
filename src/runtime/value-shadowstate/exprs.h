@@ -110,15 +110,23 @@ ConcGraft* popConcGraftStack(int count);
 const char* opSym(ShadowOpInfo* op);
 void ppConcExpr(ConcExpr* expr);
 void ppSymbExpr(SymbExpr* expr);
+void ppSymbExprNoVars(SymbExpr* expr);
+
+char* symbExprVarString(SymbExpr* expr);
 
 // Free this when you're done with it.
 char* symbExprToString(SymbExpr* expr);
-char* symbExprVarString(SymbExpr* expr);
 int symbExprPrintLen(SymbExpr* expr, VarMap* varmap,
                      NodePos curPos);
 // Returns the number of bytes written
 int writeSymbExprToString(char* buf, SymbExpr* expr,
                           NodePos curpos, VarMap* varmap);
+
+char* symbExprToStringNoVars(SymbExpr* expr);
+int symbExprNoVarsPrintLen(SymbExpr* expr,
+                           NodePos curPos);
+int writeSymbExprToStringNoVars(char* buf, SymbExpr* expr,
+                                NodePos curpos);
 int floatPrintLen(double f);
 #define MAX_BRANCH_ARGS 3
 #define MAX_EXPR_BLOCK_DEPTH 4
