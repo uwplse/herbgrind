@@ -70,6 +70,13 @@ void generalizeSymbolicExpr(SymbExpr** symbexpr, ConcExpr* cexpr){
       VG_(printf)("\n");
     }
   } else {
+    if (print_expr_updates){
+      VG_(printf)("Merging %p ", *symbexpr);
+      ppSymbExpr(*symbexpr);
+      VG_(printf)(" with %p ", cexpr);
+      ppConcExpr(cexpr);
+      VG_(printf)("\n");
+    }
     generalizeStructure(*symbexpr, cexpr);
     intersectEqualities(*symbexpr, cexpr);
     if (print_expr_updates){
