@@ -145,21 +145,33 @@ void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr){
   }
 }
 
-void intersectEqualities(SymbExpr* symbexpr, ConcExpr* concExpr){
-  tl_assert(symbexpr->type == Node_Branch);
-  for(int i = 0; i < symbexpr->branch.groups->size; i++){
-    Group curGroup = symbexpr->branch.groups->data[i];
+void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
+  tl_assert(symbExpr->type == Node_Branch);
+  for(int i = 0; i < symbExpr->branch.groups->size; i++){
+    Group* curGroup = &(symbExpr->branch.groups->data[i]);
     double canonicalValue = 0.0;
     int canonicalValueSet = 0;
     VgHashTable* splitMap = NULL;
     int splitMapCreated = 0;
     Group prevNode = NULL;
-    for(Group curNode = curGroup; curNode != NULL;
-        curNode = curNode->next){
+    Group curNode = *curGroup;
+    while(curNode != NULL){
       NodePos groupMemberPos = curNode->item;
-      if (!canonicalValueSet){
+
+      if (symbGraftPosGet(symbExpr, groupMemberPos) == NULL){
+        if (prevNode == NULL){
+          lpop(Group)(curGroup);
+          curNode = *curGroup;
+          continue;
+        } else {
+          lpop(Group)(&(prevNode->next));
+          curNode = prevNode->next;
+          continue;
+        }
+      } else if (!canonicalValueSet){
         canonicalValue =
           concGraftPosGet(concExpr, groupMemberPos)->value;
+        canonicalValueSet = True;
       } else {
         double nodeValue =
           concGraftPosGet(concExpr, groupMemberPos)->value;
@@ -177,24 +189,27 @@ void intersectEqualities(SymbExpr* symbexpr, ConcExpr* concExpr){
             Group newGroup = NULL;
             lpush(Group)(&newGroup, groupMemberPos);
             addValEntry(splitMap, nodeValue,
-                        symbexpr->branch.groups->size);
-            XApush(GroupList)(symbexpr->branch.groups, newGroup);
+                        symbExpr->branch.groups->size);
+            XApush(GroupList)(symbExpr->branch.groups, newGroup);
+            curGroup = &(symbExpr->branch.groups->data[i]);
           } else {
-            lpush(Group)(&(symbexpr->branch.groups->data[splitGroup]),
-                         groupMemberPos);
+            lpush(Group)(curGroup, groupMemberPos);
           }
           tl_assert(prevNode != NULL);
           // This should remove the current node from the tree.
           lpop(Group)(&(prevNode->next));
+          curNode = prevNode->next;
+          continue;
         }
       }
       prevNode = curNode;
+      curNode = curNode->next;
     }
     if (splitMapCreated){
       VG_(HT_destruct)(splitMap, VG_(free));
     }
   }
-  symbexpr->branch.groups = pruneSingletonGroups(symbexpr->branch.groups);
+  symbExpr->branch.groups = pruneSingletonGroups(symbExpr->branch.groups);
 }
 
 void ppNodePos(NodePos pos){
@@ -208,14 +223,17 @@ void ppNodePos(NodePos pos){
 void ppEquivGroups(GroupList groups){
   for(int i = 0; i < groups->size; ++i){
     Group g = groups->data[i];
-    VG_(printf)("{ ");
-    for(Group curNode = g; curNode != NULL; curNode = curNode->next){
-      ppNodePos(curNode->item);
-      VG_(printf)(" ");
-    }
-    VG_(printf)("}");
+    ppEquivGroup(g);
     VG_(printf)("\n");
   }
+}
+void ppEquivGroup(Group group){
+  VG_(printf)("{ ");
+  for(Group curNode = group; curNode != NULL; curNode = curNode->next){
+    ppNodePos(curNode->item);
+    VG_(printf)(" ");
+  }
+  VG_(printf)("}");
 }
 
 void getGrouped(GroupList groupList, VgHashTable* valMap,
@@ -258,10 +276,12 @@ GroupList pruneSingletonGroups(GroupList list){
   if (list->size == 0) return list;
   GroupList newGroupList = mkXA(GroupList)();
   for(int i = 0; i < list->size; ++i){
-    if (list->data[i]->next != NULL){
-      XApush(GroupList)(newGroupList, list->data[i]);
-    } else {
-      freePos(list->data[i]->item);
+    if (list->data[i] != NULL){
+      if (list->data[i]->next != NULL){
+        XApush(GroupList)(newGroupList, list->data[i]);
+      } else {
+        freePos(list->data[i]->item);
+      }
     }
   }
   freeXA(GroupList)(list);

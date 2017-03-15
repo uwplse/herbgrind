@@ -64,6 +64,7 @@ VarMap* mkVarMap(GroupList groups);
 int lookupVar(VarMap* map, NodePos pos);
 void freeVarMap(VarMap* map);
 
+void ppEquivGroup(Group group);
 void ppEquivGroups(GroupList groups);
 void addValEntry(VgHashTable* valmap, double val, int groupIdx);
 int lookupVal(VgHashTable* valmap, double val);
