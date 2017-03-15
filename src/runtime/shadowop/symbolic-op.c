@@ -154,69 +154,52 @@ void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr){
 
 void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
   tl_assert(symbExpr->type == Node_Branch);
-  for(int i = 0; i < symbExpr->branch.groups->size; i++){
-    Group* curGroup = &(symbExpr->branch.groups->data[i]);
-    double canonicalValue = 0.0;
-    int canonicalValueSet = 0;
-    VgHashTable* splitMap = NULL;
-    int splitMapCreated = 0;
-    Group prevNode = NULL;
-    Group curNode = *curGroup;
-    while(curNode != NULL){
-      NodePos groupMemberPos = curNode->item;
+  GroupList groups = symbExpr->branch.groups;
+  GroupList newGroups = mkXA(GroupList)();
+  for(int i = 0; i < groups->size; i++){
+    Group curGroup = groups->data[i];
+    Group newCurGroup = NULL;
 
+    double canonicalValue = 0.0;
+    VgHashTable* splitMap = NULL;
+
+    for(Group curNode = curGroup; curNode != NULL;
+        curNode = curNode->next){
+      NodePos groupMemberPos = curNode->item;
+      // If we pruned the node that this position refers to, kill the
+      // position.
       if (symbGraftPosGet(symbExpr, groupMemberPos) == NULL){
-        if (prevNode == NULL){
-          lpop(Group)(curGroup);
-          curNode = *curGroup;
-          continue;
-        } else {
-          lpop(Group)(&(prevNode->next));
-          curNode = prevNode->next;
-          continue;
-        }
-      } else if (!canonicalValueSet){
-        canonicalValue =
-          concGraftPosGet(concExpr, groupMemberPos)->value;
-        canonicalValueSet = True;
+        continue;
+      }
+      double nodeValue = concGraftPosGet(concExpr, groupMemberPos)->value;
+      if (newCurGroup == NULL){
+        canonicalValue = nodeValue;
+        lpush(Group)(&(newCurGroup), groupMemberPos);
       } else {
-        double nodeValue =
-          concGraftPosGet(concExpr, groupMemberPos)->value;
         if (nodeValue != canonicalValue){
-          // This should end up being a pretty uncommon case in the long
-          // run, so we're going to allow it's performance to be a bit
-          // worse to allow us to be more efficient in the common
-          // operations.
-          if (!splitMapCreated){
-            splitMap = VG_(HT_construct)("split map");
-            splitMapCreated = 1;
+          if (splitMap == NULL){
+            splitMap = VG_(HT_construct)("split map.\n");
           }
           int splitGroup = lookupVal(splitMap, nodeValue);
           if (splitGroup == -1){
-            Group newGroup = NULL;
-            lpush(Group)(&newGroup, groupMemberPos);
-            addValEntry(splitMap, nodeValue,
-                        symbExpr->branch.groups->size);
-            XApush(GroupList)(symbExpr->branch.groups, newGroup);
-            curGroup = &(symbExpr->branch.groups->data[i]);
+            Group newSplitGroup = NULL;
+            lpush(Group)(&newSplitGroup, groupMemberPos);
+            addValEntry(splitMap, nodeValue, newGroups->size);
+            XApush(GroupList)(newGroups, newSplitGroup);
           } else {
-            lpush(Group)(curGroup, groupMemberPos);
+            lpush(Group)(&(newGroups->data[splitGroup]), groupMemberPos);
           }
-          tl_assert(prevNode != NULL);
-          // This should remove the current node from the tree.
-          lpop(Group)(&(prevNode->next));
-          curNode = prevNode->next;
-          continue;
+        } else {
+          lpush(Group)(&(newCurGroup), groupMemberPos);
         }
       }
-      prevNode = curNode;
-      curNode = curNode->next;
     }
-    if (splitMapCreated){
+    if (splitMap != NULL){
       VG_(HT_destruct)(splitMap, VG_(free));
     }
+    XApush(GroupList)(newGroups, newCurGroup);
   }
-  symbExpr->branch.groups = pruneSingletonGroups(symbExpr->branch.groups);
+  symbExpr->branch.groups = pruneSingletonGroups(newGroups);
 }
 
 void ppNodePos(NodePos pos){
