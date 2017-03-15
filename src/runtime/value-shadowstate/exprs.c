@@ -245,7 +245,18 @@ void ppConcExpr(ConcExpr* expr){
     VG_(printf)("(%s", opSym(expr->branch.op));
     for (int i = 0; i < expr->branch.nargs; ++i){
       VG_(printf)(" ");
-      ppConcExpr(expr->branch.args[i]);
+      ConcExpr* childNode = expr->branch.args[i];
+      if (childNode->type == Node_Leaf ||
+          childNode->branch.op->block_addr !=
+          expr->branch.op->block_addr ||
+          childNode->branch.op->op_addr >=
+          expr->branch.op->op_addr){
+        VG_(printf)("[");
+        ppConcExpr(expr->branch.args[i]);
+        VG_(printf)("]");
+      } else {
+        ppConcExpr(expr->branch.args[i]);
+      }
     }
     VG_(printf)(")");
   }
@@ -420,8 +431,17 @@ int symbExprPrintLen(SymbExpr* expr, VarMap* varmap,
     int count = 2 + VG_(strlen)(opSym(expr->branch.op));
     for(int i = 0; i < expr->branch.nargs; ++i){
       NodePos newPos = appendPos(curPos, i);
-      count += symbExprPrintLen(expr->branch.args[i], varmap,
-                                newPos) + 1;
+      SymbExpr* childNode = expr->branch.args[i];
+      int childPrintLen = symbExprPrintLen(expr->branch.args[i], varmap, newPos);
+      if (childNode->type == Node_Leaf ||
+          childNode->branch.op->block_addr !=
+          expr->branch.op->block_addr ||
+          childNode->branch.op->op_addr >=
+          expr->branch.op->op_addr){
+        count += childPrintLen + 3;
+      } else {
+        count += childPrintLen + 1;
+      }
       freePos(newPos);
     }
     return count;
@@ -444,10 +464,24 @@ int writeSymbExprToString(char* buf, SymbExpr* expr,
     for(int i = 0; i < expr->branch.nargs; ++i){
       count += VG_(sprintf)(buf + count, " ");
       NodePos newPos = appendPos(curpos, i);
-      count += writeSymbExprToString(buf + count,
-                                     expr->branch.args[i],
-                                     newPos,
-                                     varmap);
+      SymbExpr* childNode = expr->branch.args[i];
+      if (childNode->type == Node_Leaf ||
+          childNode->branch.op->block_addr !=
+          expr->branch.op->block_addr ||
+          childNode->branch.op->op_addr >=
+          expr->branch.op->op_addr){
+        buf[count++] = '[';
+        count += writeSymbExprToString(buf + count,
+                                       expr->branch.args[i],
+                                       newPos,
+                                       varmap);
+        buf[count++] = ']';
+      } else {
+        count += writeSymbExprToString(buf + count,
+                                       expr->branch.args[i],
+                                       newPos,
+                                       varmap);
+      }
       freePos(newPos);
     }
     count += VG_(sprintf)(buf + count, ")");
