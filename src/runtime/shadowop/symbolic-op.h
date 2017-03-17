@@ -56,7 +56,7 @@ void generalizeSymbolicExpr(SymbExpr** symexpr, ConcExpr* cexpr);
 
 void generalizeStructure(SymbExpr* symbexpr, ConcExpr* concExpr);
 void intersectEqualities(SymbExpr* symbexpr, ConcExpr* concExpr);
-GroupList getConcExprEquivGroups(ConcExpr* concExpr);
+GroupList getExprsEquivGroups(ConcExpr* concExpr, SymbExpr* symbExpr);
 GroupList pruneSingletonGroups(GroupList list);
 GroupList groupsWithoutNonLeaves(SymbExpr* structure, GroupList list);
 

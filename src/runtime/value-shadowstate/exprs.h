@@ -109,24 +109,67 @@ ConcGraft* popConcGraftStack(int count);
 
 const char* opSym(ShadowOpInfo* op);
 void ppConcExpr(ConcExpr* expr);
+void ppConcExprNoGrafts(ConcExpr* expr);
 void ppSymbExpr(SymbExpr* expr);
 void ppSymbExprNoVars(SymbExpr* expr);
+void ppSymbExprNoGrafts(SymbExpr* expr);
 
 char* symbExprVarString(SymbExpr* expr);
 
+int symbExprPrintLen_(SymbExpr* expr, VarMap* varMap,
+                      NodePos curPos, int depth,
+                      int (*varLen)(VarMap*, NodePos),
+                      int (*graftPrintLen)(SymbExpr*, VarMap*, NodePos,
+                                           int));
+int writeSymbExprToString_(char* buf, SymbExpr* expr,
+                           NodePos curPos, VarMap* varMap,
+                           int depth,
+                           int (*writeVar)(char*, VarMap*, NodePos),
+                           int (*writeGrafts)(char*,SymbExpr*,
+                                              NodePos,VarMap*,
+                                              int));
+
+const char* getVar(int idx);
+int varLengthLookup(VarMap* map, NodePos pos);
+int symbExprPrintLenGraft(SymbExpr* expr, VarMap* varMap,
+                          NodePos curPos, int depth);
+int writeVarFromMap(char* buf, VarMap* varMap, NodePos curPos);
+int writeGraftsSimple(char* buf, SymbExpr* expr,
+                      NodePos curPos, VarMap* varMap,
+                      int depth);
 // Free this when you're done with it.
 char* symbExprToString(SymbExpr* expr);
 int symbExprPrintLen(SymbExpr* expr, VarMap* varmap,
-                     NodePos curPos);
+                     NodePos curPos, int depth);
 // Returns the number of bytes written
 int writeSymbExprToString(char* buf, SymbExpr* expr,
-                          NodePos curpos, VarMap* varmap);
+                          NodePos curpos, VarMap* varmap,
+                          int depth);
 
 char* symbExprToStringNoVars(SymbExpr* expr);
-int symbExprNoVarsPrintLen(SymbExpr* expr,
-                           NodePos curPos);
-int writeSymbExprToStringNoVars(char* buf, SymbExpr* expr,
-                                NodePos curpos);
+int noVarsVarLength(VarMap* map, NodePos pos);
+int symbExprNoVarsPrintLenGraft(SymbExpr* expr, VarMap* varMap,
+                                NodePos curPos, int depth);
+int symbExprNoVarsPrintLen(SymbExpr* expr);
+int writeVarBlank(char* buf, VarMap* varMap, NodePos curPos);
+int writeGraftsNoVars(char* buf, SymbExpr* expr,
+                      NodePos curPos, VarMap* varMap,
+                      int depth);
+void writeSymbExprToStringNoVars(int buflen, char* buf, SymbExpr* expr);
+
+
+// Without grafts
+char* symbExprToStringNoGrafts(SymbExpr* expr);
+int symbExprGraftPrintLenBlankGrafts(SymbExpr* expr, VarMap* varMap,
+                                     NodePos curPos, int depth);
+int symbExprPrintLenBlankGrafts(SymbExpr* expr, VarMap* varMap,
+                                NodePos curPos, int depth);
+int writeGraftsBlankGrafts(char* buf, SymbExpr* expr,
+                           NodePos curPos, VarMap* varMap, int depth);
+int writeSymbExprToStringBlankGrafts(char* buf, SymbExpr* expr,
+                                     NodePos curPos, VarMap* varMap,
+                                     int depth);
+
 int floatPrintLen(double f);
 #define MAX_BRANCH_ARGS 3
 #define MAX_EXPR_BLOCK_DEPTH 4
