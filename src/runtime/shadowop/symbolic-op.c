@@ -60,7 +60,6 @@ void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
   generalizeSymbolicExpr(&(opinfo->expr), *result);
 }
 
-int numExprs = 0;
 void generalizeSymbolicExpr(SymbExpr** symbexpr, ConcExpr* cexpr){
   if (*symbexpr == NULL){
     *symbexpr = concreteToSymbolic(cexpr);
@@ -267,7 +266,11 @@ void getGrouped(GroupList groupList, VgHashTable* valMap,
           Group newGroup = NULL;
           for(Group childItem = oldGroup; oldGroup != NULL;
               oldGroup = oldGroup->next){
-            lpush(Group)(&newGroup, appendPos(curPos, childItem->item));
+            if (childItem->item->len >
+                MAX_EXPR_IMPRECISE_BLOCK_DEPTH - MAX_EXPR_BLOCK_DEPTH){
+              lpush(Group)(&newGroup,
+                           appendPos(curPos, childItem->item));
+            }
           }
           XApush(GroupList)(groupList, newGroup);
         }

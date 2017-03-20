@@ -376,7 +376,8 @@ VG_REGPARM(2) ShadowTemp* dynamicLoad64(UWord memSrc, UWord memBytes){
     return temp;
   }
 }
-VG_REGPARM(3) ShadowTemp* dynamicLoad128(UWord memSrc, UWord bytes1, UWord bytes2){
+VG_REGPARM(3) ShadowTemp* dynamicLoad128(UWord memSrc,
+                                         UWord bytes1, UWord bytes2){
   ShadowTemp* firstHalf = dynamicLoad64(memSrc, bytes1);
   ShadowTemp* secondHalf = dynamicLoad64(memSrc + sizeof(double), bytes2);
   if (firstHalf == NULL && secondHalf == NULL){
