@@ -137,7 +137,7 @@ int graftPointSymb(SymbExpr* parent, SymbExpr* child){
       T local_acc = acc;                                                \
       local_acc = pre_f(local_acc, expr, pos, map, depth, isGraft);     \
       for(int i = 0; i < expr->branch.nargs; ++i){                      \
-        NodePos newPos = appendPos(pos, i);                             \
+        NodePos newPos = rconsPos(pos, i);                              \
         SymbExpr* childNode = expr->branch.args[i];                     \
         int linkIsGraft = graftPointSymb(expr, childNode);              \
         if (depth < MAX_FOLD_DEPTH){                                    \
@@ -153,7 +153,6 @@ int graftPointSymb(SymbExpr* parent, SymbExpr* child){
                              map, depth + 1,                            \
                              linkIsGraft);                              \
         }                                                               \
-        freePos(newPos);                                                \
       }                                                                 \
       return post_f(local_acc, expr, pos, map, depth, isGraft);         \
     }                                                                   \
@@ -165,7 +164,7 @@ T foldExpr_##N(T initial, SymbExpr* expr,                               \
                            VarMap*, int, int)){                         \
                                                                         \
   return foldExpr_##N##_                                                \
-    (initial, expr, NULL_POS,                                           \
+    (initial, expr, null_pos,                                           \
      mkVarMap(expr->type == Node_Branch ?                               \
               groupsWithoutNonLeaves(expr, expr->branch.groups) :        \
               mkXA(GroupList)()),                                       \
@@ -201,7 +200,7 @@ T foldId_##N(T v, SymbExpr* e, NodePos p,                               \
       T local_acc = acc;                                                \
       local_acc = pre_f(local_acc, expr, pos, map, depth, 0);           \
       for(int i = 0; i < expr->branch.nargs; ++i){                      \
-        NodePos newPos = appendPos(pos, i);                             \
+        NodePos newPos = rconsPos(pos, i);                              \
         SymbExpr* childNode = expr->branch.args[i];                     \
         int linkIsGraft = graftPointSymb(expr, childNode);              \
         if (depth < MAX_FOLD_DEPTH && !linkIsGraft){                    \
@@ -217,7 +216,6 @@ T foldId_##N(T v, SymbExpr* e, NodePos p,                               \
                              map, depth + 1,                            \
                              0);                                        \
         }                                                               \
-        freePos(newPos);                                                \
       }                                                                 \
       return post_f(local_acc, expr, pos, map, depth, 0);               \
     }                                                                   \
@@ -229,7 +227,7 @@ T foldId_##N(T v, SymbExpr* e, NodePos p,                               \
                               VarMap*, int, int)){                      \
                                                                         \
     return foldBlock_##N##_                                             \
-      (initial, expr, NULL_POS,                                         \
+      (initial, expr, null_pos,                                         \
        mkVarMap(expr->type == Node_Branch ?                             \
                 groupsWithoutNonLeaves(expr, expr->branch.groups) :     \
                 mkXA(GroupList)()),                                     \
@@ -267,6 +265,7 @@ void initExprAllocator(void){
     branchCExprs[i] = mkStack();
   }
   extraVars = mkXA(VarList)();
+  initializePositionTree();
 }
 void pushConcGraftStack(ConcGraft* graft, int count){
   while(concGraftStacks->size < count){
@@ -503,6 +502,11 @@ void ppSymbExprNoGrafts(SymbExpr* expr){
   VG_(printf)("%s", stringRep);
   VG_(free)(stringRep);
 }
+void ppSymbExprMarkSources(SymbExpr* expr){
+  char* stringRep = symbExprToStringMarkSources(expr);
+  VG_(printf)("%s", stringRep);
+  VG_(free)(stringRep);
+}
 
 BBuf* mkBBuf(int bound, char* buf);
 BBuf* mkBBuf(int bound, char* buf){
@@ -580,7 +584,6 @@ char* symbExprToStringNoVars(SymbExpr* expr){
                }
              }),
      foldId(int));
-  VG_(printf)("Allocated %d bytes. (3)\n", expr_len + 1);
   char* buf = VG_(malloc)("expr string", expr_len + 1);
   VG_(free)(foldExpr(BBuf)
             (mkBBuf(expr_len + 1, buf), expr,
@@ -667,7 +670,6 @@ char* symbExprToString(SymbExpr* expr){
                }
              }),
      foldId(int));
-  VG_(printf)("Allocated %d bytes. (2)\n", expr_len + 1);
   char* buf = VG_(malloc)("expr string", expr_len + 1);
   VG_(free)(foldExpr(BBuf)
             (mkBBuf(expr_len + 1, buf), expr,
@@ -692,6 +694,97 @@ char* symbExprToString(SymbExpr* expr){
                          return acc;
                        } else {
                          printBBuf(acc, " (%s",
+                                   opSym(curExpr->branch.op));
+                         return acc;
+                       }
+                     }),
+             lambda (BBuf*, (BBuf* acc, SymbExpr* curExpr,
+                             NodePos curpos, VarMap* varMap,
+                             int depth, int isGraft) {
+                       if (curExpr->type == Node_Leaf){
+                         return acc;
+                       } else if (depth > MAX_FOLD_DEPTH){
+                         return acc;
+                       } else if (isGraft) {
+                         printBBuf(acc, ")]");
+                         return acc;
+                       } else {
+                         printBBuf(acc, ")");
+                         return acc;
+                       }
+                     })));
+  return buf;
+}
+char* symbExprToStringMarkSources(SymbExpr* expr){
+  if (expr->type == Node_Leaf && !(expr->isConst)){
+    int len = VG_(strlen)(varnames[0]);
+    char* buf = VG_(malloc)("expr string", len);
+    VG_(memcpy)(buf, varnames[0], len);
+    return buf;
+  }
+  int expr_len = foldExpr(int)
+    (0, expr,
+     lambda (int, (int acc, SymbExpr* curExpr,
+                   NodePos curPos, VarMap* varMap,
+                   int depth, int isGraft) {
+               if (curExpr->type == Node_Leaf){
+                 if (curExpr->isConst){
+                   int len = symbExprConstPrintLen(curExpr)
+                     + 2 // brackets
+                     + 1;// space
+                   return acc + len;
+                 } else {
+                   int len =
+                     VG_(strlen)(getVar(lookupVar(varMap, curPos)))
+                     + 2 // brackets
+                     + 1;// space
+                   return acc + len;
+                 }
+               } else if (depth > MAX_FOLD_DEPTH){
+                 return acc
+                   + 2; // "* "
+               } else if (isGraft) {
+                 int len = 13
+                   + VG_(strlen)(opSym(curExpr->branch.op))
+                   + 2 // brackets
+                   + 2 // parenthesis
+                   + 1;// space
+                 return acc + len;
+               } else {
+                 int len = 13
+                   + VG_(strlen)(opSym(curExpr->branch.op))
+                   + 2 // parenthesis
+                   + 1;// space
+                 return acc + len;
+               }
+             }),
+     foldId(int));
+  char* buf = VG_(malloc)("expr string", expr_len + 1);
+  VG_(free)(foldExpr(BBuf)
+            (mkBBuf(expr_len + 1, buf), expr,
+             lambda (BBuf*, (BBuf* acc, SymbExpr* curExpr,
+                             NodePos curPos, VarMap* varMap,
+                             int depth, int isGraft) {
+                       if (curExpr->type == Node_Leaf){
+                         if (curExpr->isConst){
+                           printBBuf(acc, " [%f]", curExpr->constVal);
+                           return acc;
+                         } else {
+                           printBBuf(acc, " [%s]",
+                                     getVar(lookupVar(varMap, curPos)));
+                           return acc;
+                         }
+                       } else if (depth > MAX_FOLD_DEPTH){
+                         printBBuf(acc, " *");
+                         return acc;
+                       } else if (isGraft) {
+                         printBBuf(acc, " {%lX}[(%s",
+                                   curExpr->branch.op->op_addr,
+                                   opSym(curExpr->branch.op));
+                         return acc;
+                       } else {
+                         printBBuf(acc, " {%lX}(%s",
+                                   curExpr->branch.op->op_addr,
                                    opSym(curExpr->branch.op));
                          return acc;
                        }
@@ -751,13 +844,12 @@ char* symbExprToStringNoGrafts(SymbExpr* expr){
                  return acc + len;
                } else {
                  int len = VG_(strlen)(opSym(curExpr->branch.op))
-                  + 2 // parenthesis
+                   + 2 // parenthesis
                    + 1;// space
                  return acc + len;
                }
              }),
      foldId(int));
-  VG_(printf)("Allocated %d bytes.\n", expr_len + 1);
   char* buf = VG_(malloc)("expr string", expr_len + 1);
   VG_(free)(foldBlock(BBuf)
             (mkBBuf(expr_len + 1, buf), expr,

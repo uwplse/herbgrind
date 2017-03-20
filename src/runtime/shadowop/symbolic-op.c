@@ -202,14 +202,6 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
   symbExpr->branch.groups = pruneSingletonGroups(newGroups);
 }
 
-void ppNodePos(NodePos pos){
-  VG_(printf)("[");
-  for(int i = 0; i < pos.len; ++i){
-    VG_(printf)(" %d", (int)pos.data[i]);
-  }
-  VG_(printf)(" ]");
-}
-
 void ppEquivGroups(GroupList groups){
   for(int i = 0; i < groups->size; ++i){
     Group g = groups->data[i];
@@ -232,31 +224,16 @@ void getGrouped(GroupList groupList, VgHashTable* valMap,
 void getGrouped(GroupList groupList, VgHashTable* valMap,
                 ConcExpr* concExpr, SymbExpr* symbExpr,
                 NodePos curPos, int maxDepth){
-  tl_assert(groupList);
-  tl_assert(concExpr->type == Node_Branch);
-  tl_assert(symbExpr->type == Node_Branch);
-  tl_assert(concExpr->branch.op == symbExpr->branch.op);
-  if (concExpr->ngrafts != symbExpr->ngrafts){
-    VG_(printf)("Symbolic block at %lX: ",
-                symbExpr->branch.op->block_addr);
-    ppSymbExprNoGrafts(symbExpr);
-    VG_(printf)("\n"
-                "Concrete block at %lX: ",
-                concExpr->branch.op->block_addr);
-    ppConcExprNoGrafts(concExpr);
-    VG_(printf)("\n");
-    tl_assert2(concExpr->ngrafts == symbExpr->ngrafts,
-               "concrete expression has %d grafts, "
-               "but symbolic expression has %d\n",
-               concExpr->ngrafts, symbExpr->ngrafts);
-  }
+  tl_assert2(concExpr->ngrafts == symbExpr->ngrafts,
+             "concrete expression has %d grafts, "
+             "but symbolic expression has %d\n",
+             concExpr->ngrafts, symbExpr->ngrafts);
   for(int i = 0; i < concExpr->ngrafts; ++i){
-    tl_assert(groupList);
     ConcGraft curGraft = concExpr->grafts[i];
     SymbGraft symbGraft = symbExpr->grafts[i];
     ConcExpr* curNode = curGraft.parent;
     SymbExpr* symbNode = symbGraft.parent;
-    NodePos graftPos = appendPos(curPos, i);
+    NodePos graftPos = rconsPos(curPos, i);
 
     int existingEntry =
       lookupVal(valMap, concGraftChild(curGraft)->value);
@@ -278,12 +255,23 @@ void getGrouped(GroupList groupList, VgHashTable* valMap,
         symbNode->type == Node_Branch &&
         curChild->type == Node_Branch &&
         symbChild->type == Node_Branch &&
-        curChild->branch.op == symbChild->branch.op &&
-        maxDepth > 0){
-      getGrouped(groupList, valMap,
-                 curNode->branch.args[curGraft.childIndex],
-                 symbNode->branch.args[curGraft.childIndex],
-                 graftPos, maxDepth - 1);
+        curChild->branch.op == symbChild->branch.op){
+      if (maxDepth > 0){
+        getGrouped(groupList, valMap,
+                   curNode->branch.args[curGraft.childIndex],
+                   symbNode->branch.args[curGraft.childIndex],
+                   graftPos, maxDepth - 1);
+      } else {
+        for(int j = 0; j < symbChild->branch.groups->size; ++j){
+          Group oldGroup = symbChild->branch.groups->data[j];
+          Group newGroup = NULL;
+          for(Group childItem = oldGroup; oldGroup != NULL;
+              oldGroup = oldGroup->next){
+            lpush(Group)(&newGroup, appendPos(curPos, childItem->item));
+          }
+          XApush(GroupList)(groupList, newGroup);
+        }
+      }
     }
   }
 }
@@ -295,8 +283,6 @@ GroupList pruneSingletonGroups(GroupList list){
     if (list->data[i] != NULL){
       if (list->data[i]->next != NULL){
         XApush(GroupList)(newGroupList, list->data[i]);
-      } else {
-        freePos(list->data[i]->item);
       }
     }
   }
@@ -337,7 +323,7 @@ GroupList getExprsEquivGroups(ConcExpr* concExpr, SymbExpr* symbExpr){
   GroupList groupList = mkXA(GroupList)();
   VgHashTable* valMap = VG_(HT_construct)("val map");
   getGrouped(groupList, valMap, concExpr, symbExpr,
-             NULL_POS, MAX_EXPR_BLOCK_DEPTH);
+             null_pos, MAX_EXPR_BLOCK_DEPTH);
   VG_(HT_destruct)(valMap, VG_(free));
   GroupList prunedGroups = pruneSingletonGroups(groupList);
   return prunedGroups;
@@ -370,7 +356,7 @@ int lookupVar(VarMap* map, NodePos pos){
     VG_(HT_gen_lookup)(map->existingEntries, &key, cmp_position);
   if (entry == NULL){
     entry = VG_(malloc)("var map entry", sizeof(VarMapEntry));
-    entry->position = copyPos(pos);
+    entry->position = pos;
     entry->positionHash = key.positionHash;
     entry->varIdx = map->nextVarIdx;
     VG_(HT_add_node)(map->existingEntries, entry);
@@ -392,66 +378,43 @@ void freeVarMap(VarMap* map){
 
 ConcExpr* concGraftPosGet(ConcExpr* expr, NodePos pos){
   ConcExpr* curExpr = expr;
-  for(int i = 0; i < pos.len; ++i){
+  for(int i = 0; i < pos->len; ++i){
     if (curExpr->type == Node_Leaf){
       return NULL;
     }
-    if (curExpr->ngrafts <= pos.data[i]){
+    if (curExpr->ngrafts <= pos->data[i]){
       return NULL;
     }
-    ConcGraft curGraft = curExpr->grafts[pos.data[i]];
+    ConcGraft curGraft = curExpr->grafts[pos->data[i]];
     curExpr = curGraft.parent->branch.args[curGraft.childIndex];
   }
   return curExpr;
 }
 SymbExpr* symbGraftPosGet(SymbExpr* expr, NodePos pos){
   SymbExpr* curExpr = expr;
-  for(int i = 0; i < pos.len; ++i){
+  for(int i = 0; i < pos->len; ++i){
     if (curExpr->type == Node_Leaf){
       return NULL;
     }
-    if (curExpr->ngrafts <= pos.data[i]){
+    if (curExpr->ngrafts <= pos->data[i]){
       return NULL;
     }
-    SymbGraft curGraft = curExpr->grafts[pos.data[i]];
+    SymbGraft curGraft = curExpr->grafts[pos->data[i]];
     curExpr = curGraft.parent->branch.args[curGraft.childIndex];
   }
   return curExpr;
 }
-UWord hashPosition(NodePos node){
-  UWord hash = 0;
-  for(int i = 0; i < node.len; ++i){
-    hash = 31 * hash + node.data[i] + 1;
-  }
-  return hash;
-}
+
 Word cmp_position(const void* node1, const void* node2){
   const VarMapEntry* entry1 = (const VarMapEntry*)node1;
   const VarMapEntry* entry2 = (const VarMapEntry*)node2;
-  if (entry1->position.len != entry2->position.len){
+  if (entry1->position->len != entry2->position->len){
     return 1;
   }
-  for(SizeT i = 0; i < entry1->position.len; ++i){
-    if (entry1->position.data[i] != entry2->position.data[i]){
+  for(SizeT i = 0; i < entry1->position->len; ++i){
+    if (entry1->position->data[i] != entry2->position->data[i]){
       return 1;
     }
   }
   return 0;
-}
-NodePos appendPos(NodePos orig, unsigned char argIdx){
-  NodePos newPos;
-  newPos.len = orig.len + 1;
-  newPos.data = VG_(malloc)("pos data", newPos.len * sizeof(unsigned char));
-  VG_(memcpy)(newPos.data, orig.data, orig.len * sizeof(unsigned char));
-  newPos.data[newPos.len - 1] = argIdx;
-  return newPos;
-}
-void freePos(NodePos pos){
-  VG_(free)(pos.data);
-}
-NodePos copyPos(NodePos pos){
-  NodePos new = {.len = pos.len};
-  new.data = VG_(malloc)("pos data", pos.len * sizeof(unsigned char));
-  VG_(memcpy)(new.data, pos.data, pos.len * sizeof(unsigned char));
-  return new;
 }

@@ -31,11 +31,12 @@
 #define _EXPRS_H
 
 #include "exprs.hh"
+#include "pos-tree.h"
+
+#include "../op-shadowstate/shadowop-info.h"
 
 #include "../../helper/list.h"
 #include "../../helper/xarray.h"
-
-#include "../op-shadowstate/shadowop-info.h"
 
 #include "pub_tool_basics.h"
 #include "pub_tool_hashtable.h"
@@ -44,11 +45,6 @@ typedef enum {
   Node_Branch,
   Node_Leaf
 } NodeType;
-
-typedef struct {
-  unsigned char* data;
-  int len;
-} NodePos;
 
 typedef struct _ConcGraft {
   struct _Graft* next;
@@ -113,6 +109,7 @@ void ppConcExprNoGrafts(ConcExpr* expr);
 void ppSymbExpr(SymbExpr* expr);
 void ppSymbExprNoVars(SymbExpr* expr);
 void ppSymbExprNoGrafts(SymbExpr* expr);
+void ppSymbExprMarkSources(SymbExpr* expr);
 
 char* symbExprVarString(SymbExpr* expr);
 
@@ -169,8 +166,9 @@ int writeGraftsBlankGrafts(char* buf, SymbExpr* expr,
 int writeSymbExprToStringBlankGrafts(char* buf, SymbExpr* expr,
                                      NodePos curPos, VarMap* varMap,
                                      int depth);
+char* symbExprToStringMarkSources(SymbExpr* expr);
 
 int floatPrintLen(double f);
 #define MAX_BRANCH_ARGS 3
-#define MAX_EXPR_BLOCK_DEPTH 4
+#define MAX_EXPR_BLOCK_DEPTH 10
 #endif

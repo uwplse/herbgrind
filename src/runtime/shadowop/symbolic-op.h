@@ -31,8 +31,9 @@
 #define _SYMBOLIC_OP_H
 
 #include "../value-shadowstate/exprs.h"
-#include "../op-shadowstate/shadowop-info.h"
 #include "../value-shadowstate/shadowval.h"
+#include "../value-shadowstate/pos-tree.h"
+#include "../op-shadowstate/shadowop-info.h"
 
 #include "pub_tool_basics.h"
 #include "pub_tool_hashtable.h"
@@ -51,7 +52,8 @@ typedef struct _valMapEntry {
   UWord groupIdx;
 } ValMapEntry;
 
-void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result, Real real, ShadowValue** args);
+void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
+                    Real real, ShadowValue** args);
 void generalizeSymbolicExpr(SymbExpr** symexpr, ConcExpr* cexpr);
 
 void generalizeStructure(SymbExpr* symbexpr, ConcExpr* concExpr);
@@ -73,12 +75,5 @@ Word cmp_value(const void* node1, const void* node2);
 
 ConcExpr* concGraftPosGet(ConcExpr* expr, NodePos pos);
 SymbExpr* symbGraftPosGet(SymbExpr* expr, NodePos pos);
-UWord hashPosition(NodePos node);
 Word cmp_position(const void* node1, const void* node2);
-NodePos appendPos(NodePos orig, unsigned char argIdx);
-void freePos(NodePos pos);
-NodePos copyPos(NodePos pos);
-void ppNodePos(NodePos pos);
-#define NULL_POS (NodePos){.len = 0, .data = NULL}
-
 #endif
