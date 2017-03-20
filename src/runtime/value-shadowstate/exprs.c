@@ -63,6 +63,7 @@ Xarray_Impl(Group, GroupList);
 // This is unfortunate...
 inline
 int graftPointConc(ConcExpr* parent, ConcExpr* child){
+  return 1;
   ShadowOpInfo* childOp = child->branch.op;
   ShadowOpInfo* parentOp = parent->branch.op;
   return child->type == Node_Leaf ||
@@ -71,6 +72,7 @@ int graftPointConc(ConcExpr* parent, ConcExpr* child){
 }
 inline
 int graftPointSymb(SymbExpr* parent, SymbExpr* child){
+  return 1;
   ShadowOpInfo* childOp = child->branch.op;
   ShadowOpInfo* parentOp = parent->branch.op;
   return child->type == Node_Leaf ||
