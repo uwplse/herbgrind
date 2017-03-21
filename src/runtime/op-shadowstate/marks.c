@@ -43,6 +43,7 @@ void markImportant(Addr varAddr){
   MarkInfo* info = getMarkInfo(callAddr);
   tl_assert(info != NULL);
   ShadowValue* val = getMemShadow(varAddr);
+  if (val == NULL) return;
   addInfluencesToMark(info, val->influences);
   if (print_errors || print_errors_long){
     printMarkInfo(info);
