@@ -60,6 +60,7 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
     shadowArgs[i] = getMemShadow((UWord)&(args[i]));
     if (shadowArgs[i] == NULL){
       shadowArgs[i] = mkShadowValue(op_precision, args[i]);
+      addMemShadow((UWord)&(args[i]), shadowArgs[i]);
     }
   }
   ShadowValue* shadowResult = runWrappedShadowOp(type, shadowArgs);
@@ -69,8 +70,8 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
 
   Addr callAddr = getCallAddr();
   ShadowOpInfo* info = getWrappedOpInfo(callAddr, type, nargs);
-  execSymbolicOp(info, &(shadowResult->expr),
-                 shadowResult->real, shadowArgs);
+  /* execSymbolicOp(info, &(shadowResult->expr), */
+  /*                shadowResult->real, shadowArgs); */
   execLocalOp(info, shadowResult->real, shadowResult, shadowArgs);
   execInfluencesOp(info, &(shadowResult->influences), shadowArgs);
   if (print_errors_long || print_errors){
