@@ -41,12 +41,10 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                           Addr curAddr, Addr blockAddr,
                           IRTemp dest);
 
-IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
-                  FloatType type, int num_vals);
 IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
-                    Addr curAddr, Addr blockAddr,
-                    IRExpr** args, int nargs,
-                    IRTemp dest);
+                    Addr curAddr, Addr block_addr,
+                    int nargs, IRExpr** argsExprs,
+                    IRExpr* result);
 ShadowOpInfo* getSemanticOpInfo(Addr callAddr, Addr block_addr, IROp op_code, int nargs);
 Word cmp_sem_entry_by_code(const void* node1, const void* node2);
 #endif

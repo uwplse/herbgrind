@@ -66,6 +66,7 @@ typedef struct _ShadowOpInfo {
   ErrorAggregate local_eagg;
   SymbExpr* expr;
   ExtraInfo exinfo;
+  int argTemps[4];
 } ShadowOpInfo;
 
 typedef struct _mrOpInfoEntry {

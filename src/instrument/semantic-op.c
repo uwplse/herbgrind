@@ -59,45 +59,39 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
     addPrintOp(op_code);
     addPrint("\n");
   }
-  IRExpr* args[4];
-  for(int i = 0; i < nargs; ++i){
-    tl_assert(isFloatType(typeOfIRExpr(sbOut->tyenv, argExprs[i])));
-    args[i] =
-      runGetArg(sbOut, argExprs[i],
-                argPrecision(op_code), numChannelsIn(op_code));
-  }
-
-  IRExpr* shadowOutput =
-    runShadowOp(sbOut, op_code, curAddr, blockAddr,
-                args, nargs, dest);
-  if (print_temp_moves){
-    addPrint3("Putting result of op, %p, in %d", shadowOutput, mkU64(dest));
-    addPrint2(" (with %d values)\n", mkU64(numChannelsOut(op_code)));
-  }
+  IRExpr* shadowOutput = runShadowOp(sbOut, op_code,
+                                     curAddr, blockAddr,
+                                     nargs, argExprs,
+                                     IRExpr_RdTmp(dest));
   addStoreTemp(sbOut, shadowOutput, argPrecision(op_code), dest);
-
-  for(int i = 0; i < nargs; ++i){
-    if (!canStoreShadow(sbOut->tyenv, argExprs[i])){
-      addDisownNonNull(sbOut, args[i], numChannelsIn(op_code));
-    }
-  }
 }
 
 IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
                     Addr curAddr, Addr block_addr,
-                    IRExpr** args, int nargs,
-                    IRTemp dest){
+                    int nargs, IRExpr** argExprs,
+                    IRExpr* result){
   ShadowOpInfo* info = mkShadowOpInfo(op_code, curAddr,
                                       block_addr, nargs);
   for(int i = 0; i < nargs; ++i){
-    addStoreC(sbOut, args[i], (&shadowArgs[i]));
+    addStoreC(sbOut, argExprs[i],
+              (uintptr_t)
+              (info->exinfo.argPrecision == Ft_Single ?
+               ((void*)computedArgs.argValuesF[i]) :
+               ((void*)computedArgs.argValues[i])));
+    if (argExprs[i]->tag == Iex_RdTmp){
+      info->argTemps[i] = argExprs[i]->Iex.RdTmp.tmp;
+      cleanupAtEndOfBlock(sbOut, argExprs[i]->Iex.RdTmp.tmp);
+    } else {
+      info->argTemps[i] = -1;
+    }
   }
-  addStoreC(sbOut, IRExpr_RdTmp(dest), &computedResult);
-  tl_assert(info->op_code < Iop_LAST);
-  return runPureCCall64_2(sbOut,
-                          executeShadowOp,
-                          mkU64((uintptr_t)info),
-                          mkU64((uintptr_t)shadowArgs));
+  addStoreC(sbOut, result, &computedResult);
+  if (result->tag == Iex_RdTmp){
+    cleanupAtEndOfBlock(sbOut, result->Iex.RdTmp.tmp);
+  }
+  return runPureCCall64(sbOut,
+                        executeShadowOp,
+                        mkU64((uintptr_t)info));
 }
 
 ShadowOpInfo* getSemanticOpInfo(Addr callAddr, Addr block_addr, IROp op_code, int nargs){
@@ -115,44 +109,6 @@ ShadowOpInfo* getSemanticOpInfo(Addr callAddr, Addr block_addr, IROp op_code, in
     VG_(HT_add_node)(mathreplaceOpInfoMap, entry);
   }
   return entry->info;
-}
-
-IRExpr* runGetArg(IRSB* sbOut, IRExpr* argExpr,
-                  FloatType type, int num_vals){
-  tl_assert2(canBeFloat(sbOut->tyenv, argExpr),
-             "Temp %d can't hold a float, "
-             "but we're using it as an argument!\n",
-             argExpr->Iex.RdTmp.tmp);
-  if (!canHaveShadow(sbOut->tyenv, argExpr)) {
-    IRExpr* result = runMakeInput(sbOut, argExpr, type, num_vals);
-    if (print_temp_moves){
-      addPrint3("Making temp %p for non-shadowed (with %d values).\n", result, mkU64(num_vals));
-    }
-    return result;
-  } else {
-    IRExpr* loaded =
-      runLoadTemp(sbOut, argExpr->Iex.RdTmp.tmp);
-    if (hasStaticShadow(argExpr)){
-      return loaded;
-    } else {
-      IRExpr* shouldMake = runZeroCheck64(sbOut, loaded);
-      IRExpr* freshArg =
-        runMakeInputG(sbOut, shouldMake, argExpr, type, num_vals);
-
-      IRExpr* result = runITE(sbOut, shouldMake, freshArg, loaded);
-      IRExpr* shouldntMake = runUnop(sbOut, Iop_Not1, shouldMake);
-      if (print_temp_moves){
-        addPrintG3(shouldMake, "Making %p in %d",
-                   freshArg, mkU64(argExpr->Iex.RdTmp.tmp));
-        addPrintG2(shouldMake, " with %d values\n",
-                   mkU64(num_vals));
-        addPrintG3(shouldntMake, "Loaded %p from %d\n",
-                   loaded, mkU64(argExpr->Iex.RdTmp.tmp));
-      }
-      addNumValsAssertG(sbOut, shouldntMake, "loaded2", result, num_vals);
-      return result;
-    }
-  }
 }
 
 Word cmp_sem_entry_by_code(const void* node1, const void* node2){

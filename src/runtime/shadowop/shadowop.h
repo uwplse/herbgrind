@@ -46,10 +46,7 @@ union {
   double d[4];
 } computedResult;
 
-ShadowValue* shadowArgs[4];
-
-VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
-                                          ShadowTemp** args);
+VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo);
 ShadowValue* executeChannelShadowOp(int nargs,
                                     FloatType precision,
                                     ShadowOpInfo* opinfo,

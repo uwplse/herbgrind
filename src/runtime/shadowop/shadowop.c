@@ -37,13 +37,32 @@
 #include "local-op.h"
 #include "influence-op.h"
 
-VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
-                                          ShadowTemp** args){
+VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo){
   tl_assert(opInfo->op_code < Iop_LAST);
   ShadowTemp* result = mkShadowTemp(opInfo->exinfo.numChannels);
   if (print_temp_moves){
     VG_(printf)("Making %p for result of shadow op.\n",
                 result);
+  }
+  ShadowTemp* args[4];
+  for(int i = 0; i < opInfo->exinfo.nargs; ++i){
+    if (opInfo->argTemps[i] == -1 ||
+        shadowTemps[opInfo->argTemps[i]] == NULL){
+      args[i] = mkShadowTemp(opInfo->exinfo.numChannels);
+      for(int j = 0; j < opInfo->exinfo.numChannels; j++){
+        args[i]->values[j] =
+          mkShadowValue(opInfo->exinfo.argPrecision,
+                        opInfo->exinfo.argPrecision == Ft_Double ?
+                        computedArgs.argValues[i][j] :
+                        computedArgs.argValuesF[i][j]);
+      }
+      if (opInfo->argTemps[i] != -1){
+        shadowTemps[opInfo->argTemps[i]] = args[i];
+      }
+    } else {
+      args[i] = shadowTemps[opInfo->argTemps[i]];
+      tl_assert(args[i]->num_vals == opInfo->exinfo.numChannels);
+    }
   }
   for(int i = 0; i < opInfo->exinfo.numSIMDOperands; ++i){
     ShadowValue* vals[opInfo->exinfo.nargs];
@@ -92,7 +111,6 @@ VG_REGPARM(3) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo,
       VG_(printf)("\n");
     }
   }
-  tl_assert(opInfo->op_code < Iop_LAST);
   return result;
 }
 ShadowValue* executeChannelShadowOp(int nargs,

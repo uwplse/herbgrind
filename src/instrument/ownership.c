@@ -225,8 +225,6 @@ void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
 }
 void addClear(IRSB* sbOut, IRTemp dest, int num_vals){
   IRExpr* oldShadowTemp = runLoad64C(sbOut, &(shadowTemps[dest]));
-  addPrint3("Freeing value %p in %d early\n",
-            oldShadowTemp, mkU64(dest));
   addDisownNonNull(sbOut, oldShadowTemp, num_vals);
   addStoreC(sbOut, mkU64(0), &(shadowTemps[dest]));
 }
