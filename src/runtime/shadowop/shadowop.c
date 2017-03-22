@@ -50,11 +50,11 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo){
         shadowTemps[opInfo->argTemps[i]] == NULL){
       args[i] = mkShadowTemp(opInfo->exinfo.numChannels);
       for(int j = 0; j < opInfo->exinfo.numChannels; j++){
+        double value = opInfo->exinfo.argPrecision == Ft_Double ?
+          computedArgs.argValues[i][j] :
+          computedArgs.argValuesF[i][j];
         args[i]->values[j] =
-          mkShadowValue(opInfo->exinfo.argPrecision,
-                        opInfo->exinfo.argPrecision == Ft_Double ?
-                        computedArgs.argValues[i][j] :
-                        computedArgs.argValuesF[i][j]);
+          mkShadowValue_fast(opInfo->exinfo.argPrecision, value);
       }
       if (opInfo->argTemps[i] != -1){
         shadowTemps[opInfo->argTemps[i]] = args[i];
@@ -78,16 +78,17 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo){
       printOpInfo(opInfo);
       VG_(printf)(":\n");
     }
-    updateError(&(opInfo->eagg), result->values[i]->real,
-                (opInfo->exinfo.argPrecision == Ft_Single ?
-                 computedResult.f[i] : computedResult.d[i]));
+    double computedValue =
+      (opInfo->exinfo.argPrecision == Ft_Single ?
+       computedResult.f[i] : computedResult.d[i]);
+    updateError(&(opInfo->eagg), result->values[i]->real, computedValue);
   }
   for(int i = opInfo->exinfo.numSIMDOperands;
       i < opInfo->exinfo.numChannels; ++i){
     // According to the libvex_ir.h documentation, the non-operated
     // values should be copied from the first operand.
     result->values[i] = args[0]->values[i];
-    ownShadowValue(result->values[i]);
+    ownNonNullShadowValue(result->values[i]);
   }
   if (PRINT_VALUE_MOVES){
     ppIROp(opInfo->op_code);
@@ -109,6 +110,11 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo){
       VG_(printf)("from %p to %p\n", args[0], result);
     } else {
       VG_(printf)("\n");
+    }
+  }
+  for(int i = 0; i < opInfo->exinfo.nargs; ++i){
+    if (opInfo->argTemps[i] == -1){
+      disownShadowTemp_fast(args[i]);
     }
   }
   return result;
