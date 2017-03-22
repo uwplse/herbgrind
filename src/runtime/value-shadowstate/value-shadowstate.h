@@ -117,4 +117,57 @@ ShadowValue* getTS(Int idx);
 VG_REGPARM(2) void printStoreValue(const char* dest_label, ShadowValue* val);
 void printStoreValueF(ShadowValue* val, const char* format, ...);
 
+__attribute__((always_inline))
+inline
+ShadowValue* mkShadowValueBare_fast(FloatType type){
+  ShadowValue* result;
+  if (stack_empty_fast(freedVals)){
+    result = newShadowValue(type);
+  } else {
+    result = (void*)stack_pop_fast(freedVals);
+    result->type = type;
+  }
+  result->ref_count = 1;
+  return result;
+}
+
+__attribute__((always_inline))
+inline
+ShadowValue* mkShadowValue_fast(FloatType type, double value){
+  ShadowValue* result = mkShadowValueBare(type);
+  setReal_fast(result->real, value);
+  return result;
+}
+
+__attribute__((always_inline))
+inline
+void freeShadowValue_fast(ShadowValue* val){
+  stack_push_fast(freedVals, (void*)val);
+}
+__attribute__((always_inline))
+inline
+void freeShadowTemp_fast(ShadowTemp* temp){
+  stack_push_fast(freedTemps[temp->num_vals - 1], (void*)temp);
+}
+__attribute__((always_inline))
+inline
+void disownNonNullShadowValue(ShadowValue* val){
+  val->ref_count--;
+  if (val->ref_count == 0){
+    freeShadowValue(val);
+  }
+}
+__attribute__((always_inline))
+inline
+void ownNonNullShadowValue(ShadowValue* val){
+  (val->ref_count)++;
+}
+__attribute__((always_inline))
+inline
+void disownShadowTemp_fast(ShadowTemp* temp){
+  for(int i = 0; i < temp->num_vals; ++i){
+    disownNonNullShadowValue(temp->values[i]);
+  }
+  freeShadowTemp_fast(temp);
+}
 #endif

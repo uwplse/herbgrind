@@ -61,4 +61,25 @@ IRExpr* runStackPopG(IRSB* sbOut, IRExpr* guard_temp, Stack* s);
 IRExpr* runStackEmpty(IRSB* sbOut, Stack* s);
 IRExpr* runStackEmptyG(IRSB* sbOut, IRExpr* guard_temp, Stack* s);
 
+__attribute__((always_inline))
+inline
+void stack_push_fast(Stack* s, StackNode* item_node){
+  item_node->next = s->head;
+  s->head = item_node;
+}
+
+__attribute__((always_inline))
+inline
+StackNode* stack_pop_fast(Stack* s){
+  StackNode* oldHead = s->head;
+  s->head = oldHead->next;
+  return oldHead;
+}
+
+__attribute__((always_inline))
+inline
+int stack_empty_fast(Stack* s){
+  return (s->head == NULL);
+}
+
 #endif
