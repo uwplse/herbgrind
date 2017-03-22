@@ -39,6 +39,10 @@
 #include "../../options.h"
 #include "../../helper/debug.h"
 
+ArgUnion computedArgs;
+
+ResultUnion computedResult;
+
 ShadowTemp* shadowTemps[MAX_TEMPS];
 ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
 ShadowMemEntry* shadowMemTable[LARGE_PRIME];
@@ -524,11 +528,6 @@ ShadowTemp* mkShadowTemp(UWord num_vals){
   }
   return result;
 }
-inline
-void stack_push_fast(Stack* s, StackNode* item_node){
-  item_node->next = s->head;
-  s->head = item_node;
-}
 void freeShadowValue(ShadowValue* val){
   while(val->influences != NULL){
     (void)lpop(InfluenceList)(&(val->influences));
@@ -537,12 +536,6 @@ void freeShadowValue(ShadowValue* val){
   stack_push_fast(freedVals, (void*)val);
 }
 
-inline
-StackNode* stack_pop_fast(Stack* s){
-  StackNode* oldHead = s->head;
-  s->head = oldHead->next;
-  return oldHead;
-}
 ShadowValue* copyShadowValue(ShadowValue* val){
   ShadowValue* copy = mkShadowValueBare(val->type);
   copyReal(val->real, copy->real);
@@ -553,7 +546,7 @@ ShadowValue* copyShadowValue(ShadowValue* val){
 inline
 ShadowValue* mkShadowValueBare(FloatType type){
   ShadowValue* result;
-  if (stack_empty(freedVals)){
+  if (stack_empty_fast(freedVals)){
     result = newShadowValue(type);
     if (PRINT_VALUE_MOVES || print_allocs){
       VG_(printf)("Alloced new shadow value %p\n", result);

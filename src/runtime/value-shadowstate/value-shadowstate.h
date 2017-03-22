@@ -63,6 +63,20 @@ typedef struct _shadowMemEntry {
   ShadowValue* val;
 } ShadowMemEntry;
 
+typedef union {
+  float argValuesF[4][8];
+  double argValues[4][4];
+} ArgUnion;
+
+typedef union {
+  float f[8];
+  double d[4];
+} ResultUnion;
+
+extern ArgUnion computedArgs;
+
+extern ResultUnion computedResult;
+
 extern ShadowTemp* shadowTemps[MAX_TEMPS];
 extern ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
 extern ShadowMemEntry* shadowMemTable[LARGE_PRIME];

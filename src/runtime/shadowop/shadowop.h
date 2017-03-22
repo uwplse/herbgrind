@@ -36,16 +36,6 @@
 #include "../value-shadowstate/shadowval.h"
 #include "../op-shadowstate/shadowop-info.h"
 
-union {
-  float argValuesF[4][8];
-  double argValues[4][4];
-} computedArgs;
-
-union {
-  float f[8];
-  double d[4];
-} computedResult;
-
 VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo);
 ShadowValue* executeChannelShadowOp(int nargs,
                                     FloatType precision,

@@ -40,6 +40,7 @@
 
 #include "../runtime/op-shadowstate/shadowop-info.h"
 #include "../runtime/shadowop/shadowop.h"
+#include "../runtime/value-shadowstate/value-shadowstate.h"
 
 #include "instrument-storage.h"
 #include "ownership.h"
@@ -89,9 +90,19 @@ IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
   if (result->tag == Iex_RdTmp){
     cleanupAtEndOfBlock(sbOut, result->Iex.RdTmp.tmp);
   }
-  return runPureCCall64(sbOut,
-                        executeShadowOp,
-                        mkU64((uintptr_t)info));
+  IRTemp dest = newIRTemp(sbOut->tyenv, Ity_I64);
+  IRDirty* dirty =
+    unsafeIRDirty_1_N(dest, 1, "executeShadowOp",
+                      VG_(fnptr_to_fnentry)(executeShadowOp),
+                      mkIRExprVec_1(mkU64((uintptr_t)info)));
+  dirty->mFx = Ifx_Read;
+  dirty->mAddr = mkU64((uintptr_t)&computedArgs);
+  dirty->mSize =
+    sizeof(computedArgs)
+    + sizeof(computedResult)
+    + sizeof(shadowTemps);
+  addStmtToIRSB(sbOut, IRStmt_Dirty(dirty));
+  return IRExpr_RdTmp(dest);
 }
 
 ShadowOpInfo* getSemanticOpInfo(Addr callAddr, Addr block_addr, IROp op_code, int nargs){
