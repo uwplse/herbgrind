@@ -55,7 +55,7 @@
 
 #define MAX_THREADS 16
 
-#define LARGE_PRIME 1973
+#define LARGE_PRIME 1572869
 
 typedef struct _shadowMemEntry {
   struct _shadowMemEntry* next;
@@ -85,6 +85,7 @@ extern ShadowMemEntry* shadowMemTable[LARGE_PRIME];
 
 extern Stack* freedTemps[MAX_TEMP_SHADOWS];
 extern Stack* freedVals;
+extern Stack* memEntries;
 
 void initValueShadowState(void);
 VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries);
@@ -98,6 +99,7 @@ VG_REGPARM(2) ShadowTemp* dynamicLoad32(UWord memSrc);
 VG_REGPARM(2) ShadowTemp* dynamicLoad64(UWord memSrc, UWord memBytes);
 VG_REGPARM(3) ShadowTemp* dynamicLoad128(UWord memSrc,
                                          UWord bytes1, UWord bytes2);
+VG_REGPARM(0) ShadowMemEntry* newShadowMemEntry(void);
 VG_REGPARM(3) void setMemShadowTemp(Addr64 memDest, UWord size,
                                     ShadowTemp* st);
 VG_REGPARM(1) ShadowValue* getMemShadow(Addr64 memSrc);

@@ -33,6 +33,7 @@
 #include "pub_tool_tooliface.h"
 
 #include "floattypes.h"
+#include "../helper/stack.h"
 
 void initInstrumentationState(void);
 void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src);
@@ -65,6 +66,8 @@ void instrumentCAS(IRSB* sbOut,
 void finishInstrumentingBlock(IRSB* sbOut);
 void addBlockCleanupG(IRSB* sbOut, IRExpr* guard);
 
+IRExpr* getFromStackG(IRSB* sbOut, IRExpr* guard,
+                      Stack* s, void* (*freshFunc)(void));
 IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
                               IRExpr** values);
 IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
@@ -117,6 +120,8 @@ void addSetMemNullG(IRSB* sbOut, IRExpr* guard, int size,
                     IRExpr* memDest, IRExpr* st);
 void addSetMemUnknown(IRSB* sbOut, int size,
                       IRExpr* memDest, IRExpr* st);
+void addAddMemShadowG(IRSB* sbOut, IRExpr* guard,
+                      IRExpr* dest, IRExpr* val);
 void addSetMemUnknownG(IRSB* sbOut, IRExpr* guard, int size,
                        IRExpr* memDest, IRExpr* st);
 

@@ -492,6 +492,9 @@ void removeMemShadow(Addr64 addr){
     prevEntry = node;
   }
 }
+VG_REGPARM(0) ShadowMemEntry* newShadowMemEntry(void){
+  return VG_(malloc)("memEntry", sizeof(ShadowMemEntry));
+}
 void addMemShadow(Addr64 addr, ShadowValue* val){
   ShadowMemEntry* newEntry;
   if (stack_empty(memEntries)){

@@ -79,6 +79,8 @@ IRExpr* runGetI(IRSB* sbOut,
 
 IRExpr* runDirtyG_1_N(IRSB* sbOut, int nargs, const char* fname, void* f,
                      IRExpr** args, IRExpr* guard);
+#define runDirtyG_1_0(sbOut, guard, f)                          \
+  runDirtyG_1_N(sbOut, 0, #f, f, mkIRExprVec_0(), guard);
 #define runDirtyG_1_1(sbOut, guard, f, arg)                     \
   runDirtyG_1_N(sbOut, 1, #f, f, mkIRExprVec_1(arg), guard)
 #define runDirtyG_1_2(sbOut, guard, f, arg1, arg2)              \
