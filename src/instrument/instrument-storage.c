@@ -691,7 +691,7 @@ void instrumentStore(IRSB* sbOut, IRExpr* addr,
     IRExpr* st = runLoadTemp(sbOut, idx);
     addSetMemUnknown(sbOut, dest_size, addr, st);
   } else {
-    addSetMemNull(sbOut, dest_size, addr);
+    addClearMem(sbOut, dest_size, addr);
   }
 }
 void instrumentStoreG(IRSB* sbOut, IRExpr* addr,
@@ -702,7 +702,7 @@ void instrumentStoreG(IRSB* sbOut, IRExpr* addr,
     IRExpr* st = runLoadTemp(sbOut, idx);
     addSetMemUnknownG(sbOut, guard, dest_size, addr, st);
   } else {
-    addSetMemNullG(sbOut, guard, dest_size, addr, mkU64(0));
+    addClearMemG(sbOut, guard, dest_size, addr);
   }
 }
 void instrumentCAS(IRSB* sbOut,
@@ -948,44 +948,61 @@ void addStoreTempUnshadowed(IRSB* sbOut, int idx){
     VG_(printf)("Setting %d to unshadowed.\n", idx);
   }
 }
+
+IRExpr* getBucketAddr(IRSB* sbOut, IRExpr* memAddr){
+  IRExpr* bucket = runMod(sbOut, memAddr, mkU32(LARGE_PRIME));
+  return runBinop(sbOut, Iop_Add64,
+                  mkU64((uintptr_t)shadowMemTable),
+                  runBinop(sbOut, Iop_Mul64,
+                           bucket,
+                           mkU64(sizeof(ShadowMemEntry*))));
+}
+
+QuickBucketResult quickGetBucketG(IRSB* sbOut, IRExpr* guard,
+                                  IRExpr* memAddr){
+  QuickBucketResult result;
+  IRExpr* bucketEntry =
+    runLoadG64(sbOut, getBucketAddr(sbOut, memAddr), guard);
+  IRExpr* entryExists = runNonZeroCheck64(sbOut, bucketEntry);
+  IRExpr* shouldDoAnything = runAnd(sbOut, entryExists, guard);
+  IRExpr* entryAddr =
+    runArrowG(sbOut, shouldDoAnything, bucketEntry,
+              ShadowMemEntry, addr);
+  IRExpr* entryNext =
+    runArrowG(sbOut, shouldDoAnything, bucketEntry,
+              ShadowMemEntry, next);
+  IRExpr* addrMatches =
+    runBinop(sbOut, Iop_CmpEQ64, entryAddr, memAddr);
+  IRExpr* moreChain = runNonZeroCheck64(sbOut, entryNext);
+  result.entry =
+    runArrowG(sbOut, addrMatches, bucketEntry, ShadowMemEntry, val);
+  result.stillSearching =
+    runAnd(sbOut, moreChain,
+           runUnop(sbOut, Iop_Not1, addrMatches));
+  return result;
+}
 IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
-                         int size, IRExpr* memSrc){
-  IRExpr* hasExistingShadow = mkU1(False);
+                          int size, IRExpr* memSrc){
+  QuickBucketResult qresults[4];
+  IRExpr* anyNonTrivialChains = mkU1(False);
+  IRExpr* allNull = mkU1(True);
   for(int i = 0; i < size; ++i){
-    IRExpr* valDest = runBinop(sbOut, Iop_Add64, memSrc,
-                               mkU64(i * sizeof(float)));
-    IRExpr* srcBucket = runMod(sbOut, valDest, mkU32(LARGE_PRIME));
-    IRExpr* srcBucketAddr =
-      runBinop(sbOut, Iop_Add64,
-               mkU64((uintptr_t)shadowMemTable),
-               runBinop(sbOut, Iop_Mul64,
-                        srcBucket,
-                        mkU64(sizeof(ShadowMemEntry*))));
-    IRExpr* memEntry = runLoad64(sbOut, srcBucketAddr);
-    hasExistingShadow = runOr(sbOut, hasExistingShadow,
-                              runNonZeroCheck64(sbOut, memEntry));
+    qresults[i] = quickGetBucketG(sbOut, guard,
+                                  runBinop(sbOut, Iop_Add64, memSrc,
+                                           mkU64(i * sizeof(float))));
+    anyNonTrivialChains = runOr(sbOut, anyNonTrivialChains,
+                                qresults[i].stillSearching);
+    allNull = runAnd(sbOut, allNull,
+                     runZeroCheck64(sbOut, qresults[i].entry));
   }
-  return runGetMemG(sbOut,
-                    runAnd(sbOut, guard, hasExistingShadow),
-                    size, memSrc);
+  IRExpr* goToC = runAnd(sbOut,
+                         runUnop(sbOut, Iop_Not1, anyNonTrivialChains),
+                         allNull);
+  return runITE(sbOut, goToC,
+                mkU64(0), runGetMemG(sbOut, goToC, size, memSrc));
 }
 IRExpr* runGetMemUnknown(IRSB* sbOut, int size, IRExpr* memSrc){
-  IRExpr* hasExistingShadow = mkU1(False);
-  for(int i = 0; i < size; ++i){
-    IRExpr* valDest = runBinop(sbOut, Iop_Add64, memSrc,
-                               mkU64(i * sizeof(float)));
-    IRExpr* srcBucket = runMod(sbOut, valDest, mkU32(LARGE_PRIME));
-    IRExpr* srcBucketAddr =
-      runBinop(sbOut, Iop_Add64,
-               mkU64((uintptr_t)shadowMemTable),
-               runBinop(sbOut, Iop_Mul64,
-                        srcBucket,
-                        mkU64(sizeof(ShadowMemEntry*))));
-    IRExpr* memEntry = runLoad64(sbOut, srcBucketAddr);
-    hasExistingShadow = runOr(sbOut, hasExistingShadow,
-                              runNonZeroCheck64(sbOut, memEntry));
-  }
-  return runGetMemG(sbOut, hasExistingShadow, size, memSrc);
+  return runGetMemUnknownG(sbOut, mkU1(True), size, memSrc);
 }
 IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc){
   IRTemp result = newIRTemp(sbOut->tyenv, Ity_I64);
@@ -1029,14 +1046,11 @@ IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc){
   addStmtToIRSB(sbOut, IRStmt_Dirty(loadDirty));
   return runITE(sbOut, guard, IRExpr_RdTmp(result), mkU64(0));
 }
-void addSetMemNull(IRSB* sbOut, int size,
-                   IRExpr* memDest){
-  addSetMemNullG(sbOut, mkU1(False), size, memDest, mkU64(0));
+void addClearMem(IRSB* sbOut, int size, IRExpr* memDest){
+  addClearMemG(sbOut, mkU1(True), size, memDest);
 }
-// Triggers if there is something to overwrite, or guard is true.
-void addSetMemNullG(IRSB* sbOut, IRExpr* guard, int size, 
-                    IRExpr* memDest, IRExpr* st){
-  IRExpr* hasExistingShadow = guard;
+void addClearMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memDest){
+  IRExpr* hasExistingShadow = mkU1(False);
   /* IRExpr* hasCollision = mkU1(False); */
   for(int i = 0; i < size; ++i){
     IRExpr* valDest = runBinop(sbOut, Iop_Add64, memDest,
@@ -1052,31 +1066,36 @@ void addSetMemNullG(IRSB* sbOut, IRExpr* guard, int size,
     hasExistingShadow = runOr(sbOut, hasExistingShadow,
                               runNonZeroCheck64(sbOut, memEntry));
   }
-  addSetMemG(sbOut,  hasExistingShadow, size,
-             memDest, st);
+  addSetMemG(sbOut,
+             runAnd(sbOut, hasExistingShadow, guard),
+             size, memDest, mkU64(0));
 }
 void addSetMemUnknownG(IRSB* sbOut, IRExpr* guard, int size,
                       IRExpr* memDest, IRExpr* st){
-  addSetMemNullG(sbOut,
-                 runAnd(sbOut, guard, runNonZeroCheck64(sbOut, st)),
-                 size, memDest, st);
-}
-void addSetMemUnknown(IRSB* sbOut, int size,
-                      IRExpr* memDest, IRExpr* st){
-  addSetMemNullG(sbOut, mkU1(False), size, memDest, mkU64(0));
-
+  addClearMemG(sbOut, guard, size, memDest);
   IRExpr* tempNonNull = runNonZeroCheck64(sbOut, st);
-  IRExpr* tempValues = runArrowG(sbOut, tempNonNull,
-                                 st, ShadowTemp, values);
-  IRExpr* type = runArrowG(sbOut, tempNonNull,
-                           runLoadG64(sbOut, tempValues, tempNonNull),
-                           ShadowValue, type);
+  IRExpr* shouldDoAnything = runAnd(sbOut, tempNonNull, guard);
+  IRExpr* tempValues = runArrowG(sbOut, tempNonNull, st,
+                                 ShadowTemp, values);
+  IRExpr* type =
+    runArrowG(sbOut, shouldDoAnything,
+              runLoadG64(sbOut, tempValues, shouldDoAnything),
+              ShadowValue, type);
   IRExpr* isDoublePrecision =
     runBinop(sbOut, Iop_CmpEQ64,
              mkU64(Ft_Double), type);
   IRExpr* isSinglePrecision =
     runAnd(sbOut, runUnop(sbOut, Iop_Not1, isDoublePrecision),
-           tempNonNull);
+           shouldDoAnything);
+  IRExpr* hasExistingShadow = mkU1(False);
+  for(int i = 0; i < size; ++i){
+    IRExpr* valDest = runBinop(sbOut, Iop_Add64, memDest,
+                               mkU64(i * sizeof(float)));
+    IRExpr* destBucketAddr = getBucketAddr(sbOut, valDest);
+    IRExpr* memEntry = runLoad64(sbOut, destBucketAddr);
+    hasExistingShadow = runOr(sbOut, hasExistingShadow,
+                              runNonZeroCheck64(sbOut, memEntry));
+  }
   for(int i = 0; i < size / 2; ++i){
     addAddMemShadowG(sbOut, isDoublePrecision,
                      runBinop(sbOut, Iop_Add64,
@@ -1091,6 +1110,10 @@ void addSetMemUnknown(IRSB* sbOut, int size,
                      runIndexG(sbOut, isSinglePrecision, tempValues,
                                ShadowValue*, i));
   }
+}
+void addSetMemUnknown(IRSB* sbOut, int size,
+                      IRExpr* memDest, IRExpr* st){
+  addSetMemUnknownG(sbOut, mkU1(True), size, memDest, st);
 }
 IRExpr* getFromStackG(IRSB* sbOut, IRExpr* guard,
                       Stack* s, void* (*freshFunc)(void)){
@@ -1109,13 +1132,7 @@ void addAddMemShadowG(IRSB* sbOut, IRExpr* guard,
   addStoreArrowG(sbOut, guard, memEntry, ShadowMemEntry, addr, dest);
   addStoreArrowG(sbOut, guard, memEntry, ShadowMemEntry, val, val);
   addSVOwnNonNullG(sbOut, guard, val);
-  IRExpr* destBucket = runMod(sbOut, dest, mkU32(LARGE_PRIME));
-  IRExpr* destBucketAddr =
-    runBinop(sbOut, Iop_Add64,
-             mkU64((uintptr_t)shadowMemTable),
-             runBinop(sbOut, Iop_Mul64,
-                      destBucket,
-                      mkU64(sizeof(ShadowMemEntry*))));
+  IRExpr* destBucketAddr = getBucketAddr(sbOut, dest);
   addStoreArrowG(sbOut, guard, memEntry, ShadowMemEntry,
                  next, runLoadG64(sbOut, destBucketAddr, guard));
   addStoreG(sbOut, guard, memEntry, destBucketAddr);

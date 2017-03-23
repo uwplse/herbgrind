@@ -66,8 +66,6 @@ void instrumentCAS(IRSB* sbOut,
 void finishInstrumentingBlock(IRSB* sbOut);
 void addBlockCleanupG(IRSB* sbOut, IRExpr* guard);
 
-IRExpr* getFromStackG(IRSB* sbOut, IRExpr* guard,
-                      Stack* s, void* (*freshFunc)(void));
 IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
                               IRExpr** values);
 IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
@@ -106,24 +104,31 @@ void addStoreTempUnshadowed(IRSB* sbOut, int idx);
 void addStoreTempCopy(IRSB* sbOut, IRExpr* original,
                       IRTemp dest, FloatType type);
 
+IRExpr* getBucketAddr(IRSB* sbOut, IRExpr* memAddr);
+typedef struct {
+  IRExpr* entry;
+  IRExpr* stillSearching;
+} QuickBucketResult;
+QuickBucketResult quickGetBucketG(IRSB* sbOut, IRExpr* guard,
+                                  IRExpr* memAddr);
 IRExpr* runGetMemUnknown(IRSB* sbOut, int size, IRExpr* memSrc);
 IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
                           int size, IRExpr* memSrc);
 IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc);
+IRExpr* getFromStackG(IRSB* sbOut, IRExpr* guard,
+                      Stack* s, void* (*freshFunc)(void));
 void addSetMemNonNull(IRSB* sbOut, int size,
                       IRExpr* memDest, IRExpr* newTemp);
 void addSetMemG(IRSB* sbOut, IRExpr* guard, int size,
                 IRExpr* memDest, IRExpr* newTemp);
-void addSetMemNull(IRSB* sbOut, int size,
-                   IRExpr* memDest);
-void addSetMemNullG(IRSB* sbOut, IRExpr* guard, int size,
-                    IRExpr* memDest, IRExpr* st);
+void addClearMem(IRSB* sbOut, int size, IRExpr* memDest);
+void addClearMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memDest);
 void addSetMemUnknown(IRSB* sbOut, int size,
                       IRExpr* memDest, IRExpr* st);
-void addAddMemShadowG(IRSB* sbOut, IRExpr* guard,
-                      IRExpr* dest, IRExpr* val);
 void addSetMemUnknownG(IRSB* sbOut, IRExpr* guard, int size,
                        IRExpr* memDest, IRExpr* st);
+void addAddMemShadowG(IRSB* sbOut, IRExpr* guard,
+                      IRExpr* dest, IRExpr* val);
 
 IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr);
 IRExpr* mkArrayLookupExpr(IRSB* sbOut,
