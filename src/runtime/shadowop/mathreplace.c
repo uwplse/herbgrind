@@ -70,8 +70,8 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
 
   Addr callAddr = getCallAddr();
   ShadowOpInfo* info = getWrappedOpInfo(callAddr, type, nargs);
-  /* execSymbolicOp(info, &(shadowResult->expr), */
-  /*                shadowResult->real, shadowArgs); */
+  execSymbolicOp(info, &(shadowResult->expr),
+                 shadowResult->real, shadowArgs);
   execLocalOp(info, shadowResult->real, shadowResult, shadowArgs);
   execInfluencesOp(info, &(shadowResult->influences), shadowArgs);
   if (print_errors_long || print_errors){

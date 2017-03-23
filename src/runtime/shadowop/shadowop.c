@@ -54,7 +54,7 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo){
           computedArgs.argValues[i][j] :
           computedArgs.argValuesF[i][j];
         args[i]->values[j] =
-          mkShadowValue_fast(opInfo->exinfo.argPrecision, value);
+          mkShadowValue(opInfo->exinfo.argPrecision, value);
       }
       if (opInfo->argTemps[i] != -1){
         shadowTemps[opInfo->argTemps[i]] = args[i];
