@@ -83,15 +83,15 @@ Bool hg_process_cmd_line_option(const HChar* arg){
 }
 
 void hg_print_usage(void){
-  VG_(printf)("--precision=value "
-              "Sets the mantissa size of the shadow \"real\" values.\n"
-              " --error-threshold=bits "
+  VG_(printf)("    --precision=value    "
+              "Sets the mantissa size of the shadow \"real\" values. [1000]\n"
+              "    --error-threshold=bits    "
               "The number of bits of error at which to start "
-              "tracking a computation.\n"
-              "--outfile=name "
+              "tracking a computation. [5.0]\n"
+              "    --outfile=name    "
               "The name of the file to write out. If no name is "
               "specified, will use <executable-name>.gh.\n"
-              "--output-sexp "
+              "    --output-sexp    "
               "Output in an easy-to-parse s-expression based format.\n"
               );
 }
