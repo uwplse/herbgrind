@@ -164,20 +164,7 @@ void addSVOwnNonNull(IRSB* sbOut, IRExpr* sv){
 }
 void addSVDisown(IRSB* sbOut, IRExpr* sv){
   IRExpr* valueNonNull = runNonZeroCheck64(sbOut, sv);
-  IRExpr* prevRefCount =
-    runArrowG(sbOut, valueNonNull, sv, ShadowValue, ref_count);
-  IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
-  // If value is null, then preRefCount will be zero, so lastRef will be false.
-  addStackPushG(sbOut, lastRef, freedVals, sv);
-  if (PRINT_VALUE_MOVES){
-    addPrintG2(lastRef,
-               "Disowned last reference to %p! Freeing...\n", sv);
-  }
-
-  IRExpr* newRefCount =
-    runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
-  addStoreArrowG(sbOut, valueNonNull, sv, ShadowValue,
-                 ref_count, newRefCount);
+  addSVDisownNonNullG(sbOut, valueNonNull, sv);
 }
 void addSVDisownNonNull(IRSB* sbOut, IRExpr* sv){
   IRExpr* prevRefCount =
@@ -199,18 +186,15 @@ void addSVDisownNonNull(IRSB* sbOut, IRExpr* sv){
   addStoreArrow(sbOut, sv, ShadowValue,
                 ref_count, newRefCount);
 }
-void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
-  IRExpr* valueNonNull = runNonZeroCheck64(sbOut, sv);
-  IRExpr* shouldDoAnythingAtAll = runAnd(sbOut, valueNonNull, guard);
+void addSVDisownNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
   IRExpr* prevRefCount =
-    runArrowG(sbOut, shouldDoAnythingAtAll, sv, ShadowValue, ref_count);
+    runArrowG(sbOut, guard, sv, ShadowValue, ref_count);
   IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
   if (PRINT_VALUE_MOVES){
     addPrintG2(lastRef,
                "Disowned last reference to %p! Freeing...\n", sv);
   }
   addStackPushG(sbOut, lastRef, freedVals, sv);
-
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
   if (PRINT_VALUE_MOVES){
@@ -219,9 +203,12 @@ void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
     addPrintG3(nonLastRef,
                "[3] Disowning %p, new ref_count %d\n", sv, newRefCount);
   }
-  addStoreArrowG(sbOut, shouldDoAnythingAtAll,
-                 sv, ShadowValue,
-                 ref_count, newRefCount);
+  addStoreArrowG(sbOut, guard, sv, ShadowValue, ref_count, newRefCount);
+}
+void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
+  IRExpr* valueNonNull = runNonZeroCheck64(sbOut, sv);
+  IRExpr* shouldDoAnythingAtAll = runAnd(sbOut, valueNonNull, guard);
+  addSVDisownNonNullG(sbOut, shouldDoAnythingAtAll, sv);
 }
 void addClear(IRSB* sbOut, IRTemp dest, int num_vals){
   IRExpr* oldShadowTemp = runLoad64C(sbOut, &(shadowTemps[dest]));
