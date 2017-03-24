@@ -32,7 +32,6 @@
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcassert.h"
 #include "pub_tool_libcbase.h"
-#include "../../helper/stack.h"
 #include "../../helper/ir-info.h"
 #include "../shadowop/symbolic-op.h"
 #include "../shadowop/mathreplace.h"
@@ -288,17 +287,20 @@ ConcGraft* popConcGraftStack(int count){
     return (void*)stack_pop(curStack);
   }
 }
+VG_REGPARM(1) void freeBranchConcExpr(ConcExpr* expr){
+  for(int i = 0; i < expr->branch.nargs; ++i){
+    disownConcExpr(expr->branch.args[i]);
+  }
+  stack_push(branchCExprs[expr->branch.nargs], (void*)expr);
+  pushConcGraftStack(expr->grafts, expr->ngrafts);
+}
 void disownConcExpr(ConcExpr* expr){
   (expr->ref_count)--;
   if (expr->ref_count == 0){
     if (expr->type == Node_Leaf){
       stack_push(leafCExprs, (void*)expr);
     } else {
-      for(int i = 0; i < expr->branch.nargs; ++i){
-        disownConcExpr(expr->branch.args[i]);
-      }
-      stack_push(branchCExprs[expr->branch.nargs], (void*)expr);
-      pushConcGraftStack(expr->grafts, expr->ngrafts);
+      freeBranchConcExpr(expr);
     }
   }
 }

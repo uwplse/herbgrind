@@ -37,6 +37,7 @@
 
 #include "../../helper/list.h"
 #include "../../helper/xarray.h"
+#include "../../helper/stack.h"
 
 #include "pub_tool_basics.h"
 #include "pub_tool_hashtable.h"
@@ -74,6 +75,8 @@ typedef struct _SymbGraft {
 List_H(NodePos, Group);
 Xarray_H(Group, GroupList);
 
+extern Stack* leafCExprs;
+
 struct _SymbExpr {
   NodeType type;
   double constVal;
@@ -96,6 +99,7 @@ typedef struct _varMap {
 void initExprAllocator(void);
 ConcExpr* mkLeafConcExpr(double value);
 ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op, int nargs, ConcExpr** args);
+VG_REGPARM(1) void freeBranchConcExpr(ConcExpr* expr);
 void disownConcExpr(ConcExpr* expr);
 SymbExpr* mkFreshSymbolicLeaf(Bool isConst, double constVal);
 SymbExpr* concreteToSymbolic(ConcExpr* cexpr);

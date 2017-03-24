@@ -52,6 +52,7 @@ void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv);
 void addSVOwn(IRSB* sbOut, IRExpr* sv);
 void addSVOwnNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv);
 void addSVOwnNonNull(IRSB* sbOut, IRExpr* sv);
+void addExprDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* expr);
 void addClear(IRSB* sbOut, IRTemp shadowed_temp, int num_vals);
 
 #endif

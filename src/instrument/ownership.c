@@ -185,6 +185,8 @@ void addSVDisownNonNull(IRSB* sbOut, IRExpr* sv){
   }
   addStoreArrow(sbOut, sv, ShadowValue,
                 ref_count, newRefCount);
+  addExprDisownG(sbOut, lastRef,
+                 runArrowG(sbOut, lastRef, sv, ShadowValue, expr));
 }
 void addSVDisownNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
   IRExpr* prevRefCount =
@@ -204,11 +206,37 @@ void addSVDisownNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
                "[3] Disowning %p, new ref_count %d\n", sv, newRefCount);
   }
   addStoreArrowG(sbOut, guard, sv, ShadowValue, ref_count, newRefCount);
+  addExprDisownG(sbOut, lastRef,
+                 runArrowG(sbOut, lastRef, sv, ShadowValue, expr));
 }
 void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
   IRExpr* valueNonNull = runNonZeroCheck64(sbOut, sv);
   IRExpr* shouldDoAnythingAtAll = runAnd(sbOut, valueNonNull, guard);
   addSVDisownNonNullG(sbOut, shouldDoAnythingAtAll, sv);
+}
+void addExprDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* expr){
+  IRExpr* exprNonNull = runNonZeroCheck64(sbOut, expr);
+  IRExpr* shouldDoAnything = runAnd(sbOut, guard, exprNonNull);
+  IRExpr* prevRefCount =
+    runArrowG(sbOut, shouldDoAnything, expr, ConcExpr, ref_count);
+  IRExpr* newRefCount =
+    runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
+  addStoreArrowG(sbOut, guard, expr, ConcExpr, ref_count, newRefCount);
+  IRExpr* lastRef = runZeroCheck64(sbOut, newRefCount);
+  IRExpr* isBranch =
+    runBinop(sbOut, Iop_CmpEQ64,
+             runArrowG(sbOut, shouldDoAnything,
+                       expr, ConcExpr, type),
+             mkU64(Node_Branch));
+  addStackPushG(sbOut,
+                runAnd(sbOut, lastRef,
+                       runUnop(sbOut, Iop_Not1, isBranch)),
+                leafCExprs, expr);
+  IRExpr* shouldFreeBranch =
+    runAnd(sbOut, isBranch, shouldDoAnything);
+  IRStmt* freeBranch =
+    mkDirtyG_0_1(freeBranchConcExpr, expr, shouldFreeBranch);
+  addStmtToIRSB(sbOut, freeBranch);
 }
 void addClear(IRSB* sbOut, IRTemp dest, int num_vals){
   IRExpr* oldShadowTemp = runLoad64C(sbOut, &(shadowTemps[dest]));
