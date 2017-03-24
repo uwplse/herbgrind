@@ -167,76 +167,35 @@ void addSVDisown(IRSB* sbOut, IRExpr* sv){
   addSVDisownNonNullG(sbOut, valueNonNull, sv);
 }
 void addSVDisownNonNull(IRSB* sbOut, IRExpr* sv){
+  IRExpr* refCountAddr =
+    runArrowAddr(sbOut, sv, ShadowValue, ref_count);
   IRExpr* prevRefCount =
-    runArrow(sbOut, sv, ShadowValue, ref_count);
-  IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
-  addStackPushG(sbOut, lastRef, freedVals, sv);
-  if (PRINT_VALUE_MOVES){
-    addPrintG2(lastRef,
-               "Disowned last reference to %p! Freeing...\n", sv);
-  }
-
+    runLoad64(sbOut, refCountAddr);
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
-  if (PRINT_VALUE_MOVES){
-    IRExpr* shouldPrintUpdate = runUnop(sbOut, Iop_Not1, lastRef);
-    addPrintG3(shouldPrintUpdate,
-               "[2] Disowning %p, new ref_count %d\n", sv, newRefCount);
-  }
-  addStoreArrow(sbOut, sv, ShadowValue,
-                ref_count, newRefCount);
-  addExprDisownG(sbOut, lastRef,
-                 runArrowG(sbOut, lastRef, sv, ShadowValue, expr));
+  addStore(sbOut, newRefCount, refCountAddr);
+  IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
+  IRStmt* freeVal =
+    mkDirtyG_0_1(freeShadowValue, sv, lastRef);
+  addStmtToIRSB(sbOut, freeVal);
 }
 void addSVDisownNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
+  IRExpr* refCountAddr =
+    runArrowAddr(sbOut, sv, ShadowValue, ref_count);
   IRExpr* prevRefCount =
-    runArrowG(sbOut, guard, sv, ShadowValue, ref_count);
-  IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
-  if (PRINT_VALUE_MOVES){
-    addPrintG2(lastRef,
-               "Disowned last reference to %p! Freeing...\n", sv);
-  }
-  addStackPushG(sbOut, lastRef, freedVals, sv);
+    runLoadG64(sbOut, refCountAddr, guard);
   IRExpr* newRefCount =
     runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
-  if (PRINT_VALUE_MOVES){
-    IRExpr* nonLastRef = runBinop(sbOut, Iop_CmpLT64U,
-                                  mkU64(1), prevRefCount);
-    addPrintG3(nonLastRef,
-               "[3] Disowning %p, new ref_count %d\n", sv, newRefCount);
-  }
-  addStoreArrowG(sbOut, guard, sv, ShadowValue, ref_count, newRefCount);
-  addExprDisownG(sbOut, lastRef,
-                 runArrowG(sbOut, lastRef, sv, ShadowValue, expr));
+  addStoreG(sbOut, guard, newRefCount, refCountAddr);
+  IRExpr* lastRef = runBinop(sbOut, Iop_CmpEQ64, prevRefCount, mkU64(1));
+  IRStmt* freeVal =
+    mkDirtyG_0_1(freeShadowValue, sv, lastRef);
+  addStmtToIRSB(sbOut, freeVal);
 }
 void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
   IRExpr* valueNonNull = runNonZeroCheck64(sbOut, sv);
   IRExpr* shouldDoAnythingAtAll = runAnd(sbOut, valueNonNull, guard);
   addSVDisownNonNullG(sbOut, shouldDoAnythingAtAll, sv);
-}
-void addExprDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* expr){
-  IRExpr* exprNonNull = runNonZeroCheck64(sbOut, expr);
-  IRExpr* shouldDoAnything = runAnd(sbOut, guard, exprNonNull);
-  IRExpr* prevRefCount =
-    runArrowG(sbOut, shouldDoAnything, expr, ConcExpr, ref_count);
-  IRExpr* newRefCount =
-    runBinop(sbOut, Iop_Sub64, prevRefCount, mkU64(1));
-  addStoreArrowG(sbOut, guard, expr, ConcExpr, ref_count, newRefCount);
-  IRExpr* lastRef = runZeroCheck64(sbOut, newRefCount);
-  IRExpr* isBranch =
-    runBinop(sbOut, Iop_CmpEQ64,
-             runArrowG(sbOut, shouldDoAnything,
-                       expr, ConcExpr, type),
-             mkU64(Node_Branch));
-  addStackPushG(sbOut,
-                runAnd(sbOut, lastRef,
-                       runUnop(sbOut, Iop_Not1, isBranch)),
-                leafCExprs, expr);
-  IRExpr* shouldFreeBranch =
-    runAnd(sbOut, isBranch, shouldDoAnything);
-  IRStmt* freeBranch =
-    mkDirtyG_0_1(freeBranchConcExpr, expr, shouldFreeBranch);
-  addStmtToIRSB(sbOut, freeBranch);
 }
 void addClear(IRSB* sbOut, IRTemp dest, int num_vals){
   IRExpr* oldShadowTemp = runLoad64C(sbOut, &(shadowTemps[dest]));
