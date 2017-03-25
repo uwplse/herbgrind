@@ -115,8 +115,6 @@ IRExpr* runGetMemUnknown(IRSB* sbOut, int size, IRExpr* memSrc);
 IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
                           int size, IRExpr* memSrc);
 IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc);
-IRExpr* getFromStackG(IRSB* sbOut, IRExpr* guard,
-                      Stack* s, void* (*freshFunc)(void));
 void addSetMemNonNull(IRSB* sbOut, int size,
                       IRExpr* memDest, IRExpr* newTemp);
 void addSetMemG(IRSB* sbOut, IRExpr* guard, int size,
@@ -127,8 +125,6 @@ void addSetMemUnknown(IRSB* sbOut, int size,
                       IRExpr* memDest, IRExpr* st);
 void addSetMemUnknownG(IRSB* sbOut, IRExpr* guard, int size,
                        IRExpr* memDest, IRExpr* st);
-void addAddMemShadowG(IRSB* sbOut, IRExpr* guard,
-                      IRExpr* dest, IRExpr* val);
 
 IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr);
 IRExpr* mkArrayLookupExpr(IRSB* sbOut,
