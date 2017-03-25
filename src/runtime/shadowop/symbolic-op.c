@@ -171,7 +171,7 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
       NodePos groupMemberPos = lpop(Group)(&curGroup);
       // If we pruned the node that this position refers to, kill the
       // position.
-      if (symbGraftPosGet(symbExpr, groupMemberPos) == NULL){
+      if (concGraftPosGet(concExpr, groupMemberPos) == NULL){
         continue;
       }
       double nodeValue = concGraftPosGet(concExpr, groupMemberPos)->value;
