@@ -543,7 +543,8 @@ ShadowValue* copyShadowValue(ShadowValue* val){
   ShadowValue* copy = mkShadowValueBare(val->type);
   copyReal(val->real, copy->real);
   copy->expr = val->expr;
-  (copy->expr->ref_count)++;
+  recursivelyOwnConcExpr(copy->expr,
+                         MAX_EXPR_IMPRECISE_BLOCK_DEPTH);
   return copy;
 }
 inline
