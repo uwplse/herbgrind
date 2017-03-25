@@ -96,6 +96,8 @@ typedef struct _varMap {
   int nextVarIdx;
 } VarMap;
 
+void recursivelyOwnConcExpr(ConcExpr* expr, int depth);
+void recursivelyDisownConcExpr(ConcExpr* expr, int depth);
 void initExprAllocator(void);
 ConcExpr* mkLeafConcExpr(double value);
 ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op, int nargs, ConcExpr** args);

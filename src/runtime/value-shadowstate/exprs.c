@@ -288,13 +288,12 @@ ConcGraft* popConcGraftStack(int count){
   }
 }
 VG_REGPARM(1) void freeBranchConcExpr(ConcExpr* expr){
-  for(int i = 0; i < expr->branch.nargs; ++i){
-    disownConcExpr(expr->branch.args[i]);
-  }
   stack_push(branchCExprs[expr->branch.nargs], (void*)expr);
   pushConcGraftStack(expr->grafts, expr->ngrafts);
 }
-void disownConcExpr(ConcExpr* expr){
+void recursivelyDisownConcExpr(ConcExpr* expr, int depth){
+  if (depth == 0) return;
+  tl_assert(expr->ref_count > 0);
   (expr->ref_count)--;
   if (expr->ref_count == 0){
     if (expr->type == Node_Leaf){
@@ -303,6 +302,14 @@ void disownConcExpr(ConcExpr* expr){
       freeBranchConcExpr(expr);
     }
   }
+  if (expr->type == Node_Branch){
+    for(int i = 0; i < expr->branch.nargs; ++i){
+      recursivelyDisownConcExpr(expr->branch.args[i], depth - 1);
+    }
+  }
+}
+void disownConcExpr(ConcExpr* expr){
+  recursivelyDisownConcExpr(expr, MAX_EXPR_IMPRECISE_BLOCK_DEPTH);
 }
 ConcExpr* mkLeafConcExpr(double value){
   ConcExpr* result;
@@ -319,6 +326,16 @@ ConcExpr* mkLeafConcExpr(double value){
   result->ngrafts = 0;
   result->grafts = NULL;
   return result;
+}
+
+void recursivelyOwnConcExpr(ConcExpr* expr, int depth){
+  if (depth == 0) return;
+  (expr->ref_count)++;
+  if (expr->type == Node_Branch){
+    for(int i = 0; i < expr->branch.nargs; ++i){
+      recursivelyOwnConcExpr(expr->branch.args[i], depth - 1);
+    }
+  }
 }
 
 ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
@@ -338,7 +355,6 @@ ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
 
   for(int i = 0; i < nargs; ++i){
     result->branch.args[i] = args[i];
-    (args[i]->ref_count)++;
   }
 
   // Grafts
@@ -371,6 +387,9 @@ ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
                   sizeof(ConcGraft) * child->ngrafts);
       grafti += child->ngrafts;
     }
+  }
+  for(int i = 0; i < nargs; ++i){
+    recursivelyOwnConcExpr(args[i], MAX_EXPR_IMPRECISE_BLOCK_DEPTH - 1);
   }
   return result;
 }
