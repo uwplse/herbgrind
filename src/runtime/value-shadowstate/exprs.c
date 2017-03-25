@@ -524,7 +524,6 @@ void printBBuf(BBuf* bbuf, const char* format, ...){
   va_start(arglist, format);
   int printLength = VG_(vsnprintf)(bbuf->buf, bbuf->bound, format,
                                    arglist);
-  VG_(printf)("%s", bbuf->buf);
   if (printLength >= bbuf->bound){
     tl_assert2(printLength < bbuf->bound,
                "trying to print %d character past bound!\n",
