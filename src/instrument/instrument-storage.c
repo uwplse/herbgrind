@@ -992,14 +992,15 @@ IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
                                            mkU64(i * sizeof(float))));
     anyNonTrivialChains = runOr(sbOut, anyNonTrivialChains,
                                 qresults[i].stillSearching);
-    allNull = runAnd(sbOut, allNull,
-                     runZeroCheck64(sbOut, qresults[i].entry));
+    IRExpr* entryNull = runZeroCheck64(sbOut, qresults[i].entry);
+    allNull = runAnd(sbOut, allNull, entryNull);
   }
-  IRExpr* goToC = runAnd(sbOut,
-                         runUnop(sbOut, Iop_Not1, anyNonTrivialChains),
-                         allNull);
+  IRExpr* goToC = runOr(sbOut,
+                        anyNonTrivialChains,
+                        runUnop(sbOut, Iop_Not1, allNull));
   return runITE(sbOut, goToC,
-                mkU64(0), runGetMemG(sbOut, goToC, size, memSrc));
+                runGetMemG(sbOut, goToC, size, memSrc),
+                mkU64(0));
 }
 IRExpr* runGetMemUnknown(IRSB* sbOut, int size, IRExpr* memSrc){
   return runGetMemUnknownG(sbOut, mkU1(True), size, memSrc);
@@ -1082,13 +1083,15 @@ void addSetMemUnknownG(IRSB* sbOut, IRExpr* guard, int size,
                                 tempNull_32,
                                 guard_32)),
                size, memDest);
+  IRExpr* shouldDoCSet =
+    runUnop(sbOut, Iop_32to1,
+            runBinop(sbOut, Iop_And32,
+                     tempNonNull_32,
+                     guard_32));
   addStmtToIRSB(sbOut,
                 mkDirtyG_0_3(setMemShadowTemp,
                              memDest, mkU64(size), st,
-                             runUnop(sbOut, Iop_32to1,
-                                     runBinop(sbOut, Iop_And32,
-                                              tempNonNull_32,
-                                              guard_32))));
+                             shouldDoCSet));
 }
 void addSetMemUnknown(IRSB* sbOut, int size,
                       IRExpr* memDest, IRExpr* st){
