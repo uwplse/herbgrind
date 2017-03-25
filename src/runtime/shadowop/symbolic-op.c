@@ -123,7 +123,8 @@ int NaNSafeEquals(double a, double b){
   return a == b || (a != a && b != b);
 }
 
-void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr){
+void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr,
+                         int depth){
   if (depth == 0){
     return;
   }
