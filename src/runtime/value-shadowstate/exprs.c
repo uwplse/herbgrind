@@ -398,7 +398,6 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
   if (cexpr->type == Node_Branch &&
       cexpr->branch.op->expr != NULL){
     SymbExpr* existingExpr = cexpr->branch.op->expr;
-    generalizeStructure(existingExpr, cexpr);
     return existingExpr;
   }
 

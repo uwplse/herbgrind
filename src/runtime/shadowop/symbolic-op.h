@@ -56,7 +56,8 @@ void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
                     Real real, ShadowValue** args);
 void generalizeSymbolicExpr(SymbExpr** symexpr, ConcExpr* cexpr);
 
-void generalizeStructure(SymbExpr* symbexpr, ConcExpr* concExpr);
+void generalizeStructure(SymbExpr* symbexpr, ConcExpr* concExpr,
+                         int depth);
 void intersectEqualities(SymbExpr* symbexpr, ConcExpr* concExpr);
 GroupList getExprsEquivGroups(ConcExpr* concExpr, SymbExpr* symbExpr);
 GroupList pruneSingletonGroups(GroupList list);

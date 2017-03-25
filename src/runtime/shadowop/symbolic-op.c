@@ -34,6 +34,8 @@
 #include "pub_tool_libcbase.h"
 #include "pub_tool_xarray.h"
 
+#define GENERALIZE_DEPTH 2
+
 inline
 ConcExpr* concGraftChild(ConcGraft graft);
 
@@ -76,7 +78,7 @@ void generalizeSymbolicExpr(SymbExpr** symbexpr, ConcExpr* cexpr){
       ppConcExpr(cexpr);
       VG_(printf)("\n");
     }
-    generalizeStructure(*symbexpr, cexpr);
+    generalizeStructure(*symbexpr, cexpr, GENERALIZE_DEPTH);
     intersectEqualities(*symbexpr, cexpr);
     if (print_expr_updates){
       VG_(printf)("Updated expression %p to ", *symbexpr);
@@ -122,6 +124,9 @@ int NaNSafeEquals(double a, double b){
 }
 
 void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr){
+  if (depth == 0){
+    return;
+  }
   for(int i = 0; i < symbExpr->ngrafts; ++i){
     SymbGraft curSymbGraft = symbExpr->grafts[i];
     ConcGraft curConcGraft = concExpr->grafts[i];
@@ -146,7 +151,7 @@ void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr){
     // Recurse
     if (concMatch->type == Node_Branch &&
         symbMatch->type == Node_Branch){
-      generalizeStructure(symbMatch, concMatch);
+      generalizeStructure(symbMatch, concMatch, depth - 1);
     }
   }
 }
