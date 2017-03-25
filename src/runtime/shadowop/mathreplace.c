@@ -61,6 +61,13 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
     if (shadowArgs[i] == NULL){
       shadowArgs[i] = mkShadowValue(op_precision, args[i]);
       addMemShadow((UWord)&(args[i]), shadowArgs[i]);
+      // When a shadow value is created, it has a single reference,
+      // because it assumes you're going to put it in a temp without
+      // bumping it's reference counter. Letting it start at zero
+      // references can make sketch things happen. However, adding it
+      // to memory adds a reference too, so we get a redundant
+      // reference. This removes that.
+      disownShadowValue(shadowArgs[i]);
     }
   }
   ShadowValue* shadowResult = runWrappedShadowOp(type, shadowArgs);
