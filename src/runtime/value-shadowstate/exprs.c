@@ -407,15 +407,11 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
     cexpr->branch.op->expr = result;
   }
 
-  result->isConst = True;
-  result->constVal = cexpr->value;
   if (cexpr->type == Node_Leaf){
-    result->type = Node_Leaf;
-    result->branch.groups = NULL;
-
-    result->ngrafts = 0;
-    result->grafts = NULL;
+    mkFreshSymbolicLeaf(True, cexpr->value);
   } else {
+    result->isConst = True;
+    result->constVal = cexpr->value;
     result->type = Node_Branch;
     result->branch.op = cexpr->branch.op;
     result->branch.nargs = cexpr->branch.nargs;
@@ -423,7 +419,13 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
       VG_(perm_malloc)(sizeof(SymbExpr*) * cexpr->branch.nargs,
                        vg_alignof(SymbExpr*));
     for(int i = 0; i < cexpr->branch.nargs; ++i){
-      result->branch.args[i] = concreteToSymbolic(cexpr->branch.args[i]);
+      ConcExpr* arg = cexpr->branch.args[i];
+      if (arg->type == Node_Leaf){
+        result->branch.args[i] = mkFreshSymbolicLeaf(True, arg->value);
+      } else {
+        tl_assert(arg->branch.op->expr != NULL);
+        result->branch.args[i] = arg->branch.op->expr;
+      }
     }
     result->ngrafts = cexpr->ngrafts;
     result->grafts =
@@ -433,8 +435,14 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
       if (cexpr->grafts[i].parent == cexpr){
         result->grafts[i].parent = result;
       } else {
-        result->grafts[i].parent =
-          concreteToSymbolic(cexpr->grafts[i].parent);
+        ConcExpr* cparent = cexpr->grafts[i].parent;
+        if (cparent->type == Node_Leaf){
+          result->grafts[i].parent =
+            mkFreshSymbolicLeaf(True, cparent->value);
+        } else {
+          tl_assert(cparent->branch.op->expr != NULL);
+          result->grafts[i].parent = cparent->branch.op->expr;
+        }
       }
       result->grafts[i].childIndex = cexpr->grafts[i].childIndex;
     }
