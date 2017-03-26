@@ -349,7 +349,8 @@ ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
   } else {
     result = (void*)stack_pop(branchCExprs[nargs]);
   }
-  result->ref_count = 1;
+  // We'll do ownership stuff at the end, leave it at 0 refs for now.
+  result->ref_count = 0;
   result->value = value;
   result->branch.op = op;
 
@@ -388,9 +389,7 @@ ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
       grafti += child->ngrafts;
     }
   }
-  for(int i = 0; i < nargs; ++i){
-    recursivelyOwnConcExpr(args[i], MAX_EXPR_IMPRECISE_BLOCK_DEPTH - 1);
-  }
+  recursivelyOwnConcExpr(result, MAX_EXPR_IMPRECISE_BLOCK_DEPTH);
   return result;
 }
 
