@@ -272,7 +272,7 @@ void getGrouped(GroupList groupList, VgHashTable* valMap,
           Group newGroup = NULL;
           for(Group childItem = oldGroup; oldGroup != NULL;
               oldGroup = oldGroup->next){
-            if (childItem->item->len >
+            if (childItem->item->len <
                 MAX_EXPR_IMPRECISE_BLOCK_DEPTH - MAX_EXPR_BLOCK_DEPTH){
               lpush(Group)(&newGroup,
                            appendPos(curPos, childItem->item));
