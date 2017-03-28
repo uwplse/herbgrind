@@ -167,7 +167,7 @@ T foldExpr_##N(T initial, SymbExpr* expr,                               \
   return foldExpr_##N##_                                                \
     (initial, expr, null_pos,                                           \
      mkVarMap(expr->type == Node_Branch ?                               \
-              groupsWithoutNonLeaves(expr, expr->branch.groups) :        \
+              groupsWithoutNonVars(expr, expr->branch.groups) :        \
               mkXA(GroupList)()),                                       \
      0, 0, pre_f, post_f);                                              \
 }                                                                       \
@@ -230,7 +230,7 @@ T foldId_##N(T v, SymbExpr* e, NodePos p,                               \
     return foldBlock_##N##_                                             \
       (initial, expr, null_pos,                                         \
        mkVarMap(expr->type == Node_Branch ?                             \
-                groupsWithoutNonLeaves(expr, expr->branch.groups) :     \
+                groupsWithoutNonVars(expr, expr->branch.groups) :     \
                 mkXA(GroupList)()),                                     \
        0, 0, pre_f, post_f);                                            \
   }                                                                     \
@@ -926,7 +926,7 @@ char* symbExprToStringNoGrafts(SymbExpr* expr){
 char* symbExprVarString(SymbExpr* expr){
   char* buf = NULL;
   GroupList trimmedGroups =
-    groupsWithoutNonLeaves(expr, expr->branch.groups);
+    groupsWithoutNonVars(expr, expr->branch.groups);
   int numVars =
     trimmedGroups->size;
   tl_assert(numVars <= sizeof(varnames));

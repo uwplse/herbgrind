@@ -284,7 +284,7 @@ GroupList pruneSingletonGroups(GroupList list){
   freeXA(GroupList)(list);
   return newGroupList;
 }
-GroupList groupsWithoutNonLeaves(SymbExpr* structure, GroupList list){
+GroupList groupsWithoutNonVars(SymbExpr* structure, GroupList list){
   if (list->size == 0) return list;
   GroupList newGroupList = mkXA(GroupList)();
   for(int i = 0; i < list->size; ++i){
@@ -295,7 +295,8 @@ GroupList groupsWithoutNonLeaves(SymbExpr* structure, GroupList list){
       // fact that expressions share structure, and prunings, but
       // don't share their equivalence maps, so those might get out of
       // date if a child expression decides to prune.
-      if (target != NULL && target->type == Node_Leaf){
+      if (target != NULL && target->type == Node_Leaf &&
+          !target->isConst){
         XApush(GroupList)(newGroupList, list->data[i]);
         break;
       }
