@@ -671,13 +671,11 @@ char* symbExprToString(SymbExpr* expr){
                if (curExpr->type == Node_Leaf){
                  if (curExpr->isConst){
                    int len = symbExprConstPrintLen(curExpr)
-                     + 2 // brackets
                      + 1;// space
                    return acc + len;
                  } else {
                    int len =
                      VG_(strlen)(getVar(lookupVar(varMap, curPos)))
-                     + 2 // brackets
                      + 1;// space
                    return acc + len;
                  }
@@ -686,7 +684,6 @@ char* symbExprToString(SymbExpr* expr){
                    + 2; // "* "
                } else if (isGraft) {
                  int len = VG_(strlen)(opSym(curExpr->branch.op))
-                   + 2 // brackets
                    + 2 // parenthesis
                    + 1;// space
                  return acc + len;
@@ -706,10 +703,10 @@ char* symbExprToString(SymbExpr* expr){
                              int depth, int isGraft) {
                        if (curExpr->type == Node_Leaf){
                          if (curExpr->isConst){
-                           printBBuf(acc, " [%f]", curExpr->constVal);
+                           printBBuf(acc, " %f", curExpr->constVal);
                            return acc;
                          } else {
-                           printBBuf(acc, " [%s]",
+                           printBBuf(acc, " %s",
                                      getVar(lookupVar(varMap, curPos)));
                            return acc;
                          }
@@ -717,7 +714,7 @@ char* symbExprToString(SymbExpr* expr){
                          printBBuf(acc, " *");
                          return acc;
                        } else if (isGraft) {
-                         printBBuf(acc, " [(%s",
+                         printBBuf(acc, " (%s",
                                    opSym(curExpr->branch.op));
                          return acc;
                        } else {
@@ -734,7 +731,7 @@ char* symbExprToString(SymbExpr* expr){
                        } else if (depth > MAX_FOLD_DEPTH){
                          return acc;
                        } else if (isGraft) {
-                         printBBuf(acc, ")]");
+                         printBBuf(acc, ")");
                          return acc;
                        } else {
                          printBBuf(acc, ")");
