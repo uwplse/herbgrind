@@ -9,7 +9,7 @@
 #define NPTS 8000
 #endif
 
-double f_id(ARGS(double));
+double f(ARGS(double));
 
 extern double pts[NPTS][NARGS];
 
@@ -26,11 +26,10 @@ int main(int argc, char** argv){
 
     // Run the program on the args
     HERBGRIND_BEGIN();
-    result = INVOKE(f_id, pts[i]);
+    result = INVOKE(f, pts[i]);
     HERBGRIND_END();
 
     /* printf(" --> %e\n", result); */
   }
-  printf("Min legal input was %e, max was %e\n", min_input, max_input);
 }
 

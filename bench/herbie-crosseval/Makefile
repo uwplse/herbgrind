@@ -17,7 +17,7 @@ NMSE-problem-3.4.4.out-errors.gh NMSE-problem-3.4.5.out-errors.gh	\
 NMSE-problem-3.4.6.out-errors.gh NMSE-section-3.11.out-errors.gh	\
 NMSE-section-3.5.out-errors.gh
 
-FLAGS=-g -std=c11 -lm -lmpfr -I../../valgrind/herbgrind/include
+FLAGS=-g -std=c11 -lm -I../../valgrind/herbgrind/include
 
 RHOST=uwplse.org
 RHOSTDIR=/var/www/herbie/herbgrind/hamming
@@ -46,8 +46,8 @@ HERBGRIND-PATH=~/herbie-all/herbgrind
 
 %.out: %.c %-pts.c driver.c
 	gcc $(FLAGS) \
-		-DNARGS=$(shell grep f_if $*.c | tr '()_ ,' '\n' \
-                          | tail -n+2 | grep float -c) \
+		-DNARGS=$(shell grep f $*.c | tr '()_ ,' '\n' \
+                          | tail -n+2 | grep double -c) \
 		-DNPTS=$(shell grep "double pts" $*-pts.c | \
 			cut -d '[' -f 2 | cut -d ']' -f 1) \
         -o $@ $^
@@ -57,33 +57,36 @@ driver.c:
 	true
 
 %.c:
-	cd $(HERBIE-PATH) && \
-	racket herbie/compile/c-single.rkt \
-		--test '$(shell echo $* | sed -e "s/-/ /g" )' \
-                --prog \
-		bench/hamming/ $(HERBGRIND-PATH)/bench/herbie-crosseval/
+	racket fpcore-to-c.rkt $(HERBIE-PATH)/bench/hamming/ \
+		'$(shell echo $* | sed -e "s/-/ /g" )' \
+		> $@
 
 %-pts.c:
 ifeq ($(SEED),)
-	cd $(HERBIE-PATH) && \
-	racket herbie/compile/c-single.rkt \
-		--test '$(shell echo $* | sed -e "s/-/ /g" )' \
-	        --pts \
+	racket sample-fpcore-pts.rkt \
 		-n $(NPTS) \
-		bench/hamming/ $(HERBGRIND-PATH)/bench/herbie-crosseval/
+		$(HERBIE-PATH)/bench/hamming \
+		'$(shell echo $* | sed -e "s/-/ /g" )' \
+		> $@
 else
-	cd $(HERBIE-PATH) && \
-	racket herbie/compile/c-single.rkt \
-		--test '$(shell echo $* | sed -e "s/-/ /g" )' \
-	        --pts \
+	racket sample-fpcore-pts.rkt \
 		-n $(NPTS) \
 		-r "$(SEED)" \
-		bench/hamming/ $(HERBGRIND-PATH)/bench/herbie-crosseval/
+		$(HERBIE-PATH)/bench/hamming \
+		'$(shell echo $* | sed -e "s/-/ /g" )' \
+		> $@
 endif
 
 %.out-errors.gh: %.out
+ifeq ($(PRECISION),)
+	$(eval PRECISION=$(shell grep mpfr_set_default_prec $*.c | head -n 1 | cut -d '(' -f 2 | cut -d ')' -f 1))
+	../../valgrind/$(HG_LOCAL_INSTALL_NAME)/bin/valgrind --tool=herbgrind \
+                                         --start-off \
+                                         ./$*.out
+else
 	$(eval PRECISION=$(shell grep mpfr_set_default_prec $*.c | head -n 1 | cut -d '(' -f 2 | cut -d ')' -f 1))
 	../../valgrind/$(HG_LOCAL_INSTALL_NAME)/bin/valgrind --tool=herbgrind \
                                          --precision=$(PRECISION) \
                                          --start-off \
                                          ./$*.out
+endif
