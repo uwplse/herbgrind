@@ -1,21 +1,21 @@
 include ../../Makefile.common
 
-HAMMING=NMSE-example-3.1.out-errors.gh					\
-NMSE-example-3.10.out-errors.gh NMSE-example-3.3.out-errors.gh		\
-NMSE-example-3.4.out-errors.gh NMSE-example-3.5.out-errors.gh		\
-NMSE-example-3.6.out-errors.gh NMSE-example-3.7.out-errors.gh		\
-NMSE-example-3.8.out-errors.gh NMSE-example-3.9.out-errors.gh		\
-NMSE-p42,-positive.out-errors.gh NMSE-p42,-negative.out-errors.gh	\
-NMSE-problem-3.2.1,-positive.out-errors.gh				\
-NMSE-problem-3.2.1,-negative.out-errors.gh				\
-NMSE-problem-3.3.1.out-errors.gh NMSE-problem-3.3.2.out-errors.gh	\
-NMSE-problem-3.3.3.out-errors.gh NMSE-problem-3.3.4.out-errors.gh	\
-NMSE-problem-3.3.5.out-errors.gh NMSE-problem-3.3.6.out-errors.gh	\
-NMSE-problem-3.3.7.out-errors.gh NMSE-problem-3.4.1.out-errors.gh	\
-NMSE-problem-3.4.2.out-errors.gh NMSE-problem-3.4.3.out-errors.gh	\
-NMSE-problem-3.4.4.out-errors.gh NMSE-problem-3.4.5.out-errors.gh	\
-NMSE-problem-3.4.6.out-errors.gh NMSE-section-3.11.out-errors.gh	\
-NMSE-section-3.5.out-errors.gh
+HAMMING=NMSE-example-3.1.out.gh					\
+NMSE-example-3.10.out.gh NMSE-example-3.3.out.gh		\
+NMSE-example-3.4.out.gh NMSE-example-3.5.out.gh		\
+NMSE-example-3.6.out.gh NMSE-example-3.7.out.gh		\
+NMSE-example-3.8.out.gh NMSE-example-3.9.out.gh		\
+NMSE-p42,-positive.out.gh NMSE-p42,-negative.out.gh	\
+NMSE-problem-3.2.1,-positive.out.gh				\
+NMSE-problem-3.2.1,-negative.out.gh				\
+NMSE-problem-3.3.1.out.gh NMSE-problem-3.3.2.out.gh	\
+NMSE-problem-3.3.3.out.gh NMSE-problem-3.3.4.out.gh	\
+NMSE-problem-3.3.5.out.gh NMSE-problem-3.3.6.out.gh	\
+NMSE-problem-3.3.7.out.gh NMSE-problem-3.4.1.out.gh	\
+NMSE-problem-3.4.2.out.gh NMSE-problem-3.4.3.out.gh	\
+NMSE-problem-3.4.4.out.gh NMSE-problem-3.4.5.out.gh	\
+NMSE-problem-3.4.6.out.gh NMSE-section-3.11.out.gh	\
+NMSE-section-3.5.out.gh
 
 FLAGS=-g -std=c11 -lm -I../../valgrind/herbgrind/include
 
@@ -77,7 +77,7 @@ else
 		> $@
 endif
 
-%.out-errors.gh: %.out
+%.out.gh: %.out
 ifeq ($(PRECISION),)
 	$(eval PRECISION=$(shell grep mpfr_set_default_prec $*.c | head -n 1 | cut -d '(' -f 2 | cut -d ')' -f 1))
 	../../valgrind/$(HG_LOCAL_INSTALL_NAME)/bin/valgrind --tool=herbgrind \
