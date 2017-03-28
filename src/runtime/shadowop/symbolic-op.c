@@ -209,22 +209,6 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
   symbExpr->branch.groups = pruneSingletonGroups(newGroups);
 }
 
-void ppEquivGroups(GroupList groups){
-  for(int i = 0; i < groups->size; ++i){
-    Group g = groups->data[i];
-    ppEquivGroup(g);
-    VG_(printf)("\n");
-  }
-}
-void ppEquivGroup(Group group){
-  VG_(printf)("{ ");
-  for(Group curNode = group; curNode != NULL; curNode = curNode->next){
-    ppNodePos(curNode->item);
-    VG_(printf)(" ");
-  }
-  VG_(printf)("}");
-}
-
 void getGrouped(GroupList groupList, VgHashTable* valMap,
                 ConcExpr* concExpr, SymbExpr* symbExpr,
                 NodePos curPos, int maxDepth);

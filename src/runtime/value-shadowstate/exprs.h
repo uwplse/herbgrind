@@ -109,6 +109,9 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr);
 void pushConcGraftStack(ConcGraft* graft, int count);
 ConcGraft* popConcGraftStack(int count);
 
+void ppEquivGroup(Group group);
+void ppEquivGroups(GroupList groups);
+
 const char* opSym(ShadowOpInfo* op);
 void ppConcExpr(ConcExpr* expr);
 void ppConcExprNoGrafts(ConcExpr* expr);
