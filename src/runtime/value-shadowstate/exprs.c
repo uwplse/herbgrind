@@ -1,9 +1,9 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie                exprs.c ---*/
+/*--- Herbgrind: a valgrind tool for Herbie                exprs.c ---*/
 /*--------------------------------------------------------------------*/
 
 /*
-   This file is part of HerbGrind, a valgrind tool for diagnosing
+   This file is part of Herbgrind, a valgrind tool for diagnosing
    floating point accuracy problems in binary programs and extracting
    problematic expressions.
 

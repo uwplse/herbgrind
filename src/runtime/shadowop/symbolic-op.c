@@ -1,9 +1,9 @@
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie          symbolic-op.c ---*/
+/*--- Herbgrind: a valgrind tool for Herbie          symbolic-op.c ---*/
 /*--------------------------------------------------------------------*/
 
 /*
-   This file is part of HerbGrind, a valgrind tool for diagnosing
+   This file is part of Herbgrind, a valgrind tool for diagnosing
    floating point accuracy problems in binary programs and extracting
    problematic expressions.
 
@@ -161,6 +161,8 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
   tl_assert(symbExpr->type == Node_Branch);
   GroupList groups = symbExpr->branch.groups;
   GroupList newGroups = mkXA(GroupList)();
+  freeXA(GroupList)(newGroups);
+  return;
   for(int i = 0; i < groups->size; i++){
     Group curGroup = groups->data[i];
     Group newCurGroup = NULL;

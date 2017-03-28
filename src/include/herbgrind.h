@@ -1,10 +1,9 @@
-
 /*--------------------------------------------------------------------*/
-/*--- HerbGrind: a valgrind tool for Herbie            herbgrind.h ---*/
+/*--- Herbgrind: a valgrind tool for Herbie            herbgrind.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
-   This file is part of HerbGrind, a valgrind tool for diagnosing
+   This file is part of Herbgrind, a valgrind tool for diagnosing
    floating point accuracy problems in binary programs and extracting
    problematic expressions.
 
@@ -46,7 +45,7 @@ typedef enum {
   VG_USERREQ__FORCE_TRACK,
   VG_USERREQ__FORCE_TRACKF,
   VG_USERREQ__MARK_IMPORTANT,
-} Vg_HerbGrindClientRequests;
+} Vg_HerbgrindClientRequests;
 
 #define HERBGRIND_BEGIN()                                               \
   (__extension__({unsigned long _qzz_res;                               \
