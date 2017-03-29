@@ -99,7 +99,8 @@ void writeOutput(void){
                              markInfo->eagg.num_evals);
     VG_(write)(fileD, buf, entryLen);
 
-    for(InfluenceList curNode = markInfo->influences;
+    for(InfluenceList curNode =
+          filterInfluenceSubexprs(markInfo->influences);
         curNode != NULL; curNode = curNode->next){
       ShadowOpInfo* opinfo = curNode->item;
       char* varString = symbExprVarString(opinfo->expr);

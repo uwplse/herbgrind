@@ -76,3 +76,37 @@ void printMarkInfo(MarkInfo* info){
   VG_(printf)("At ");
   ppAddr(info->addr);
 }
+
+int isSubexpr(SymbExpr* needle, SymbExpr* haystack, int depth){
+  if (needle == haystack) return 1;
+  else if (haystack->type == Node_Leaf) return 0;
+  else {
+    for(int i = 0; i < haystack->branch.nargs; ++i){
+      if (isSubexpr(needle, haystack->branch.args[i], depth - 1)) return 1;
+    }
+    return 0;
+  }
+}
+
+InfluenceList filterInfluenceSubexprs(InfluenceList influences){
+  InfluenceList result = NULL;
+  for(InfluenceList curNode = influences;
+      curNode != NULL;
+      curNode = curNode->next){
+    ShadowOpInfo* influence = curNode->item;
+    for(InfluenceList otherNode = influences;
+        otherNode != NULL;
+        otherNode = otherNode->next){
+      ShadowOpInfo* otherInfluence = otherNode->item;
+      if (otherInfluence == influence){
+        continue;
+      }
+      if (isSubexpr(influence->expr, otherInfluence->expr, MAX_EXPR_IMPRECISE_BLOCK_DEPTH)){
+        goto dont_keep_influence;
+      }
+    }
+    lpush(InfluenceList)(&result, influence);
+  dont_keep_influence:;
+  }
+  return result;
+}

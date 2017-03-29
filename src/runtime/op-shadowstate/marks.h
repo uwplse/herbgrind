@@ -51,5 +51,7 @@ void markImportant(Addr varAddr);
 MarkInfo* getMarkInfo(Addr callAddr);
 void addInfluencesToMark(MarkInfo* info, InfluenceList influences);
 void printMarkInfo(MarkInfo* info);
+int isSubexpr(SymbExpr* needle, SymbExpr* haystack, int depth);
+InfluenceList filterInfluenceSubexprs(InfluenceList influences);
 
 #endif
