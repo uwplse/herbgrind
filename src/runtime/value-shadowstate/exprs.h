@@ -120,6 +120,9 @@ void ppSymbExprNoVars(SymbExpr* expr);
 void ppSymbExprNoGrafts(SymbExpr* expr);
 void ppSymbExprMarkSources(SymbExpr* expr);
 
+int numVarNodes(SymbExpr* expr);
+int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups);
+int numExprVars(SymbExpr* expr);
 char* symbExprVarString(SymbExpr* expr);
 
 int symbExprPrintLen_(SymbExpr* expr, VarMap* varMap,

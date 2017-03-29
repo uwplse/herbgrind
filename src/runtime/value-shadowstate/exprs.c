@@ -920,18 +920,52 @@ char* symbExprToStringNoGrafts(SymbExpr* expr){
                      })));
   return buf;
 }
-char* symbExprVarString(SymbExpr* expr){
-  char* buf = NULL;
+int numVarNodes(SymbExpr* expr){
+  return foldExpr(int)
+    (0, expr,
+     lambda (int, (int acc, SymbExpr* curExpr,
+                   NodePos curPos, VarMap* varMap,
+                   int depth, int isGraft) {
+               if (curExpr->type == Node_Leaf &&
+                   !curExpr->isConst){
+                 return acc + 1;
+               } else {
+                 return acc;
+               }
+             }),
+     foldId(int));
+}
+int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups){
+  int acc = 0;
+  for(int i = 0; i < trimmedGroups->size; ++i){
+    for(Group curNode = trimmedGroups->data[i]->next;
+        curNode != NULL; curNode = curNode->next){
+      SymbExpr* exprNode = symbGraftPosGet(expr, curNode->item);
+      if (exprNode->type == Node_Leaf &&
+          !exprNode->isConst){
+        acc += 1;
+      }
+    }
+  }
+  return acc;
+}
+int numExprVars(SymbExpr* expr){
   GroupList trimmedGroups =
     groupsWithoutNonVars(expr, expr->branch.groups);
-  int numVars =
-    trimmedGroups->size;
-  tl_assert(numVars <= sizeof(varnames));
+  int numNodes = numVarNodes(expr);
+  int numRepetitions = numRepeatedVars(expr, trimmedGroups);
+  int result = numNodes - numRepetitions;
   freeXA(GroupList)(trimmedGroups);
+  return result;
+}
+char* symbExprVarString(SymbExpr* expr){
+  char* buf = NULL;
+  int numVars = numExprVars(expr);
   switch(numVars){
   case 0:{
     char noVars[] = "()";
     buf = VG_(malloc)("var string", sizeof(noVars));
+    VG_(strcpy)(buf, noVars);
   }
     break;
   case 1:{
@@ -941,13 +975,13 @@ char* symbExprVarString(SymbExpr* expr){
   }
     break;
   default:{
-    int buflen = 2 * numVars + 2;
+    int buflen = 2 * numVars + 3;
     buf = VG_(malloc)("var string", buflen * sizeof(char));
     tl_assert(VG_(strlen)(varnames[0]) == 1);
     int count = 0;
     count += VG_(snprintf)(buf + count, buflen - count,
                            "(%s ", varnames[0]);
-    for(int i = 0; i < numVars - 1; ++i){
+    for(int i = 1; i < numVars - 1; ++i){
       count += VG_(snprintf)(buf + count, buflen - count, "%s ", getVar(i));
     }
     VG_(snprintf)(buf + count, buflen - count, "%s)",
