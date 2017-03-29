@@ -938,7 +938,7 @@ int numVarNodes(SymbExpr* expr){
 int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups){
   int acc = 0;
   for(int i = 0; i < trimmedGroups->size; ++i){
-    for(Group curNode = trimmedGroups->data[i]->next;
+    for(Group curNode = trimmedGroups->data[i];
         curNode != NULL; curNode = curNode->next){
       SymbExpr* exprNode = symbGraftPosGet(expr, curNode->item);
       if (exprNode->type == Node_Leaf &&
@@ -946,6 +946,7 @@ int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups){
         acc += 1;
       }
     }
+    acc -= 1;
   }
   return acc;
 }
