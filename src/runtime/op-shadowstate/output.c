@@ -117,6 +117,7 @@ void writeOutput(void){
       entryLen =
         VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
                       output_sexp ?
+                      "\n"
                       "    (FPCore %s\n"
                       "     %s)\n"
                       "     (function \"%s\")\n"
