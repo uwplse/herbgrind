@@ -52,7 +52,7 @@ void execLocalOp(ShadowOpInfo* info, Real realVal,
   double bitsLocalError =
     updateError(&(info->local_eagg), realVal, locallyApproximateResult);
 
-  if (bitsLocalError > error_threshold){
+  if (bitsLocalError >= error_threshold){
     trackOpAsInfluence(info, res);
   }
 }
