@@ -48,23 +48,10 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo){
   }
   ShadowTemp* args[4];
   for(int i = 0; i < opInfo->exinfo.nargs; ++i){
-    if (opInfo->argTemps[i] == -1 ||
-        shadowTemps[opInfo->argTemps[i]] == NULL){
-      args[i] = mkShadowTemp(opInfo->exinfo.numChannels);
-      for(int j = 0; j < opInfo->exinfo.numChannels; j++){
-        double value = opInfo->exinfo.argPrecision == Ft_Double ?
-          computedArgs.argValues[i][j] :
-          computedArgs.argValuesF[i][j];
-        args[i]->values[j] =
-          mkShadowValue(opInfo->exinfo.argPrecision, value);
-      }
-      if (opInfo->argTemps[i] != -1){
-        shadowTemps[opInfo->argTemps[i]] = args[i];
-      }
-    } else {
-      args[i] = shadowTemps[opInfo->argTemps[i]];
-      tl_assert(args[i]->num_vals == opInfo->exinfo.numChannels);
-    }
+    args[i] = getArg(i,
+                     opInfo->exinfo.numChannels,
+                     opInfo->exinfo.argPrecision,
+                     opInfo->argTemps[i]);
   }
   for(int i = 0; i < opInfo->exinfo.numSIMDOperands; ++i){
     ShadowValue* vals[opInfo->exinfo.nargs];
@@ -120,6 +107,26 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo){
     }
   }
   return result;
+}
+ShadowTemp* getArg(int argIdx, int numChannels, FloatType argPrecision,
+                   IRTemp argTemp){
+  if (argTemp == -1 ||
+      shadowTemps[argTemp] == NULL){
+    ShadowTemp* result = mkShadowTemp(numChannels);
+    for(int j = 0; j < numChannels; j++){
+      double value = argPrecision == Ft_Double ?
+        computedArgs.argValues[argIdx][j] :
+        computedArgs.argValuesF[argIdx][j];
+      result->values[j] =
+        mkShadowValue(argPrecision, value);
+    }
+    if (argTemp != -1){
+      shadowTemps[argTemp] = result;
+    }
+    return result;
+  } else {
+    return shadowTemps[argTemp];
+  }
 }
 ShadowValue* executeChannelShadowOp(int nargs,
                                     FloatType type,
