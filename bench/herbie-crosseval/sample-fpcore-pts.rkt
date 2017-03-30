@@ -1,5 +1,6 @@
 #lang racket
 
+(require math/bigfloat)
 (require "../../../herbie/src/formats/test.rkt");
 (require "../../../herbie/src/points.rkt")
 (require "../../../herbie/src/config.rkt")
@@ -15,6 +16,7 @@
                    (test-program test)
                    (test-samplers test)
                    '#t)])
+    (printf "#define PRECISION ~a\n" (bf-precision))
     (printf "double pts[~a][NARGS] = {\n"
             (*num-points*))
     (for ([(pt ex) (in-pcontext context)])

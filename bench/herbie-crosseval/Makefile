@@ -77,16 +77,13 @@ else
 		> $@
 endif
 
-%.out.gh: %.out
+%.out.gh: %.out %-pts.c
 ifeq ($(PRECISION),)
-	$(eval PRECISION=$(shell grep mpfr_set_default_prec $*.c | head -n 1 | cut -d '(' -f 2 | cut -d ')' -f 1))
-	../../valgrind/$(HG_LOCAL_INSTALL_NAME)/bin/valgrind --tool=herbgrind \
-                                         --start-off \
-                                         ./$*.out
-else
-	$(eval PRECISION=$(shell grep mpfr_set_default_prec $*.c | head -n 1 | cut -d '(' -f 2 | cut -d ')' -f 1))
-	../../valgrind/$(HG_LOCAL_INSTALL_NAME)/bin/valgrind --tool=herbgrind \
-                                         --precision=$(PRECISION) \
-                                         --start-off \
-                                         ./$*.out
+	$(eval PRECISION=$(shell grep "#define PRECISION" $*-pts.c \
+	| head -n 1 | cut -d ' ' -f 3 ))
 endif
+	../../valgrind/$(HG_LOCAL_INSTALL_NAME)/bin/valgrind \
+					--tool=herbgrind \
+                                        --precision=$(PRECISION) \
+                                        --start-off \
+                                        ./$*.out
