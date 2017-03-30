@@ -39,5 +39,12 @@ int numSIMDOperands(IROp op_code);
 int inferOtherNumChannels(int inferIndex, IRExpr* arg, IROp op_code);
 const char* getOpcodeSymbol(IROp op_code);
 double runEmulatedOp(IROp op_code, double* args);
+void ppIROp_Extended(int op_code);
+
+typedef enum {
+  Iop_Neg32F0x4=Iop_LAST+1,
+  Iop_Neg64F0x2,
+  Iop_REALLY_LAST_FOR_REAL_GUYS,
+} IROp_Extended;
 
 #endif

@@ -98,7 +98,8 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
   }
   // If the op isn't a float op, dont shadow it.
   if (isSpecialOp(op_code)){
-    handleSpecialOp(sbOut, op_code, argExprs, dest);
+    handleSpecialOp(sbOut, op_code, argExprs, dest,
+                    curAddr, blockAddr);
   } else if (isFloatOp(op_code)){
     if (isConversionOp(op_code)){
       instrumentConversion(sbOut, op_code, argExprs, dest);
@@ -125,17 +126,21 @@ Bool isSpecialOp(IROp op_code){
 }
 
 void handleSpecialOp(IRSB* sbOut, IROp op_code,
-                     IRExpr** argExprs, IRTemp dest){
+                     IRExpr** argExprs, IRTemp dest,
+                     Addr curAddr, Addr block_addr){
   switch(op_code){
   case Iop_I32StoF64:
   case Iop_I64StoF64:
-  case Iop_XorV128:
   case Iop_AndV128:
   case Iop_OrV128:
   case Iop_NotV128:
     addStoreTempUnshadowed(sbOut, dest);
     break;
+  case Iop_XorV128:
+    instrumentPossibleNegate(sbOut, argExprs, dest, curAddr, block_addr);
+    break;
   default:
+    tl_assert(0);
     break;
   }
 }

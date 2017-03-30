@@ -40,8 +40,12 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                           int nargs, IRExpr** argExprs,
                           Addr curAddr, Addr blockAddr,
                           IRTemp dest);
+void instrumentPossibleNegate(IRSB* sbOut,
+                              IRExpr** argExprs, IRTemp dest,
+                              Addr curAddr, Addr blockAddr);
 
-IRExpr* runShadowOp(IRSB* sbOut, IROp op_code,
+IRExpr* runShadowOp(IRSB* sbOut, IRExpr* guard,
+                    IROp op_code,
                     Addr curAddr, Addr block_addr,
                     int nargs, IRExpr** argsExprs,
                     IRExpr* result);

@@ -36,9 +36,11 @@
 #include "symbolic-op.h"
 #include "local-op.h"
 #include "influence-op.h"
+#include "../../helper/ir-info.h"
 
 VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo){
-  tl_assert(opInfo->op_code < Iop_LAST);
+  tl_assert((int)opInfo->op_code <
+            (int)Iop_REALLY_LAST_FOR_REAL_GUYS);
   ShadowTemp* result = mkShadowTemp(opInfo->exinfo.numChannels);
   if (print_temp_moves){
     VG_(printf)("Making %p for result of shadow op.\n",

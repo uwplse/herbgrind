@@ -51,11 +51,12 @@ int numChannelsOut(IROp op_code){
 }
 
 int numChannelsIn(IROp op_code){
-  switch(op_code){
+  switch((int)op_code){
   case Iop_RecipEst32Fx4:
   case Iop_RSqrtEst32Fx4:
   case Iop_Abs32Fx4:
   case Iop_Neg32Fx4:
+  case Iop_Neg32F0x4:
   case Iop_ZeroHI96ofV128:
   case Iop_V128to32:
   case Iop_Sqrt32F0x4:
@@ -66,6 +67,7 @@ int numChannelsIn(IROp op_code){
   case Iop_RSqrtEst64Fx2:
   case Iop_Abs64Fx2:
   case Iop_Neg64Fx2:
+  case Iop_Neg64F0x2:
   case Iop_Neg32Fx2:
   case Iop_Abs32Fx2:
   case Iop_RSqrtEst32Fx2:
@@ -195,7 +197,7 @@ int numChannelsIn(IROp op_code){
 // means that operations that take a simd value with four channels,
 // and only operate on the first one, return 1.
 int numSIMDOperands(IROp op_code){
-  switch(op_code){
+  switch((int)op_code){
   case Iop_RecipEst32Fx4:
   case Iop_RSqrtEst32Fx4:
   case Iop_Abs32Fx4:
@@ -217,8 +219,10 @@ int numSIMDOperands(IROp op_code){
   case Iop_F128LOtoF64:
   case Iop_F32toF64:
   case Iop_NegF32:
+  case Iop_Neg32F0x4:
   case Iop_AbsF32:
   case Iop_NegF64:
+  case Iop_Neg64F0x2:
   case Iop_AbsF64:
   case Iop_Sqrt64F0x2:
   case Iop_RecipEst32F0x4:
@@ -369,7 +373,7 @@ int inferOtherNumChannels(int inferIndex, IRExpr* arg, IROp op_code){
 }
 
 const char* getOpcodeSymbol(IROp op_code){
-  switch(op_code){
+  switch((int)op_code){
   case Iop_RecipEst32Fx4:
   case Iop_RecipEst64Fx2:
   case Iop_RecipEst32Fx2:
@@ -396,9 +400,11 @@ const char* getOpcodeSymbol(IROp op_code){
   case Iop_Abs32Fx2:
     return "abs";
   case Iop_Neg32Fx4:
+  case Iop_Neg64F0x2:
   case Iop_Neg64Fx2:
   case Iop_NegF32:
   case Iop_NegF64:
+  case Iop_Neg32F0x4:
   case Iop_Neg32Fx2:
     return "-";
   case Iop_Sqrt64F0x2:
@@ -526,7 +532,7 @@ const char* getOpcodeSymbol(IROp op_code){
 }
 
 double runEmulatedOp(IROp op_code, double* args){
-  switch(op_code){
+  switch((int)op_code){
   case Iop_Abs32Fx4:
   case Iop_Abs64Fx2:
   case Iop_AbsF32:
@@ -535,9 +541,11 @@ double runEmulatedOp(IROp op_code, double* args){
     return fabs(args[0]);
   case Iop_Neg32Fx4:
   case Iop_Neg64Fx2:
+  case Iop_Neg64F0x2:
   case Iop_NegF32:
   case Iop_NegF64:
   case Iop_Neg32Fx2:
+  case Iop_Neg32F0x4:
     return -args[0];
   case Iop_Sqrt64F0x2:
   case Iop_Sqrt32F0x4:
@@ -667,5 +675,19 @@ double runEmulatedOp(IROp op_code, double* args){
   default:
     tl_assert(0);
     return 0;
+  }
+}
+
+void ppIROp_Extended(int op_code){
+  switch(op_code){
+  case Iop_Neg32F0x4:
+    VG_(printf)("Iop_Neg32F0x4");
+    break;
+  case Iop_Neg64F0x2:
+    VG_(printf)("Iop_Neg64F0x2");
+    break;
+  default:
+    ppIROp(op_code);
+    break;
   }
 }

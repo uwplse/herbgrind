@@ -31,9 +31,10 @@
 #include "../value-shadowstate/real.h"
 #include "pub_tool_libcassert.h"
 #include "pub_tool_libcprint.h"
+#include "../../helper/ir-info.h"
 
 void execRealOp(IROp op_code, Real* result, ShadowValue** args){
-  switch(op_code){
+  switch((int)op_code){
   case Iop_RecipEst32Fx4:
   case Iop_RecipEst32Fx2:
   case Iop_RecipEst64Fx2:
@@ -55,8 +56,10 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
     CALL1(abs, (*result)->RVAL, args[0]->real->RVAL);
     break;
   case Iop_Neg32Fx4:
+  case Iop_Neg32F0x4:
   case Iop_Neg32Fx2:
   case Iop_Neg64Fx2:
+  case Iop_Neg64F0x2:
   case Iop_NegF32:
   case Iop_NegF64:
     CALL1(neg, (*result)->RVAL, args[0]->real->RVAL);
@@ -259,7 +262,7 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
     break;
   default:
     VG_(printf)("Don't recognize (%d) ", op_code);
-    ppIROp(op_code);
+    ppIROp_Extended(op_code);
     VG_(printf)("\n");
     tl_assert(0);
     return;

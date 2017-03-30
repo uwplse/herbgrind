@@ -33,6 +33,7 @@
 #include "pub_tool_libcassert.h"
 #include "pub_tool_libcprint.h"
 #include "../helper/stack.h"
+#include "../helper/ir-info.h"
 
 FloatType tempContext[MAX_TEMPS];
 FloatType tsContext[MAX_REGISTERS];
@@ -53,10 +54,6 @@ Bool tempIsTyped(int idx){
     tempContext[idx] == Ft_Double;
 }
 FloatType tempType(int idx){
-  /* tl_assert2(tempContext[idx] != Ft_NonFloat, */
-  /*            "Tried to get the type of temp %d, " */
-  /*            "but it hasn't been set yet this SB!\n", */
-  /*            idx); */
   return tempContext[idx];
 }
 int valueSize(IRSB* sbOut, int idx){
@@ -293,14 +290,6 @@ FloatType inferTSType64(Int tsAddr){
   tl_assert2(tsContext[tsAddr] != Ft_Double ||
              tsContext[tsAddr + sizeof(float)] == Ft_NonFloat,
              "Mismatched float at TS(%d)!", tsAddr);
-  /* tl_assert2(tsContext[tsAddr] != Ft_NonFloat || */
-  /*            tsContext[tsAddr + sizeof(float)] == Ft_NonFloat, */
-  /*            "Mismatched float at TS(%d)!", tsAddr); */
-  /* tl_assert2(tsContext[tsAddr] != Ft_Single || */
-  /*            tsContext[tsAddr + sizeof(float)] == Ft_Single || */
-  /*            tsContext[tsAddr + sizeof(float)] == Ft_NonFloat || */
-  /*            tsContext[tsAddr + sizeof(float)] == Ft_Unknown, */
-  /*            "Mismatched float at TS(%d)!", tsAddr); */
   if (tsContext[tsAddr] == Ft_Unknown){
     return tsContext[tsAddr + sizeof(float)];
   } else {
@@ -309,7 +298,7 @@ FloatType inferTSType64(Int tsAddr){
 }
 
 FloatType argPrecision(IROp op_code){
-  switch(op_code){
+  switch((int)op_code){
     // Non-semantic ops have no need for this, since they will never
     // be constructing new shadow values, so we can just return
     // Ft_Unknown for them.
@@ -327,6 +316,7 @@ FloatType argPrecision(IROp op_code){
   case Iop_RSqrtEst32Fx2:
   case Iop_RecipEst32Fx2:
   case Iop_NegF32:
+  case Iop_Neg32F0x4:
   case Iop_AbsF32:
   case Iop_RecipStep32Fx4:
   case Iop_RSqrtStep32Fx4:
@@ -378,6 +368,7 @@ FloatType argPrecision(IROp op_code){
     return Ft_Single;
   case Iop_RSqrtEst5GoodF64:
   case Iop_NegF64:
+  case Iop_Neg64F0x2:
   case Iop_AbsF64:
   case Iop_Sqrt64F0x2:
   case Iop_Sqrt64Fx2:
@@ -442,7 +433,7 @@ FloatType argPrecision(IROp op_code){
   }
 }
 FloatType resultPrecision(IROp op_code){
-  switch(op_code){
+  switch((int)op_code){
     // Non-semantic ops have no need for this, since they will never
     // be constructing new shadow values, so we can just return
     // Ft_NonFloat for them.
@@ -450,10 +441,7 @@ FloatType resultPrecision(IROp op_code){
   case Iop_RSqrtEst32Fx4:
   case Iop_Abs32Fx4:
   case Iop_Neg32Fx4:
-  case Iop_RecipEst64Fx2:
-  case Iop_RSqrtEst64Fx2:
-  case Iop_Abs64Fx2:
-  case Iop_Neg64Fx2:
+  case Iop_Neg32F0x4:
   case Iop_RecipEst32F0x4:
   case Iop_Sqrt32F0x4:
   case Iop_RSqrtEst32F0x4:
@@ -513,6 +501,11 @@ FloatType resultPrecision(IROp op_code){
   case Iop_F64toF32:
     return Ft_Single;
   case Iop_RSqrtEst5GoodF64:
+  case Iop_RecipEst64Fx2:
+  case Iop_RSqrtEst64Fx2:
+  case Iop_Abs64Fx2:
+  case Iop_Neg64Fx2:
+  case Iop_Neg64F0x2:
   case Iop_NegF64:
   case Iop_AbsF64:
   case Iop_Sqrt64F0x2:
