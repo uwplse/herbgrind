@@ -43,7 +43,14 @@ void markImportant(Addr varAddr){
   MarkInfo* info = getMarkInfo(callAddr);
   tl_assert(info != NULL);
   ShadowValue* val = getMemShadow(varAddr);
-  if (val == NULL) return;
+  if (val == NULL){
+    VG_(umsg)("This mark couldn't find a shadow value! This means either it lost the value, or there were no floating point operations on this value prior to hitting this mark.\n");
+    if (info->eagg->max_error < 0){
+      info->eagg->max_error = 0;
+    }
+    info->eagg->num_evals += 1;
+    return;
+  }
   addInfluencesToMark(info, val->influences);
   if (print_errors || print_errors_long){
     printMarkInfo(info);
