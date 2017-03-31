@@ -85,5 +85,6 @@ endif
 	../../valgrind/$(HG_LOCAL_INSTALL_NAME)/bin/valgrind \
 					--tool=herbgrind \
                                         --precision=$(PRECISION) \
+					--error-threshold=0 \
                                         --start-off \
                                         ./$*.out

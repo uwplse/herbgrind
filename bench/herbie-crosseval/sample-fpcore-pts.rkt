@@ -2,6 +2,7 @@
 
 (require math/bigfloat)
 (require "../../../herbie/src/formats/test.rkt");
+(require "../../../herbie/src/mainloop.rkt")
 (require "../../../herbie/src/points.rkt")
 (require "../../../herbie/src/config.rkt")
 (require "../../../herbie/src/common.rkt")
@@ -11,15 +12,14 @@
          [test (car (filter (λ (test)
                               (equal? (test-name test)
                                       name))
-                            tests))]
-         [context (prepare-points
-                   (test-program test)
-                   (test-samplers test)
-                   '#t)])
+                            tests))])
+    (setup-prog! (test-program test)
+                 #:samplers (test-samplers test)
+                 #:precondition (test-precondition test))
     (printf "#define PRECISION ~a\n" (bf-precision))
     (printf "double pts[~a][NARGS] = {\n"
             (*num-points*))
-    (for ([(pt ex) (in-pcontext context)])
+    (for ([(pt ex) (in-pcontext (*pcontext*))])
       (printf "    {")
       (for ([dim pt])
         (printf "~a, " dim))
