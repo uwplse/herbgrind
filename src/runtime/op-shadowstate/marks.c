@@ -45,10 +45,10 @@ void markImportant(Addr varAddr){
   ShadowValue* val = getMemShadow(varAddr);
   if (val == NULL){
     VG_(umsg)("This mark couldn't find a shadow value! This means either it lost the value, or there were no floating point operations on this value prior to hitting this mark.\n");
-    if (info->eagg->max_error < 0){
-      info->eagg->max_error = 0;
+    if (info->eagg.max_error < 0){
+      info->eagg.max_error = 0;
     }
-    info->eagg->num_evals += 1;
+    info->eagg.num_evals += 1;
     return;
   }
   addInfluencesToMark(info, val->influences);
