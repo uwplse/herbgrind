@@ -107,7 +107,7 @@ typedef enum {
   (__extension__({unsigned long _qzz_res;                       \
       VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,                   \
                                  VG_USERREQ__MARK_IMPORTANT,    \
-                                 &_qzz_var, 0, 0, 0, 0);     \
+                                 &(_qzz_var), 0, 0, 0, 0);      \
       _qzz_res;                                                 \
     }))
 #endif
