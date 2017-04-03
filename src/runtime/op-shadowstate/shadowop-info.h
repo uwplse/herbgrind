@@ -41,6 +41,7 @@
 extern VgHashTable* mathreplaceOpInfoMap;
 extern VgHashTable* semanticOpInfoMap;
 extern VgHashTable* markMap;
+extern VgHashTable* intMarkMap;
 
 typedef struct _ErrorAggregate {
   double max_error;

@@ -33,15 +33,14 @@
 #include "../shadowop/error.h"
 #include "../shadowop/influence-op.h"
 #include "pub_tool_libcprint.h"
-
-List_Impl(MarkInfo, MarkList);
+#include "pub_tool_libcbase.h"
 
 VgHashTable* markMap = NULL;
+VgHashTable* intMarkMap = NULL;
 
 void markImportant(Addr varAddr){
   Addr callAddr = getCallAddr();
   MarkInfo* info = getMarkInfo(callAddr);
-  tl_assert(info != NULL);
   ShadowValue* val = getMemShadow(varAddr);
   if (val == NULL){
     VG_(umsg)("This mark couldn't find a shadow value! This means either it lost the value, or there were no floating point operations on this value prior to hitting this mark.\n");
@@ -51,13 +50,36 @@ void markImportant(Addr varAddr){
     info->eagg.num_evals += 1;
     return;
   }
-  addInfluencesToMark(info, val->influences);
-  if (print_errors || print_errors_long){
-    printMarkInfo(info);
-  }
+  dedupAddInfluencesToList(&(info->influences), val->influences);
   updateError(&(info->eagg), val->real, *(double*)varAddr);
 }
+void markEscapeFromFloat(const char* markType, ShadowValue* value, int mismatch){
+  Addr callAddr = getCallAddr();
+  IntMarkInfo* info = getIntMarkInfo(callAddr, markType);
+  info->num_hits += 1;
+  info->num_mismatches += mismatch;
+  if (value == NULL){
+    VG_(umsg)("This mark couldn't find a shadow value! This means either it lost the value, or there were no floating point operations on this value prior to hitting this mark.\n");
+    return;
+  }
+  dedupAddInfluencesToList(&(info->influences), value->influences);
+}
 
+IntMarkInfo* getIntMarkInfo(Addr callAddr, const char* markType){
+  IntMarkInfo* markInfo = VG_(HT_lookup)(markMap, callAddr);
+  if (markInfo == NULL){
+    markInfo = VG_(perm_malloc)(sizeof(MarkInfo), vg_alignof(MarkInfo));
+    markInfo->addr = callAddr;
+    markInfo->influences = NULL;
+    markInfo->num_hits = 0;
+    markInfo->num_mismatches = 0;
+    markInfo->markType = markType;
+    VG_(HT_add_node)(intMarkMap, markInfo);
+  } else {
+    tl_assert(!VG_(strcmp)(markType, markInfo->markType));
+  }
+  return markInfo;
+}
 MarkInfo* getMarkInfo(Addr callAddr){
   MarkInfo* markInfo = VG_(HT_lookup)(markMap, callAddr);
   if (markInfo == NULL){
@@ -72,10 +94,10 @@ MarkInfo* getMarkInfo(Addr callAddr){
   return markInfo;
 }
 
-void addInfluencesToMark(MarkInfo* info, InfluenceList influences){
+void dedupAddInfluencesToList(InfluenceList* list, InfluenceList influences){
   for(InfluenceList curNode = influences; curNode != NULL;
       curNode = curNode->next){
-    dedupAddInfluenceToList(&(info->influences), curNode->item);
+    dedupAddInfluenceToList(list, curNode->item);
   }
 }
 

@@ -30,7 +30,10 @@
 #ifndef _OUTPUT_H
 #define _OUTPUT_H
 
+#include "marks.h"
+
 void writeOutput(void);
 
 const char* getOutputFilename(void);
+void writeInfluences(Int fileD, InfluenceList influences);
 #endif

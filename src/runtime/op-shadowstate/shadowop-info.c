@@ -41,6 +41,7 @@ void initOpShadowState(void){
   mathreplaceOpInfoMap = VG_(HT_construct)("call map mathreplace");
   semanticOpInfoMap = VG_(HT_construct)("call map semantic op");
   markMap = VG_(HT_construct)("mark map");
+  intMarkMap = VG_(HT_construct)("int mark map");
 }
 
 ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,

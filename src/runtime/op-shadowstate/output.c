@@ -35,7 +35,6 @@
 #include "pub_tool_debuginfo.h"
 #include "pub_tool_hashtable.h"
 #include "pub_tool_mallocfree.h"
-#include "marks.h"
 #include "shadowop-info.h"
 #include "../../options.h"
 
@@ -70,8 +69,9 @@ void writeOutput(void){
       src_line = -1;
       src_filename = "Unknown";
       fnname = "Unknown";
+    } else {
+      VG_(get_fnname)(markInfo->addr, &fnname);
     }
-    VG_(get_fnname)(markInfo->addr, &fnname);
 
     char buf[ENTRY_BUFFER_SIZE];
     unsigned int entryLen;
@@ -99,58 +99,55 @@ void writeOutput(void){
                              markInfo->eagg.num_evals);
     VG_(write)(fileD, buf, entryLen);
 
-    for(InfluenceList curNode =
-          filterInfluenceSubexprs(markInfo->influences);
-        curNode != NULL; curNode = curNode->next){
-      ShadowOpInfo* opinfo = curNode->item;
-      char* varString = symbExprVarString(opinfo->expr);
-      char* exprString = symbExprToString(opinfo->expr);
-      
-      VG_(get_fnname)(opinfo->op_addr, &fnname);
-      if (!VG_(get_filename_linenum)(markInfo->addr, &src_filename,
-                                     NULL, &src_line)){
-        src_line = -1;
-        src_filename = "Unknown";
-        fnname = "Unknown";
-      }
-
-      entryLen =
-        VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                      output_sexp ?
-                      "\n"
-                      "    (FPCore %s\n"
-                      "     %s)\n"
-                      "     (function \"%s\")\n"
-                      "     (filename \"%s\")\n"
-                      "     (line-num %u)\n"
-                      "     (instr-addr %lX)\n"
-                      "     (avg-error %f)\n"
-                      "     (max-error %f)\n"
-                      "     (avg-local-error %f)\n"
-                      "     (max-local-error %f)\n"
-                      "     (num-calls %lld))\n" :
-                      "   (FPCore %s\n"
-                      "    %s)\n"
-                      "   in %s at %s:%u (address %lX)\n"
-                      "   %f bits average error\n"
-                      "   %f bits max error\n"
-                      "   %f bits average local error\n"
-                      "   %f bits max local error\n"
-                      "   Aggregated over %lld instances\n",
-                      varString, exprString,
-                      fnname, src_filename, src_line,
-                      opinfo->op_addr,
-                      opinfo->eagg.total_error /
-                      opinfo->eagg.num_evals,
-                      opinfo->eagg.max_error,
-                      opinfo->local_eagg.total_error /
-                      opinfo->local_eagg.num_evals,
-                      opinfo->local_eagg.max_error,
-                      opinfo->eagg.num_evals);
-      VG_(free)(exprString);
-      VG_(free)(varString);
-      VG_(write)(fileD, buf, entryLen);
+    writeInfluences(fileD, filterInfluenceSubexprs(markInfo->influences));
+    if (output_sexp){
+      char endparens[] = "  ))\n";
+      VG_(write)(fileD, endparens, sizeof(endparens));
     }
+  }
+  VG_(HT_ResetIter)(markMap);
+  for(IntMarkInfo* intMarkInfo = VG_(HT_Next)(intMarkMap);
+      intMarkInfo != NULL; intMarkInfo = VG_(HT_Next)(intMarkMap)){
+    const char* src_filename;
+    const char* fnname;
+    unsigned int src_line;
+
+    if (!VG_(get_filename_linenum)(intMarkInfo->addr, &src_filename,
+                                   NULL, &src_line)){
+      src_line = -1;
+      src_filename = "Unknown";
+      fnname = "Unknown";
+    } else {
+      VG_(get_fnname)(intMarkInfo->addr, &fnname);
+    }
+
+    char buf[ENTRY_BUFFER_SIZE];
+    unsigned int entryLen;
+    entryLen = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
+                             output_sexp ?
+                             "(%s\n"
+                             "  (function \"%s\")\n"
+                             "  (filename \"%s\")\n"
+                             "  (line-num %u)\n"
+                             "  (instr-addr %lX)\n"
+                             "  (percent-wrong %d)\n"
+                             "  (num-wrong %d)\n"
+                             "  (num-calls %d)\n"
+                             "  (influences\n" :
+                             "%s in %s at %s:%u (address %lX)\n"
+                             "%%%d incorrect\n"
+                             "%d incorrect values\n"
+                             "%d total instances\n"
+                             "Influenced by erroneous expressions:\n",
+                             intMarkInfo->markType,
+                             fnname, src_filename, src_line,
+                             intMarkInfo->addr,
+                             (intMarkInfo->num_mismatches * 100) / intMarkInfo->num_hits,
+                             intMarkInfo->num_mismatches,
+                             intMarkInfo->num_hits);
+    VG_(write)(fileD, buf, entryLen);
+
+    writeInfluences(fileD, filterInfluenceSubexprs(intMarkInfo->influences));
     if (output_sexp){
       char endparens[] = "  ))\n";
       VG_(write)(fileD, endparens, sizeof(endparens));
@@ -167,5 +164,65 @@ const char* getOutputFilename(void){
     return default_filename;
   } else {
     return output_filename;
+  }
+}
+
+void writeInfluences(Int fileD, InfluenceList influences){
+  const char* src_filename;
+  const char* fnname;
+  unsigned int src_line;
+  char buf[ENTRY_BUFFER_SIZE];
+  unsigned int entryLen;
+  for(InfluenceList curNode = influences;
+      curNode != NULL; curNode = curNode->next){
+    ShadowOpInfo* opinfo = curNode->item;
+    char* varString = symbExprVarString(opinfo->expr);
+    char* exprString = symbExprToString(opinfo->expr);
+
+    if (!VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
+                                   NULL, &src_line)){
+      src_line = -1;
+      src_filename = "Unknown";
+      fnname = "Unknown";
+    } else {
+      VG_(get_fnname)(opinfo->op_addr, &fnname);
+    }
+
+    entryLen =
+      VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
+                    output_sexp ?
+                    "\n"
+                    "    (FPCore %s\n"
+                    "     %s)\n"
+                    "     (function \"%s\")\n"
+                    "     (filename \"%s\")\n"
+                    "     (line-num %u)\n"
+                    "     (instr-addr %lX)\n"
+                    "     (avg-error %f)\n"
+                    "     (max-error %f)\n"
+                    "     (avg-local-error %f)\n"
+                    "     (max-local-error %f)\n"
+                    "     (num-calls %lld))\n" :
+                    "   (FPCore %s\n"
+                    "    %s)\n"
+                    "   in %s at %s:%u (address %lX)\n"
+                    "   %f bits average error\n"
+                    "   %f bits max error\n"
+                    "   %f bits average local error\n"
+                    "   %f bits max local error\n"
+                    "   Aggregated over %lld instances\n",
+                    varString, exprString,
+                    fnname, src_filename, src_line,
+                    opinfo->op_addr,
+                    opinfo->eagg.total_error /
+                    opinfo->eagg.num_evals,
+                    opinfo->eagg.max_error,
+                    opinfo->local_eagg.total_error /
+                    opinfo->local_eagg.num_evals,
+                    opinfo->local_eagg.max_error,
+                    opinfo->eagg.num_evals);
+    VG_(free)(exprString);
+    VG_(free)(varString);
+    VG_(write)(fileD, buf, entryLen);
   }
 }

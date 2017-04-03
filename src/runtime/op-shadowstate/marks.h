@@ -45,11 +45,21 @@ typedef struct _markInfo {
   ErrorAggregate eagg;
 } MarkInfo;
 
-List_H(MarkInfo, MarkList);
+typedef struct _intMarkInfo {
+  struct _intMarkInfo* next;
+
+  const char* markType;
+  Addr addr;
+  InfluenceList influences;
+  int num_hits;
+  int num_mismatches;
+} IntMarkInfo;
 
 void markImportant(Addr varAddr);
+void markEscapeFromFloat(const char* markType, ShadowValue* value, int mismatch);
+IntMarkInfo* getIntMarkInfo(Addr callAddr, const char* markType);
 MarkInfo* getMarkInfo(Addr callAddr);
-void addInfluencesToMark(MarkInfo* info, InfluenceList influences);
+void dedupAddInfluencesToList(InfluenceList* info, InfluenceList influences);
 void printMarkInfo(MarkInfo* info);
 int isSubexpr(SymbExpr* needle, SymbExpr* haystack, int depth);
 InfluenceList filterInfluenceSubexprs(InfluenceList influences);
