@@ -161,8 +161,6 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
   tl_assert(symbExpr->type == Node_Branch);
   GroupList groups = symbExpr->branch.groups;
   GroupList newGroups = mkXA(GroupList)();
-  freeXA(GroupList)(newGroups);
-  return;
   for(int i = 0; i < groups->size; i++){
     Group curGroup = groups->data[i];
     Group newCurGroup = NULL;
@@ -172,9 +170,7 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
 
     while(curGroup != NULL){
       NodePos groupMemberPos = lpop(Group)(&curGroup);
-      // If we pruned the node that this position refers to, kill the
-      // position.
-      if (concGraftPosGet(concExpr, groupMemberPos) == NULL){
+      if (symbGraftPosGet(symbExpr, groupMemberPos) == NULL){
         continue;
       }
       double nodeValue = concGraftPosGet(concExpr, groupMemberPos)->value;
@@ -285,8 +281,8 @@ GroupList pruneSingletonGroups(GroupList list){
   return newGroupList;
 }
 GroupList groupsWithoutNonVars(SymbExpr* structure, GroupList list){
-  if (list->size == 0) return list;
   GroupList newGroupList = mkXA(GroupList)();
+  if (list->size == 0) return newGroupList;
   for(int i = 0; i < list->size; ++i){
     for(Group curNode = list->data[i]; curNode != NULL;
         curNode = curNode->next){
