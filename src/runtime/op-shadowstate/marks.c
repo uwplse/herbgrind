@@ -75,8 +75,6 @@ IntMarkInfo* getIntMarkInfo(Addr callAddr, const char* markType){
     markInfo->num_mismatches = 0;
     markInfo->markType = markType;
     VG_(HT_add_node)(intMarkMap, markInfo);
-  } else {
-    tl_assert(!VG_(strcmp)(markType, markInfo->markType));
   }
   return markInfo;
 }
