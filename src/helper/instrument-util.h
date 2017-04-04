@@ -103,7 +103,7 @@ IRStmt* mkDirtyG_0_N(int nargs, const char* fname, void* f,
 #define mkDirty_0_2(f, arg1, arg2)              \
   mkDirty_0_N(2, f, mkIRExprVec_2(arg1, arg2))
 #define mkDirty_0_3(f, arg1, arg2, arg3)        \
-  mkDirty_0_N(3, f, mkIRExprVec_3(arg1, arg2, arg3)
+  mkDirty_0_N(3, f, mkIRExprVec_3(arg1, arg2, arg3))
 
 IRExpr* runUnop(IRSB* sbOut, IROp op_code, IRExpr* arg);
 

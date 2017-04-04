@@ -53,22 +53,22 @@ void markImportant(Addr varAddr){
   dedupAddInfluencesToList(&(info->influences), val->influences);
   updateError(&(info->eagg), val->real, *(double*)varAddr);
 }
-void markEscapeFromFloat(const char* markType, ShadowValue* value, int mismatch){
+void markEscapeFromFloat(const char* markType, int mismatch, int num_vals, ShadowValue** values){
   Addr callAddr = getCallAddr();
   IntMarkInfo* info = getIntMarkInfo(callAddr, markType);
   info->num_hits += 1;
   info->num_mismatches += mismatch;
-  if (value == NULL){
-    VG_(umsg)("This mark couldn't find a shadow value! This means either it lost the value, or there were no floating point operations on this value prior to hitting this mark.\n");
-    return;
+  for(int i = 0; i < num_vals; ++i){
+    if (mismatch){
+      dedupAddInfluencesToList(&(info->influences), values[i]->influences);
+    }
   }
-  dedupAddInfluencesToList(&(info->influences), value->influences);
 }
 
 IntMarkInfo* getIntMarkInfo(Addr callAddr, const char* markType){
-  IntMarkInfo* markInfo = VG_(HT_lookup)(markMap, callAddr);
+  IntMarkInfo* markInfo = VG_(HT_lookup)(intMarkMap, callAddr);
   if (markInfo == NULL){
-    markInfo = VG_(perm_malloc)(sizeof(MarkInfo), vg_alignof(MarkInfo));
+    markInfo = VG_(perm_malloc)(sizeof(IntMarkInfo), vg_alignof(IntMarkInfo));
     markInfo->addr = callAddr;
     markInfo->influences = NULL;
     markInfo->num_hits = 0;

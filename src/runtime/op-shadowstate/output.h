@@ -35,5 +35,6 @@
 void writeOutput(void);
 
 const char* getOutputFilename(void);
+int haveErroneousIntMarks(void);
 void writeInfluences(Int fileD, InfluenceList influences);
 #endif

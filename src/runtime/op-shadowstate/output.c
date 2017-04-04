@@ -52,7 +52,8 @@ void writeOutput(void){
   }
   Int fileD = sr_Res(fileResult);
 
-  if (VG_(HT_count_nodes)(markMap) == 0){
+  if (VG_(HT_count_nodes)(markMap) == 0 &&
+      !haveErroneousIntMarks()){
     char output[] = "No erroneous expressions found!\n";
     VG_(write)(fileD, output, sizeof(output));
     return;
@@ -105,9 +106,10 @@ void writeOutput(void){
       VG_(write)(fileD, endparens, sizeof(endparens));
     }
   }
-  VG_(HT_ResetIter)(markMap);
+  VG_(HT_ResetIter)(intMarkMap);
   for(IntMarkInfo* intMarkInfo = VG_(HT_Next)(intMarkMap);
       intMarkInfo != NULL; intMarkInfo = VG_(HT_Next)(intMarkMap)){
+    if (intMarkInfo->num_mismatches == 0) continue;
     const char* src_filename;
     const char* fnname;
     unsigned int src_line;
@@ -135,7 +137,7 @@ void writeOutput(void){
                              "  (num-calls %d)\n"
                              "  (influences\n" :
                              "%s in %s at %s:%u (address %lX)\n"
-                             "%%%d incorrect\n"
+                             "%d%% incorrect\n"
                              "%d incorrect values\n"
                              "%d total instances\n"
                              "Influenced by erroneous expressions:\n",
@@ -165,6 +167,16 @@ const char* getOutputFilename(void){
   } else {
     return output_filename;
   }
+}
+
+int haveErroneousIntMarks(void){
+  VG_(HT_ResetIter)(intMarkMap);
+  for(IntMarkInfo* intMarkInfo = VG_(HT_Next)(intMarkMap);
+      intMarkInfo != NULL; intMarkInfo = VG_(HT_Next)(intMarkMap)){
+    if (intMarkInfo->num_mismatches == 0) continue;
+    return True;
+  }
+  return False;
 }
 
 void writeInfluences(Int fileD, InfluenceList influences){

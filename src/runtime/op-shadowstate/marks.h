@@ -48,15 +48,15 @@ typedef struct _markInfo {
 typedef struct _intMarkInfo {
   struct _intMarkInfo* next;
 
-  const char* markType;
   Addr addr;
+  const char* markType;
   InfluenceList influences;
   int num_hits;
   int num_mismatches;
 } IntMarkInfo;
 
 void markImportant(Addr varAddr);
-void markEscapeFromFloat(const char* markType, ShadowValue* value, int mismatch);
+void markEscapeFromFloat(const char* markType, int mismatch, int numVals, ShadowValue** values);
 IntMarkInfo* getIntMarkInfo(Addr callAddr, const char* markType);
 MarkInfo* getMarkInfo(Addr callAddr);
 void dedupAddInfluencesToList(InfluenceList* info, InfluenceList influences);

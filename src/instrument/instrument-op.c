@@ -37,11 +37,14 @@
 #include "instrument-storage.h"
 #include "conversion.h"
 #include "semantic-op.h"
+#include "ownership.h"
 #include "../runtime/shadowop/shadowop.h"
 #include "../runtime/shadowop/conversions.h"
+#include "../runtime/shadowop/exit-float-op.h"
 #include "../runtime/value-shadowstate/exprs.h"
 #include "../runtime/value-shadowstate/shadowval.h"
 #include "../runtime/value-shadowstate/real.h"
+#include "../helper/instrument-util.h"
 
 void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
                   Addr curAddr, Addr blockAddr){
@@ -100,6 +103,9 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
   if (isSpecialOp(op_code)){
     handleSpecialOp(sbOut, op_code, argExprs, dest,
                     curAddr, blockAddr);
+  } else if (isExitFloatOp(op_code)){
+    handleExitFloatOp(sbOut, op_code, argExprs, dest,
+                      curAddr, blockAddr);
   } else if (isFloatOp(op_code)){
     if (isConversionOp(op_code)){
       instrumentConversion(sbOut, op_code, argExprs, dest);
@@ -109,6 +115,124 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
     }
   } else {
     addStoreTempNonFloat(sbOut, dest);
+  }
+}
+Bool isExitFloatOp(IROp op_code){
+  switch(op_code){
+  case Iop_CmpF64:
+  case Iop_CmpF32:
+  case Iop_F64toI16S:
+  case Iop_F64toI32S:
+  case Iop_F64toI32U:
+  case Iop_F64toI64S:
+  case Iop_F64toI64U:
+  case Iop_F32toI32S:
+  case Iop_F32toI32U:
+  case Iop_F32toI64S:
+  case Iop_F32toI64U:
+    return True;
+  default:
+    return False;
+  }
+}
+void handleExitFloatOp(IRSB* sbOut, IROp op_code,
+                       IRExpr** argExprs, IRTemp dest,
+                       Addr curAddr, Addr blockAddr){
+  switch(op_code){
+  case Iop_CmpF64:
+  case Iop_CmpF32:
+    {
+      int argTemps[2];
+      for(int i = 0; i < 2; ++i){
+        addStoreC(sbOut, argExprs[i],
+                  (uintptr_t)
+                  (op_code == Iop_CmpF32 ?
+                   ((void*)computedArgs.argValuesF[i]) :
+                   ((void*)computedArgs.argValues[i])));
+        if (argExprs[i]->tag == Iex_RdTmp){
+          argTemps[i] = argExprs[i]->Iex.RdTmp.tmp;
+          cleanupAtEndOfBlock(sbOut, argTemps[i]);
+        } else {
+          argTemps[i] = -1;
+        }
+      }
+      addStoreC(sbOut, IRExpr_RdTmp(dest), &computedResult);
+      cleanupAtEndOfBlock(sbOut, dest);
+
+      IRDirty* dirty =
+        unsafeIRDirty_0_N(3, "checkCompare",
+                          VG_(fnptr_to_fnentry)(checkCompare),
+                          mkIRExprVec_3(mkU64(op_code == Iop_CmpF32 ?
+                                              Ft_Single :
+                                              Ft_Double),
+                                        mkU64(argTemps[0]), mkU64(argTemps[1])));
+      dirty->mFx = Ifx_Read;
+      dirty->mAddr = mkU64((uintptr_t)&computedArgs);
+      dirty->mSize =
+        sizeof(computedArgs)
+        + sizeof(computedResult)
+        + sizeof(shadowTemps);
+      addStmtToIRSB(sbOut, IRStmt_Dirty(dirty));
+    }
+    break;
+  case Iop_F64toI16S:
+  case Iop_F64toI32S:
+  case Iop_F64toI32U:
+  case Iop_F64toI64S:
+  case Iop_F64toI64U:
+  case Iop_F32toI32S:
+  case Iop_F32toI32U:
+  case Iop_F32toI64S:
+  case Iop_F32toI64U:
+    {
+      FloatType argPrecision;
+      switch(op_code){
+      case Iop_F64toI16S:
+      case Iop_F64toI32S:
+      case Iop_F64toI32U:
+      case Iop_F64toI64S:
+      case Iop_F64toI64U:
+        argPrecision = Ft_Double;
+        break;
+      case Iop_F32toI32S:
+      case Iop_F32toI32U:
+      case Iop_F32toI64S:
+      case Iop_F32toI64U:
+      default:
+        argPrecision = Ft_Single;
+        break;
+      }
+      int argTemp;
+      addStoreC(sbOut, argExprs[1],
+                (uintptr_t)
+                (argPrecision == Ft_Single ?
+                 ((void*)computedArgs.argValuesF[0]) :
+                 ((void*)computedArgs.argValues[0])));
+      if (argExprs[1]->tag == Iex_RdTmp){
+        argTemp = argExprs[1]->Iex.RdTmp.tmp;
+        cleanupAtEndOfBlock(sbOut, argTemp);
+      } else {
+        argTemp = -1;
+      }
+      addStoreC(sbOut, IRExpr_RdTmp(dest), &computedResult);
+      cleanupAtEndOfBlock(sbOut, dest);
+
+      IRDirty* dirty =
+        unsafeIRDirty_0_N(2, "checkCompare",
+                          VG_(fnptr_to_fnentry)(checkConvert),
+                          mkIRExprVec_2(mkU64(argPrecision),
+                                        mkU64(argTemp)));
+      dirty->mFx = Ifx_Read;
+      dirty->mAddr = mkU64((uintptr_t)&computedArgs);
+      dirty->mSize =
+        sizeof(computedArgs)
+        + sizeof(computedResult)
+        + sizeof(shadowTemps);
+      addStmtToIRSB(sbOut, IRStmt_Dirty(dirty));
+    }
+    break;
+  default:
+    return;
   }
 }
 Bool isSpecialOp(IROp op_code){

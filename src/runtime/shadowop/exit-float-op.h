@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- Herbgrind: a valgrind tool for Herbie        instrument-op.h ---*/
+/*--- Herbgrind: a valgrind tool for Herbie        exit-float-op.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,23 +27,14 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _INSTRUMENT_OP_H
-#define _INSTRUMENT_OP_H
+#ifndef _EXIT_FLOAT_OP_H
+#define _EXIT_FLOAT_OP_H
 
-#include "pub_tool_tooliface.h"
-#include "../runtime/value-shadowstate/shadowval.h"
+#include "pub_tool_basics.h"
+#include "../value-shadowstate/shadowval.h"
+#include "../op-shadowstate/marks.h"
 
-void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
-                  Addr curAddr, Addr blockAddr);
+VG_REGPARM(3) void checkCompare(FloatType argPrecision, IRTemp t1, IRTemp t2);
+VG_REGPARM(2) void checkConvert(FloatType argPrecision, IRTemp tmp);
 
-Bool isSpecialOp(IROp op_code);
-void handleSpecialOp(IRSB* sbOut, IROp op_code,
-                     IRExpr** argExprs, IRTemp dest,
-                     Addr curAddr, Addr blockAddr);
-Bool isFloatOp(IROp op);
-Bool isExitFloatOp(IROp op);
-
-void handleExitFloatOp(IRSB* sbOut, IROp op_code,
-                       IRExpr** argExprs, IRTemp dest,
-                       Addr curAddr, Addr blockAddr);
 #endif
