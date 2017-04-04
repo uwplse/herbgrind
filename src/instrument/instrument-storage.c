@@ -985,7 +985,7 @@ IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
                           int size, IRExpr* memSrc){
   QuickBucketResult qresults[4];
   IRExpr* anyNonTrivialChains = mkU1(False);
-  IRExpr* allNull = mkU1(True);
+  IRExpr* allNull_64 = mkU64(1);
   for(int i = 0; i < size; ++i){
     qresults[i] = quickGetBucketG(sbOut, guard,
                                   runBinop(sbOut, Iop_Add64, memSrc,
@@ -993,11 +993,16 @@ IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
     anyNonTrivialChains = runOr(sbOut, anyNonTrivialChains,
                                 qresults[i].stillSearching);
     IRExpr* entryNull = runZeroCheck64(sbOut, qresults[i].entry);
-    allNull = runAnd(sbOut, allNull, entryNull);
+    allNull_64 = runBinop(sbOut, Iop_And64,
+                          allNull_64,
+                          runUnop(sbOut, Iop_1Uto64,
+                                  entryNull));
   }
   IRExpr* goToC = runOr(sbOut,
                         anyNonTrivialChains,
-                        runUnop(sbOut, Iop_Not1, allNull));
+                        runUnop(sbOut, Iop_Not1,
+                                runUnop(sbOut, Iop_64to1,
+                                        allNull_64)));
   return runITE(sbOut, goToC,
                 runGetMemG(sbOut, goToC, size, memSrc),
                 mkU64(0));
