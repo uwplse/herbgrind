@@ -33,6 +33,7 @@
 #include "error.h"
 #include "influence-op.h"
 #include "../../options.h"
+#include "pub_tool_libcprint.h"
 
 void execLocalOp(ShadowOpInfo* info, Real realVal,
                  ShadowValue* res, ShadowValue** args){
@@ -53,6 +54,11 @@ void execLocalOp(ShadowOpInfo* info, Real realVal,
     updateError(&(info->local_eagg), realVal, locallyApproximateResult);
 
   if (bitsLocalError >= error_threshold){
+    if (print_flagged){
+      VG_(printf)("Hit local error! ");
+      printOpInfo(info);
+      VG_(printf)("\n");
+    }
     trackOpAsInfluence(info, res);
   }
 }

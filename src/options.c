@@ -51,6 +51,7 @@ Bool print_expr_updates = False;
 Bool running = True;
 Bool always_on = False;
 Bool output_sexp = False;
+Bool print_flagged = False;
 Int longprint_len = 15;
 Int precision = 1000;
 double error_threshold = 5.0;
@@ -74,6 +75,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--start-off", running, False) {}
   else if VG_XACT_CLO(arg, "--always-on", always_on, True) {}
   else if VG_XACT_CLO(arg, "--output-sexp", output_sexp, True) {}
+  else if VG_XACT_CLO(arg, "--print-flagged", print_flagged, True) {}
   else if VG_BINT_CLO(arg, "--longprint-len", longprint_len, 1, 1000) {}
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else if VG_DBL_CLO(arg, "--error-threshold", error_threshold) {}
@@ -131,5 +133,7 @@ void hg_print_debug_usage(void){
               " --always-on "
               "Ignore calls to HERBGRIND_END()\n"
               " --longprint-len=length "
-              "How many digits of long real values to print.\n");
+              "How many digits of long real values to print.\n"
+              " --print-flagged"
+              "Print every operation that is flagged.\n");
 }
