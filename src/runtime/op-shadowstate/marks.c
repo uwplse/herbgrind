@@ -53,9 +53,10 @@ void markImportant(Addr varAddr){
   dedupAddInfluencesToList(&(info->influences), val->influences);
   updateError(&(info->eagg), val->real, *(double*)varAddr);
 }
-void markEscapeFromFloat(const char* markType, int mismatch, int num_vals, ShadowValue** values){
-  Addr callAddr = getCallAddr();
-  IntMarkInfo* info = getIntMarkInfo(callAddr, markType);
+void markEscapeFromFloat(const char* markType, Addr curAddr,
+                         int mismatch,
+                         int num_vals, ShadowValue** values){
+  IntMarkInfo* info = getIntMarkInfo(curAddr, markType);
   info->num_hits += 1;
   info->num_mismatches += mismatch;
   for(int i = 0; i < num_vals; ++i){

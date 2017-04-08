@@ -30,11 +30,12 @@
 #include "exit-float-op.h"
 #include "shadowop.h"
 #include "pub_tool_libcprint.h"
+#include "../../helper/runtime-util.h"
 
-VG_REGPARM(3) void checkCompare(FloatType argPrecision, IRTemp t1, IRTemp t2){
+VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
   ShadowTemp* args[2];
   for(int i = 0; i < 2; ++i){
-    args[i] = getArg(i, 1, argPrecision, i == 0 ? t1 : t2);
+    args[i] = getArg(i, 1, info->precision, info->argTemps[i]);
   }
   double correctFst = getDouble(args[0]->values[0]->real);
   double correctSnd = getDouble(args[1]->values[0]->real);
@@ -55,20 +56,24 @@ VG_REGPARM(3) void checkCompare(FloatType argPrecision, IRTemp t1, IRTemp t2){
   for(int i = 0; i < 2; ++i){
     values[i] = args[i]->values[0];
   }
-  markEscapeFromFloat("Compare", actualResult != computedValue, 2, values);
-  if (t1 == -1){
-    disownShadowTemp_fast(args[0]);
-  }
-  if (t2 == -1){
-    disownShadowTemp_fast(args[1]);
+  markEscapeFromFloat("Compare", info->op_addr,
+                      actualResult != computedValue,
+                      2, values);
+  for(int i = 0; i < 2; ++i){
+    if (info->argTemps[i] == -1){
+      disownShadowTemp_fast(args[0]);
+    }
   }
 }
-VG_REGPARM(2) void checkConvert(FloatType argPrecision, IRTemp tmp){
+VG_REGPARM(3) void checkConvert(FloatType argPrecision, IRTemp tmp,
+                                Addr curAddr){
   ShadowTemp* arg = getArg(0, 1, argPrecision, tmp);
   int correctResult = (int)getDouble(arg->values[0]->real);
   int computedValue =
     *((int*)&computedResult.f[0]);
-  markEscapeFromFloat("Convert", correctResult != computedValue, 1, &(arg->values[0]));
+  markEscapeFromFloat("Convert", curAddr,
+                      correctResult != computedValue,
+                      1, &(arg->values[0]));
   if (tmp == -1){
     disownShadowTemp_fast(arg);
   }

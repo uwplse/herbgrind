@@ -34,7 +34,8 @@
 #include "../value-shadowstate/shadowval.h"
 #include "../op-shadowstate/marks.h"
 
-VG_REGPARM(3) void checkCompare(FloatType argPrecision, IRTemp t1, IRTemp t2);
-VG_REGPARM(2) void checkConvert(FloatType argPrecision, IRTemp tmp);
+VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info);
+VG_REGPARM(3) void checkConvert(FloatType argPrecision, IRTemp tmp,
+                                Addr curAddr);
 
 #endif

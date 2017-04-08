@@ -70,6 +70,12 @@ typedef struct _ShadowOpInfo {
   int argTemps[4];
 } ShadowOpInfo;
 
+typedef struct _ShadowCmpInfo {
+  Addr op_addr;
+  FloatType precision;
+  IRTemp argTemps[2];
+} ShadowCmpInfo;
+
 typedef struct _mrOpInfoEntry {
   struct _mrOpInfoEntry* next;
   UWord call_addr;

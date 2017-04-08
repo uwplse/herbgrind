@@ -142,7 +142,12 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
   case Iop_CmpF64:
   case Iop_CmpF32:
     {
-      int argTemps[2];
+      ShadowCmpInfo* info =
+        VG_(perm_malloc)(sizeof(ShadowCmpInfo),
+                         vg_alignof(ShadowCmpInfo));
+      info->op_addr = curAddr;
+      info->precision = op_code == Iop_CmpF32 ? Ft_Single : Ft_Double;
+
       for(int i = 0; i < 2; ++i){
         addStoreC(sbOut, argExprs[i],
                   (uintptr_t)
@@ -150,22 +155,20 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
                    ((void*)computedArgs.argValuesF[i]) :
                    ((void*)computedArgs.argValues[i])));
         if (argExprs[i]->tag == Iex_RdTmp){
-          argTemps[i] = argExprs[i]->Iex.RdTmp.tmp;
-          cleanupAtEndOfBlock(sbOut, argTemps[i]);
+          info->argTemps[i] = argExprs[i]->Iex.RdTmp.tmp;
+          cleanupAtEndOfBlock(sbOut, info->argTemps[i]);
         } else {
-          argTemps[i] = -1;
+          info->argTemps[i] = -1;
         }
       }
       addStoreC(sbOut, IRExpr_RdTmp(dest), &computedResult);
       cleanupAtEndOfBlock(sbOut, dest);
 
       IRDirty* dirty =
-        unsafeIRDirty_0_N(3, "checkCompare",
+        unsafeIRDirty_0_N(1, "checkCompare",
                           VG_(fnptr_to_fnentry)(checkCompare),
-                          mkIRExprVec_3(mkU64(op_code == Iop_CmpF32 ?
-                                              Ft_Single :
-                                              Ft_Double),
-                                        mkU64(argTemps[0]), mkU64(argTemps[1])));
+                          mkIRExprVec_1(mkU64((uintptr_t)
+                                              info)));
       dirty->mFx = Ifx_Read;
       dirty->mAddr = mkU64((uintptr_t)&computedArgs);
       dirty->mSize =
@@ -220,8 +223,9 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
       IRDirty* dirty =
         unsafeIRDirty_0_N(2, "checkCompare",
                           VG_(fnptr_to_fnentry)(checkConvert),
-                          mkIRExprVec_2(mkU64(argPrecision),
-                                        mkU64(argTemp)));
+                          mkIRExprVec_3(mkU64(argPrecision),
+                                        mkU64(argTemp),
+                                        mkU64(curAddr)));
       dirty->mFx = Ifx_Read;
       dirty->mAddr = mkU64((uintptr_t)&computedArgs);
       dirty->mSize =
