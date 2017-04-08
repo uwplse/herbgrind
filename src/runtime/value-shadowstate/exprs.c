@@ -866,11 +866,10 @@ char* symbExprToStringNoGrafts(SymbExpr* expr){
                            return acc;
                          }
                        } else if (depth > MAX_FOLD_DEPTH){
-                         printBBuf(acc, " *");
+                         printBBuf(acc, " _");
                          return acc;
                        } else if (isGraft) {
-                         printBBuf(acc, " _",
-                                   opSym(curExpr->branch.op));
+                         printBBuf(acc, " _");
                          return acc;
                        } else {
                          printBBuf(acc, " (%s",
