@@ -24,10 +24,11 @@ endif
 
 HERBGRIND_SOURCES_COMMON = hg_main.c helper/mpfr-valgrind-glue.c	\
 helper/stack.c helper/instrument-util.c helper/runtime-util.c		\
-helper/ir-info.c runtime/value-shadowstate/value-shadowstate.c		\
+helper/ir-info.c helper/bbuf.c						\
+runtime/value-shadowstate/value-shadowstate.c				\
 runtime/value-shadowstate/shadowval.c					\
 runtime/value-shadowstate/exprs.c runtime/value-shadowstate/real.c	\
-runtime/value-shadowstate/pos-tree.c 					\
+runtime/value-shadowstate/pos-tree.c					\
 runtime/op-shadowstate/shadowop-info.c runtime/op-shadowstate/marks.c	\
 runtime/op-shadowstate/output.c runtime/shadowop/shadowop.c		\
 runtime/shadowop/realop.c runtime/shadowop/conversions.c		\
