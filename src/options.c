@@ -50,6 +50,7 @@ Bool print_errors_long = False;
 Bool print_expr_updates = False;
 Bool print_flagged = False;
 Bool print_object_files = False;
+Bool print_subexpr_locations = False;
 Bool running = True;
 Bool always_on = False;
 Bool output_sexp = False;
@@ -75,6 +76,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-expr-updates", print_expr_updates, True) {}
   else if VG_XACT_CLO(arg, "--print-flagged", print_flagged, True) {}
   else if VG_XACT_CLO(arg, "--print-object-files", print_object_files, True) {}
+  else if VG_XACT_CLO(arg, "--output-subexpr-sources", print_subexpr_locations, True) {}
   else if VG_XACT_CLO(arg, "--start-off", running, False) {}
   else if VG_XACT_CLO(arg, "--always-on", always_on, True) {}
   else if VG_XACT_CLO(arg, "--output-sexp", output_sexp, True) {}
@@ -97,6 +99,9 @@ void hg_print_usage(void){
               "specified, will use <executable-name>.gh.\n"
               "    --output-sexp    "
               "Output in an easy-to-parse s-expression based format.\n"
+              "    --output-subexpr-sources    "
+              "Print the source locations of every subexpression that isn't "
+              "in the same function as it's parent.\n"
               );
 }
 void hg_print_debug_usage(void){
