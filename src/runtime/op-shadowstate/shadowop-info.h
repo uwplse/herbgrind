@@ -89,5 +89,6 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
                              int nargs);
 void printOpInfo(ShadowOpInfo* opinfo);
 void ppAddr(Addr addr);
+char* getAddrString(Addr addr);
 
 #endif

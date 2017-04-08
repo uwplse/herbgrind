@@ -32,6 +32,7 @@
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcassert.h"
 #include "pub_tool_libcbase.h"
+#include "pub_tool_debuginfo.h"
 #include "../../helper/ir-info.h"
 #include "../../helper/bbuf.h"
 #include "../shadowop/symbolic-op.h"
@@ -48,7 +49,7 @@ StackArray concGraftStacks;
 
 const char* varnames[] = {"x", "y", "z", "a", "b", "c",
                           "i", "j", "k", "l", "m", "n"};
-#define MAX_FOLD_DEPTH 10
+#define MAX_FOLD_DEPTH MAX_EXPR_IMPRECISE_BLOCK_DEPTH
 
 #define lambda(return_type, function_body)      \
   ({                                            \
@@ -254,7 +255,6 @@ FoldExpr_Impl(int);
 
 FoldExpr_H_Named(BBuf*, BBuf);
 FoldExpr_Impl_Named(BBuf*, BBuf);
-
 
 void initExprAllocator(void){
   leafCExprs = mkStack();
@@ -715,96 +715,68 @@ char* symbExprToString(SymbExpr* expr){
                      })));
   return buf;
 }
+#define MAX_MARKED_EXPR_LEN 10000
+void recursivelyMark(SymbExpr* expr, BBuf* buf, VarMap* varMap,
+                     const char* parent_func,
+                     NodePos curPos, int max_depth);
 char* symbExprToStringMarkSources(SymbExpr* expr){
   if (expr->type == Node_Leaf && !(expr->isConst)){
     int len = VG_(strlen)(varnames[0]);
     char* buf = VG_(malloc)("expr string", len);
     VG_(memcpy)(buf, varnames[0], len);
     return buf;
+  } else {
+    VarMap* varMap = mkVarMap(expr->branch.groups);
+    const char* toplevel_func;
+    if (!VG_(get_fnname)(expr->branch.op->op_addr, &toplevel_func)){
+      toplevel_func = "none";
+    }
+    char* _buf = VG_(malloc)("buffer data", MAX_MARKED_EXPR_LEN);
+    BBuf* bbuf = mkBBuf(MAX_MARKED_EXPR_LEN, _buf);
+    recursivelyMark(expr, bbuf, varMap,
+                    toplevel_func,
+                    null_pos,
+                    MAX_FOLD_DEPTH);
+    VG_(realloc_shrink)(_buf,
+                        MAX_MARKED_EXPR_LEN - bbuf->bound + 10);
+    VG_(free)(bbuf);
+    freeVarMap(varMap);
+    return _buf;
   }
-  int expr_len = foldExpr(int)
-    (0, expr,
-     lambda (int, (int acc, SymbExpr* curExpr,
-                   NodePos curPos, VarMap* varMap,
-                   int depth, int isGraft) {
-               if (curExpr->type == Node_Leaf){
-                 if (curExpr->isConst){
-                   int len = symbExprConstPrintLen(curExpr)
-                     + 2 // brackets
-                     + 1;// space
-                   return acc + len;
-                 } else {
-                   int len =
-                     VG_(strlen)(getVar(lookupVar(varMap, curPos)))
-                     + 2 // brackets
-                     + 1;// space
-                   return acc + len;
-                 }
-               } else if (depth > MAX_FOLD_DEPTH){
-                 return acc
-                   + 2; // "* "
-               } else if (isGraft) {
-                 int len = 13
-                   + VG_(strlen)(opSym(curExpr->branch.op))
-                   + 2 // brackets
-                   + 2 // parenthesis
-                   + 1;// space
-                 return acc + len;
-               } else {
-                 int len = 13
-                   + VG_(strlen)(opSym(curExpr->branch.op))
-                   + 2 // parenthesis
-                   + 1;// space
-                 return acc + len;
-               }
-             }),
-     foldId(int));
-  char* buf = VG_(malloc)("expr string", expr_len + 1);
-  VG_(free)(foldExpr(BBuf)
-            (mkBBuf(expr_len + 1, buf), expr,
-             lambda (BBuf*, (BBuf* acc, SymbExpr* curExpr,
-                             NodePos curPos, VarMap* varMap,
-                             int depth, int isGraft) {
-                       if (curExpr->type == Node_Leaf){
-                         if (curExpr->isConst){
-                           printBBuf(acc, " [%f]", curExpr->constVal);
-                           return acc;
-                         } else {
-                           printBBuf(acc, " [%s]",
-                                     getVar(lookupVar(varMap, curPos)));
-                           return acc;
-                         }
-                       } else if (depth > MAX_FOLD_DEPTH){
-                         printBBuf(acc, " *");
-                         return acc;
-                       } else if (isGraft) {
-                         printBBuf(acc, " {%lX}[(%s",
-                                   curExpr->branch.op->op_addr,
-                                   opSym(curExpr->branch.op));
-                         return acc;
-                       } else {
-                         printBBuf(acc, " {%lX}(%s",
-                                   curExpr->branch.op->op_addr,
-                                   opSym(curExpr->branch.op));
-                         return acc;
-                       }
-                     }),
-             lambda (BBuf*, (BBuf* acc, SymbExpr* curExpr,
-                             NodePos curpos, VarMap* varMap,
-                             int depth, int isGraft) {
-                       if (curExpr->type == Node_Leaf){
-                         return acc;
-                       } else if (depth > MAX_FOLD_DEPTH){
-                         return acc;
-                       } else if (isGraft) {
-                         printBBuf(acc, ")]");
-                         return acc;
-                       } else {
-                         printBBuf(acc, ")");
-                         return acc;
-                       }
-                     })));
-  return buf;
+}
+void recursivelyMark(SymbExpr* expr, BBuf* buf, VarMap* varMap,
+                      const char* parent_func,
+                      NodePos curPos, int max_depth){
+  if (max_depth == 0){
+    printBBuf(buf, "_");
+  } else if (expr->type == Node_Leaf){
+    if (expr->isConst){
+      printBBuf(buf, " %f", expr->constVal);
+    } else {
+      printBBuf(buf, " %s", getVar(lookupVar(varMap, curPos)));
+    }
+  } else {
+    printBBuf(buf, " ");
+
+    const char* fnname;
+    if (!(VG_(get_fnname)(expr->branch.op->op_addr, &fnname))){
+      fnname = "none";
+    }
+    if (VG_(strcmp)(fnname, parent_func)){
+      char* addrString = getAddrString(expr->branch.op->op_addr);
+      printBBuf(buf, "{%s}", addrString);
+      VG_(free)(addrString);
+    }
+
+    printBBuf(buf, "(%s", opSym(expr->branch.op));
+
+    for(int i = 0; i < expr->branch.nargs; i++){
+      recursivelyMark(expr->branch.args[i], buf, varMap,
+                      fnname, rconsPos(curPos, i),
+                      max_depth - 1);
+    }
+    printBBuf(buf, ")");
+  }
 }
 FoldBlock_H(int);
 FoldBlock_Impl(int);

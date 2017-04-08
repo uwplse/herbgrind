@@ -31,7 +31,9 @@
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_debuginfo.h"
 #include "pub_tool_libcprint.h"
+#include "pub_tool_libcbase.h"
 #include "../../helper/ir-info.h"
+#include "../../helper/bbuf.h"
 #include "../shadowop/mathreplace.h"
 
 VgHashTable* mathreplaceOpInfoMap = NULL;
@@ -59,6 +61,7 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
   result->expr = NULL;
   result->exinfo.numSIMDOperands =
     op_code == 0x0 ? 1 : numSIMDOperands(op_code);
+
   result->exinfo.numChannels =
     op_code == 0x0 ? 1 : numChannelsOut(op_code);
   result->exinfo.nargs = nargs;
@@ -86,6 +89,33 @@ void ppAddr(Addr addr){
     }
     VG_(printf)(" in %s", objname);
   }
+}
+#define MAX_ADDR_STRING_SIZE 300
+char* getAddrString(Addr addr){
+  const HChar* src_filename;
+  const HChar* fnname;
+  UInt src_line;
+  char _buf[MAX_ADDR_STRING_SIZE];
+  BBuf* buf = mkBBuf(MAX_ADDR_STRING_SIZE, _buf);
+
+  if (VG_(get_filename_linenum)(addr, &src_filename,
+                                NULL, &src_line)){
+    VG_(get_fnname)(addr, &fnname);
+    printBBuf(buf, "%s:%u in %s (addr %lX)",
+              src_filename, src_line, fnname, addr);
+  } else {
+    printBBuf(buf, "addr %lX", addr);
+  }
+  if (print_object_files){
+    const HChar* objname;
+    if (!VG_(get_objname)(addr, &objname)){
+      objname = "Uknown Object";
+    }
+    printBBuf(buf, " in %s", objname);
+  }
+  char* result = VG_(malloc)("addr string", MAX_ADDR_STRING_SIZE - buf->bound);
+  VG_(strcpy)(result, _buf);
+  return result;
 }
 
 void printOpInfo(ShadowOpInfo* opinfo){
