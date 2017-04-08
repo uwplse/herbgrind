@@ -50,6 +50,7 @@ extern Bool print_allocs;
 extern Bool print_errors;
 extern Bool print_errors_long;
 extern Bool print_expr_updates;
+extern Bool print_object_files;
 extern Bool running;
 extern Bool always_on;
 extern Bool output_sexp;

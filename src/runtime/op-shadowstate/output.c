@@ -37,6 +37,7 @@
 #include "pub_tool_mallocfree.h"
 #include "shadowop-info.h"
 #include "../../options.h"
+#include "../../helper/bbuf.h"
 
 #define ENTRY_BUFFER_SIZE 2048
 
@@ -74,31 +75,57 @@ void writeOutput(void){
       VG_(get_fnname)(markInfo->addr, &fnname);
     }
 
-    char buf[ENTRY_BUFFER_SIZE];
-    unsigned int entryLen;
-    entryLen = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                             output_sexp ?
-                             "(output\n"
-                             "  (function \"%s\")\n"
-                             "  (filename \"%s\")\n"
-                             "  (line-num %u)\n"
-                             "  (instr-addr %lX)\n"
-                             "  (avg-error %f)\n"
-                             "  (max-error %f)\n"
-                             "  (num-calls %lld)\n"
-                             "  (influences\n" :
-                             "Result in %s at %s:%u (address %lX)\n"
-                             "%f bits average error\n"
-                             "%f bits max error\n"
-                             "Aggregated over %lld instances\n"
-                             "Influenced by erroneous expressions:\n",
-                             fnname, src_filename, src_line,
-                             markInfo->addr,
-                             markInfo->eagg.total_error /
-                             markInfo->eagg.num_evals,
-                             markInfo->eagg.max_error,
-                             markInfo->eagg.num_evals);
-    VG_(write)(fileD, buf, entryLen);
+    char _buf[ENTRY_BUFFER_SIZE];
+    BBuf* buf = mkBBuf(ENTRY_BUFFER_SIZE, _buf);
+
+    if (output_sexp){
+      printBBuf(buf, "(output\n");
+      printBBuf(buf,
+                "  (function \"%s\")\n"
+                "  (filename \"%s\")\n"
+                "  (line-num %u)\n"
+                "  (instr-addr %lX)\n",
+                fnname, src_filename, src_line,
+                markInfo->addr);
+      if (print_object_files){
+        const char* objfile_name;
+        if (!VG_(get_objname)(markInfo->addr, &objfile_name)){
+          objfile_name = "Unknown Object";
+        }
+        printBBuf(buf,
+                  "  (objectfile \"%s\")\n",
+                  objfile_name);
+      }
+      printBBuf(buf,
+                "  (avg-error %f)\n"
+                "  (max-error %f)\n"
+                "  (num-calls %lld)\n"
+                "  (influences\n",
+                markInfo->eagg.total_error /
+                markInfo->eagg.num_evals,
+                markInfo->eagg.max_error,
+                markInfo->eagg.num_evals);
+    } else {
+      printBBuf(buf, "Result");
+      printBBuf(buf, " in %s at %s:%u (address %lX)",
+                fnname, src_filename, src_line);
+      if (print_object_files){
+        const char* objfile_name;
+        if (!VG_(get_objname)(markInfo->addr, &objfile_name)){
+          objfile_name = "Unknown Object";
+        }
+        printBBuf(buf, " %s");
+      }
+      printBBuf(buf, "\n");
+
+      printBBuf(buf,
+                "%f bits average error\n"
+                "%f bits max error\n"
+                "Aggregated over %lld instances\n"
+                "Influenced by erroneous expression:\n");
+    }
+    unsigned int entryLen = ENTRY_BUFFER_SIZE - buf->bound;
+    VG_(write)(fileD, _buf, entryLen);
 
     writeInfluences(fileD, filterInfluenceSubexprs(markInfo->influences));
     if (output_sexp){
@@ -112,6 +139,7 @@ void writeOutput(void){
     if (intMarkInfo->num_mismatches == 0) continue;
     const char* src_filename;
     const char* fnname;
+    const char* objname;
     unsigned int src_line;
 
     if (!VG_(get_filename_linenum)(intMarkInfo->addr, &src_filename,
@@ -122,32 +150,61 @@ void writeOutput(void){
     } else {
       VG_(get_fnname)(intMarkInfo->addr, &fnname);
     }
+    if (print_object_files &&
+        !VG_(get_objname)(intMarkInfo->addr, &objname)){
+      objname = "Unknown object";
+    }
 
-    char buf[ENTRY_BUFFER_SIZE];
-    unsigned int entryLen;
-    entryLen = VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                             output_sexp ?
-                             "(%s\n"
-                             "  (function \"%s\")\n"
-                             "  (filename \"%s\")\n"
-                             "  (line-num %u)\n"
-                             "  (instr-addr %lX)\n"
-                             "  (percent-wrong %d)\n"
-                             "  (num-wrong %d)\n"
-                             "  (num-calls %d)\n"
-                             "  (influences\n" :
-                             "%s in %s at %s:%u (address %lX)\n"
-                             "%d%% incorrect\n"
-                             "%d incorrect values\n"
-                             "%d total instances\n"
-                             "Influenced by erroneous expressions:\n",
-                             intMarkInfo->markType,
-                             fnname, src_filename, src_line,
-                             intMarkInfo->addr,
-                             (intMarkInfo->num_mismatches * 100) / intMarkInfo->num_hits,
-                             intMarkInfo->num_mismatches,
-                             intMarkInfo->num_hits);
-    VG_(write)(fileD, buf, entryLen);
+    char _buf[ENTRY_BUFFER_SIZE];
+    BBuf* buf = mkBBuf(ENTRY_BUFFER_SIZE, _buf);
+
+    if (output_sexp){
+      printBBuf(buf, "(%s\n", intMarkInfo->markType);
+      printBBuf(buf,
+                "  (function \"%s\")\n"
+                "  (filename \"%s\")\n"
+                "  (line-num %u)\n"
+                "  (instr-addr %lX)\n",
+                fnname, src_filename, src_line,
+                intMarkInfo->addr);
+      if (print_object_files){
+        printBBuf(buf,
+                  "  (objectfile \"%s\")\n",
+                  objname);
+      }
+      printBBuf(buf,
+                "  (percent-wrong %d)\n"
+                "  (num-wrong %d)\n"
+                "  (num-calls %d)\n"
+                "  (influences\n",
+                (intMarkInfo->num_mismatches * 100)
+                / intMarkInfo->num_hits,
+                intMarkInfo->num_mismatches,
+                intMarkInfo->num_hits);
+    } else {
+      printBBuf(buf, "%s", intMarkInfo->markType);
+      printBBuf(buf, " in %s at %s:%u (address %lX)",
+                fnname, src_filename, src_line,
+                intMarkInfo->addr);
+      if (print_object_files){
+        printBBuf(buf,
+                  "  %s",
+                  objname);
+      }
+      printBBuf(buf, "\n");
+
+      printBBuf(buf,
+                "%d%% incorrect\n"
+                "%d incorrect values\n"
+                "%d total instances\n"
+                "Influenced by erroneous expressions:\n",
+                (intMarkInfo->num_mismatches * 100)
+                / intMarkInfo->num_hits,
+                intMarkInfo->num_mismatches,
+                intMarkInfo->num_hits);
+    }
+    unsigned int entryLen = ENTRY_BUFFER_SIZE - buf->bound;
+    VG_(write)(fileD, _buf, entryLen);
 
     writeInfluences(fileD, filterInfluenceSubexprs(intMarkInfo->influences));
     if (output_sexp){
@@ -182,9 +239,9 @@ int haveErroneousIntMarks(void){
 void writeInfluences(Int fileD, InfluenceList influences){
   const char* src_filename;
   const char* fnname;
+  const char* objname;
   unsigned int src_line;
-  char buf[ENTRY_BUFFER_SIZE];
-  unsigned int entryLen;
+  char _buf[ENTRY_BUFFER_SIZE];
   for(InfluenceList curNode = influences;
       curNode != NULL; curNode = curNode->next){
     ShadowOpInfo* opinfo = curNode->item;
@@ -199,42 +256,75 @@ void writeInfluences(Int fileD, InfluenceList influences){
     } else {
       VG_(get_fnname)(opinfo->op_addr, &fnname);
     }
+    if (!VG_(get_objname)(opinfo->op_addr, &objname)){
+      objname = "Unknown object";
+    }
 
-    entryLen =
-      VG_(snprintf)(buf, ENTRY_BUFFER_SIZE,
-                    output_sexp ?
-                    "\n"
-                    "    (FPCore %s\n"
-                    "     %s)\n"
-                    "     (function \"%s\")\n"
-                    "     (filename \"%s\")\n"
-                    "     (line-num %u)\n"
-                    "     (instr-addr %lX)\n"
-                    "     (avg-error %f)\n"
-                    "     (max-error %f)\n"
-                    "     (avg-local-error %f)\n"
-                    "     (max-local-error %f)\n"
-                    "     (num-calls %lld))\n" :
-                    "   (FPCore %s\n"
-                    "    %s)\n"
-                    "   in %s at %s:%u (address %lX)\n"
-                    "   %f bits average error\n"
-                    "   %f bits max error\n"
-                    "   %f bits average local error\n"
-                    "   %f bits max local error\n"
-                    "   Aggregated over %lld instances\n",
-                    varString, exprString,
-                    fnname, src_filename, src_line,
-                    opinfo->op_addr,
-                    opinfo->eagg.total_error /
-                    opinfo->eagg.num_evals,
-                    opinfo->eagg.max_error,
-                    opinfo->local_eagg.total_error /
-                    opinfo->local_eagg.num_evals,
-                    opinfo->local_eagg.max_error,
-                    opinfo->eagg.num_evals);
+    BBuf* buf = mkBBuf(ENTRY_BUFFER_SIZE, _buf);
+    if (output_sexp){
+      printBBuf(buf,
+                "\n"
+                "    (FPCore %s\n"
+                "     %s\n",
+                varString, exprString);
+      printBBuf(buf,
+                "     (function \"%s\")\n"
+                "     (filename \"%s\")\n"
+                "     (line-num %u)\n"
+                "     (instr-addr %lX)\n",
+                fnname, src_filename, src_line,
+                opinfo->op_addr);
+      if (print_object_files){
+        printBBuf(buf,
+                  "    (objectfile \"%s\")\n",
+                  objname);
+      }
+      printBBuf(buf,
+                "     (avg-error %f)\n"
+                "     (max-error %f)\n"
+                "     (avg-local-error %f)\n"
+                "     (max-local-error %f)\n"
+                "     (num-calls %lld))\n",
+                opinfo->eagg.total_error
+                / opinfo->eagg.num_evals,
+                opinfo->eagg.max_error,
+                opinfo->local_eagg.total_error
+                / opinfo->eagg.num_evals,
+                opinfo->local_eagg.max_error,
+                opinfo->eagg.num_evals);
+    } else {
+      printBBuf(buf,
+                "\n"
+                "    (FPCore %s\n"
+                "     %s\n",
+                varString, exprString);
+      printBBuf(buf,
+                "   in %s at %s:%u (address %lX)",
+                fnname, src_filename, src_line,
+                opinfo->op_addr);
+      if (print_object_files){
+        printBBuf(buf,
+                  " %s",
+                  objname);
+      }
+      printBBuf(buf, "\n");
+      printBBuf(buf,
+                "   %f bits average error\n"
+                "   %f bits max error\n"
+                "   %f bits average local error\n"
+                "   %f bits max local error\n"
+                "   Aggregated over %lld instances\n",
+                opinfo->eagg.total_error
+                / opinfo->eagg.num_evals,
+                opinfo->eagg.max_error,
+                opinfo->local_eagg.total_error
+                / opinfo->eagg.num_evals,
+                opinfo->local_eagg.max_error,
+                opinfo->eagg.num_evals);
+    }
+    unsigned int entryLen = ENTRY_BUFFER_SIZE - buf->bound;
     VG_(free)(exprString);
     VG_(free)(varString);
-    VG_(write)(fileD, buf, entryLen);
+    VG_(write)(fileD, _buf, entryLen);
   }
 }
