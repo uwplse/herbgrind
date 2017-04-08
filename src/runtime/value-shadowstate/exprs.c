@@ -33,6 +33,7 @@
 #include "pub_tool_libcassert.h"
 #include "pub_tool_libcbase.h"
 #include "../../helper/ir-info.h"
+#include "../../helper/bbuf.h"
 #include "../shadowop/symbolic-op.h"
 #include "../shadowop/mathreplace.h"
 #include <math.h>
@@ -251,10 +252,6 @@ T foldId_##N(T v, SymbExpr* e, NodePos p,                               \
 FoldExpr_H(int);
 FoldExpr_Impl(int);
 
-typedef struct {
-  int bound;
-  char* buf;
-} BBuf;
 FoldExpr_H_Named(BBuf*, BBuf);
 FoldExpr_Impl_Named(BBuf*, BBuf);
 
@@ -537,28 +534,6 @@ void ppSymbExprMarkSources(SymbExpr* expr){
   VG_(free)(stringRep);
 }
 
-BBuf* mkBBuf(int bound, char* buf);
-BBuf* mkBBuf(int bound, char* buf){
-  BBuf* res = VG_(malloc)("bounded buffer", sizeof(BBuf));
-  res->bound = bound;
-  res->buf = buf;
-  return res;
-}
-void printBBuf(BBuf* bbuf, const char* format, ...);
-void printBBuf(BBuf* bbuf, const char* format, ...){
-  va_list arglist;
-  va_start(arglist, format);
-  int printLength = VG_(vsnprintf)(bbuf->buf, bbuf->bound, format,
-                                   arglist);
-  if (printLength >= bbuf->bound){
-    tl_assert2(printLength < bbuf->bound,
-               "trying to print %d character past bound!\n",
-               printLength - bbuf->bound);
-  }
-  va_end(arglist);
-  bbuf->bound -= printLength;
-  bbuf->buf += printLength;
-}
 inline
 int symbExprConstPrintLen(SymbExpr* expr){
   if (isnan(expr->constVal)){

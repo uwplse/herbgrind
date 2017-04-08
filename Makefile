@@ -26,7 +26,7 @@ endif
 HEADERS=src/include/herbgrind.h src/helper/mpfr-valgrind-glue.h		\
 src/helper/stack.h src/helper/instrument-util.h				\
 src/helper/runtime-util.h src/helper/ir-info.h src/helper/debug.h	\
-src/helper/list.h src/helper/xarray.h src/options.h			\
+src/helper/list.h src/helper/xarray.h src/helper/bbuf.h src/options.h	\
 src/runtime/value-shadowstate/shadowval.h				\
 src/runtime/value-shadowstate/value-shadowstate.h			\
 src/runtime/value-shadowstate/exprs.h					\
@@ -48,8 +48,8 @@ src/instrument/ownership.h src/instrument/floattypes.h
 SOURCES=src/hg_main.c src/helper/mathwrap.c				\
 src/include/mk-mathreplace.py src/helper/mpfr-valgrind-glue.c		\
 src/helper/stack.c src/helper/instrument-util.c				\
-src/helper/runtime-util.c src/helper/ir-info.c src/options.c		\
-src/runtime/value-shadowstate/shadowval.c				\
+src/helper/runtime-util.c src/helper/ir-info.c src/helper/bbuf.c	\
+src/options.c src/runtime/value-shadowstate/shadowval.c			\
 src/runtime/value-shadowstate/value-shadowstate.c			\
 src/runtime/value-shadowstate/shadowval.c				\
 src/runtime/value-shadowstate/exprs.c					\
