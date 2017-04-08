@@ -79,6 +79,13 @@ void ppAddr(Addr addr){
   } else {
     VG_(printf)("addr %lX", addr);
   }
+  if (print_object_files){
+    const HChar* objname;
+    if (!VG_(get_objname)(addr, &objname)){
+      objname = "Unknown Object";
+    }
+    VG_(printf)(" in %s", objname);
+  }
 }
 
 void printOpInfo(ShadowOpInfo* opinfo){

@@ -45,4 +45,7 @@ ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs);
 double runEmulatedWrappedOp(OpType type, double* args);
 Word cmp_op_entry_by_type(const void* node1, const void* node2);
 
+void performSpecialWrappedOp(SpecialOpType type, double* args,
+                             double* res1, double* res2);
+
 #endif

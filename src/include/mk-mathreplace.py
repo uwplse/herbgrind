@@ -30,7 +30,7 @@
 
 
 class Op(object):
-    def __init__(self, func, plain_name, nargs, mpfr_func=None, needsround=True, precision=64):
+    def __init__(self, func, plain_name, nargs, mpfr_func=None, needsround=True, precision=64, native_func=None):
         self.func = func
         self.nargs = nargs
         self.plain_name = plain_name
@@ -40,6 +40,10 @@ class Op(object):
             self.mpfr_func = "mpfr_{}".format(func)
         else:
             self.mpfr_func = mpfr_func
+        if (native_func == None):
+            self.native_func = func
+        else:
+            self.native_func = native_func
 
 def write_mathreplace_funcs(ops, fname):
     with open(fname, "w") as f:
@@ -194,22 +198,29 @@ def write_mathreplace_funcs(ops, fname):
 ops = []
 
 def addOp(name, plain_name, nargs,
-          hasfloat=True, mpfr_func=None, needsRound=True):
+          hasfloat=True, needsRound=True,
+          mpfr_func=None, native_func=None):
     mpfr_fn = "mpfr_" + name
     if (mpfr_func != None):
         mpfr_fn = mpfr_func
 
     ops.append(Op(name, plain_name, nargs,
                   mpfr_func=mpfr_fn,
-                  needsround=needsRound))
+                  needsround=needsRound,
+                  native_func=native_func))
 
     if hasfloat:
+        if (native_func != None):
+            native_fn_f = native_func + "f"
+        else:
+            native_fn_f = None
         ops.append(Op(name + "f",
                       plain_name + " (float)",
                       nargs,
                       mpfr_func=mpfr_fn,
                       needsround=needsRound,
-                      precision=32))
+                      precision=32,
+                      native_func=native_fn_f))
 
 def write_labels(f, l):
     for i, op in enumerate(l):
@@ -226,11 +237,11 @@ def write_switch_run(f, l):
     for op in l:
         f.write("  case OP_{}: \\\n".format(op.func.upper()))
         if op.nargs == 1:
-            f.write("    result = {}(args[0]); \\\n".format(op.func))
+            f.write("    result = {}(args[0]); \\\n".format(op.native_func))
         elif op.nargs == 2:
-            f.write("    result = {}(args[0], args[1]); \\\n".format(op.func))
+            f.write("    result = {}(args[0], args[1]); \\\n".format(op.native_func))
         elif op.nargs == 3:
-            f.write("    result = {}(args[0], args[1], args[2]); \\\n".format(op.func))
+            f.write("    result = {}(args[0], args[1], args[2]); \\\n".format(op.native_func))
         f.write("    break; \\\n");
     f.write("  default: \\\n")
     f.write("    result = 0.0; \\\n")
@@ -304,6 +315,7 @@ addOp("acosh", "hyperbolic arc cosine", 1)
 addOp("atanh", "hyperbolic arc tangent", 1)
 
 addOp("atan2", "arc tangent (two arguments)", 2)
+addOp("__ieee754_atan2_avx", "arc tangenet (two arguments)", 2, mpfr_func="mpfr_atan2", native_func="atan2")
 addOp("hypot", "hypotenuse", 2)
 
 addOp("pow", "power", 2)

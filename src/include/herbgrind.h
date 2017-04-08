@@ -40,12 +40,18 @@ typedef enum {
   VG_USERREQ__END,
 
   VG_USERREQ__PERFORM_OP,
+  VG_USERREQ__PERFORM_SPECIAL_OP,
   VG_USERREQ__GET_EXACT,
   VG_USERREQ__GET_EXACTF,
   VG_USERREQ__FORCE_TRACK,
   VG_USERREQ__FORCE_TRACKF,
   VG_USERREQ__MARK_IMPORTANT,
 } Vg_HerbgrindClientRequests;
+
+typedef enum {
+  OP_SINCOS,
+  OP_SINCOSF
+} SpecialOpType;
 
 #define HERBGRIND_BEGIN()                                               \
   (__extension__({unsigned long _qzz_res;                               \
@@ -68,6 +74,15 @@ typedef enum {
       VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,                           \
                                  VG_USERREQ__PERFORM_OP, \
                                  _qzz_op, _qzz_result_addr, _qzz_args, 0, 0); \
+      _qzz_res; \
+    }))
+#define HERBGRIND_PERFORM_SPECIAL_OP(_qzz_op, _qzz_args, \
+                                     _qzz_res1, _qzz_res2)              \
+  (__extension__({unsigned long _qzz_res;                               \
+      VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,                           \
+                                 VG_USERREQ__PERFORM_SPECIAL_OP,        \
+                                 _qzz_op, _qzz_args, \
+                                 _qzz_res1, _qzz_res2, 0);    \
       _qzz_res; \
     }))
 

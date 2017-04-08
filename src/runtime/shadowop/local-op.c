@@ -55,7 +55,7 @@ void execLocalOp(ShadowOpInfo* info, Real realVal,
 
   if (bitsLocalError >= error_threshold){
     if (print_flagged){
-      VG_(printf)("Hit local error! ");
+      VG_(umsg)("Hit local error! ");
       printOpInfo(info);
       VG_(printf)("\n");
     }

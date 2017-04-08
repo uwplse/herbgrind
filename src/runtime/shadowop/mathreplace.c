@@ -216,3 +216,20 @@ Word cmp_op_entry_by_type(const void* node1, const void* node2){
   const MrOpInfoEntry* entry2 = (const MrOpInfoEntry*)node2;
   return !(entry1->type == entry2->type);
 }
+
+void performSpecialWrappedOp(SpecialOpType type, double* args,
+                             double* res1, double* res2){
+#ifndef USE_MPFR
+  tl_assert2(0, "Can't wrap math ops in GMP mode!\n");
+#endif
+  switch(type){
+  case OP_SINCOS:
+    performWrappedOp(OP_SIN, res1, args);
+    performWrappedOp(OP_COS, res2, args);
+    break;
+  case OP_SINCOSF:
+    performWrappedOp(OP_SINF, res1, args);
+    performWrappedOp(OP_COSF, res2, args);
+    break;
+  }
+}

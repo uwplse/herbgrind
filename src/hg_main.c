@@ -54,6 +54,10 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
   case VG_USERREQ__PERFORM_OP:
     performWrappedOp((OpType)arg[1], (double*)arg[2], (double*)arg[3]);
     break;
+  case VG_USERREQ__PERFORM_SPECIAL_OP:
+    performSpecialWrappedOp((SpecialOpType)arg[1], (double*)arg[2],
+                            (double*)arg[3], (double*)arg[4]);
+    break;
   case VG_USERREQ__MARK_IMPORTANT:
     markImportant((Addr)arg[1]);
     break;

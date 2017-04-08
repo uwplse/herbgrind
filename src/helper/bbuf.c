@@ -38,6 +38,10 @@ BBuf* mkBBuf(int bound, char* buf){
   res->buf = buf;
   return res;
 }
+
+BBuf* allocBBuf(int bound){
+  return mkBBuf(bound, VG_(malloc)("buffer data", sizeof(char) * bound));
+}
 void printBBuf(BBuf* bbuf, const char* format, ...){
   va_list arglist;
   va_start(arglist, format);

@@ -36,6 +36,7 @@
 #include "../include/mathreplace-funcs.h"
 
 #define LIBM libmZdsoZa
+#define LIBM_CPP libmZhZaZdsoZa
 
 // This file instructs valgrind to capture calls to the math functions
 // listed in hg_mathreplace_funcs.h, and redirect them to the
@@ -60,6 +61,14 @@
     args[0] = x;                                           \
     HERBGRIND_PERFORM_OP(opname, &result, args);           \
     return result;                                         \
+  }                                                        \
+  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x);    \
+  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x){    \
+    double result;                                         \
+    double args[1];                                        \
+    args[0] = x;                                           \
+    HERBGRIND_PERFORM_OP(opname, &result, args);           \
+    return result;                                         \
   }
 
 // This macro is defined in include/hg_mathreplace_funcs.h, and
@@ -74,6 +83,15 @@ WRAP_UNARY_OPS
 #define WRAP_BINARY(fnname, opname)                             \
   double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y);  \
   double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y){  \
+    double result;                                               \
+    double args[2];                                              \
+    args[0] = x;                                                 \
+    args[1] = y;                                                 \
+    HERBGRIND_PERFORM_OP(opname, &result, args);                 \
+    return result;                                               \
+  }                                                                     \
+  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y);  \
+  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y){  \
     double result;                                               \
     double args[2];                                              \
     args[0] = x;                                                 \
@@ -101,9 +119,33 @@ WRAP_BINARY_OPS
     args[2] = z;                                                        \
     HERBGRIND_PERFORM_OP(opname, &result, args);                        \
     return result;                                                      \
+  }                                                                     \
+  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y, double z); \
+  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y, double z){ \
+    double result;                                                      \
+    double args[3];                                                     \
+    args[0] = x;                                                        \
+    args[1] = y;                                                        \
+    args[2] = z;                                                        \
+    HERBGRIND_PERFORM_OP(opname, &result, args);                        \
+    return result;                                                      \
   }
 
 // This macro is defined in include/hg_mathreplace_funcs.h, and
 // invokes the above macro for each ternary operation that needs to be
 // wrapped.
 WRAP_TERNARY_OPS
+
+// This is a special wrap
+void VG_REPLACE_FUNCTION_ZU(LIBM_CPP, sincos)(double x, double* p_sin, double* p_cos);
+void VG_REPLACE_FUNCTION_ZU(LIBM_CPP, sincos)(double x, double* p_sin, double* p_cos){
+  double args[1];
+  args[0] = x;
+  HERBGRIND_PERFORM_SPECIAL_OP(OP_SINCOS, args, p_sin, p_cos);
+}
+void VG_REPLACE_FUNCTION_ZU(LIBM, sincos)(double x, double* p_sin, double* p_cos);
+void VG_REPLACE_FUNCTION_ZU(LIBM, sincos)(double x, double* p_sin, double* p_cos){
+  double args[1];
+  args[0] = x;
+  HERBGRIND_PERFORM_SPECIAL_OP(OP_SINCOS, args, p_sin, p_cos);
+}
