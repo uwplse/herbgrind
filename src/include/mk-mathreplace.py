@@ -264,7 +264,7 @@ def write_switch_names(f, l):
     f.write("  switch(op){ \\\n")
     for op in l:
         f.write("  case OP_{}: \\\n".format(op.func.upper()))
-        f.write("    namevar = \"{}\"; \\\n".format(op.func))
+        f.write("    namevar = \"{}\"; \\\n".format(op.native_func))
         f.write("    break;\\\n")
     f.write("  default: \\\n"
             "    break; \\\n"
