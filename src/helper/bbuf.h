@@ -37,6 +37,5 @@ typedef struct {
 
 BBuf* mkBBuf(int bound, char* buf);
 void printBBuf(BBuf* bbuf, const char* format, ...);
-BBuf* allocBBuf(int bound);
 
 #endif
