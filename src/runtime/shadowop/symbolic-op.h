@@ -60,6 +60,7 @@ void generalizeStructure(SymbExpr* symbexpr, ConcExpr* concExpr,
                          int depth);
 void intersectEqualities(SymbExpr* symbexpr, ConcExpr* concExpr);
 GroupList getExprsEquivGroups(ConcExpr* concExpr, SymbExpr* symbExpr);
+GroupList dedupGroups(GroupList list);
 GroupList pruneSingletonGroups(GroupList list);
 GroupList groupsWithoutNonVars(SymbExpr* structure, GroupList list);
 

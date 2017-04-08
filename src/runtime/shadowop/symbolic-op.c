@@ -267,9 +267,10 @@ void getGrouped(GroupList groupList, VgHashTable* valMap,
   }
 }
 
-GroupList pruneSingletonGroups(GroupList list){
-  if (list->size == 0) return list;
+GroupList pruneSingletonGroups(GroupList _list){
   GroupList newGroupList = mkXA(GroupList)();
+  GroupList list = dedupGroups(_list);
+  if (list->size == 0) return newGroupList;
   for(int i = 0; i < list->size; ++i){
     if (list->data[i] != NULL){
       if (list->data[i]->next != NULL){
@@ -278,6 +279,26 @@ GroupList pruneSingletonGroups(GroupList list){
     }
   }
   freeXA(GroupList)(list);
+  freeXA(GroupList)(_list);
+  return newGroupList;
+}
+GroupList dedupGroups(GroupList list){
+  GroupList newGroupList = mkXA(GroupList)();
+  for(int i = 0; i < list->size; ++i){
+    Group newGroup = NULL;
+    for(Group curNode = list->data[i]; curNode != NULL;
+        curNode = curNode->next){
+      for(Group existingNode = newGroup; existingNode != NULL;
+          existingNode = existingNode->next){
+        if (existingNode->item == curNode->item){
+          goto is_duplicate;
+        }
+      }
+      lpush(Group)(&newGroup, curNode->item);
+    is_duplicate:;
+    }
+    XApush(GroupList)(newGroupList, newGroup);
+  }
   return newGroupList;
 }
 GroupList groupsWithoutNonVars(SymbExpr* structure, GroupList list){
