@@ -676,7 +676,10 @@ char* symbExprToString(SymbExpr* expr){
              lambda (BBuf*, (BBuf* acc, SymbExpr* curExpr,
                              NodePos curPos, VarMap* varMap,
                              int depth, int isGraft) {
-                       if (curExpr->type == Node_Leaf){
+                       if (depth > MAX_FOLD_DEPTH){
+                         printBBuf(acc, " _");
+                         return acc;
+                       } else if (curExpr->type == Node_Leaf){
                          if (curExpr->isConst){
                            printBBuf(acc, " %f", curExpr->constVal);
                            return acc;
@@ -685,9 +688,6 @@ char* symbExprToString(SymbExpr* expr){
                                      getVar(lookupVar(varMap, curPos)));
                            return acc;
                          }
-                       } else if (depth > MAX_FOLD_DEPTH){
-                         printBBuf(acc, " *");
-                         return acc;
                        } else if (isGraft) {
                          printBBuf(acc, " (%s",
                                    opSym(curExpr->branch.op));
@@ -901,7 +901,7 @@ int numVarNodes(SymbExpr* expr){
                    NodePos curPos, VarMap* varMap,
                    int depth, int isGraft) {
                if (curExpr->type == Node_Leaf &&
-                   !curExpr->isConst){
+                   !curExpr->isConst && depth <= MAX_FOLD_DEPTH){
                  return acc + 1;
                } else {
                  return acc;
@@ -916,7 +916,7 @@ int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups){
         curNode != NULL; curNode = curNode->next){
       SymbExpr* exprNode = symbGraftPosGet(expr, curNode->item);
       if (exprNode->type == Node_Leaf &&
-          !exprNode->isConst){
+          !exprNode->isConst && curNode->item->len < MAX_FOLD_DEPTH){
         acc += 1;
       }
     }
@@ -950,7 +950,10 @@ char* symbExprVarString(SymbExpr* expr){
   }
     break;
   default:{
-    int buflen = 2 * numVars + 3;
+    int buflen = 3;
+    for(int i = 0; i < numVars; ++i){
+      buflen += VG_(strlen)(getVar(i)) + 1;
+    }
     buf = VG_(malloc)("var string", buflen * sizeof(char));
     tl_assert(VG_(strlen)(varnames[0]) == 1);
     int count = 0;
