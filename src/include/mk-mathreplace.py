@@ -290,6 +290,8 @@ addOp("log", "log", 1)
 addOp("log10", "log base ten", 1)
 addOp("log1p", "plus one log", 1)
 addOp("log2", "log base two", 1)
+addOp("__ieee754_exp_avx", "exponentiate", 1,
+      mpfr_func="mpfr_exp", native_func="exp")
 
 addOp("erf", "error function", 1)
 addOp("erfc", "complementary error function", 1)
@@ -315,7 +317,8 @@ addOp("acosh", "hyperbolic arc cosine", 1)
 addOp("atanh", "hyperbolic arc tangent", 1)
 
 addOp("atan2", "arc tangent (two arguments)", 2)
-addOp("__ieee754_atan2_avx", "arc tangenet (two arguments)", 2, mpfr_func="mpfr_atan2", native_func="atan2")
+addOp("__ieee754_atan2_avx", "arc tangenet (two arguments)", 2,
+      mpfr_func="mpfr_atan2", native_func="atan2")
 addOp("hypot", "hypotenuse", 2)
 
 addOp("pow", "power", 2)
