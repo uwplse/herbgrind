@@ -132,6 +132,26 @@ ShadowValue* executeChannelShadowOp(int nargs,
                                     FloatType type,
                                     ShadowOpInfo* opinfo,
                                     ShadowValue** args){
+  if (ignore_pure_zeroes){
+    switch(opinfo->op_code){
+    case Iop_Mul32F0x4:
+    case Iop_Mul64F0x2:
+    case Iop_Mul32Fx8:
+    case Iop_Mul64Fx4:
+    case Iop_Mul32Fx4:
+    case Iop_Mul64Fx2:
+    case Iop_MulF64:
+    case Iop_MulF128:
+    case Iop_MulF32:
+    case Iop_MulF64r32:
+      if (getDouble(args[0]->real) == 0 || getDouble(args[1]->real) == 0){
+        ShadowValue* result = mkShadowValue(type, 0);
+        return result;
+      }
+    default:
+      break;
+    }
+  }
   ShadowValue* result = mkShadowValueBare(type);
   execRealOp(opinfo->op_code, &(result->real), args);
   execSymbolicOp(opinfo, &(result->expr), result->real, args);
