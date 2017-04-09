@@ -735,7 +735,23 @@ void recursivelyMark(SymbExpr* expr, BBuf* buf, VarMap* varMap,
     printBBuf(buf, "_");
   } else if (expr->type == Node_Leaf){
     if (expr->isConst){
-      printBBuf(buf, " %f", expr->constVal);
+      int i = 0;
+      double val = expr->constVal;
+      if (val > 0 && val < 1){
+        while(val < 1){
+          val *= 10;
+          i++;
+        }
+        printBBuf(buf, " %fe-%d", val, i);
+      } else if (val < 0 && val > -1){
+        while(val > -1){
+          val *= 10;
+          i++;
+        }
+        printBBuf(buf, " %fe-%d", val, i);
+      } else {
+        printBBuf(buf, " %f", val);
+      }
     } else {
       printBBuf(buf, " %s", getVar(lookupVar(varMap, curPos)));
     }
