@@ -61,7 +61,8 @@ void markEscapeFromFloat(const char* markType, Addr curAddr,
   info->num_mismatches += mismatch;
   for(int i = 0; i < num_vals; ++i){
     if (mismatch){
-      dedupAddInfluencesToList(&(info->influences), values[i]->influences);
+      dedupAddInfluencesToList(&(info->influences),
+                               values[i]->influences);
     }
   }
 }

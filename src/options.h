@@ -53,6 +53,7 @@ extern Bool print_expr_updates;
 extern Bool print_object_files;
 extern Bool print_flagged;
 extern Bool print_subexpr_locations;
+extern Bool expr_colors;
 extern Bool running;
 extern Bool always_on;
 extern Bool output_sexp;
