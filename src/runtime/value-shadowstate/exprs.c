@@ -481,14 +481,7 @@ void ppConcExpr(ConcExpr* expr){
     VG_(printf)("(%s", opSym(expr->branch.op));
     for (int i = 0; i < expr->branch.nargs; ++i){
       VG_(printf)(" ");
-      ConcExpr* childNode = expr->branch.args[i];
-      if (graftPointConc(expr, childNode)){
-        VG_(printf)("[");
-        ppConcExpr(expr->branch.args[i]);
-        VG_(printf)("]");
-      } else {
-        ppConcExpr(expr->branch.args[i]);
-      }
+      ppConcExpr(expr->branch.args[i]);
     }
     VG_(printf)(")");
   }
@@ -662,7 +655,7 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
 void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
                          NodePos curPos, int max_depth){
   if (max_depth == 0){
-    printBBuf(buf, "_");
+    printBBuf(buf, " _");
   } else if (expr->type == Node_Leaf){
     if (expr->isConst){
       printBBuf(buf, " %f", expr->constVal);
