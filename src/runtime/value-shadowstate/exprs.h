@@ -123,7 +123,8 @@ void ppSymbExprMarkSources(SymbExpr* expr);
 int numVarNodes(SymbExpr* expr);
 int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups);
 int numExprVars(SymbExpr* expr);
-char* symbExprVarString(SymbExpr* expr);
+int countVars(VarMap* map);
+char* symbExprVarString(int num_vars);
 
 int symbExprPrintLen_(SymbExpr* expr, VarMap* varMap,
                       NodePos curPos, int depth,
@@ -147,7 +148,7 @@ int writeGraftsSimple(char* buf, SymbExpr* expr,
                       NodePos curPos, VarMap* varMap,
                       int depth);
 // Free this when you're done with it.
-char* symbExprToString(SymbExpr* expr);
+char* symbExprToString(SymbExpr* expr, int* outNumVars);
 int symbExprPrintLen(SymbExpr* expr, VarMap* varmap,
                      NodePos curPos, int depth);
 // Returns the number of bytes written
@@ -178,7 +179,7 @@ int writeGraftsBlankGrafts(char* buf, SymbExpr* expr,
 int writeSymbExprToStringBlankGrafts(char* buf, SymbExpr* expr,
                                      NodePos curPos, VarMap* varMap,
                                      int depth);
-char* symbExprToStringMarkSources(SymbExpr* expr);
+char* symbExprToStringMarkSources(SymbExpr* expr, int* numVarsOut);
 
 int floatPrintLen(double f);
 #define MAX_BRANCH_ARGS 3

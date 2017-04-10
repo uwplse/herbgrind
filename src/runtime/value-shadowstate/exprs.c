@@ -33,6 +33,7 @@
 #include "pub_tool_libcassert.h"
 #include "pub_tool_libcbase.h"
 #include "pub_tool_debuginfo.h"
+#include "pub_tool_oset.h"
 #include "../../helper/ir-info.h"
 #include "../../helper/bbuf.h"
 #include "../shadowop/symbolic-op.h"
@@ -513,7 +514,7 @@ void ppConcExprNoGrafts(ConcExpr* expr){
 }
 
 void ppSymbExpr(SymbExpr* expr){
-  char* stringRep = symbExprToString(expr);
+  char* stringRep = symbExprToString(expr, NULL);
   tl_assert(stringRep != NULL);
   VG_(printf)("%s", stringRep);
   VG_(free)(stringRep);
@@ -529,7 +530,7 @@ void ppSymbExprNoGrafts(SymbExpr* expr){
   VG_(free)(stringRep);
 }
 void ppSymbExprMarkSources(SymbExpr* expr){
-  char* stringRep = symbExprToStringMarkSources(expr);
+  char* stringRep = symbExprToStringMarkSources(expr, NULL);
   VG_(printf)("%s", stringRep);
   VG_(free)(stringRep);
 }
@@ -634,11 +635,14 @@ char* symbExprToStringNoVars(SymbExpr* expr){
 #define MAX_EXPR_LEN 20000
 void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
                          NodePos curPos, int max_depth);
-char* symbExprToString(SymbExpr* expr){
+char* symbExprToString(SymbExpr* expr, int* numVarsOut){
   if (expr->type == Node_Leaf && !(expr->isConst)){
     int len = VG_(strlen)(varnames[0]);
     char* buf = VG_(malloc)("expr string", len);
     VG_(memcpy)(buf, varnames[0], len);
+    if (numVarsOut != NULL){
+      *numVarsOut = 1;
+    }
     return buf;
   } else {
     VarMap* varMap = mkVarMap(expr->branch.groups);
@@ -647,6 +651,9 @@ char* symbExprToString(SymbExpr* expr){
     recursivelyToString(expr, bbuf, varMap, null_pos, MAX_FOLD_DEPTH);
     VG_(realloc_shrink)(_buf, MAX_EXPR_LEN - bbuf->bound + 10);
     VG_(free)(bbuf);
+    if (numVarsOut != NULL){
+      *numVarsOut = countVars(varMap);
+    }
     freeVarMap(varMap);
     return _buf;
   }
@@ -697,11 +704,14 @@ void printColorCode(BBuf* buffer, Color color){
 void recursivelyMark(SymbExpr* expr, BBuf* buf, VarMap* varMap,
                      const char* parent_func, Color curColor,
                      NodePos curPos, int max_depth);
-char* symbExprToStringMarkSources(SymbExpr* expr){
+char* symbExprToStringMarkSources(SymbExpr* expr, int* numVarsOut){
   if (expr->type == Node_Leaf && !(expr->isConst)){
     int len = VG_(strlen)(varnames[0]);
     char* buf = VG_(malloc)("expr string", len);
     VG_(memcpy)(buf, varnames[0], len);
+    if (numVarsOut != NULL){
+      *numVarsOut = 1;
+    }
     return buf;
   } else {
     VarMap* varMap = mkVarMap(expr->branch.groups);
@@ -724,6 +734,9 @@ char* symbExprToStringMarkSources(SymbExpr* expr){
     VG_(realloc_shrink)(_buf,
                         MAX_EXPR_LEN - bbuf->bound + 10);
     VG_(free)(bbuf);
+    if (numVarsOut != NULL){
+      *numVarsOut = countVars(varMap);
+    }
     freeVarMap(varMap);
     return _buf;
   }
@@ -889,6 +902,21 @@ int numVarNodes(SymbExpr* expr){
              }),
      foldId(int));
 }
+int countVars(VarMap* map){
+  OSet* vars = VG_(OSetWord_Create)(VG_(malloc), "varset",
+                                    VG_(free));
+  int result = 0;
+  VG_(HT_ResetIter)(map->existingEntries);
+  VarMapEntry* entry;
+  while((entry = VG_(HT_Next)(map->existingEntries)) != NULL){
+    if (!(VG_(OSetWord_Contains)(vars, entry->varIdx))){
+      result++;
+      VG_(OSetWord_Insert)(vars, entry->varIdx);
+    }
+  }
+  VG_(OSetWord_Destroy)(vars);
+  return result;
+}
 int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups){
   int acc = 0;
   for(int i = 0; i < trimmedGroups->size; ++i){
@@ -913,9 +941,8 @@ int numExprVars(SymbExpr* expr){
   freeXA(GroupList)(trimmedGroups);
   return result;
 }
-char* symbExprVarString(SymbExpr* expr){
+char* symbExprVarString(int numVars){
   char* buf = NULL;
-  int numVars = numExprVars(expr);
   switch(numVars){
   case 0:{
     char noVars[] = "()";
