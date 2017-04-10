@@ -645,7 +645,8 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
     }
     return buf;
   } else {
-    VarMap* varMap = mkVarMap(expr->branch.groups);
+    VarMap* varMap =
+      mkVarMap(groupsWithoutNonVars(expr, expr->branch.groups));
     char* _buf = VG_(malloc)("buffer data", MAX_EXPR_LEN);
     BBuf* bbuf = mkBBuf(MAX_EXPR_LEN, _buf);
     recursivelyToString(expr, bbuf, varMap, null_pos, MAX_FOLD_DEPTH);
@@ -714,7 +715,8 @@ char* symbExprToStringMarkSources(SymbExpr* expr, int* numVarsOut){
     }
     return buf;
   } else {
-    VarMap* varMap = mkVarMap(expr->branch.groups);
+    VarMap* varMap =
+      mkVarMap(groupsWithoutNonVars(expr, expr->branch.groups));
     const char* toplevel_func;
     if (!VG_(get_fnname)(expr->branch.op->op_addr, &toplevel_func)){
       toplevel_func = "none";
