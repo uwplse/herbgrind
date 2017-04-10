@@ -279,26 +279,26 @@ GroupList pruneSingletonGroups(GroupList _list){
     }
   }
   freeXA(GroupList)(list);
-  freeXA(GroupList)(_list);
   return newGroupList;
 }
 GroupList dedupGroups(GroupList list){
   GroupList newGroupList = mkXA(GroupList)();
   for(int i = 0; i < list->size; ++i){
     Group newGroup = NULL;
-    for(Group curNode = list->data[i]; curNode != NULL;
-        curNode = curNode->next){
+    while(list->data[i] != NULL){
+      NodePos curPos = lpop(Group)(&(list->data[i]));
       for(Group existingNode = newGroup; existingNode != NULL;
           existingNode = existingNode->next){
-        if (existingNode->item == curNode->item){
+        if (existingNode->item == curPos){
           goto is_duplicate;
         }
       }
-      lpush(Group)(&newGroup, curNode->item);
+      lpush(Group)(&newGroup, curPos);
     is_duplicate:;
     }
     XApush(GroupList)(newGroupList, newGroup);
   }
+  freeXA(GroupList)(list);
   return newGroupList;
 }
 GroupList groupsWithoutNonVars(SymbExpr* structure, GroupList list){
