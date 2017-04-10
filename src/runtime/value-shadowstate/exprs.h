@@ -118,7 +118,6 @@ void ppConcExprNoGrafts(ConcExpr* expr);
 void ppSymbExpr(SymbExpr* expr);
 void ppSymbExprNoVars(SymbExpr* expr);
 void ppSymbExprNoGrafts(SymbExpr* expr);
-void ppSymbExprMarkSources(SymbExpr* expr);
 
 int numVarNodes(SymbExpr* expr);
 int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups);
@@ -179,8 +178,6 @@ int writeGraftsBlankGrafts(char* buf, SymbExpr* expr,
 int writeSymbExprToStringBlankGrafts(char* buf, SymbExpr* expr,
                                      NodePos curPos, VarMap* varMap,
                                      int depth);
-char* symbExprToStringMarkSources(SymbExpr* expr, int* numVarsOut);
-
 int floatPrintLen(double f);
 #define MAX_BRANCH_ARGS 3
 #define MAX_EXPR_BLOCK_DEPTH 5

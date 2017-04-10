@@ -132,7 +132,7 @@ ShadowValue* executeChannelShadowOp(int nargs,
                                     FloatType type,
                                     ShadowOpInfo* opinfo,
                                     ShadowValue** args){
-  if (ignore_pure_zeroes){
+  if (ignore_pure_zeroes || sound_simplify){
     switch(opinfo->op_code){
     case Iop_Mul32F0x4:
     case Iop_Mul64F0x2:
@@ -146,6 +146,7 @@ ShadowValue* executeChannelShadowOp(int nargs,
     case Iop_MulF64r32:
       if (getDouble(args[0]->real) == 0 || getDouble(args[1]->real) == 0){
         ShadowValue* result = mkShadowValue(type, 0);
+        execSymbolicOp(opinfo, &(result->expr), result->real, args);
         return result;
       }
     default:

@@ -522,12 +522,6 @@ void ppSymbExprNoGrafts(SymbExpr* expr){
   VG_(printf)("%s", stringRep);
   VG_(free)(stringRep);
 }
-void ppSymbExprMarkSources(SymbExpr* expr){
-  char* stringRep = symbExprToStringMarkSources(expr, NULL);
-  VG_(printf)("%s", stringRep);
-  VG_(free)(stringRep);
-}
-
 inline
 int symbExprConstPrintLen(SymbExpr* expr){
   if (isnan(expr->constVal)){
@@ -626,54 +620,6 @@ char* symbExprToStringNoVars(SymbExpr* expr){
   return buf;
 }
 #define MAX_EXPR_LEN 20000
-void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
-                         NodePos curPos, int max_depth);
-char* symbExprToString(SymbExpr* expr, int* numVarsOut){
-  if (expr->type == Node_Leaf && !(expr->isConst)){
-    int len = VG_(strlen)(varnames[0]);
-    char* buf = VG_(malloc)("expr string", len);
-    VG_(memcpy)(buf, varnames[0], len);
-    if (numVarsOut != NULL){
-      *numVarsOut = 1;
-    }
-    return buf;
-  } else {
-    VarMap* varMap =
-      mkVarMap(groupsWithoutNonVars(expr, expr->branch.groups));
-    char* _buf = VG_(malloc)("buffer data", MAX_EXPR_LEN);
-    BBuf* bbuf = mkBBuf(MAX_EXPR_LEN, _buf);
-    recursivelyToString(expr, bbuf, varMap, null_pos, MAX_FOLD_DEPTH);
-    VG_(realloc_shrink)(_buf, MAX_EXPR_LEN - bbuf->bound + 10);
-    VG_(free)(bbuf);
-    if (numVarsOut != NULL){
-      *numVarsOut = countVars(varMap);
-    }
-    freeVarMap(varMap);
-    return _buf;
-  }
-}
-void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
-                         NodePos curPos, int max_depth){
-  if (max_depth == 0){
-    printBBuf(buf, " _");
-  } else if (expr->type == Node_Leaf){
-    if (expr->isConst){
-      printBBuf(buf, " %f", expr->constVal);
-    } else {
-      printBBuf(buf, " %s", getVar(lookupVar(varMap, curPos)));
-    }
-  } else {
-    printBBuf(buf, " ");
-    printBBuf(buf, "(%s", opSym(expr->branch.op));
-
-    for(int i = 0; i < expr->branch.nargs; i++){
-      recursivelyToString(expr->branch.args[i], buf, varMap,
-                          rconsPos(curPos, i),
-                          max_depth - 1);
-    }
-    printBBuf(buf, ")");
-  }
-}
 typedef enum {
   COLOR_RED,
   COLOR_BLUE,
@@ -695,10 +641,10 @@ void printColorCode(BBuf* buffer, Color color){
     break;
   }
 }
-void recursivelyMark(SymbExpr* expr, BBuf* buf, VarMap* varMap,
-                     const char* parent_func, Color curColor,
-                     NodePos curPos, int max_depth);
-char* symbExprToStringMarkSources(SymbExpr* expr, int* numVarsOut){
+void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
+                         const char* parent_func, Color curColor,
+                         NodePos curPos, int max_depth);
+char* symbExprToString(SymbExpr* expr, int* numVarsOut){
   if (expr->type == Node_Leaf && !(expr->isConst)){
     int len = VG_(strlen)(varnames[0]);
     char* buf = VG_(malloc)("expr string", len);
@@ -719,10 +665,10 @@ char* symbExprToStringMarkSources(SymbExpr* expr, int* numVarsOut){
     if (expr_colors){
       printColorCode(bbuf, COLOR_BLUE);
     }
-    recursivelyMark(expr, bbuf, varMap,
-                    toplevel_func, COLOR_BLUE,
-                    null_pos,
-                    MAX_FOLD_DEPTH);
+    recursivelyToString(expr, bbuf, varMap,
+                        toplevel_func, COLOR_BLUE,
+                        null_pos,
+                        MAX_FOLD_DEPTH);
     if (expr_colors){
       printBBuf(bbuf, "\033[0m");
     }
@@ -736,9 +682,9 @@ char* symbExprToStringMarkSources(SymbExpr* expr, int* numVarsOut){
     return _buf;
   }
 }
-void recursivelyMark(SymbExpr* expr, BBuf* buf, VarMap* varMap,
-                     const char* parent_func, Color curColor,
-                     NodePos curPos, int max_depth){
+void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
+                         const char* parent_func, Color curColor,
+                         NodePos curPos, int max_depth){
   if (max_depth == 0){
     printBBuf(buf, "_");
   } else if (expr->type == Node_Leaf){
@@ -764,8 +710,125 @@ void recursivelyMark(SymbExpr* expr, BBuf* buf, VarMap* varMap,
       printBBuf(buf, " %s", getVar(lookupVar(varMap, curPos)));
     }
   } else {
+    if (sound_simplify){
+      switch(expr->branch.op->op_code){
+      case Iop_Mul32F0x4:
+      case Iop_Mul64F0x2:
+      case Iop_Mul32Fx8:
+      case Iop_Mul64Fx4:
+      case Iop_Mul32Fx4:
+      case Iop_Mul64Fx2:
+      case Iop_MulF64:
+      case Iop_MulF128:
+      case Iop_MulF32:
+      case Iop_MulF64r32:
+        {
+          SymbExpr* arg0 = expr->branch.args[0];
+          SymbExpr* arg1 = expr->branch.args[1];
+          if (arg0->isConst && arg0->constVal == 1.0){
+            recursivelyToString(arg1, buf, varMap,
+                                parent_func, curColor,
+                                rconsPos(curPos, 1),
+                                max_depth - 1);
+            return;
+          }
+          if (arg1->isConst && arg1->constVal == 1.0){
+            recursivelyToString(arg0, buf, varMap,
+                                parent_func, curColor,
+                                rconsPos(curPos, 0),
+                                max_depth - 1);
+            return;
+          }
+          if ((arg0->isConst && arg0->constVal == 0.0) ||
+              (arg1->isConst && arg1->constVal == 0.0)){
+            printBBuf(buf, "%f", 0.0);
+            return;
+          }
+          break;
+        }
+      case Iop_Add32Fx2:
+      case Iop_Add32F0x4:
+      case Iop_Add64F0x2:
+      case Iop_Add32Fx8:
+      case Iop_Add64Fx4:
+      case Iop_Add32Fx4:
+      case Iop_Add64Fx2:
+      case Iop_AddF128:
+      case Iop_AddF64:
+      case Iop_AddF32:
+      case Iop_AddF64r32:
+        {
+          SymbExpr* arg0 = expr->branch.args[0];
+          SymbExpr* arg1 = expr->branch.args[1];
+          if (arg0->isConst && arg0->constVal == 0.0){
+            recursivelyToString(arg1, buf, varMap,
+                                parent_func, curColor,
+                                rconsPos(curPos, 1),
+                                max_depth - 1);
+            return;
+          }
+          if (arg1->isConst && arg1->constVal == 0.0){
+            recursivelyToString(arg0, buf, varMap,
+                                parent_func, curColor,
+                                rconsPos(curPos, 0),
+                                max_depth - 1);
+            return;
+          }
+          break;
+        }
+      case Iop_Sub32Fx2:
+      case Iop_Sub32F0x4:
+      case Iop_Sub64F0x2:
+      case Iop_Sub32Fx8:
+      case Iop_Sub64Fx4:
+      case Iop_Sub32Fx4:
+      case Iop_Sub64Fx2:
+      case Iop_SubF128:
+      case Iop_SubF64:
+      case Iop_SubF32:
+      case Iop_SubF64r32:
+        {
+          SymbExpr* arg0 = expr->branch.args[0];
+          SymbExpr* arg1 = expr->branch.args[1];
+          if (arg0->isConst && arg0->constVal == 0.0){
+            const char* fnname;
+            if (!(VG_(get_fnname)(expr->branch.op->op_addr, &fnname))){
+              fnname = "none";
+            }
+            if (VG_(strcmp)(fnname, parent_func)){
+              curColor = (curColor + 1) % COLOR_LAST;
+              if (expr_colors){
+                printColorCode(buf, curColor);
+              }
+              if (print_subexpr_locations){
+                char* addrString =
+                  getAddrString(expr->branch.op->op_addr);
+                printBBuf(buf, "{%s}", addrString);
+                VG_(free)(addrString);
+              }
+            }
+            printBBuf(buf, " (-");
+            recursivelyToString(arg1, buf, varMap,
+                                parent_func, curColor,
+                                rconsPos(curPos, 1),
+                                max_depth - 1);
+            printBBuf(buf, ")");
+            return;
+          }
+          if (arg1->isConst && arg1->constVal == 0.0){
+            recursivelyToString(arg0, buf, varMap,
+                                parent_func, curColor,
+                                rconsPos(curPos, 0),
+                                max_depth - 1);
+            return;
+          }
+        }
+      default:
+        break;
+      }
+    }
     printBBuf(buf, " ");
-
+    
     const char* fnname;
     if (!(VG_(get_fnname)(expr->branch.op->op_addr, &fnname))){
       fnname = "none";
@@ -775,18 +838,20 @@ void recursivelyMark(SymbExpr* expr, BBuf* buf, VarMap* varMap,
       if (expr_colors){
         printColorCode(buf, curColor);
       }
-      char* addrString = getAddrString(expr->branch.op->op_addr);
-      printBBuf(buf, "{%s}", addrString);
-      VG_(free)(addrString);
+      if (print_subexpr_locations){
+        char* addrString = getAddrString(expr->branch.op->op_addr);
+        printBBuf(buf, "{%s}", addrString);
+        VG_(free)(addrString);
+      }
     }
 
     printBBuf(buf, "(%s", opSym(expr->branch.op));
 
     for(int i = 0; i < expr->branch.nargs; i++){
-      recursivelyMark(expr->branch.args[i], buf, varMap,
-                      fnname, curColor,
-                      rconsPos(curPos, i),
-                      max_depth - 1);
+      recursivelyToString(expr->branch.args[i], buf, varMap,
+                          fnname, curColor,
+                          rconsPos(curPos, i),
+                          max_depth - 1);
       if (expr_colors){
         printColorCode(buf, curColor);
       }

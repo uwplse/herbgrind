@@ -247,12 +247,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
     ShadowOpInfo* opinfo = curNode->item;
 
     int numVars;
-    char* exprString;
-    if (print_subexpr_locations){
-      exprString = symbExprToStringMarkSources(opinfo->expr, &numVars);
-    } else {
-      exprString = symbExprToString(opinfo->expr, &numVars);
-    }
+    char* exprString = symbExprToString(opinfo->expr, &numVars);
     char* varString = symbExprVarString(numVars);
 
     if (!VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,

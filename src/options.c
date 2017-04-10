@@ -56,6 +56,7 @@ Bool expr_colors = False;
 Bool running = True;
 Bool always_on = False;
 Bool output_sexp = False;
+Bool sound_simplify = False;
 Int longprint_len = 15;
 Int precision = 1000;
 double error_threshold = 5.0;
@@ -80,6 +81,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-object-files", print_object_files, True) {}
   else if VG_XACT_CLO(arg, "--output-subexpr-sources", print_subexpr_locations, True) {}
   else if VG_XACT_CLO(arg, "--ignore-pure-zeroes", ignore_pure_zeroes, True) {}
+  else if VG_XACT_CLO(arg, "--sound-simplify", sound_simplify, True) {}
   else if VG_XACT_CLO(arg, "--expr-colors", expr_colors, True) {}
   else if VG_XACT_CLO(arg, "--start-off", running, False) {}
   else if VG_XACT_CLO(arg, "--always-on", always_on, True) {}

@@ -58,6 +58,7 @@ extern Bool expr_colors;
 extern Bool running;
 extern Bool always_on;
 extern Bool output_sexp;
+extern Bool sound_simplify;
 extern Int longprint_len;
 extern Int precision;
 extern double error_threshold;
