@@ -269,8 +269,8 @@ void getGrouped(GroupList groupList, VgHashTable* valMap,
 
 GroupList pruneSingletonGroups(GroupList _list){
   GroupList newGroupList = mkXA(GroupList)();
+  if (_list->size == 0) return newGroupList;
   GroupList list = dedupGroups(_list);
-  if (list->size == 0) return newGroupList;
   for(int i = 0; i < list->size; ++i){
     if (list->data[i] != NULL){
       if (list->data[i]->next != NULL){
