@@ -96,6 +96,16 @@ void writeOutput(void){
                   "  (objectfile \"%s\")\n",
                   objfile_name);
       }
+      if (output_mark_exprs){
+        printBBuf(buf, "  (full-expr \n");
+        int numVars;
+        char* exprString = symbExprToString(markInfo->expr, &numVars);
+        char* varString = symbExprVarString(numVars);
+        printBBuf(buf,
+                  "    (FPCore %s\n"
+                  "     %s))\n",
+                  varString, exprString);
+      }
       printBBuf(buf,
                 "  (avg-error %f)\n"
                 "  (max-error %f)\n"
@@ -117,6 +127,16 @@ void writeOutput(void){
         printBBuf(buf, " %s");
       }
       printBBuf(buf, "\n");
+      if (output_mark_exprs){
+        printBBuf(buf, "  Full expr:\n");
+        int numVars;
+        char* exprString = symbExprToString(markInfo->expr, &numVars);
+        char* varString = symbExprVarString(numVars);
+        printBBuf(buf,
+                  "    (FPCore %s\n"
+                  "     %s))\n",
+                  varString, exprString);
+      }
 
       printBBuf(buf,
                 "%f bits average error\n"
@@ -133,7 +153,11 @@ void writeOutput(void){
       VG_(write)(fileD, endparens, sizeof(endparens));
     }
     char newline[] = "\n";
+<<<<<<< HEAD
     VG_(write)(fileD, newline, sizeof(newline));
+=======
+    VG_(write)(fileD, newline, 1);
+>>>>>>> Added --output-mark-exprs flag
   }
   VG_(HT_ResetIter)(intMarkMap);
   for(IntMarkInfo* intMarkInfo = VG_(HT_Next)(intMarkMap);
@@ -174,6 +198,20 @@ void writeOutput(void){
                   "  (objectfile \"%s\")\n",
                   objname);
       }
+      if (output_mark_exprs){
+        printBBuf(buf, "  (full-exprs \n");
+        for(int i = 0; i < intMarkInfo->nargs; ++i){
+          int numVars;
+          char* exprString = symbExprToString(intMarkInfo->exprs[i],
+                                              &numVars);
+          char* varString = symbExprVarString(numVars);
+          printBBuf(buf,
+                    "    (FPCore %s\n"
+                    "     %s)\n",
+                    varString, exprString);
+        }
+        printBBuf(buf, "    )\n");
+      }
       printBBuf(buf,
                 "  (percent-wrong %d)\n"
                 "  (num-wrong %d)\n"
@@ -194,6 +232,19 @@ void writeOutput(void){
                   objname);
       }
       printBBuf(buf, "\n");
+      if (output_mark_exprs){
+        printBBuf(buf, "Full exprs:\n");
+        for(int i = 0; i < intMarkInfo->nargs; ++i){
+          int numVars;
+          char* exprString = symbExprToString(intMarkInfo->exprs[i],
+                                              &numVars);
+          char* varString = symbExprVarString(numVars);
+          printBBuf(buf,
+                    "    (FPCore %s\n"
+                    "     %s)\n",
+                    varString, exprString);
+        }
+      }
 
       printBBuf(buf,
                 "%d%% incorrect\n"
@@ -269,7 +320,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
       printBBuf(buf,
                 "\n"
                 "    (FPCore %s\n"
-                "     %s\n",
+                "     %s)\n",
                 varString, exprString);
       printBBuf(buf,
                 "     (function \"%s\")\n"

@@ -78,8 +78,16 @@ void generalizeSymbolicExpr(SymbExpr** symbexpr, ConcExpr* cexpr){
       ppConcExpr(cexpr);
       VG_(printf)("\n");
     }
+    if ((*symbexpr)->type == Node_Branch && cexpr->type == Node_Leaf){
+      (*symbexpr) =
+        mkFreshSymbolicLeaf((*symbexpr)->isConst &&
+                            (*symbexpr)->constVal == cexpr->value,
+                            (*symbexpr)->constVal);
+    }
     generalizeStructure(*symbexpr, cexpr, GENERALIZE_DEPTH);
-    intersectEqualities(*symbexpr, cexpr);
+    if ((*symbexpr)->type == Node_Branch){
+      intersectEqualities(*symbexpr, cexpr);
+    }
     if (print_expr_updates){
       VG_(printf)("Updated expression %p to ", *symbexpr);
       ppSymbExpr(*symbexpr);
@@ -139,7 +147,9 @@ void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr,
       if (concMatch->type == Node_Leaf ||
           concMatch->branch.op != symbMatch->branch.op){
         curSymbGraft.parent->branch.args[curSymbGraft.childIndex] =
-          mkFreshSymbolicLeaf(symbMatch->isConst, symbMatch->constVal);
+          mkFreshSymbolicLeaf(symbMatch->isConst &&
+                              symbMatch->constVal == concMatch->value,
+                              symbMatch->constVal);
         symbMatch = symbGraftChild(curSymbGraft);
       }
     }
@@ -158,6 +168,7 @@ void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr,
 }
 
 void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
+  tl_assert(concExpr->type == Node_Branch);
   tl_assert(symbExpr->type == Node_Branch);
   GroupList groups = symbExpr->branch.groups;
   GroupList newGroups = mkXA(GroupList)();

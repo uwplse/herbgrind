@@ -49,12 +49,13 @@ Bool print_errors = False;
 Bool print_errors_long = False;
 Bool print_expr_updates = False;
 Bool print_flagged = False;
-Bool print_object_files = False;
-Bool print_subexpr_locations = False;
-Bool ignore_pure_zeroes = False;
-Bool expr_colors = False;
 Bool running = True;
 Bool always_on = False;
+Bool print_object_files = False;
+Bool expr_colors = False;
+Bool ignore_pure_zeroes = False;
+Bool print_subexpr_locations = False;
+Bool output_mark_exprs = False;
 Bool output_sexp = False;
 Bool sound_simplify = False;
 Int longprint_len = 15;
@@ -83,6 +84,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--ignore-pure-zeroes", ignore_pure_zeroes, True) {}
   else if VG_XACT_CLO(arg, "--sound-simplify", sound_simplify, True) {}
   else if VG_XACT_CLO(arg, "--expr-colors", expr_colors, True) {}
+  else if VG_XACT_CLO(arg, "--output-mark-exprs", output_mark_exprs, True) {}
   else if VG_XACT_CLO(arg, "--start-off", running, False) {}
   else if VG_XACT_CLO(arg, "--always-on", always_on, True) {}
   else if VG_XACT_CLO(arg, "--output-sexp", output_sexp, True) {}
@@ -106,8 +108,24 @@ void hg_print_usage(void){
               "    --output-sexp    "
               "Output in an easy-to-parse s-expression based format.\n"
               "    --output-subexpr-sources    "
-              "Print the source locations of every subexpression that isn't "
-              "in the same function as it's parent.\n"
+              "Print the source locations of every subexpression that "
+              "isn't in the same function as it's parent.\n"
+              "    --ignore-pure-zeroes    "
+              "Cut's off expressions which are multiplied by zero, "
+              "if they are always only multiplied by zero, and "
+              "ignores influences from values which are multiplied "
+              "by zero.\n"
+              "    --expr-colors    "
+              "Use colors to mark the boundries between different "
+              "functions in expressions.\n"
+              "    --print-object-files    "
+              "Anywhere an address would be printed, also print "
+              "which object file it came from.\n"
+              "    --output-mark-exprs     "
+              "Print the full expressions for marks.\n"
+              "    --sound-simplify    "
+              "Simplify expressions in simple ways which don't affect "
+              "their floating point behavior.\n"
               );
 }
 void hg_print_debug_usage(void){

@@ -424,7 +424,7 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
   }
 
   if (cexpr->type == Node_Leaf){
-    mkFreshSymbolicLeaf(True, cexpr->value);
+    result = mkFreshSymbolicLeaf(True, cexpr->value);
   } else {
     result->isConst = True;
     result->constVal = cexpr->value;
@@ -645,14 +645,23 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
                          const char* parent_func, Color curColor,
                          NodePos curPos, int max_depth);
 char* symbExprToString(SymbExpr* expr, int* numVarsOut){
-  if (expr->type == Node_Leaf && !(expr->isConst)){
-    int len = VG_(strlen)(varnames[0]);
-    char* buf = VG_(malloc)("expr string", len);
-    VG_(memcpy)(buf, varnames[0], len);
-    if (numVarsOut != NULL){
-      *numVarsOut = 1;
+  if (expr->type == Node_Leaf){
+    if (expr->isConst){
+      char* _buf = VG_(malloc)("buffer data", MAX_EXPR_LEN);
+      BBuf* bbuf = mkBBuf(MAX_EXPR_LEN, _buf);
+      printBBuf(bbuf, "%f", expr->constVal);
+      VG_(realloc_shrink)(_buf, MAX_EXPR_LEN - bbuf->bound + 10);
+      VG_(free)(bbuf);
+      return _buf;
+    } else {
+      int len = VG_(strlen)(varnames[0]);
+      char* buf = VG_(malloc)("expr string", len + 1);
+      VG_(memcpy)(buf, varnames[0], len + 1);
+      if (numVarsOut != NULL){
+        *numVarsOut = 1;
+      }
+      return buf;
     }
-    return buf;
   } else {
     VarMap* varMap =
       mkVarMap(groupsWithoutNonVars(expr, expr->branch.groups));

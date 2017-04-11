@@ -50,19 +50,23 @@ extern Bool print_allocs;
 extern Bool print_errors;
 extern Bool print_errors_long;
 extern Bool print_expr_updates;
-extern Bool print_object_files;
 extern Bool print_flagged;
-extern Bool print_subexpr_locations;
-extern Bool ignore_pure_zeroes;
-extern Bool expr_colors;
+
 extern Bool running;
 extern Bool always_on;
+
+extern Bool ignore_pure_zeroes;
+extern Bool expr_colors;
+extern Bool print_object_files;
+extern Bool print_subexpr_locations;
+extern Bool output_mark_exprs;
 extern Bool output_sexp;
 extern Bool sound_simplify;
+
 extern Int longprint_len;
 extern Int precision;
 extern double error_threshold;
-const char* output_filename;
+extern const char* output_filename;
 
 #define USE_MPFR
 

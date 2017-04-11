@@ -32,6 +32,7 @@
 #include "../value-shadowstate/shadowval.h"
 #include "../shadowop/error.h"
 #include "../shadowop/influence-op.h"
+#include "../shadowop/symbolic-op.h"
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcbase.h"
 
@@ -52,6 +53,7 @@ void markImportant(Addr varAddr){
   }
   dedupAddInfluencesToList(&(info->influences), val->influences);
   updateError(&(info->eagg), val->real, *(double*)varAddr);
+  generalizeSymbolicExpr(&(info->expr), val->expr);
 }
 void markEscapeFromFloat(const char* markType, Addr curAddr,
                          int mismatch,
@@ -59,11 +61,15 @@ void markEscapeFromFloat(const char* markType, Addr curAddr,
   IntMarkInfo* info = getIntMarkInfo(curAddr, markType);
   info->num_hits += 1;
   info->num_mismatches += mismatch;
+  if (info->nargs < num_vals){
+    info->nargs = num_vals;
+  }
   for(int i = 0; i < num_vals; ++i){
     if (mismatch){
       dedupAddInfluencesToList(&(info->influences),
                                values[i]->influences);
     }
+    generalizeSymbolicExpr(&(info->exprs[i]), values[i]->expr);
   }
 }
 
@@ -76,6 +82,11 @@ IntMarkInfo* getIntMarkInfo(Addr callAddr, const char* markType){
     markInfo->num_hits = 0;
     markInfo->num_mismatches = 0;
     markInfo->markType = markType;
+    markInfo->exprs =
+      VG_(perm_malloc)(sizeof(SymbExpr*) * 2, vg_alignof(SymbExpr*));
+    for(int i = 0; i < 2; ++i){
+      markInfo->exprs[i] = NULL;
+    }
     VG_(HT_add_node)(intMarkMap, markInfo);
   }
   return markInfo;

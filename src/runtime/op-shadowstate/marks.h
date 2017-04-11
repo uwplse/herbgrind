@@ -43,6 +43,7 @@ typedef struct _markInfo {
   Addr addr;
   InfluenceList influences;
   ErrorAggregate eagg;
+  SymbExpr* expr;
 } MarkInfo;
 
 typedef struct _intMarkInfo {
@@ -53,6 +54,8 @@ typedef struct _intMarkInfo {
   InfluenceList influences;
   int num_hits;
   int num_mismatches;
+  int nargs;
+  SymbExpr** exprs;
 } IntMarkInfo;
 
 void markImportant(Addr varAddr);
