@@ -211,6 +211,16 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
         }
       }
     }
+    if (getDouble(args[1]->real) == 0){
+      if (clientArgs[1] != 0.0){
+        ULong inputError = ulpd(getDouble(args[0]->real), clientArgs[0]);
+        ULong outputError = ulpd(getDouble(result->real), clientResult);
+        if (inputError < outputError){
+          result->influences = cloneInfluences(args[0]->influences);
+          return result;
+        }
+      }
+    }
   default:
     execInfluencesOp(opinfo, &(result->influences), args);
     break;
