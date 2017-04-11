@@ -153,11 +153,7 @@ void writeOutput(void){
       VG_(write)(fileD, endparens, sizeof(endparens));
     }
     char newline[] = "\n";
-<<<<<<< HEAD
-    VG_(write)(fileD, newline, sizeof(newline));
-=======
     VG_(write)(fileD, newline, 1);
->>>>>>> Added --output-mark-exprs flag
   }
   VG_(HT_ResetIter)(intMarkMap);
   for(IntMarkInfo* intMarkInfo = VG_(HT_Next)(intMarkMap);
