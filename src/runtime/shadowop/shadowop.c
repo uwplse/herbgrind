@@ -132,7 +132,7 @@ ShadowValue* executeChannelShadowOp(int nargs,
                                     FloatType type,
                                     ShadowOpInfo* opinfo,
                                     ShadowValue** args){
-  if (ignore_pure_zeroes || sound_simplify){
+  if (!dont_ignore_pure_zeroes){
     switch(opinfo->op_code){
     case Iop_Mul32F0x4:
     case Iop_Mul64F0x2:
