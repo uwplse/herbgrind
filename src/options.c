@@ -62,6 +62,7 @@ Bool print_subexpr_locations = False;
 Bool output_mark_exprs = False;
 Bool output_sexp = False;
 Bool sound_simplify = False;
+Bool shortmark_all_exprs = False;
 
 Int precision = 1000;
 Int max_expr_block_depth = 10;
@@ -90,6 +91,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--sound-simplify", sound_simplify, True) {}
   else if VG_XACT_CLO(arg, "--expr-colors", expr_colors, True) {}
   else if VG_XACT_CLO(arg, "--output-mark-exprs", output_mark_exprs, True) {}
+  else if VG_XACT_CLO(arg, "--shortmark-all-exprs", shortmark_all_exprs, True) {}
   else if VG_XACT_CLO(arg, "--start-off", running, False) {}
   else if VG_XACT_CLO(arg, "--always-on", always_on, True) {}
   else if VG_XACT_CLO(arg, "--output-sexp", output_sexp, True) {}

@@ -852,6 +852,8 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
         printBBuf(buf, "{%s}", addrString);
         VG_(free)(addrString);
       }
+    } else if (shortmark_all_exprs){
+      printBBuf(buf, "{%lX}", expr->branch.op->op_addr);
     }
 
     printBBuf(buf, "(%s", opSym(expr->branch.op));
