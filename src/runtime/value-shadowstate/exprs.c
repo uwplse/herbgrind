@@ -50,7 +50,7 @@ StackArray concGraftStacks;
 
 const char* varnames[] = {"x", "y", "z", "a", "b", "c",
                           "i", "j", "k", "l", "m", "n"};
-#define MAX_FOLD_DEPTH MAX_EXPR_IMPRECISE_BLOCK_DEPTH
+#define MAX_FOLD_DEPTH (max_expr_block_depth * 2)
 
 #define lambda(return_type, function_body)      \
   ({                                            \
@@ -307,7 +307,7 @@ void recursivelyDisownConcExpr(ConcExpr* expr, int depth){
   }
 }
 void disownConcExpr(ConcExpr* expr){
-  recursivelyDisownConcExpr(expr, MAX_EXPR_IMPRECISE_BLOCK_DEPTH);
+  recursivelyDisownConcExpr(expr, max_expr_block_depth * 2);
 }
 ConcExpr* mkLeafConcExpr(double value){
   ConcExpr* result;
@@ -387,7 +387,7 @@ ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
       grafti += child->ngrafts;
     }
   }
-  recursivelyOwnConcExpr(result, MAX_EXPR_IMPRECISE_BLOCK_DEPTH);
+  recursivelyOwnConcExpr(result, max_expr_block_depth * 2);
   return result;
 }
 

@@ -266,7 +266,7 @@ void getGrouped(GroupList groupList, VgHashTable* valMap,
           for(Group childItem = oldGroup; oldGroup != NULL;
               oldGroup = oldGroup->next){
             if (childItem->item->len <
-                MAX_EXPR_IMPRECISE_BLOCK_DEPTH - MAX_EXPR_BLOCK_DEPTH){
+                max_expr_block_depth){
               lpush(Group)(&newGroup,
                            appendPos(curPos, childItem->item));
             }
@@ -347,7 +347,7 @@ GroupList getExprsEquivGroups(ConcExpr* concExpr, SymbExpr* symbExpr){
   GroupList groupList = mkXA(GroupList)();
   VgHashTable* valMap = VG_(HT_construct)("val map");
   getGrouped(groupList, valMap, concExpr, symbExpr,
-             null_pos, MAX_EXPR_BLOCK_DEPTH);
+             null_pos, max_expr_block_depth);
   VG_(HT_destruct)(valMap, VG_(free));
   GroupList prunedGroups = pruneSingletonGroups(groupList);
   return prunedGroups;

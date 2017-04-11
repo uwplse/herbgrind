@@ -35,10 +35,14 @@
 
 #include "mpfr.h"
 
+Bool running = True;
+Bool always_on = False;
+
 Bool print_in_blocks = False;
 Bool print_out_blocks = False;
 Bool print_block_boundries = False;
 Bool print_run_blocks = False;
+
 Bool print_temp_moves = False;
 Bool print_value_moves = False;
 Bool print_semantic_ops = False;
@@ -49,17 +53,18 @@ Bool print_errors = False;
 Bool print_errors_long = False;
 Bool print_expr_updates = False;
 Bool print_flagged = False;
-Bool running = True;
-Bool always_on = False;
-Bool print_object_files = False;
-Bool expr_colors = False;
+Int longprint_len = 15;
+
 Bool ignore_pure_zeroes = False;
+Bool expr_colors = False;
+Bool print_object_files = False;
 Bool print_subexpr_locations = False;
 Bool output_mark_exprs = False;
 Bool output_sexp = False;
 Bool sound_simplify = False;
-Int longprint_len = 15;
+
 Int precision = 1000;
+Int max_expr_block_depth = 10;
 double error_threshold = 5.0;
 const char* output_filename = NULL;
 
@@ -90,6 +95,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--output-sexp", output_sexp, True) {}
   else if VG_BINT_CLO(arg, "--longprint-len", longprint_len, 1, 1000) {}
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
+  else if VG_BINT_CLO(arg, "--max-expr-block-depth", max_expr_block_depth, 1, 100) {}
   else if VG_DBL_CLO(arg, "--error-threshold", error_threshold) {}
   else if VG_STR_CLO(arg, "--outfile", output_filename) {}
   else return False;
@@ -102,6 +108,9 @@ void hg_print_usage(void){
               "    --error-threshold=bits    "
               "The number of bits of error at which to start "
               "tracking a computation. [5.0]\n"
+              "    --max-expr-block-depth    "
+              "Sets the maximum depth to which expressions will "
+              "maintain proper equivalence information.\n"
               "    --outfile=name    "
               "The name of the file to write out. If no name is "
               "specified, will use <executable-name>.gh.\n"
@@ -111,9 +120,7 @@ void hg_print_usage(void){
               "Print the source locations of every subexpression that "
               "isn't in the same function as it's parent.\n"
               "    --ignore-pure-zeroes    "
-              "Cut's off expressions which are multiplied by zero, "
-              "if they are always only multiplied by zero, and "
-              "ignores influences from values which are multiplied "
+              "Ignores influences from values which are multiplied "
               "by zero.\n"
               "    --expr-colors    "
               "Use colors to mark the boundries between different "
@@ -126,6 +133,11 @@ void hg_print_usage(void){
               "    --sound-simplify    "
               "Simplify expressions in simple ways which don't affect "
               "their floating point behavior.\n"
+              "    --shortmark-all-exprs    "
+              "Mark every subexpression with it's address, without any "
+              "additional debug info. If --output-subexpr-source is "
+              "also on, it overrides this for subexpressions that "
+              "aren't in the same function as their parent.\n"
               );
 }
 void hg_print_debug_usage(void){

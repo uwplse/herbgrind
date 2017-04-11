@@ -180,6 +180,4 @@ int writeSymbExprToStringBlankGrafts(char* buf, SymbExpr* expr,
                                      int depth);
 int floatPrintLen(double f);
 #define MAX_BRANCH_ARGS 3
-#define MAX_EXPR_BLOCK_DEPTH 5
-#define MAX_EXPR_IMPRECISE_BLOCK_DEPTH 10
 #endif

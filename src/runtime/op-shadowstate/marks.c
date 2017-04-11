@@ -142,7 +142,8 @@ InfluenceList filterInfluenceSubexprs(InfluenceList influences){
       if (otherInfluence == influence){
         continue;
       }
-      if (isSubexpr(influence->expr, otherInfluence->expr, MAX_EXPR_IMPRECISE_BLOCK_DEPTH)){
+      if (isSubexpr(influence->expr, otherInfluence->expr,
+                    max_expr_block_depth * 2)){
         goto dont_keep_influence;
       }
     }

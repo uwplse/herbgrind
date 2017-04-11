@@ -36,6 +36,9 @@
 // Herbgrind. print_in_blocks prints the VEX super blocks that
 // Herbgrind receives, and print_out_blocks prints the VEX blocks that
 // Herbgrind passes back to Valgrind for execution.
+extern Bool running;
+extern Bool always_on;
+
 extern Bool print_in_blocks;
 extern Bool print_out_blocks;
 extern Bool print_block_boundries;
@@ -51,9 +54,7 @@ extern Bool print_errors;
 extern Bool print_errors_long;
 extern Bool print_expr_updates;
 extern Bool print_flagged;
-
-extern Bool running;
-extern Bool always_on;
+extern Int longprint_len;
 
 extern Bool ignore_pure_zeroes;
 extern Bool expr_colors;
@@ -63,8 +64,8 @@ extern Bool output_mark_exprs;
 extern Bool output_sexp;
 extern Bool sound_simplify;
 
-extern Int longprint_len;
 extern Int precision;
+extern Int max_expr_block_depth;
 extern double error_threshold;
 extern const char* output_filename;
 
