@@ -107,6 +107,7 @@ void printMarkInfo(MarkInfo* info){
 }
 
 int isSubexpr(SymbExpr* needle, SymbExpr* haystack, int depth){
+  if (depth < 1) return 0;
   if (needle == haystack) return 1;
   else if (haystack->type == Node_Leaf) return 0;
   else {
