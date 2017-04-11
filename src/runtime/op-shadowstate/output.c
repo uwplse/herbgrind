@@ -55,7 +55,7 @@ void writeOutput(void){
 
   if (VG_(HT_count_nodes)(markMap) == 0 &&
       !haveErroneousIntMarks()){
-    char output[] = "No erroneous expressions found!\n";
+    char output[] = "No marks found!\n";
     VG_(write)(fileD, output, sizeof(output));
     return;
   }
@@ -67,7 +67,7 @@ void writeOutput(void){
     unsigned int src_line;
 
     if (!VG_(get_filename_linenum)(markInfo->addr, &src_filename,
-                                NULL, &src_line)){
+                                   NULL, &src_line)){
       src_line = -1;
       src_filename = "Unknown";
       fnname = "Unknown";
@@ -132,6 +132,8 @@ void writeOutput(void){
       char endparens[] = "  ))\n";
       VG_(write)(fileD, endparens, sizeof(endparens));
     }
+    char newline[] = "\n";
+    VG_(write)(fileD, newline, sizeof(newline));
   }
   VG_(HT_ResetIter)(intMarkMap);
   for(IntMarkInfo* intMarkInfo = VG_(HT_Next)(intMarkMap);
