@@ -39,8 +39,8 @@
 VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo);
 ShadowTemp* getArg(int argIdx, int numChannels, FloatType precision,
                    IRTemp argTemp);
-ShadowValue* executeChannelShadowOp(int nargs,
-                                    FloatType precision,
-                                    ShadowOpInfo* opinfo,
-                                    ShadowValue** args);
+ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
+                                    ShadowValue** args,
+                                    double* computedArgs,
+                                    double computedResult);
 #endif

@@ -39,38 +39,50 @@
 #include "../../helper/ir-info.h"
 
 VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo){
+  // Make sure the op code is sane, so that things don't go bonkers
+  // later.
   tl_assert(opInfo->op_code <
             IEop_REALLY_LAST_FOR_REAL_GUYS);
+
+  // Create a shadow temp for the result.
   ShadowTemp* result = mkShadowTemp(opInfo->exinfo.numChannels);
   if (print_temp_moves){
     VG_(printf)("Making %p for result of shadow op.\n",
                 result);
   }
+
+  // Get the computed and shadow arguments.
   ShadowTemp* args[4];
+  double clientArgs[4][4];
   for(int i = 0; i < opInfo->exinfo.nargs; ++i){
     args[i] = getArg(i,
                      opInfo->exinfo.numChannels,
                      opInfo->exinfo.argPrecision,
                      opInfo->argTemps[i]);
+    for (int j = 0; j < opInfo->exinfo.numChannels; ++j){
+      clientArgs[j][i] =
+        opInfo->exinfo.argPrecision == Ft_Double ?
+        computedArgs.argValues[i][j] :
+        computedArgs.argValuesF[i][j];
+    }
   }
   for(int i = 0; i < opInfo->exinfo.numSIMDOperands; ++i){
     ShadowValue* vals[opInfo->exinfo.nargs];
     for(int j = 0; j < opInfo->exinfo.nargs; ++j){
       vals[j] = args[j]->values[i];
     }
+    double computedOutput =
+      (opInfo->exinfo.argPrecision == Ft_Single ?
+       computedResult.f[i] : computedResult.d[i]);
     result->values[i] =
-      executeChannelShadowOp(opInfo->exinfo.nargs,
-                             opInfo->exinfo.argPrecision,
-                             opInfo,
-                             vals);
+      executeChannelShadowOp(opInfo,
+                             vals,
+                             clientArgs[i],
+                             computedOutput);
     if (print_errors_long || print_errors){
       printOpInfo(opInfo);
       VG_(printf)(":\n");
     }
-    double computedValue =
-      (opInfo->exinfo.argPrecision == Ft_Single ?
-       computedResult.f[i] : computedResult.d[i]);
-    updateError(&(opInfo->eagg), result->values[i]->real, computedValue);
   }
   for(int i = opInfo->exinfo.numSIMDOperands;
       i < opInfo->exinfo.numChannels; ++i){
@@ -128,10 +140,10 @@ ShadowTemp* getArg(int argIdx, int numChannels, FloatType argPrecision,
     return shadowTemps[argTemp];
   }
 }
-ShadowValue* executeChannelShadowOp(int nargs,
-                                    FloatType type,
-                                    ShadowOpInfo* opinfo,
-                                    ShadowValue** args){
+ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
+                                    ShadowValue** args,
+                                    double* clientArgs,
+                                    double clientResult){
   if (!dont_ignore_pure_zeroes){
     switch((int)opinfo->op_code){
     case Iop_Mul32F0x4:
@@ -145,7 +157,8 @@ ShadowValue* executeChannelShadowOp(int nargs,
     case Iop_MulF32:
     case Iop_MulF64r32:
       if (getDouble(args[0]->real) == 0 || getDouble(args[1]->real) == 0){
-        ShadowValue* result = mkShadowValue(type, 0);
+        ShadowValue* result =
+          mkShadowValue(opinfo->exinfo.argPrecision, 0);
         execSymbolicOp(opinfo, &(result->expr), result->real, args);
         return result;
       }
@@ -153,11 +166,11 @@ ShadowValue* executeChannelShadowOp(int nargs,
       break;
     }
   }
-  ShadowValue* result = mkShadowValueBare(type);
+  ShadowValue* result = mkShadowValueBare(opinfo->exinfo.argPrecision);
   execRealOp(opinfo->op_code, &(result->real), args);
   execSymbolicOp(opinfo, &(result->expr), result->real, args);
   execLocalOp(opinfo, result->real, result, args);
-  execInfluencesOp(opinfo, &(result->influences), args);
+  updateError(&(opinfo->eagg), result->real, clientResult);
   if (print_semantic_ops){
     VG_(printf)("%p = ", result);
     ppIROp(opinfo->op_code);
@@ -175,6 +188,32 @@ ShadowValue* executeChannelShadowOp(int nargs,
       }
       VG_(printf)(")\n");
     }
+  }
+  switch(opinfo->op_code){
+  case Iop_Add32Fx2:
+  case Iop_Add32F0x4:
+  case Iop_Add64F0x2:
+  case Iop_Add32Fx8:
+  case Iop_Add64Fx4:
+  case Iop_Add32Fx4:
+  case Iop_Add64Fx2:
+  case Iop_AddF128:
+  case Iop_AddF64:
+  case Iop_AddF32:
+  case Iop_AddF64r32:
+    if (getDouble(args[0]->real) == 0){
+      if (clientArgs[0] != 0.0){
+        ULong inputError = ulpd(getDouble(args[1]->real), clientArgs[1]);
+        ULong outputError = ulpd(getDouble(result->real), clientResult);
+        if (inputError < outputError){
+          result->influences = cloneInfluences(args[1]->influences);
+          return result;
+        }
+      }
+    }
+  default:
+    execInfluencesOp(opinfo, &(result->influences), args);
+    break;
   }
   return result;
 }

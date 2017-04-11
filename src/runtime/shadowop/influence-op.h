@@ -37,5 +37,6 @@ void execInfluencesOp(ShadowOpInfo* info,
                       InfluenceList* res, ShadowValue** args);
 void dedupAddInfluenceToList(InfluenceList* influences,
                              ShadowOpInfo* influence);
+InfluenceList cloneInfluences(InfluenceList influences);
 
 #endif

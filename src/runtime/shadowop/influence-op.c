@@ -56,3 +56,11 @@ void dedupAddInfluenceToList(InfluenceList* influences,
   }
   lpush(InfluenceList)(influences, influence);
 }
+InfluenceList cloneInfluences(InfluenceList influences){
+  InfluenceList newInfluences = NULL;
+  for(InfluenceList curNode = influences; curNode != NULL;
+      curNode = curNode->next){
+    lpush(InfluenceList)(&newInfluences, curNode->item);
+  }
+  return newInfluences;
+}
