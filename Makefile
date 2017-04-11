@@ -118,7 +118,11 @@ valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURC
 	cp -r src/* valgrind/herbgrind
 # Run make install to build the binaries and put them in the right
 # place.
+ifeq ($(DONT_WRAP),)
 	$(MAKE) -C valgrind/ install
+else
+	$(MAKE) -C valgrind CFLAGS+=-DDONT_WRAP install
+endif
 
 # Alias the compile target to just "compile" for ease of use
 compile: valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT)

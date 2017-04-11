@@ -74,7 +74,9 @@
 // This macro is defined in include/hg_mathreplace_funcs.h, and
 // invokes the above macro for each unary operation that needs to be
 // wrapped.
+#ifndef DONT_WRAP
 WRAP_UNARY_OPS
+#endif
 
 /*----------------------------
 ====== Binary Ops ============
@@ -103,7 +105,9 @@ WRAP_UNARY_OPS
 // This macro is defined in include/hg_mathreplace_funcs.h, and
 // invokes the above macro for each binary operation that needs to be
 // wrapped.
+#ifndef DONT_WRAP
 WRAP_BINARY_OPS
+#endif
 
 /*----------------------------
 ====== Ternary Ops ===========
@@ -134,7 +138,9 @@ WRAP_BINARY_OPS
 // This macro is defined in include/hg_mathreplace_funcs.h, and
 // invokes the above macro for each ternary operation that needs to be
 // wrapped.
+#ifndef DONT_WRAP
 WRAP_TERNARY_OPS
+#endif
 
 // This is a special wrap
 void VG_REPLACE_FUNCTION_ZU(LIBM_CPP, sincos)(double x, double* p_sin, double* p_cos);

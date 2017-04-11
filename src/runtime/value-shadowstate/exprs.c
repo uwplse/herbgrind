@@ -619,7 +619,7 @@ char* symbExprToStringNoVars(SymbExpr* expr){
                      })));
   return buf;
 }
-#define MAX_EXPR_LEN 20000
+#define MAX_EXPR_LEN 2000000000
 typedef enum {
   COLOR_RED,
   COLOR_BLUE,

@@ -39,7 +39,7 @@
 #include "../../options.h"
 #include "../../helper/bbuf.h"
 
-#define ENTRY_BUFFER_SIZE 2048
+#define ENTRY_BUFFER_SIZE 2048000
 
 void writeOutput(void){
   SysRes fileResult =
