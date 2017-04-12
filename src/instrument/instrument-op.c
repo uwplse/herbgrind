@@ -45,6 +45,7 @@
 #include "../runtime/value-shadowstate/shadowval.h"
 #include "../runtime/value-shadowstate/real.h"
 #include "../helper/instrument-util.h"
+#include "../options.h"
 
 void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
                   Addr curAddr, Addr blockAddr){
@@ -103,7 +104,7 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
   if (isSpecialOp(op_code)){
     handleSpecialOp(sbOut, op_code, argExprs, dest,
                     curAddr, blockAddr);
-  } else if (isExitFloatOp(op_code)){
+  } else if (isExitFloatOp(op_code) && mark_on_escape){
     handleExitFloatOp(sbOut, op_code, argExprs, dest,
                       curAddr, blockAddr);
   } else if (isFloatOp(op_code)){

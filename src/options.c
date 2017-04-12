@@ -63,6 +63,7 @@ Bool output_mark_exprs = False;
 Bool output_sexp = False;
 Bool sound_simplify = False;
 Bool shortmark_all_exprs = False;
+Bool mark_on_escape = True;
 
 Int precision = 1000;
 Int max_expr_block_depth = 10;
@@ -95,6 +96,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--start-off", running, False) {}
   else if VG_XACT_CLO(arg, "--always-on", always_on, True) {}
   else if VG_XACT_CLO(arg, "--output-sexp", output_sexp, True) {}
+  else if VG_XACT_CLO(arg, "--no-mark-on-escape", mark_on_escape, False) {}
   else if VG_BINT_CLO(arg, "--longprint-len", longprint_len, 1, 1000) {}
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else if VG_BINT_CLO(arg, "--max-expr-block-depth", max_expr_block_depth, 1, 100) {}
