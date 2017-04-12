@@ -142,7 +142,11 @@ void writeOutput(void){
                 "%f bits average error\n"
                 "%f bits max error\n"
                 "Aggregated over %lld instances\n"
-                "Influenced by erroneous expression:\n");
+                "Influenced by erroneous expression:\n",
+                markInfo->eagg.total_error /
+                markInfo->eagg.num_evals,
+                markInfo->eagg.max_error,
+                markInfo->eagg.num_evals);
     }
     unsigned int entryLen = ENTRY_BUFFER_SIZE - buf->bound;
     VG_(write)(fileD, _buf, entryLen);
