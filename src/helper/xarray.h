@@ -44,18 +44,13 @@
   }* name;                                      \
   name mkXA_##name(void);                       \
   void XApush_##name(name arr, Type item);      \
-  void freeXA_##name(name XA);
+  void freeXA_##name(name XA);                  \
+  void mkXA_w_initial(int initial);             \
+  void finalizeXA(name arr);
 
 #define Xarray_Impl(Type, name)                         \
   name mkXA_##name() {                                  \
-    name arr = VG_(malloc)("xarray",                   \
-                           sizeof(struct _##name));     \
-    arr->size = 0;                                     \
-    arr->capacity = INITIAL_XARRAY_CAPACITY;           \
-    arr->data =                                                        \
-      VG_(malloc)("xarray data",                                        \
-                  sizeof(Type) * INITIAL_XARRAY_CAPACITY);              \
-    return arr;                                                         \
+    return mkXA_w_initial(INITIAL_XARRAY_CAPACITY);     \
   }                                                                     \
   void XApush_##name(name arr, Type item){                              \
     if (arr->capacity == arr->size){                                    \
@@ -69,11 +64,26 @@
   void freeXA_##name(name XA) {                                         \
     VG_(free)(XA->data);                                                \
     VG_(free)(XA);                                                      \
+  }                                                                     \
+  void finalizeXA(name arr){                                            \
+    VG_(realloc_shrink)(arr->data, arr->size);                          \
+  }                                                                     \
+  void mkXA_w_initial(int initial){                                     \
+    name arr = VG_(malloc)("xarray",                   \
+                           sizeof(struct _##name));     \
+    arr->size = 0;                                     \
+    arr->capacity = INITIAL_XARRAY_CAPACITY;           \
+    arr->data =                                                        \
+      VG_(malloc)("xarray data",                                        \
+                  sizeof(Type) * INITIAL_XARRAY_CAPACITY);              \
+    return arr;                                                         \
   }
     
 
 #define mkXA(type) mkXA_##type
+#define mkXA_w_initial(type) mkXA_##type
 #define XApush(type) XApush_##type
 #define freeXA(type) freeXA_##type
+#define finalizeXA(type) finalizeXA_##type
 
 #endif

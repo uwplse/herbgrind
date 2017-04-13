@@ -302,6 +302,8 @@ FloatType argPrecision(IROp op_code){
     // Non-semantic ops have no need for this, since they will never
     // be constructing new shadow values, so we can just return
     // Ft_Unknown for them.
+  case Iop_CmpF32:
+  case Iop_CmpLT32F0x4:
   case Iop_RecipEst32Fx4:
   case Iop_RSqrtEst32Fx4:
   case Iop_Abs32Fx4:
@@ -366,6 +368,8 @@ FloatType argPrecision(IROp op_code){
   case Iop_RoundF32toInt:
   case Iop_SetV128lo32:
     return Ft_Single;
+  case Iop_CmpLT64F0x2:
+  case Iop_CmpF64:
   case Iop_RSqrtEst5GoodF64:
   case Iop_NegF64:
   case IEop_Neg64F0x2:

@@ -74,6 +74,7 @@ typedef struct _ShadowOpInfo {
 
 typedef struct _ShadowCmpInfo {
   Addr op_addr;
+  IROp op_code;
   FloatType precision;
   IRTemp argTemps[2];
 } ShadowCmpInfo;

@@ -45,6 +45,7 @@
 #include "../runtime/value-shadowstate/shadowval.h"
 #include "../runtime/value-shadowstate/real.h"
 #include "../helper/instrument-util.h"
+#include "../helper/debug.h"
 #include "../options.h"
 
 void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
@@ -115,13 +116,41 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
                            curAddr, blockAddr, dest);
     }
   } else {
+    for(int i = 0; i < nargs; ++i){
+      if (hasStaticShadow(argExprs[i])){
+        ppIROp(op_code);
+        VG_(printf)(" on ");
+        ppIRExpr(argExprs[i]);
+        VG_(printf)("\n");
+        tl_assert(!hasStaticShadow(argExprs[i]));
+      }
+    }
     addStoreTempNonFloat(sbOut, dest);
   }
 }
 Bool isExitFloatOp(IROp op_code){
   switch(op_code){
-  case Iop_CmpF64:
   case Iop_CmpF32:
+  case Iop_CmpEQ32Fx2:
+  case Iop_CmpGT32Fx2:
+  case Iop_CmpGE32Fx2:
+  case Iop_CmpEQ32Fx4:
+  case Iop_CmpLT32Fx4:
+  case Iop_CmpLE32Fx4:
+  case Iop_CmpUN32Fx4:
+  case Iop_CmpEQ32F0x4:
+  case Iop_CmpLT32F0x4:
+  case Iop_CmpLE32F0x4:
+  case Iop_CmpUN32F0x4:
+  case Iop_CmpF64:
+  case Iop_CmpEQ64Fx2:
+  case Iop_CmpLT64Fx2:
+  case Iop_CmpLE64Fx2:
+  case Iop_CmpUN64Fx2:
+  case Iop_CmpEQ64F0x2:
+  case Iop_CmpLT64F0x2:
+  case Iop_CmpLE64F0x2:
+  case Iop_CmpUN64F0x2:
   case Iop_F64toI16S:
   case Iop_F64toI32S:
   case Iop_F64toI32U:
@@ -142,17 +171,20 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
   switch(op_code){
   case Iop_CmpF64:
   case Iop_CmpF32:
+  case Iop_CmpLT32F0x4:
+  case Iop_CmpLT64F0x2:
     {
       ShadowCmpInfo* info =
         VG_(perm_malloc)(sizeof(ShadowCmpInfo),
                          vg_alignof(ShadowCmpInfo));
       info->op_addr = curAddr;
-      info->precision = op_code == Iop_CmpF32 ? Ft_Single : Ft_Double;
+      info->op_code = op_code;
+      info->precision = argPrecision(op_code);
 
       for(int i = 0; i < 2; ++i){
         addStoreC(sbOut, argExprs[i],
                   (uintptr_t)
-                  (op_code == Iop_CmpF32 ?
+                  (argPrecision(op_code) == Ft_Single ?
                    ((void*)computedArgs.argValuesF[i]) :
                    ((void*)computedArgs.argValues[i])));
         if (argExprs[i]->tag == Iex_RdTmp){
@@ -178,6 +210,41 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
         + sizeof(shadowTemps);
       addStmtToIRSB(sbOut, IRStmt_Dirty(dirty));
     }
+    break;
+  case Iop_CmpEQ32Fx2:
+  case Iop_CmpGT32Fx2:
+  case Iop_CmpGE32Fx2:
+  case Iop_CmpEQ32Fx4:
+  case Iop_CmpLE32Fx4:
+  case Iop_CmpUN32Fx4:
+  case Iop_CmpLT32Fx4:
+  case Iop_CmpEQ32F0x4:
+  case Iop_CmpLE32F0x4:
+  case Iop_CmpUN32F0x4:
+    addPrintOp(op_code);
+    addPrint3("\nArgs are {%f, %f} ",
+              runUnop(sbOut, Iop_V128HIto64,
+                      argExprs[0]),
+              runUnop(sbOut, Iop_V128to64,
+                      argExprs[0]));
+    addPrint3("and {%f, %f} ",
+              runUnop(sbOut, Iop_V128HIto64,
+                      argExprs[1]),
+              runUnop(sbOut, Iop_V128to64,
+                      argExprs[1]));
+    addPrint3("Result is {%lX, %lX}\n",
+              runUnop(sbOut, Iop_V128HIto64, IRExpr_RdTmp(dest)),
+              runUnop(sbOut, Iop_V128to64, IRExpr_RdTmp(dest)));
+    addAssertNEQ(sbOut, "done.", mkU64(0), mkU64(0));
+    break;
+  case Iop_CmpLT64Fx2:
+  case Iop_CmpEQ64Fx2:
+  case Iop_CmpLE64Fx2:
+  case Iop_CmpUN64Fx2:
+  case Iop_CmpEQ64F0x2:
+  case Iop_CmpLE64F0x2:
+  case Iop_CmpUN64F0x2:
+    tl_assert(0);
     break;
   case Iop_F64toI16S:
   case Iop_F64toI32S:
