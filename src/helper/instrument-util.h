@@ -233,7 +233,7 @@ IRExpr* runPureCCall(IRSB* sbOut, IRCallee* callee, IRType retty,
 #define runV128to4th32(sbOut, v)                        \
   runF32toF64(sbOut,                                    \
               runUnop(sbOut, Iop_64to32,                \
-                      runUnop(sbOut, Iop_V128to64, v)))   \
+                      runUnop(sbOut, Iop_V128to64, v)))
 void addPrintStore(IRSB* sbOut, IRExpr* val, const char* format, ...);
 void addPrintStoreAlways(IRSB* sbOut, IRExpr* val, const char* format, ...);
 void addPrintStoreValue(IRSB* sbOut, IRExpr* val, const char* format, ...);

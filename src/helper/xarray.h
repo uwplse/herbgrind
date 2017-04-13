@@ -45,12 +45,12 @@
   name mkXA_##name(void);                       \
   void XApush_##name(name arr, Type item);      \
   void freeXA_##name(name XA);                  \
-  void mkXA_w_initial(int initial);             \
-  void finalizeXA(name arr);
+  name mkXA_w_initial_##name(int initial);             \
+  void finalizeXA_##name(name arr);
 
 #define Xarray_Impl(Type, name)                         \
   name mkXA_##name() {                                  \
-    return mkXA_w_initial(INITIAL_XARRAY_CAPACITY);     \
+    return mkXA_w_initial_##name(INITIAL_XARRAY_CAPACITY);     \
   }                                                                     \
   void XApush_##name(name arr, Type item){                              \
     if (arr->capacity == arr->size){                                    \
@@ -65,10 +65,10 @@
     VG_(free)(XA->data);                                                \
     VG_(free)(XA);                                                      \
   }                                                                     \
-  void finalizeXA(name arr){                                            \
+  void finalizeXA_##name(name arr){                                     \
     VG_(realloc_shrink)(arr->data, arr->size);                          \
   }                                                                     \
-  void mkXA_w_initial(int initial){                                     \
+  name mkXA_w_initial_##name(int initial){                              \
     name arr = VG_(malloc)("xarray",                   \
                            sizeof(struct _##name));     \
     arr->size = 0;                                     \
