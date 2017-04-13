@@ -56,7 +56,7 @@ int numChannelsIn(IROp op_code){
   case Iop_RSqrtEst32Fx4:
   case Iop_Abs32Fx4:
   case Iop_Neg32Fx4:
-  case Iop_Neg32F0x4:
+  case IEop_Neg32F0x4:
   case Iop_ZeroHI96ofV128:
   case Iop_V128to32:
   case Iop_Sqrt32F0x4:
@@ -67,7 +67,7 @@ int numChannelsIn(IROp op_code){
   case Iop_RSqrtEst64Fx2:
   case Iop_Abs64Fx2:
   case Iop_Neg64Fx2:
-  case Iop_Neg64F0x2:
+  case IEop_Neg64F0x2:
   case Iop_Neg32Fx2:
   case Iop_Abs32Fx2:
   case Iop_RSqrtEst32Fx2:
@@ -219,10 +219,10 @@ int numSIMDOperands(IROp op_code){
   case Iop_F128LOtoF64:
   case Iop_F32toF64:
   case Iop_NegF32:
-  case Iop_Neg32F0x4:
+  case IEop_Neg32F0x4:
   case Iop_AbsF32:
   case Iop_NegF64:
-  case Iop_Neg64F0x2:
+  case IEop_Neg64F0x2:
   case Iop_AbsF64:
   case Iop_Sqrt64F0x2:
   case Iop_RecipEst32F0x4:
@@ -400,11 +400,11 @@ const char* getOpcodeSymbol(IROp op_code){
   case Iop_Abs32Fx2:
     return "abs";
   case Iop_Neg32Fx4:
-  case Iop_Neg64F0x2:
+  case IEop_Neg64F0x2:
   case Iop_Neg64Fx2:
   case Iop_NegF32:
   case Iop_NegF64:
-  case Iop_Neg32F0x4:
+  case IEop_Neg32F0x4:
   case Iop_Neg32Fx2:
     return "-";
   case Iop_Sqrt64F0x2:
@@ -541,11 +541,11 @@ double runEmulatedOp(IROp op_code, double* args){
     return fabs(args[0]);
   case Iop_Neg32Fx4:
   case Iop_Neg64Fx2:
-  case Iop_Neg64F0x2:
+  case IEop_Neg64F0x2:
   case Iop_NegF32:
   case Iop_NegF64:
   case Iop_Neg32Fx2:
-  case Iop_Neg32F0x4:
+  case IEop_Neg32F0x4:
     return -args[0];
   case Iop_Sqrt64F0x2:
   case Iop_Sqrt32F0x4:
@@ -680,11 +680,11 @@ double runEmulatedOp(IROp op_code, double* args){
 
 void ppIROp_Extended(int op_code){
   switch(op_code){
-  case Iop_Neg32F0x4:
-    VG_(printf)("Iop_Neg32F0x4");
+  case IEop_Neg32F0x4:
+    VG_(printf)("IEop_Neg32F0x4");
     break;
-  case Iop_Neg64F0x2:
-    VG_(printf)("Iop_Neg64F0x2");
+  case IEop_Neg64F0x2:
+    VG_(printf)("IEop_Neg64F0x2");
     break;
   default:
     ppIROp(op_code);

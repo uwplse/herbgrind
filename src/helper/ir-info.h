@@ -42,9 +42,11 @@ double runEmulatedOp(IROp op_code, double* args);
 void ppIROp_Extended(int op_code);
 
 typedef enum {
-  Iop_Neg32F0x4=Iop_LAST+1,
-  Iop_Neg64F0x2,
-  Iop_REALLY_LAST_FOR_REAL_GUYS,
+  IEop_Neg32F0x4=Iop_LAST+1,
+  IEop_Neg64F0x2,
+  IEop_REALLY_LAST_FOR_REAL_GUYS,
 } IROp_Extended;
+
+#define IEop_INVALID (IROp_Extended)(Iop_INVALID)
 
 #endif

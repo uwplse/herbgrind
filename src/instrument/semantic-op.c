@@ -123,7 +123,7 @@ void instrumentPossibleNegate(IRSB* sbOut,
                     mkU64(0)));
   IRExpr* shadowSingleNegateOutput =
     runShadowOp(sbOut, isSingleNegate,
-                Iop_Neg32F0x4,
+                IEop_Neg32F0x4,
                 curAddr, blockAddr,
                 1, argExprs + 1,
                 IRExpr_RdTmp(dest));
@@ -141,7 +141,7 @@ void instrumentPossibleNegate(IRSB* sbOut,
                     mkU64(0)));
   IRExpr* shadowDoubleNegateOutput =
     runShadowOp(sbOut, isDoubleNegate,
-                Iop_Neg64F0x2,
+                IEop_Neg64F0x2,
                 curAddr, blockAddr,
                 1, argExprs + 1,
                 IRExpr_RdTmp(dest));

@@ -430,6 +430,11 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
     result->constVal = cexpr->value;
     result->type = Node_Branch;
     result->branch.op = cexpr->branch.op;
+    tl_assert2(result->branch.op->op_code == 0 ||
+               (result->branch.op->op_code > IEop_INVALID &&
+                result->branch.op->op_code < IEop_REALLY_LAST_FOR_REAL_GUYS),
+               "Bad IR Op %d on op %p",
+               result->branch.op->op_code);
     result->branch.nargs = cexpr->branch.nargs;
     result->branch.args =
       VG_(perm_malloc)(sizeof(SymbExpr*) * cexpr->branch.nargs,
@@ -720,7 +725,7 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
     }
   } else {
     if (sound_simplify){
-      switch(expr->branch.op->op_code){
+      switch((int)expr->branch.op->op_code){
       case Iop_Mul32F0x4:
       case Iop_Mul64F0x2:
       case Iop_Mul32Fx8:

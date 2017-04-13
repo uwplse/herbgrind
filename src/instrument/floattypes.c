@@ -316,7 +316,7 @@ FloatType argPrecision(IROp op_code){
   case Iop_RSqrtEst32Fx2:
   case Iop_RecipEst32Fx2:
   case Iop_NegF32:
-  case Iop_Neg32F0x4:
+  case IEop_Neg32F0x4:
   case Iop_AbsF32:
   case Iop_RecipStep32Fx4:
   case Iop_RSqrtStep32Fx4:
@@ -368,7 +368,7 @@ FloatType argPrecision(IROp op_code){
     return Ft_Single;
   case Iop_RSqrtEst5GoodF64:
   case Iop_NegF64:
-  case Iop_Neg64F0x2:
+  case IEop_Neg64F0x2:
   case Iop_AbsF64:
   case Iop_Sqrt64F0x2:
   case Iop_Sqrt64Fx2:
@@ -441,7 +441,7 @@ FloatType resultPrecision(IROp op_code){
   case Iop_RSqrtEst32Fx4:
   case Iop_Abs32Fx4:
   case Iop_Neg32Fx4:
-  case Iop_Neg32F0x4:
+  case IEop_Neg32F0x4:
   case Iop_RecipEst32F0x4:
   case Iop_Sqrt32F0x4:
   case Iop_RSqrtEst32F0x4:
@@ -505,7 +505,7 @@ FloatType resultPrecision(IROp op_code){
   case Iop_RSqrtEst64Fx2:
   case Iop_Abs64Fx2:
   case Iop_Neg64Fx2:
-  case Iop_Neg64F0x2:
+  case IEop_Neg64F0x2:
   case Iop_NegF64:
   case Iop_AbsF64:
   case Iop_Sqrt64F0x2:

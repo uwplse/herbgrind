@@ -34,6 +34,8 @@
 #include "pub_tool_tooliface.h"
 #include "pub_tool_hashtable.h"
 
+#include "../../helper/ir-info.h"
+
 #include "../value-shadowstate/exprs.hh"
 #include "../../instrument/floattypes.h"
 #include "../../include/mathreplace-funcs.h"
@@ -58,7 +60,7 @@ typedef struct _ExtraInfo {
 
 typedef struct _ShadowOpInfo {
   // These two are mutually exclusive.
-  IROp op_code;
+  IROp_Extended op_code;
   OpType op_type;
 
   Addr op_addr;

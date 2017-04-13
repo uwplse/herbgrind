@@ -53,6 +53,7 @@ void markImportant(Addr varAddr){
   }
   dedupAddInfluencesToList(&(info->influences), val->influences);
   updateError(&(info->eagg), val->real, *(double*)varAddr);
+  tl_assert(val->expr != NULL);
   generalizeSymbolicExpr(&(info->expr), val->expr);
 }
 void markEscapeFromFloat(const char* markType, Addr curAddr,
@@ -69,6 +70,7 @@ void markEscapeFromFloat(const char* markType, Addr curAddr,
       dedupAddInfluencesToList(&(info->influences),
                                values[i]->influences);
     }
+    tl_assert(values[i]->expr != NULL);
     generalizeSymbolicExpr(&(info->exprs[i]), values[i]->expr);
   }
 }

@@ -56,10 +56,10 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
     CALL1(abs, (*result)->RVAL, args[0]->real->RVAL);
     break;
   case Iop_Neg32Fx4:
-  case Iop_Neg32F0x4:
+  case IEop_Neg32F0x4:
   case Iop_Neg32Fx2:
   case Iop_Neg64Fx2:
-  case Iop_Neg64F0x2:
+  case IEop_Neg64F0x2:
   case Iop_NegF32:
   case Iop_NegF64:
     CALL1(neg, (*result)->RVAL, args[0]->real->RVAL);
