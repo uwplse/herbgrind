@@ -65,6 +65,7 @@ extern Bool output_sexp;
 extern Bool sound_simplify;
 extern Bool shortmark_all_exprs;
 extern Bool mark_on_escape;
+extern Bool compensation_detection;
 
 extern Int precision;
 extern Int max_expr_block_depth;

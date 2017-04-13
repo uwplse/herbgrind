@@ -200,42 +200,44 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
       VG_(printf)(")\n");
     }
   }
-  switch(opinfo->op_code){
-  case Iop_Add32F0x4:
-  case Iop_Add64F0x2:
-  case Iop_AddF64:
-  case Iop_AddF32:
-    if (getDouble(args[0]->real) == 0){
-      ULong inputError = ulpd(getDouble(args[1]->real), clientArgs[1]);
-      ULong outputError = ulpd(getDouble(result->real), clientResult);
-      if (outputError <= inputError){
-        result->influences = cloneInfluences(args[1]->influences);
-        return result;
+  if (compensation_detection){
+    switch((int)opinfo->op_code){
+    case Iop_Add32F0x4:
+    case Iop_Add64F0x2:
+    case Iop_AddF64:
+    case Iop_AddF32:
+      if (getDouble(args[0]->real) == 0){
+        ULong inputError = ulpd(getDouble(args[1]->real), clientArgs[1]);
+        ULong outputError = ulpd(getDouble(result->real), clientResult);
+        if (outputError <= inputError){
+          result->influences = cloneInfluences(args[1]->influences);
+          return result;
+        }
       }
-    }
-    if (getDouble(args[1]->real) == 0){
-      ULong inputError = ulpd(getDouble(args[0]->real), clientArgs[0]);
-      ULong outputError = ulpd(getDouble(result->real), clientResult);
-      if (outputError <= inputError){
-        result->influences = cloneInfluences(args[0]->influences);
-        return result;
+      if (getDouble(args[1]->real) == 0){
+        ULong inputError = ulpd(getDouble(args[0]->real), clientArgs[0]);
+        ULong outputError = ulpd(getDouble(result->real), clientResult);
+        if (outputError <= inputError){
+          result->influences = cloneInfluences(args[0]->influences);
+          return result;
+        }
       }
-    }
-  case Iop_Sub32F0x4:
-  case Iop_Sub64F0x2:
-  case Iop_SubF64:
-  case Iop_SubF32:
-    if (getDouble(args[1]->real) == 0){
-      ULong inputError = ulpd(getDouble(args[0]->real), clientArgs[0]);
-      ULong outputError = ulpd(getDouble(result->real), clientResult);
-      if (outputError <= inputError){
-        result->influences = cloneInfluences(args[0]->influences);
-        return result;
+    case Iop_Sub32F0x4:
+    case Iop_Sub64F0x2:
+    case Iop_SubF64:
+    case Iop_SubF32:
+      if (getDouble(args[1]->real) == 0){
+        ULong inputError = ulpd(getDouble(args[0]->real), clientArgs[0]);
+        ULong outputError = ulpd(getDouble(result->real), clientResult);
+        if (outputError <= inputError){
+          result->influences = cloneInfluences(args[0]->influences);
+          return result;
+        }
       }
+    default:
+      execInfluencesOp(opinfo, &(result->influences), args);
+      break;
     }
-  default:
-    execInfluencesOp(opinfo, &(result->influences), args);
-    break;
   }
   return result;
 }
