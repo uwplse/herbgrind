@@ -67,7 +67,7 @@ Bool mark_on_escape = True;
 Bool compensation_detection = True;
 
 Int precision = 1000;
-Int max_expr_block_depth = 10;
+Int max_expr_block_depth = 5;
 double error_threshold = 5.0;
 const char* output_filename = NULL;
 
