@@ -295,6 +295,17 @@ void writeInfluences(Int fileD, InfluenceList influences){
   const char* objname;
   unsigned int src_line;
   char _buf[ENTRY_BUFFER_SIZE];
+  if (influences == NULL){
+    if (!output_sexp){
+      BBuf* buf = mkBBuf(ENTRY_BUFFER_SIZE, _buf);
+      printBBuf(buf,
+                "\n"
+                "No influences found!\n"
+                "\n");
+      unsigned int entryLen = ENTRY_BUFFER_SIZE - buf->bound;
+      VG_(write)(fileD, _buf, entryLen);
+    }
+  }
   for(InfluenceList curNode = influences;
       curNode != NULL; curNode = curNode->next){
     ShadowOpInfo* opinfo = curNode->item;
