@@ -78,15 +78,18 @@ void generalizeSymbolicExpr(SymbExpr** symbexpr, ConcExpr* cexpr){
       ppConcExpr(cexpr);
       VG_(printf)("\n");
     }
-    if ((*symbexpr)->type == Node_Branch && cexpr->type == Node_Leaf){
+    if ((*symbexpr)->type == Node_Branch &&
+        (cexpr->type == Node_Leaf ||
+         cexpr->branch.op != (*symbexpr)->branch.op)){
       (*symbexpr) =
         mkFreshSymbolicLeaf((*symbexpr)->isConst &&
                             (*symbexpr)->constVal == cexpr->value,
                             (*symbexpr)->constVal);
-    }
-    generalizeStructure(*symbexpr, cexpr, GENERALIZE_DEPTH);
-    if ((*symbexpr)->type == Node_Branch){
-      intersectEqualities(*symbexpr, cexpr);
+    } else {
+      generalizeStructure(*symbexpr, cexpr, GENERALIZE_DEPTH);
+      if ((*symbexpr)->type == Node_Branch){
+        intersectEqualities(*symbexpr, cexpr);
+      }
     }
     if (print_expr_updates){
       VG_(printf)("Updated expression %p to ", *symbexpr);

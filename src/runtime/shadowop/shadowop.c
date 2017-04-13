@@ -133,7 +133,7 @@ ShadowValue* executeChannelShadowOp(int nargs,
                                     ShadowOpInfo* opinfo,
                                     ShadowValue** args){
   if (!dont_ignore_pure_zeroes){
-    switch(opinfo->op_code){
+    switch((int)opinfo->op_code){
     case Iop_Mul32F0x4:
     case Iop_Mul64F0x2:
     case Iop_Mul32Fx8:
