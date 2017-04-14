@@ -235,9 +235,9 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
         }
       }
     default:
-      execInfluencesOp(opinfo, &(result->influences), args);
       break;
     }
   }
+  execInfluencesOp(opinfo, &(result->influences), args);
   return result;
 }
