@@ -114,7 +114,7 @@ void hg_print_usage(void){
               "    --error-threshold=bits    "
               "The number of bits of error at which to start "
               "tracking a computation. [5.0]\n"
-              "    --max-expr-block-depth    "
+              "    --max-expr-block-depth=depth    "
               "Sets the maximum depth to which expressions will "
               "maintain proper equivalence information.\n"
               "    --outfile=name    "
