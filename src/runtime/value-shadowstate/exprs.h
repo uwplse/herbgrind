@@ -125,31 +125,10 @@ int numExprVars(SymbExpr* expr);
 int countVars(VarMap* map);
 char* symbExprVarString(int num_vars);
 
-int symbExprPrintLen_(SymbExpr* expr, VarMap* varMap,
-                      NodePos curPos, int depth,
-                      int (*varLen)(VarMap*, NodePos),
-                      int (*graftPrintLen)(SymbExpr*, VarMap*, NodePos,
-                                           int));
-int writeSymbExprToString_(char* buf, SymbExpr* expr,
-                           NodePos curPos, VarMap* varMap,
-                           int depth,
-                           int (*writeVar)(char*, VarMap*, NodePos),
-                           int (*writeGrafts)(char*,SymbExpr*,
-                                              NodePos,VarMap*,
-                                              int));
-
 const char* getVar(int idx);
 int varLengthLookup(VarMap* map, NodePos pos);
-int symbExprPrintLenGraft(SymbExpr* expr, VarMap* varMap,
-                          NodePos curPos, int depth);
-int writeVarFromMap(char* buf, VarMap* varMap, NodePos curPos);
-int writeGraftsSimple(char* buf, SymbExpr* expr,
-                      NodePos curPos, VarMap* varMap,
-                      int depth);
 // Free this when you're done with it.
 char* symbExprToString(SymbExpr* expr, int* outNumVars);
-int symbExprPrintLen(SymbExpr* expr, VarMap* varmap,
-                     NodePos curPos, int depth);
 // Returns the number of bytes written
 int writeSymbExprToString(char* buf, SymbExpr* expr,
                           NodePos curpos, VarMap* varmap,
