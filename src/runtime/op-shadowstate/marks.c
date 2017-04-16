@@ -51,8 +51,11 @@ void markImportant(Addr varAddr){
     info->eagg.num_evals += 1;
     return;
   }
-  dedupAddInfluencesToList(&(info->influences), val->influences);
-  updateError(&(info->eagg), val->real, *(double*)varAddr);
+  double thisError =
+    updateError(&(info->eagg), val->real, *(double*)varAddr);
+  if (thisError >= error_threshold){
+    dedupAddInfluencesToList(&(info->influences), val->influences);
+  }
   tl_assert(val->expr != NULL);
   generalizeSymbolicExpr(&(info->expr), val->expr);
 }
