@@ -79,10 +79,6 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo){
                              vals,
                              clientArgs[i],
                              computedOutput);
-    if (print_errors_long || print_errors){
-      printOpInfo(opInfo);
-      VG_(printf)(":\n");
-    }
   }
   for(int i = opInfo->exinfo.numSIMDOperands;
       i < opInfo->exinfo.numChannels; ++i){
@@ -177,10 +173,26 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
       break;
     }
   }
+  if (print_inputs){
+    for(int i = 0; i < opinfo->exinfo.nargs; ++i){
+      VG_(printf)("Arg %d is computed as %f, and is shadowed as %f",
+                  i + 1, clientArgs[i], getDouble(args[i]->real));
+    }
+  }
   ShadowValue* result = mkShadowValueBare(opinfo->exinfo.argPrecision);
   execRealOp(opinfo->op_code, &(result->real), args);
   execSymbolicOp(opinfo, &(result->expr), result->real, args);
+  if (print_errors_long || print_errors){
+    printOpInfo(opinfo);
+    VG_(printf)(":\n");
+  }
+  if (print_errors_long || print_errors){
+    VG_(printf)("Local:\n");
+  }
   execLocalOp(opinfo, result->real, result, args);
+  if (print_errors_long || print_errors){
+    VG_(printf)("Global:\n");
+  }
   updateError(&(opinfo->eagg), result->real, clientResult);
   if (print_semantic_ops){
     VG_(printf)("%p = ", result);

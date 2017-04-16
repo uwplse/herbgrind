@@ -81,10 +81,6 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
                  shadowResult->real, shadowArgs);
   execLocalOp(info, shadowResult->real, shadowResult, shadowArgs);
   execInfluencesOp(info, &(shadowResult->influences), shadowArgs);
-  if (print_errors_long || print_errors){
-    printOpInfo(info);
-    VG_(printf)(":\n");
-  }
   if (print_semantic_ops){
     VG_(printf)("%p = %s", shadowResult, getWrappedName(type));
     switch(nargs){
@@ -101,6 +97,10 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
       }
       VG_(printf)(")\n");
     }
+  }
+  if (print_errors_long || print_errors){
+    printOpInfo(info);
+    VG_(printf)(":\n");
   }
   updateError(&(info->eagg), shadowResult->real, *resLoc);
 }
