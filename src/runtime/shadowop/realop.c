@@ -99,6 +99,12 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
   case Iop_Sqrt64Fx2:
     if (GETD(args[0]->real->RVAL) >= 0.0){
       CALL1(sqrt, (*result)->RVAL, args[0]->real->RVAL);
+    } else {
+      #ifdef USE_MPFR
+      mpfr_set_nan((*result)->RVAL);
+      #else
+      tl_assert2(0, "I don't think GMP supports NaN");
+      #endif
     }
     break;
   case Iop_RecpExpF64:
@@ -183,6 +189,12 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
       CALL2(div, (*result)->RVAL,
             args[0]->real->RVAL,
             args[1]->real->RVAL);
+    } else {
+      #ifdef USE_MPFR
+      mpfr_set_nan((*result)->RVAL);
+      #else
+      tl_assert2(0, "I don't think GMP supports NaN");
+      #endif
     }
     break;
   case Iop_Max64F0x2:

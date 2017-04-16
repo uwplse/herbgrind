@@ -50,11 +50,20 @@ double updateError(ErrorAggregate* eagg,
       VG_(printf)("The shadow value is ");
       printReal(realVal);
     } else {
-      VG_(printf)("The rounded shadow value is %f", shadowRounded);
+      if (shadowRounded != shadowRounded){
+        VG_(printf)("The rounded shadow value is NaN");
+      } else {
+        VG_(printf)("The rounded shadow value is %f", shadowRounded);
+      }
     }
-    VG_(printf)(", but %f was computed.\n"
-                "%f bits error (%llu ulps)\n",
-                computedVal, bitsError, ulpsError);
+    if (computedVal != computedVal){
+      VG_(printf)(", but NaN was computed.\n");
+    } else {
+      VG_(printf)(", but %f was computed.\n",
+                  computedVal);
+    }
+    VG_(printf)("%f bits error (%llu ulps)\n",
+                bitsError, ulpsError);
   }
   return bitsError;
 }
@@ -63,7 +72,7 @@ ULong ulpd(double x, double y){
   if (x == 0) x = 0; // -0 == 0
   if (y == 0) y = 0; // -0 == 0
 
-  if (x != x && y != y) return 0;
+  /* if (x != x && y != y) return 0; */
   if (x != x) return ULLONG_MAX - 1; // Maximum error
   if (y != y) return ULLONG_MAX - 1; // Maximum error
 
