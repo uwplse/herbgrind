@@ -52,6 +52,7 @@ extern Bool print_types;
 extern Bool print_allocs;
 extern Bool print_errors;
 extern Bool print_errors_long;
+extern Bool print_inputs;
 extern Bool print_expr_updates;
 extern Bool print_flagged;
 extern Int longprint_len;

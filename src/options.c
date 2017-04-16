@@ -51,6 +51,7 @@ Bool print_types = False;
 Bool print_allocs = False;
 Bool print_errors = False;
 Bool print_errors_long = False;
+Bool print_inputs = False;
 Bool print_expr_updates = False;
 Bool print_flagged = False;
 Int longprint_len = 15;
@@ -85,6 +86,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-allocs", print_allocs, True) {}
   else if VG_XACT_CLO(arg, "--print-errors", print_errors, True) {}
   else if VG_XACT_CLO(arg, "--print-errors-long", print_errors_long, True) {}
+  else if VG_XACT_CLO(arg, "--print-inputs", print_inputs, True) {}
   else if VG_XACT_CLO(arg, "--print-expr-updates", print_expr_updates, True) {}
   else if VG_XACT_CLO(arg, "--print-flagged", print_flagged, True) {}
   else if VG_XACT_CLO(arg, "--print-object-files", print_object_files, True) {}
@@ -180,6 +182,8 @@ void hg_print_debug_usage(void){
               " --print-errors-long "
               "Prints the error of the result of each operation, "
               "with long mpfr values.\n"
+              " --print-inputs "
+              "Prints the input values to each function.\n"
               " --print-expr-updates "
               "Prints the expressions that are derived for each "
               "operation.\n"
