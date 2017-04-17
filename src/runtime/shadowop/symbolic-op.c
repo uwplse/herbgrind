@@ -53,6 +53,9 @@ SymbExpr* symbGraftChild(SymbGraft graft){
 
 void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
                     Real real, ShadowValue** args){
+  if (no_exprs){
+    return;
+  }
   ConcExpr* exprArgs[MAX_BRANCH_ARGS];
   for(int i = 0; i < opinfo->exinfo.nargs; ++i){
     exprArgs[i] = args[i]->expr;

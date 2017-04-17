@@ -96,7 +96,7 @@ void writeOutput(void){
                   "  (objectfile \"%s\")\n",
                   objfile_name);
       }
-      if (output_mark_exprs){
+      if (output_mark_exprs && !no_exprs){
         printBBuf(buf, "  (full-expr \n");
         int numVars;
         char* exprString = symbExprToString(markInfo->expr, &numVars);
@@ -127,7 +127,7 @@ void writeOutput(void){
         printBBuf(buf, " %s");
       }
       printBBuf(buf, "\n");
-      if (output_mark_exprs){
+      if (output_mark_exprs && !no_exprs){
         printBBuf(buf, "  Full expr:\n");
         int numVars;
         char* exprString = symbExprToString(markInfo->expr, &numVars);
@@ -198,7 +198,7 @@ void writeOutput(void){
                   "  (objectfile \"%s\")\n",
                   objname);
       }
-      if (output_mark_exprs){
+      if (output_mark_exprs && !no_exprs){
         printBBuf(buf, "  (full-exprs \n");
         for(int i = 0; i < intMarkInfo->nargs; ++i){
           int numVars;
@@ -232,7 +232,7 @@ void writeOutput(void){
                   objname);
       }
       printBBuf(buf, "\n");
-      if (output_mark_exprs){
+      if (output_mark_exprs && !no_exprs){
         printBBuf(buf, "Full exprs:\n");
         for(int i = 0; i < intMarkInfo->nargs; ++i){
           int numVars;

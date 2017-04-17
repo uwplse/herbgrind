@@ -67,6 +67,9 @@ Bool shortmark_all_exprs = False;
 Bool mark_on_escape = True;
 Bool compensation_detection = True;
 
+Bool no_exprs = False;
+Bool no_influences = False;
+
 Int precision = 1000;
 Int max_expr_block_depth = 5;
 double error_threshold = 5.0;
@@ -101,6 +104,8 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--output-sexp", output_sexp, True) {}
   else if VG_XACT_CLO(arg, "--no-mark-on-escape", mark_on_escape, False) {}
   else if VG_XACT_CLO(arg, "--no-compensation-detection", compensation_detection, False) {}
+  else if VG_XACT_CLO(arg, "--no-exprs", no_exprs, True) {}
+  else if VG_XACT_CLO(arg, "--no-influences", no_influences, True) {}
   else if VG_BINT_CLO(arg, "--longprint-len", longprint_len, 1, 1000) {}
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else if VG_BINT_CLO(arg, "--max-expr-block-depth", max_expr_block_depth, 1, 100) {}

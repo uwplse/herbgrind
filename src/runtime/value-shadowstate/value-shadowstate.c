@@ -535,7 +535,9 @@ void freeShadowValue(ShadowValue* val){
   while(val->influences != NULL){
     (void)lpop(InfluenceList)(&(val->influences));
   }
-  disownConcExpr(val->expr);
+  if (!no_exprs){
+    disownConcExpr(val->expr);
+  }
   stack_push_fast(freedVals, (void*)val);
 }
 
@@ -543,8 +545,10 @@ ShadowValue* copyShadowValue(ShadowValue* val){
   ShadowValue* copy = mkShadowValueBare(val->type);
   copyReal(val->real, copy->real);
   copy->expr = val->expr;
-  recursivelyOwnConcExpr(copy->expr,
-                         max_expr_block_depth * 2);
+  if (!no_exprs){
+    recursivelyOwnConcExpr(copy->expr,
+                           max_expr_block_depth * 2);
+  }
   return copy;
 }
 inline
@@ -566,7 +570,9 @@ inline
 ShadowValue* mkShadowValue(FloatType type, double value){
   ShadowValue* result = mkShadowValueBare(type);
   setReal(result->real, value);
-  result->expr = mkLeafConcExpr(value);
+  if (!no_exprs){
+    result->expr = mkLeafConcExpr(value);
+  }
   return result;
 }
 

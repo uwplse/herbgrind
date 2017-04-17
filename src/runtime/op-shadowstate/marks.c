@@ -40,6 +40,9 @@ VgHashTable* markMap = NULL;
 VgHashTable* intMarkMap = NULL;
 
 void markImportant(Addr varAddr){
+  if (no_influences){
+    return;
+  }
   Addr callAddr = getCallAddr();
   MarkInfo* info = getMarkInfo(callAddr);
   ShadowValue* val = getMemShadow(varAddr);
@@ -56,12 +59,17 @@ void markImportant(Addr varAddr){
   if (thisError >= error_threshold){
     dedupAddInfluencesToList(&(info->influences), val->influences);
   }
-  tl_assert(val->expr != NULL);
-  generalizeSymbolicExpr(&(info->expr), val->expr);
+  if (!no_exprs){
+    tl_assert(val->expr != NULL);
+    generalizeSymbolicExpr(&(info->expr), val->expr);
+  }
 }
 void markEscapeFromFloat(const char* markType, Addr curAddr,
                          int mismatch,
                          int num_vals, ShadowValue** values){
+  if (no_influences){
+    return;
+  }
   IntMarkInfo* info = getIntMarkInfo(curAddr, markType);
   info->num_hits += 1;
   info->num_mismatches += mismatch;
@@ -73,8 +81,10 @@ void markEscapeFromFloat(const char* markType, Addr curAddr,
       dedupAddInfluencesToList(&(info->influences),
                                values[i]->influences);
     }
-    tl_assert(values[i]->expr != NULL);
-    generalizeSymbolicExpr(&(info->exprs[i]), values[i]->expr);
+    if (!no_exprs){
+      tl_assert(values[i]->expr != NULL);
+      generalizeSymbolicExpr(&(info->exprs[i]), values[i]->expr);
+    }
   }
 }
 

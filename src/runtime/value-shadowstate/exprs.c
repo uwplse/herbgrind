@@ -543,6 +543,14 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
                          const char* parent_func, Color curColor,
                          NodePos curPos, int max_depth);
 char* symbExprToString(SymbExpr* expr, int* numVarsOut){
+  if (no_exprs){
+    char* buf = VG_(malloc)("buffer data", 2);
+    buf[0] = '\0';
+    if (numVarsOut != NULL){
+      *numVarsOut = 0;
+    }
+    return buf;
+  }
   if (expr->type == Node_Leaf){
     if (expr->isConst){
       char* _buf = VG_(malloc)("buffer data", MAX_EXPR_LEN);

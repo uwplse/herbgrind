@@ -34,6 +34,9 @@ List_Impl(ShadowOpInfo*, InfluenceList);
 
 void execInfluencesOp(ShadowOpInfo* info,
                       InfluenceList* res, ShadowValue** args){
+  if (no_influences){
+    return;
+  }
   for(int i = 0; i < info->exinfo.nargs; ++i){
     for(InfluenceList curNode = args[i]->influences;
         curNode != NULL; curNode = curNode->next){
