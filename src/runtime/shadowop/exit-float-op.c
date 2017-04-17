@@ -33,6 +33,7 @@
 #include "../../helper/runtime-util.h"
 
 VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
+  if (no_reals) return;
   ShadowTemp* args[2];
   for(int i = 0; i < 2; ++i){
     args[i] = getArg(i, 1, info->precision, info->argTemps[i]);

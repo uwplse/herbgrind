@@ -37,6 +37,7 @@
 
 void execLocalOp(ShadowOpInfo* info, Real realVal,
                  ShadowValue* res, ShadowValue** args){
+  if (no_reals) return;
   int nargs = info->exinfo.nargs;
   double exactRoundedArgs[4];
   for(int i = 0; i < nargs; ++i){

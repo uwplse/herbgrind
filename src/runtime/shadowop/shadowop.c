@@ -151,7 +151,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
                                     ShadowValue** args,
                                     double* clientArgs,
                                     double clientResult){
-  if (!dont_ignore_pure_zeroes){
+  if (!dont_ignore_pure_zeroes && !no_reals){
     switch((int)opinfo->op_code){
     case Iop_Mul32F0x4:
     case Iop_Mul64F0x2:
@@ -212,7 +212,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
       VG_(printf)(")\n");
     }
   }
-  if (compensation_detection){
+  if (compensation_detection && !no_reals){
     switch((int)opinfo->op_code){
     case Iop_Add32F0x4:
     case Iop_Add64F0x2:

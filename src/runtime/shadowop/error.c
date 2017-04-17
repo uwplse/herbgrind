@@ -35,6 +35,7 @@
 
 double updateError(ErrorAggregate* eagg,
                    Real realVal, double computedVal){
+  if (no_reals) return 0.0;
   double shadowRounded = getDouble(realVal);
   ULong ulpsError = ulpd(shadowRounded, computedVal);
 

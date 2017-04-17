@@ -79,7 +79,9 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
   ShadowOpInfo* info = getWrappedOpInfo(callAddr, type, nargs);
   execSymbolicOp(info, &(shadowResult->expr),
                  shadowResult->real, shadowArgs);
-  execLocalOp(info, shadowResult->real, shadowResult, shadowArgs);
+  if (!no_reals){
+    execLocalOp(info, shadowResult->real, shadowResult, shadowArgs);
+  }
   execInfluencesOp(info, &(shadowResult->influences), shadowArgs);
   if (print_semantic_ops){
     VG_(printf)("%p = %s", shadowResult, getWrappedName(type));
@@ -157,6 +159,7 @@ const char* getWrappedName(OpType type){
 
 ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs){
   ShadowValue* result = mkShadowValueBare(getWrappedPrecision(type));
+  if (no_reals) return result;
   switch(type){
   case UNARY_OPS_ROUND_CASES:
     {

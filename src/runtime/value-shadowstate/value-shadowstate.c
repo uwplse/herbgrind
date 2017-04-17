@@ -543,7 +543,9 @@ void freeShadowValue(ShadowValue* val){
 
 ShadowValue* copyShadowValue(ShadowValue* val){
   ShadowValue* copy = mkShadowValueBare(val->type);
-  copyReal(val->real, copy->real);
+  if (!no_reals){
+    copyReal(val->real, copy->real);
+  }
   copy->expr = val->expr;
   if (!no_exprs){
     recursivelyOwnConcExpr(copy->expr,
