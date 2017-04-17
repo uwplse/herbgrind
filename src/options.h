@@ -70,6 +70,7 @@ extern Bool compensation_detection;
 
 extern Bool no_exprs;
 extern Bool no_influences;
+extern Bool no_reals;
 
 extern Int precision;
 extern Int max_expr_block_depth;

@@ -34,6 +34,9 @@
 #include "../../helper/ir-info.h"
 
 void execRealOp(IROp op_code, Real* result, ShadowValue** args){
+  if (no_reals){
+    return;
+  }
   switch((int)op_code){
   case Iop_RecipEst32Fx4:
   case Iop_RecipEst32Fx2:

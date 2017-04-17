@@ -62,7 +62,9 @@ ShadowValue* newShadowValue(FloatType type){
     VG_(perm_malloc)(sizeof(ShadowValue), vg_alignof(ShadowValue));
   result->type = type;
   result->ref_count = 1;
-  result->real = mkReal();
+  if (!no_reals){
+    result->real = mkReal();
+  }
   return result;
 }
 VG_REGPARM(2) void assertValValid(const char* label, ShadowValue* val){

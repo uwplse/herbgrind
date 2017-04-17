@@ -569,7 +569,9 @@ ShadowValue* mkShadowValueBare(FloatType type){
 inline
 ShadowValue* mkShadowValue(FloatType type, double value){
   ShadowValue* result = mkShadowValueBare(type);
-  setReal(result->real, value);
+  if (!no_reals){
+    setReal(result->real, value);
+  }
   if (!no_exprs){
     result->expr = mkLeafConcExpr(value);
   }
