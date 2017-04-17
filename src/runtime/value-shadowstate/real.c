@@ -35,7 +35,6 @@
 
 Real mkReal(void){
   Real result = VG_(malloc)("real", sizeof(struct _RealStruct));
-  tl_assert(0);
   #ifdef USE_MPFR
   mpfr_init2(result->mpfr_val, precision);
   #else
@@ -44,7 +43,6 @@ Real mkReal(void){
   return result;
 }
 void setReal(Real r, double bytes){
-  tl_assert(0);
   #ifdef USE_MPFR
   mpfr_set_d(r->mpfr_val, bytes, MPFR_RNDN);
   #else
@@ -52,7 +50,6 @@ void setReal(Real r, double bytes){
   #endif
 }
 void freeReal(Real real){
-  tl_assert(0);
   #ifdef USE_MPFR
   mpfr_clear(real->mpfr_val);
   #else
@@ -63,7 +60,6 @@ void freeReal(Real real){
 
 double getDouble(Real real){
   if (no_reals) return 0.0;
-  tl_assert(0);
   #ifdef USE_MPFR
   return mpfr_get_d(real->mpfr_val, MPFR_RNDN);
   #else
@@ -72,7 +68,6 @@ double getDouble(Real real){
 }
 
 void copyReal(Real src, Real dest){
-  tl_assert(0);
   #ifdef USE_MPFR
   mpfr_set(dest->mpfr_val, src->mpfr_val, MPFR_RNDN);
   #else
@@ -81,7 +76,6 @@ void copyReal(Real src, Real dest){
 }
 
 void printReal(Real real){
-  tl_assert(0);
   #ifdef USE_MPFR
   char* shadowValStr;
   mpfr_exp_t shadowValExpt;
