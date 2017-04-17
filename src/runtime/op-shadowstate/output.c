@@ -153,8 +153,8 @@ void writeOutput(void){
 
     writeInfluences(fileD, filterInfluenceSubexprs(markInfo->influences));
     if (output_sexp){
-      char endparens[] = "  ))\n";
-      VG_(write)(fileD, endparens, sizeof(endparens));
+      char endparens[] = "  )\n";
+      VG_(write)(fileD, endparens, sizeof(endparens) - 1);
     }
     char newline[] = "\n";
     VG_(write)(fileD, newline, 1);
@@ -261,8 +261,8 @@ void writeOutput(void){
 
     writeInfluences(fileD, filterInfluenceSubexprs(intMarkInfo->influences));
     if (output_sexp){
-      char endparens[] = "  ))\n";
-      VG_(write)(fileD, endparens, sizeof(endparens));
+      char endparens[] = "  )\n";
+      VG_(write)(fileD, endparens, sizeof(endparens) - 1);
     }
   }
   VG_(close)(fileD);
@@ -306,6 +306,10 @@ void writeInfluences(Int fileD, InfluenceList influences){
       VG_(write)(fileD, _buf, entryLen);
     }
   }
+  if (output_sexp){
+    char startparen[] = "    (\n";
+    VG_(write)(fileD, startparen, sizeof(startparen) - 1);
+  }
   for(InfluenceList curNode = influences;
       curNode != NULL; curNode = curNode->next){
     ShadowOpInfo* opinfo = curNode->item;
@@ -329,9 +333,12 @@ void writeInfluences(Int fileD, InfluenceList influences){
     BBuf* buf = mkBBuf(ENTRY_BUFFER_SIZE, _buf);
     if (output_sexp){
       printBBuf(buf,
+                "    (");
+      printBBuf(buf,
                 "\n"
-                "    (FPCore %s\n"
-                "     %s)\n",
+                "     (expr\n"
+                "       (FPCore %s\n"
+                "         %s))\n",
                 varString, exprString);
       printBBuf(buf,
                 "     (function \"%s\")\n"
@@ -358,6 +365,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 / opinfo->eagg.num_evals,
                 opinfo->local_eagg.max_error,
                 opinfo->eagg.num_evals);
+      printBBuf(buf, "    )\n");
     } else {
       printBBuf(buf,
                 "\n"
@@ -392,5 +400,9 @@ void writeInfluences(Int fileD, InfluenceList influences){
     VG_(free)(exprString);
     VG_(free)(varString);
     VG_(write)(fileD, _buf, entryLen);
+  }
+  if (output_sexp){
+    char endparen[] = "    )\n";
+    VG_(write)(fileD, endparen, sizeof(endparen) - 1);
   }
 }
