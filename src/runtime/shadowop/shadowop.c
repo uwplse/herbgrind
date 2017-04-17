@@ -238,6 +238,14 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
     case Iop_Sub64F0x2:
     case Iop_SubF64:
     case Iop_SubF32:
+      if (getDouble(args[0]->real) == 0){
+        ULong inputError = ulpd(getDouble(args[1]->real), clientArgs[1]);
+        ULong outputError = ulpd(getDouble(result->real), clientResult);
+        if (outputError <= inputError){
+          result->influences = cloneInfluences(args[1]->influences);
+          return result;
+        }
+      }
       if (getDouble(args[1]->real) == 0){
         ULong inputError = ulpd(getDouble(args[0]->real), clientArgs[0]);
         ULong outputError = ulpd(getDouble(result->real), clientResult);
