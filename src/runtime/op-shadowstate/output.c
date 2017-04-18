@@ -370,7 +370,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
       printBBuf(buf,
                 "\n"
                 "    (FPCore %s\n"
-                "     %s\n",
+                "     %s)\n",
                 varString, exprString);
       printBBuf(buf,
                 "   in %s at %s:%u (address %lX)",
