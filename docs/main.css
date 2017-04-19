@@ -1,0 +1,22 @@
+/* Fonts */
+@font-face {
+    font-family: "nyt-cheltenham";
+    font-style: normal;
+    font-weight: 200;
+}
+h1 {
+    text-align: center;
+    font-size: 48px;
+    font-family: sans-serif;
+    color:rgba(0,50,0,.90);
+}
+/* Typography*/
+body {
+    font: 1rem/1.6rem Georgia,serif;
+    text-rendering: optimizeLegibility;
+}
+body {
+    max-width:600px;
+    margin: 3em auto;
+    position: relative;
+}

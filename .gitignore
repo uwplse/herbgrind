@@ -14,4 +14,3 @@ bench/herbie-crosseval/*.c
 vgcore*
 *.swp
 *#*#
-docs/*
