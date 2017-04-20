@@ -17,6 +17,8 @@ early in development, but it's goals are:
 - Extracting enough other information from programs to make
   improvement with herbie easy
 
+Herbgrind is documented at http://uwplse.github.io/herbgrind/
+
 Herbgrind is licensed under GPLv3 (and some dependencies are under
 other, similar licenses). If that doesn't work for your use case, let
 us know, and we're happy to talk about licensing under other terms.
