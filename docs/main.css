@@ -4,11 +4,25 @@
     font-style: normal;
     font-weight: 200;
 }
+h1, h2, h3 {
+    color:rgba(0,50,0,.90);
+}
 h1 {
     text-align: center;
     font-size: 48px;
     font-family: sans-serif;
-    color:rgba(0,50,0,.90);
+}
+li {
+    margin-left: 120px;
+    list-style: none inside;
+}
+time {
+    font-weight: bold;
+    text-align: right;
+    position: absolute;
+    left: 0;
+    display: block;
+    width: 100px;
 }
 b {
     color:rgba(0,50,0,.90);
