@@ -10,6 +10,9 @@ h1 {
     font-family: sans-serif;
     color:rgba(0,50,0,.90);
 }
+b {
+    color:rgba(0,50,0,.90);
+}
 div {
     font-size: 30px;
     text-align: center;
