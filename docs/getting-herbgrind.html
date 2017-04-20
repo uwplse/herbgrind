@@ -1,0 +1,48 @@
+<html>
+  <head>
+    <title>Getting Herbgrind</title>
+    <link rel="stylesheet" type="text/css" href="main.css">
+  </head> 
+  <a href="http://uwplse.github.io/herbgrind/">
+    <h4>From the team that brought you <a href="http://herbie.uwplse.org"><img src="http://herbie.uwplse.org/logo.png" align="middle" style="width:10%"></a></h4>
+    <h1>Herbgrind</h1>
+    <img src="logo.jpg" style="display: block; margin: 0 auto; width:50%">
+  </a>
+
+    <h2>Getting Herbgrind</h2>
+    <p> We don't have any binary builds available, but it should be
+      easy to install it. Herbgrind currently primarily supports
+      64-bit Linux, but 32-bit might also work, and theres some work
+      in progress to also support OSX.</p>
+
+    <p> Herbgrind requires that you have
+    the <a href="https://gcc.gnu.org/install/">GNU C Compiler</a>,
+    <a href="https://www.gnu.org/software/automake/">Automake 1.15</a>,
+    <a href="https://www.gnu.org/software/autoconf/">Autoconf</a>, and
+    <a href="https://git-scm.com/book/en/v2/Getting-Started-Installing-Git">Git</a>
+    installed. The first three are probably already installed on your
+    Linux installation, and if not should be available in your package
+    manager, although some older builds might not have a new enough
+    version of Automake.</p>
+
+    <p> Herbgrind also builds
+      on <a href="http://valgrind.org">Valgrind</a>, <a href="https://gmplib.org/">GMP</a>, <a href="http://www.mpfr.org/">GNU
+      MPFR</a>, and <a href="http://openlibm.org/">OpenLibm</a>, but
+      these are included in the release and don't need to be
+      separately downloaded.</p>
+
+    <p> Once you have the prerequisites installed, you can run:</p>
+    <pre>git clone https://github.com/uwplse/herbgrind.git</pre>
+    <p> to download the source code, and put it in a directory called
+    "herbgrind" in the current working directory. From there, you
+      should just be able to run:</p>
+    <pre>cd hergrind; make</pre>
+    <p> to build it, and </p>
+    <pre> <i>herbgrind-path</i>/valgrind/herbgrind-install/bin/valgrind --tool=herbgrind <i>path-to-client-binary</i></pre>
+    <p> to run it. Please <a href="mailto:alexss@eng.ucsd.edu">email
+        me</a> with any problems you have.</p>
+    <p> You can get find out more about Herbgrind's various options by running</p>
+    <pre> <i>herbgrind-path</i>/valgrind/herbgrind-install/bin/valgrind --tool=herbgrind --help</pre>
+    <p> and </p>
+    <pre> <i>herbgrind-path</i>/valgrind/herbgrind-install/bin/valgrind --tool=herbgrind --debug-help</pre>
+</html>

@@ -10,6 +10,17 @@ h1 {
     font-family: sans-serif;
     color:rgba(0,50,0,.90);
 }
+div {
+    font-size: 30px;
+    text-align: center;
+    font-family: sans-serif;
+    padding: 15px;
+}
+pre {
+    font-size: 14px;
+    padding-left: 2em;
+    font-family: monospace;
+}
 /* Typography*/
 body {
     font: 1rem/1.6rem Georgia,serif;

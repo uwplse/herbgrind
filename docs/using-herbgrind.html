@@ -1,0 +1,131 @@
+<html>
+  <head>
+    <title>Getting Herbgrind</title>
+    <link rel="stylesheet" type="text/css" href="main.css">
+  </head> 
+  <a href="http://uwplse.github.io/herbgrind/">
+  <h4>From the team that brought you <a href="http://herbie.uwplse.org"><img src="http://herbie.uwplse.org/logo.png" align="middle" style="width:10%"></a></h4>
+    <h1>Herbgrind</h1>
+    <img src="logo.jpg" style="display: block; margin: 0 auto; width:50%">
+  </a>
+
+    <h2> Using Herbgrind </h2>
+    <p>
+    Herbgrind analyzes binaries to find inaccurate
+    floating point expressions. The binaries can come from anywhere—C
+    source, Fortran source, even unknown origins. This tutorial
+    runs Herbgrind on the benchmark programs that Herbgrind ships with.
+  </p>
+  
+  <h4>Compiling the benchmark program</h4>
+
+  <p>
+    Herbgrind ships test binaries in its <code>bench/</code>
+    directory. You can build them with:
+  </p>
+  
+  <pre>make -C bench all</pre>
+
+  <p>
+    Let's analyze the <code>diff-roots-simple.out</code> binary that
+    you just compiled. Run Herbgrind on that binary with:
+  </p>
+
+  <pre><i>herbgrind-path</i>/valgrind/herbgrind-install/bin/valgrind --tool=herbgrind bench/diff-roots-simple.out</pre>
+
+  <p>
+    This should produce output that looks like this:
+  </p>
+  
+  <pre>==16725== Herbgrind, a valgrind tool for Herbie
+==16725== 
+==16725== Using Valgrind-3.12.0.SVN and LibVEX; rerun with -h for copyright info
+==16725== Command: bench/diff-roots-simple.out
+==16725== 
+1.578592e-07
+==16725== 
+Writing report out to bench/diff-roots-simple.out.gh</pre>
+
+  <p>The printed value, <code>1.578592e-07</code>, is printed by
+  the <code>diff-roots-simple.out</code> binary. Herbgrind writes its
+  results to the named
+  file, <code>bench/diff-roots-simple.gh</code>. This file
+  contains one record for each operation; the only operation found
+  in <code>diff-roots-simple.c</code> is:</p>
+  
+  <pre>(FPCore ()
+  :type binary64
+  (- (sqrt (+ 1.000000 10000000000000.000000)) (sqrt 10000000000000.000000)))
+subtraction in main at diff-roots-simple.c:12 (address 400A00)
+43.129555 bits average error
+43.129555 bits max error
+Aggregated over 1 instances</pre>
+
+  <p>
+    The first line gives the expression inaccurately evaluated, and
+    the second line gives its location. That line
+    in <code>diff-roots-simple.c</code> is actually:
+  </p>
+
+  <pre>y = sqrt(x + 1) - sqrt(x);</pre>
+  
+  <p>
+    Since this line of code is run only once, Herbgrind doesn't know
+    that <code>x</code> is intended to be a variable, and instead
+    inlines its value. In a slightly more complicated
+    example, <code>diff-roots.c</code>, this code is executed in a
+    loop with different values for <code>x</code>, so Herbgrind will
+    report it as a variable.
+  </p>
+  
+  <p>
+    The next three lines of the output give the error incurred by the
+    inaccurate computation: 43.1 bits of error over 1 instance of computing that expression.
+  </p>
+  
+  <h4>Turning Herbgrind on and off</h4>
+
+  <p>
+    While running on <code>diff-roots-simple.out</code>, Herbgrind
+    found inaccurate computations not only
+    in <code>diff-roots-simple.out</code> but also in several GNU
+    library calls. Herbgrind has a feature to avoid tracking floating
+    point operations in libraries and other code not within your
+    control by adding instrumentation to your source code.
+  </p>
+  
+  <p>
+    Simply surround the numerically-interesting parts of your
+    computation in the <code>HERBGRIND_BEGIN()</code>
+    and <code>HERBGRIND_END()</code> macros:
+  </p>
+  
+  <pre>// initialization code ...
+HERBGRIND_BEGIN();
+// numerical code ...
+HERBGRIND_END();
+// cleanup code ...</pre>
+
+  <p>The <code>diff-roots-simple.c</code> example does this on lines
+    11 and 13. You can then run Herbgrind with
+    the <code>--start-off</code> flag, which tells Herbgrind not to
+    begin analyzing floating point operations until it sees
+    a <code>HERBGRIND_BEGIN()</code> region:
+  </p>
+
+  <pre>valgrind/herbgrind-install/bin/valgrind --tool=herbgrind \
+      <b>--start-off</b> bench/diff-roots-simple.out</pre>
+
+  <p>
+    The report file now contains only the inaccurate expression
+    described before, and no library computations.
+  </p>
+  
+  <p>
+    The <code>HERBGRIND_BEGIN()</code>/<code>HERBGRIND_END()</code>
+    regions can be sprinkled anywhere in your source code; it's common
+    to use them to start Herbgrind only after initializing your
+    program and before cleaning up and outputting results. Herbgrind
+    can be turned on and off multiple times.
+  </p>
+</html>
