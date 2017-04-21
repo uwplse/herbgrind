@@ -5,7 +5,7 @@ Herbgrind -- A Valgrind Tool For Herbie
 
 Herbgrind is a valgrind tool for tracking floating point imprecision
 in binary programs, inspired by FpDebug. Herbgrind is still pretty
-early in development, but it's goals are:
+early in development, but its goals are:
 
 - Determining whether a program is generally accurate
 
