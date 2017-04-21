@@ -23,6 +23,8 @@ Herbgrind is licensed under GPLv3 (and some dependencies are under
 other, similar licenses). If that doesn't work for your use case, let
 us know, and we're happy to talk about licensing under other terms.
 
+Herbgrind is documented at http://uwplse.github.io/herbgrind/
+
 Installation Instructions
 -------------------------
 
