@@ -67,5 +67,5 @@ and (max-device-width: 768px) {
     body { width: 80%; }
     h1 { font-size: 4em; }
     h2 { font-size: 3em; }
-    div { font-size: 2em; }
+    .biglink { font-size: 3em; }
 }
