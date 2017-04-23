@@ -48,3 +48,10 @@ body {
     margin: 3em auto;
     position: relative;
 }
+/* mobile layout tweaks */
+@media
+only screen
+and (max-device-width: 768px) {
+    body { width: 80%; }
+    h2 { font-size: 3em; }
+}
