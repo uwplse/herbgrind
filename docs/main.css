@@ -48,6 +48,19 @@ body {
     margin: 3em auto;
     position: relative;
 }
+section {
+    clear: left;
+}
+/*Scaling*/
+@media all {html {font-size: 16px;}}
+@media all and (max-width:760px){html {font-size: 15px;}}
+@media all and (max-width:720px){html {font-size: 14px;}}
+@media all and (max-width:680px){html {font-size: 13px;}}
+@media all and (max-width:640px){html {font-size: 12px;}}
+@media all and (max-width:600px){html {font-size: 11px;}}
+@media all and (max-width:560px){html {font-size: 10px;}}
+@media all and (max-width:520px){html {font-size: 9px;}}
+
 /* mobile layout tweaks */
 @media
 only screen
