@@ -27,12 +27,10 @@ time {
 b {
     color:rgba(0,50,0,.90);
 }
-div {
-    font-size: 30px;
+.biglink {
+    font-size: 2em;
     text-align: center;
-    height: auto;
     font-family: sans-serif;
-    padding: 15px;
 }
 pre {
     font-size: 14px;
