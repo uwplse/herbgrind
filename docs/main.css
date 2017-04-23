@@ -64,8 +64,8 @@ section {
 @media
 only screen
 and (max-device-width: 768px) {
-    body { width: 80%;
-           font-size: 2em; }
+    body { width: 80%; }
+    p.bodytext { font-size: 2em; line-height: 1.5}
     h1 { font-size: 4em; }
     h2 { font-size: 3em; }
     .biglink { font-size: 3em; }
