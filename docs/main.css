@@ -30,6 +30,7 @@ b {
 div {
     font-size: 30px;
     text-align: center;
+    height: auto;
     font-family: sans-serif;
     padding: 15px;
 }
