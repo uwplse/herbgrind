@@ -2,6 +2,7 @@
   <head>
     <title>Using Herbgrind</title>
     <link rel="stylesheet" type="text/css" href="main.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
   </head> 
   <h4>From the team that brought you <a href="http://herbie.uwplse.org"><img src="http://herbie.uwplse.org/logo.png" align="middle" style="width:10%"></a></h4>
     <h1>Herbgrind</h1>
@@ -10,7 +11,7 @@
   </a>
 
     <h2> Using Herbgrind </h2>
-    <p>
+    <p class="bodytext">
     Herbgrind analyzes binaries to find inaccurate
     floating point expressions. The binaries can come from anywhere—C
     source, Fortran source, even unknown origins. This tutorial
@@ -19,21 +20,21 @@
   
   <h4>Compiling the benchmark program</h4>
 
-  <p>
+  <p class="bodytext">
     Herbgrind ships test binaries in its <code>bench/</code>
     directory. You can build them with:
   </p>
   
   <pre>make -C bench all</pre>
 
-  <p>
+  <p class="bodytext">
     Let's analyze the <code>diff-roots-simple.out</code> binary that
     you just compiled. Run Herbgrind on that binary with:
   </p>
 
   <pre><i>herbgrind-path</i>/valgrind/herbgrind-install/bin/valgrind --tool=herbgrind bench/diff-roots-simple.out</pre>
 
-  <p>
+  <p class="bodytext">
     This should produce output that looks like this:
   </p>
   
@@ -46,7 +47,7 @@
 ==16725== 
 Writing report out to bench/diff-roots-simple.out.gh</pre>
 
-  <p>The printed value, <code>1.578592e-07</code>, is printed by
+  <p class="bodytext">The printed value, <code>1.578592e-07</code>, is printed by
   the <code>diff-roots-simple.out</code> binary. Herbgrind writes its
   results to the named
   file, <code>bench/diff-roots-simple.gh</code>. This file
@@ -61,7 +62,7 @@ subtraction in main at diff-roots-simple.c:12 (address 400A00)
 43.129555 bits max error
 Aggregated over 1 instances</pre>
 
-  <p>
+  <p class="bodytext">
     The first line gives the expression inaccurately evaluated, and
     the second line gives its location. That line
     in <code>diff-roots-simple.c</code> is actually:
@@ -69,7 +70,7 @@ Aggregated over 1 instances</pre>
 
   <pre>y = sqrt(x + 1) - sqrt(x);</pre>
   
-  <p>
+  <p class="bodytext">
     Since this line of code is run only once, Herbgrind doesn't know
     that <code>x</code> is intended to be a variable, and instead
     inlines its value. In a slightly more complicated
@@ -78,14 +79,14 @@ Aggregated over 1 instances</pre>
     report it as a variable.
   </p>
   
-  <p>
+  <p class="bodytext">
     The next three lines of the output give the error incurred by the
     inaccurate computation: 43.1 bits of error over 1 instance of computing that expression.
   </p>
   
   <h4>Turning Herbgrind on and off</h4>
 
-  <p>
+  <p class="bodytext">
     While running on <code>diff-roots-simple.out</code>, Herbgrind
     found inaccurate computations not only
     in <code>diff-roots-simple.out</code> but also in several GNU
@@ -94,7 +95,7 @@ Aggregated over 1 instances</pre>
     control by adding instrumentation to your source code.
   </p>
   
-  <p>
+  <p class="bodytext">
     Simply surround the numerically-interesting parts of your
     computation in the <code>HERBGRIND_BEGIN()</code>
     and <code>HERBGRIND_END()</code> macros:
@@ -106,7 +107,7 @@ HERBGRIND_BEGIN();
 HERBGRIND_END();
 // cleanup code ...</pre>
 
-  <p>The <code>diff-roots-simple.c</code> example does this on lines
+  <p class="bodytext">The <code>diff-roots-simple.c</code> example does this on lines
     11 and 13. You can then run Herbgrind with
     the <code>--start-off</code> flag, which tells Herbgrind not to
     begin analyzing floating point operations until it sees
@@ -116,12 +117,12 @@ HERBGRIND_END();
   <pre>valgrind/herbgrind-install/bin/valgrind --tool=herbgrind \
       <b>--start-off</b> bench/diff-roots-simple.out</pre>
 
-  <p>
+  <p class="bodytext">
     The report file now contains only the inaccurate expression
     described before, and no library computations.
   </p>
   
-  <p>
+  <p class="bodytext">
     The <code>HERBGRIND_BEGIN()</code>/<code>HERBGRIND_END()</code>
     regions can be sprinkled anywhere in your source code; it's common
     to use them to start Herbgrind only after initializing your
