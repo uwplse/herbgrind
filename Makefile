@@ -92,7 +92,7 @@ valgrind/herbgrind/Makefile: valgrind/patched src/Makefile.am
 valgrind/patched: valgrind/README
 # Run a script to modify the setup files to include the herbgrind
 # directory.
-	svn revert --depth=infinity
+	svn revert --depth=infinity valgrind
 	cd setup && ./modify_makefiles.sh
 # Run the autogen and configure scripts to turn the .am file into a
 # real makefile.
