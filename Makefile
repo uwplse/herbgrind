@@ -75,9 +75,6 @@ valgrind/README:
 # Check out valgrind from source.
 	svn co --ignore-externals $(VALGRIND_REPO_LOCATION)@$(VALGRIND_REVISION) valgrind
 	svn co $(VEX_REPO_LOCATION)@$(VEX_REVISION) valgrind/VEX
-# Run a script to modify the setup files to include the herbgrind
-# directory.
-	cd setup && ./modify_makefiles.sh
 # Make a directory for the herbgrind tool
 	mkdir valgrind/herbgrind
 # ...and copy the files from the top level herbgrind folder into it.
@@ -85,7 +82,7 @@ valgrind/README:
 
 # The herbgrind makefile needs to be recreated, if it's source .am
 # file changes or we've just cloned the valgrind repo
-valgrind/herbgrind/Makefile: valgrind/README src/Makefile.am
+valgrind/herbgrind/Makefile: valgrind/patched src/Makefile.am
 # Copy over the latest version of all the herbgrind stuff, including
 # the .am file that we need for this step.
 	rm -r -f valgrind/herbgrind/*
@@ -99,6 +96,12 @@ valgrind/herbgrind/Makefile: valgrind/README src/Makefile.am
 		./configure --prefix=$(shell pwd)/valgrind/$(HG_LOCAL_INSTALL_NAME) \
 		            --enable-only64bit \
 		            --build=$(TARGET_PLAT)
+
+valgrind/patched: valgrind/README
+# Run a script to modify the setup files to include the herbgrind
+# directory.
+	cd setup && ./modify_makefiles.sh
+	touch valgrind/patched
 
 # This is the target we call to bring in the dependencies, like gmp,
 # mpfr, and valgrind, and to make sure the herbgrind files have been
