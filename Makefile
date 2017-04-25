@@ -88,6 +88,12 @@ valgrind/herbgrind/Makefile: valgrind/patched src/Makefile.am
 	rm -r -f valgrind/herbgrind/*
 	mkdir -p valgrind/herbgrind
 	cp -r src/* valgrind/herbgrind/
+
+valgrind/patched: valgrind/README
+# Run a script to modify the setup files to include the herbgrind
+# directory.
+	svn revert --depth=infinity
+	cd setup && ./modify_makefiles.sh
 # Run the autogen and configure scripts to turn the .am file into a
 # real makefile.
 	cd valgrind && ./autogen.sh
@@ -96,11 +102,6 @@ valgrind/herbgrind/Makefile: valgrind/patched src/Makefile.am
 		./configure --prefix=$(shell pwd)/valgrind/$(HG_LOCAL_INSTALL_NAME) \
 		            --enable-only64bit \
 		            --build=$(TARGET_PLAT)
-
-valgrind/patched: valgrind/README
-# Run a script to modify the setup files to include the herbgrind
-# directory.
-	cd setup && ./modify_makefiles.sh
 	touch valgrind/patched
 
 # This is the target we call to bring in the dependencies, like gmp,
