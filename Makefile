@@ -137,7 +137,7 @@ endif
 compile: valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT)
 
 # Use the gmp README to tell if gmp has been extracted yet.
-deps/gmp-%/README: setup/gmp-$(GMP_VERSION).tar.xz setup/patch_gmp.sh
+deps/gmp-%/herbgrind-install/lib/libgmp.a: setup/gmp-$(GMP_VERSION).tar.xz setup/patch_gmp.sh
 # Extract gmp, and rename its folder so we don't have to use the
 # version number all over the place.
 	tar xf setup/gmp-$(GMP_VERSION).tar.xz
@@ -193,7 +193,7 @@ configure-mpfr-64:
 		            $(MPFR_CONFIGURE_FLAGS)
 
 # Use the mpfr readme to tell if mpfr has been extracted yet.
-deps/mpfr-%/README: setup/mpfr-$(MPFR_VERSION).tar.xz setup/patch_mpfr.sh
+deps/mpfr-%/herbgrind-install/lib/libmpfr.a: setup/mpfr-$(MPFR_VERSION).tar.xz setup/patch_mpfr.sh
 # Extract mpfr, and rename its folder so we don't have to use the
 # version number all over the place.
 	tar xf setup/mpfr-$(MPFR_VERSION).tar.xz
