@@ -82,14 +82,20 @@ valgrind/README:
 
 # The herbgrind makefile needs to be recreated, if it's source .am
 # file changes or we've just cloned the valgrind repo
-valgrind/herbgrind/Makefile: valgrind/patched src/Makefile.am
+valgrind/herbgrind/Makefile: valgrind/Makefile src/Makefile.am
 # Copy over the latest version of all the herbgrind stuff, including
 # the .am file that we need for this step.
 	rm -r -f valgrind/herbgrind/*
 	mkdir -p valgrind/herbgrind
 	cp -r src/* valgrind/herbgrind/
+	cd valgrind && ./autogen.sh
+	cd valgrind && 
+		CFLAGS="-fno-stack-protector" \
+		./configure --prefix=$(shell pwd)/valgrind/$(HG_LOCAL_INSTALL_NAME) \
+		            --enable-only64bit \
+		            --build=$(TARGET_PLAT)
 
-valgrind/patched: valgrind/README
+valgrind/Makefile: valgrind/README
 # Run a script to modify the setup files to include the herbgrind
 # directory.
 	svn revert --depth=infinity valgrind
@@ -102,18 +108,15 @@ valgrind/patched: valgrind/README
 		./configure --prefix=$(shell pwd)/valgrind/$(HG_LOCAL_INSTALL_NAME) \
 		            --enable-only64bit \
 		            --build=$(TARGET_PLAT)
-	touch valgrind/patched
 
 # This is the target we call to bring in the dependencies, like gmp,
 # mpfr, and valgrind, and to make sure the herbgrind files have been
 # initially copied over.
-setup: valgrind/herbgrind/Makefile $(DEPS)
+setup: valgrind/Makefile $(DEPS)
 
 # This is the target we call to actually get the executable built so
 # we can run herbgrind. 
 valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) setup
-# First, we've got to make sure all the dependencies are extracted and set up.
-	$(MAKE) setup
 # Then, let's run the python script to generate the mathreplace header
 # in src/
 	rm -rf src/include/mathreplace-funcs.h
