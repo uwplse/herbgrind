@@ -317,6 +317,9 @@ Bool isSpecialOp(IROp op_code){
   case Iop_AndV128:
   case Iop_OrV128:
   case Iop_NotV128:
+  case Iop_64to32:
+  case Iop_Shr64:
+  case Iop_Shl64:
     return True;
   default:
     return False;
@@ -332,6 +335,9 @@ void handleSpecialOp(IRSB* sbOut, IROp op_code,
   case Iop_AndV128:
   case Iop_OrV128:
   case Iop_NotV128:
+  case Iop_64to32:
+  case Iop_Shr64:
+  case Iop_Shl64:
     addStoreTempUnshadowed(sbOut, dest);
     break;
   case Iop_XorV128:
