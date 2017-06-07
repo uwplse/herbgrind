@@ -11,13 +11,13 @@ EasyBMP/EasyBMP.o: EasyBMP
 	$(CXX) -O3 EasyBMP/EasyBMP.cpp -c -o $@
 
 plotter.std: main.cpp EasyBMP/EasyBMP.o
-	$(CXX) -O3 $^ -DSQRT=sqrt -o $@
+	$(CXX) -O3 -g $^ -DSQRT=sqrt -o $@
 
 plotter.good: main.cpp EasyBMP/EasyBMP.o
-	$(CXX) -O3 $^ -DSQRT=goodsqrt -o $@
+	$(CXX) -O3 -g $^ -DSQRT=goodsqrt -o $@
 
 plotter.bad: main.cpp EasyBMP/EasyBMP.o
-	$(CXX) -O3 $^ -DSQRT=badsqrt -o $@
+	$(CXX) -O3 -g $^ -DSQRT=badsqrt -o $@
 
 %.bmp: plotter.%
 	./$< 1000 $@
