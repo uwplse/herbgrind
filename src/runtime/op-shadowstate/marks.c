@@ -39,6 +39,25 @@
 VgHashTable* markMap = NULL;
 VgHashTable* intMarkMap = NULL;
 
+void maybeMarkImportant(Addr varAddr){
+  VG_(printf)("Hitting this.\n");
+  if (no_influences) return;
+  ShadowValue* val = getMemShadow(varAddr);
+  VG_(printf)("And getting shadow.\n");
+  if (val == NULL) return;
+  Addr callAddr = getCallAddr();
+  MarkInfo* info = getMarkInfo(callAddr);
+  double thisError =
+    updateError(&(info->eagg), val->real, *(double*)varAddr);
+  VG_(printf)("Updated error.\n");
+  if (thisError >= error_threshold){
+    dedupAddInfluencesToList(&(info->influences), val->influences);
+  }
+  if (!no_exprs){
+    tl_assert(val->expr != NULL);
+    generalizeSymbolicExpr(&(info->expr), val->expr);
+  }
+}
 void markImportant(Addr varAddr){
   if (no_influences){
     return;

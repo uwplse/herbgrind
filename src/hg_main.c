@@ -61,6 +61,9 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
   case VG_USERREQ__MARK_IMPORTANT:
     markImportant((Addr)arg[1]);
     break;
+  case VG_USERREQ__MAYBE_MARK_IMPORTANT:
+    maybeMarkImportant((Addr)arg[1]);
+    break;
   default:
     return False;
   }
