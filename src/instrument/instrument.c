@@ -116,7 +116,7 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
     break;
   case Ist_Put:
     instrumentPut(sbOut, stmt->Ist.Put.offset, stmt->Ist.Put.data);
-   break;
+    break;
   case Ist_PutI:
     instrumentPutI(sbOut,
                    stmt->Ist.PutI.details->ix,

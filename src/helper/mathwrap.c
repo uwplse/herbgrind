@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- Herbgrind: a valgrind tool for Herbie          hg_mathwrap.c ---*/
+/*--- Herbgrind: a valgrind tool for Herbie             mathwrap.c ---*/
 /*--------------------------------------------------------------------*/
 
 /*

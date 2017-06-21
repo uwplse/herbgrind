@@ -309,9 +309,9 @@ ShadowTemp* setV128lo64Dynamic1(ShadowTemp* bottom,
 VG_REGPARM(2)
 ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* lo){
   if (hi->values[0]->type == Ft_Double){
-    tl_assert(hi->values[1]->type == Ft_Double);
+    tl_assert2(hi->values[0]->type == Ft_Double,
+               "Type is instead %d", hi->values[0]->type);
     tl_assert(lo->values[0]->type == Ft_Double);
-    tl_assert(lo->values[1]->type == Ft_Double);
     ShadowTemp* result = mkShadowTemp(2);
     result->values[0] = hi->values[0];
     ownShadowValue(result->values[0]);
@@ -325,10 +325,10 @@ ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* lo){
     }
     return result;
   } else {
-    tl_assert(hi->values[0]->type == Ft_Double);
-    tl_assert(hi->values[1]->type == Ft_Double);
-    tl_assert(lo->values[0]->type == Ft_Double);
-    tl_assert(lo->values[1]->type == Ft_Double);
+    tl_assert(hi->values[0]->type == Ft_Single);
+    tl_assert(hi->values[1]->type == Ft_Single);
+    tl_assert(lo->values[0]->type == Ft_Single);
+    tl_assert(lo->values[1]->type == Ft_Single);
     ShadowTemp* result = mkShadowTemp(4);
     result->values[0] = hi->values[0];
     ownShadowValue(result->values[0]);

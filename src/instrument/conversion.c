@@ -491,7 +491,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
         hasStaticShadow(argExprs[1])))){
     if (print_temp_moves){
       addPrintOp(op_code);
-      addPrint3(": Putting conerted temp %p in %d\n",
+      addPrint3(": Putting converted temp %p in %d\n",
                 shadowOutput, mkU64(dest));
     }
     addStoreTemp(sbOut, shadowOutput,
