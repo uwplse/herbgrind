@@ -46,10 +46,10 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
   }
   switch(arg[0]) {
   case VG_USERREQ__BEGIN:
-    running = True;
+    running_depth++;
     break;
   case VG_USERREQ__END:
-    running = False;
+    running_depth--;
     break;
   case VG_USERREQ__PERFORM_OP:
     performWrappedOp((OpType)arg[1], (double*)arg[2], (double*)arg[3]);
