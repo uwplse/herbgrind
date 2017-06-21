@@ -90,6 +90,29 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
                         2, values);
   }
     break;
+  case Iop_CmpLE64F0x2: {
+    double correctFst = getDouble(args[0]->values[0]->real);
+    double correctSnd = getDouble(args[1]->values[0]->real);
+    int actualResult;
+    if (correctFst != correctFst ||
+        correctSnd != correctSnd) {
+      actualResult = 0x00;
+    } else if (correctFst <= correctSnd) {
+      actualResult = 0x01;
+    } else {
+      actualResult = 0x00;
+    }
+    int computedValue =
+      *((int*)&computedResult.f[0]);
+    ShadowValue* values[2];
+    for(int i = 0; i < 2; ++i){
+      values[i] = args[i]->values[0];
+    }
+    markEscapeFromFloat("Compare", info->op_addr,
+                        actualResult != computedValue,
+                        2, values);
+  }
+    break;
   default:
     tl_assert(0);
     return;

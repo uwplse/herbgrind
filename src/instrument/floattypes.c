@@ -369,6 +369,7 @@ FloatType argPrecision(IROp op_code){
   case Iop_SetV128lo32:
     return Ft_Single;
   case Iop_CmpLT64F0x2:
+  case Iop_CmpLE64F0x2:
   case Iop_CmpF64:
   case Iop_RSqrtEst5GoodF64:
   case Iop_NegF64:

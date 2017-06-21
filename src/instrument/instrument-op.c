@@ -175,6 +175,7 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
   case Iop_CmpF32:
   case Iop_CmpLT32F0x4:
   case Iop_CmpLT64F0x2:
+  case Iop_CmpLE64F0x2:
     {
       ShadowCmpInfo* info =
         VG_(perm_malloc)(sizeof(ShadowCmpInfo),
@@ -244,7 +245,6 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
   case Iop_CmpLE64Fx2:
   case Iop_CmpUN64Fx2:
   case Iop_CmpEQ64F0x2:
-  case Iop_CmpLE64F0x2:
   case Iop_CmpUN64F0x2:
     tl_assert(0);
     break;
