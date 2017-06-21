@@ -372,10 +372,11 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 "    (FPCore %s\n"
                 "     %s)\n",
                 varString, exprString);
+      char* addrString = getAddrString(opinfo->op_addr);
       printBBuf(buf,
-                "   in %s at %s:%u (address %lX)",
-                fnname, src_filename, src_line,
-                opinfo->op_addr);
+                "   %s",
+                addrString);
+      VG_(free)(addrString);
       if (print_object_files){
         printBBuf(buf,
                   " %s",
