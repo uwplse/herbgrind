@@ -91,7 +91,7 @@ valgrind/herbgrind/Makefile: valgrind/Makefile src/Makefile.am
 	mkdir -p valgrind/herbgrind
 	cp -r src/* valgrind/herbgrind/
 	cd valgrind && ./autogen.sh
-	cd valgrind && 
+	cd valgrind && \
 		CFLAGS="-fno-stack-protector" \
 		./configure --prefix=$(shell pwd)/valgrind/$(HG_LOCAL_INSTALL_NAME) \
 		            --enable-only64bit \
@@ -117,8 +117,8 @@ valgrind/Makefile: valgrind/README
 setup: valgrind/Makefile $(DEPS)
 
 # This is the target we call to actually get the executable built so
-# we can run herbgrind. 
-valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) setup
+# we can run herbgrind.
+valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) src/Makefile.am setup
 # Then, let's run the python script to generate the mathreplace header
 # in src/
 	rm -rf src/include/mathreplace-funcs.h
