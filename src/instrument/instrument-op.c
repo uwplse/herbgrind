@@ -170,6 +170,7 @@ Bool isExitFloatOp(IROp op_code){
 void handleExitFloatOp(IRSB* sbOut, IROp op_code,
                        IRExpr** argExprs, IRTemp dest,
                        Addr curAddr, Addr blockAddr){
+  if (!RUNNING) return;
   switch(op_code){
   case Iop_CmpF64:
   case Iop_CmpF32:
