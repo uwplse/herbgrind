@@ -60,7 +60,7 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
     for(int i = 0; i < 2; ++i){
       values[i] = args[i]->values[0];
     }
-    markEscapeFromFloat("Compare", info->op_addr,
+    markEscapeFromFloat("Compare",
                         actualResult != computedValue,
                         2, values);
   }
@@ -85,7 +85,7 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
     for(int i = 0; i < 2; ++i){
       values[i] = args[i]->values[0];
     }
-    markEscapeFromFloat("Compare", info->op_addr,
+    markEscapeFromFloat("Compare",
                         actualResult != computedValue,
                         2, values);
   }
@@ -108,7 +108,7 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
     for(int i = 0; i < 2; ++i){
       values[i] = args[i]->values[0];
     }
-    markEscapeFromFloat("Compare", info->op_addr,
+    markEscapeFromFloat("Compare",
                         actualResult != computedValue,
                         2, values);
   }
@@ -129,7 +129,7 @@ VG_REGPARM(3) void checkConvert(FloatType argPrecision, IRTemp tmp,
   int correctResult = (int)getDouble(arg->values[0]->real);
   int computedValue =
     *((int*)&computedResult.f[0]);
-  markEscapeFromFloat("Convert", curAddr,
+  markEscapeFromFloat("Convert",
                       correctResult != computedValue,
                       1, &(arg->values[0]));
   if (tmp == -1){

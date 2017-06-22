@@ -52,6 +52,7 @@ Addr getCallAddr(void){
     const HChar* filename;
     if (!VG_(get_filename)(addr, &filename)) continue;
     if (VG_(strcmp)(filename, "mathwrap.c") == 0) continue;
+    if (VG_(strcmp)(filename, "printf-wrap.c") == 0) continue;
     return addr;
   }
   return 0;

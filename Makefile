@@ -47,7 +47,7 @@ src/instrument/instrument-op.h src/instrument/instrument-storage.h	\
 src/instrument/conversion.h src/instrument/semantic-op.h		\
 src/instrument/ownership.h src/instrument/floattypes.h
 
-SOURCES=src/hg_main.c src/helper/mathwrap.c				\
+SOURCES=src/hg_main.c src/helper/mathwrap.c src/helper/printf-wrap.c	\
 src/include/mk-mathreplace.py src/helper/mpfr-valgrind-glue.c		\
 src/helper/stack.c src/helper/instrument-util.c				\
 src/helper/runtime-util.c src/helper/ir-info.c src/helper/bbuf.c	\
