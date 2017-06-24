@@ -95,10 +95,10 @@ VG_REGPARM(2) ShadowTemp* dynamicGet64(Int tsSrc,
                                        UWord tsBytes);
 VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
                                         UWord bytes1, UWord bytes2);
-VG_REGPARM(2) ShadowTemp* dynamicLoad32(UWord memSrc);
-VG_REGPARM(2) ShadowTemp* dynamicLoad64(UWord memSrc, UWord memBytes);
-VG_REGPARM(3) ShadowTemp* dynamicLoad128(UWord memSrc,
-                                         UWord bytes1, UWord bytes2);
+VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, int size);
+ShadowTemp* dynamicLoad32(UWord memSrc);
+ShadowTemp* dynamicLoad64(UWord memSrc);
+ShadowTemp* dynamicLoad128(UWord memSrc);
 VG_REGPARM(0) ShadowMemEntry* newShadowMemEntry(void);
 VG_REGPARM(3) void setMemShadowTemp(Addr64 memDest, UWord size,
                                     ShadowTemp* st);
