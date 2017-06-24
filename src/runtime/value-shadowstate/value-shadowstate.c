@@ -103,17 +103,13 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
   if (st->num_vals == 1){
     tl_assert(st->values[0]->type == Ft_Double);
     ShadowValue* val = st->values[0];
-    shadowThreadState[VG_(get_running_tid)()][tsDest] = val;
-    shadowThreadState[VG_(get_running_tid)()][tsDest + sizeof(float)] =
-      NULL;
-    ownShadowValue(val);
     if (PRINT_VALUE_MOVES){
       if (getTS(tsDest) != NULL || val != NULL){
-        VG_(printf)("dynamicPut64: Setting thread state %d to %p",
-                    tsDest, val);
+        VG_(printf)("dynamicPut64: Setting thread state %d to %p (old ref count %lu",
+                    tsDest, val, val->ref_count);
       }
       if (val != NULL){
-        VG_(printf)(" (type ");
+        VG_(printf)(") (type ");
         ppFloatType(val->type);
       }
       VG_(printf)(")\n");
@@ -124,6 +120,10 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
                     tsDest);
       }
     }
+    shadowThreadState[VG_(get_running_tid)()][tsDest] = val;
+    shadowThreadState[VG_(get_running_tid)()][tsDest + sizeof(float)] =
+      NULL;
+    ownShadowValue(val);
   } else {
     for(int i = 0; i < 2; ++i){
       int dest_addr = tsDest + i * sizeof(float);
@@ -133,8 +133,8 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
       ownShadowValue(val);
       if (PRINT_VALUE_MOVES){
         if (getTS(tsDest) != NULL || val != NULL){
-          VG_(printf)("dynamicPut64: Setting thread state %d to %p\n",
-                      tsDest, val);
+          VG_(printf)("dynamicPut64: Setting thread state %d to %p (new ref count %lu)\n",
+                      tsDest, val, val->ref_count);
         }
         if (val != NULL){
           VG_(printf)(" (type ");
@@ -157,7 +157,7 @@ VG_REGPARM(2) void dynamicPut128(Int tsDest, ShadowTemp* st){
         VG_(printf)("dynamicPut: Setting thread state %d to %p",
                     dest_byte, val);
         if (val != NULL){
-          VG_(printf)(" (type %d)\n", val->type);
+          VG_(printf)(" (type %d) (new ref count %lu)\n", val->type, val->ref_count);
         } else {
           VG_(printf)("\n");
         }
@@ -337,6 +337,10 @@ VG_REGPARM(2) ShadowTemp* dynamicLoad32(UWord memSrc){
     ShadowTemp* newTemp = mkShadowTemp(1);
     newTemp->values[0] = val;
     ownShadowValue(val);
+    if (PRINT_VALUE_MOVES){
+      VG_(printf)("Owning shadow value %p (new rc %lu) as part of dynamic load 32.\n",
+                  val, val->ref_count);
+    }
     return newTemp;
   } else {
     return NULL;
@@ -356,11 +360,19 @@ VG_REGPARM(2) ShadowTemp* dynamicLoad64(UWord memSrc, UWord memBytes){
     temp->values[0] = firstValue;
     temp->values[1] = secondValue;
     ownShadowValue(secondValue);
+    if (PRINT_VALUE_MOVES){
+      VG_(printf)("Owning shadow value %p (new rc %lu) as part of dynamic load 64.\n",
+                  secondValue, secondValue->ref_count);
+    }
     return temp;
   } else if (firstValue->type == Ft_Double){
     ShadowTemp* temp = mkShadowTemp(1);
     temp->values[0] = firstValue;
     ownShadowValue(firstValue);
+    if (PRINT_VALUE_MOVES){
+      VG_(printf)("Owning shadow value %p (new rc %lu) as part of dynamic load 64.\n",
+                  firstValue, firstValue->ref_count);
+    }
     return temp;
   } else {
     ShadowValue* secondValue = getMemShadow(memSrc + sizeof(float));
@@ -375,6 +387,15 @@ VG_REGPARM(2) ShadowTemp* dynamicLoad64(UWord memSrc, UWord memBytes){
     ownShadowValue(firstValue);
     tl_assert(secondValue->type == Ft_Single);
     ShadowTemp* temp = mkShadowTemp(2);
+    if (PRINT_VALUE_MOVES){
+      VG_(printf)("Owning shadow value(s) %p (new rc %lu)",
+                  firstValue, firstValue->ref_count);
+      if (secondValue != NULL){
+        VG_(printf)(" and %p (new rc %lu)",
+                    secondValue, secondValue->ref_count);
+      }
+      VG_(printf)(" as part of dynamic load 64.\n");
+    }
     temp->values[0] = firstValue;
     temp->values[1] = secondValue;
     return temp;
@@ -453,9 +474,6 @@ VG_REGPARM(1) ShadowValue* getMemShadow(Addr64 addr){
 VG_REGPARM(3) void setMemShadowTemp(Addr64 memDest,
                                     UWord size,
                                     ShadowTemp* st){
-  if (PRINT_VALUE_MOVES){
-    VG_(printf)("Setting at %llX\n", memDest);
-  }
   for(int i = 0; i < size; ++i){
     UWord addr = memDest + i * sizeof(float);
     removeMemShadow(addr);
@@ -483,7 +501,11 @@ void removeMemShadow(Addr64 addr){
       }
 
       if (PRINT_VALUE_MOVES){
-        VG_(printf)("Clearing %llX\n", addr);
+        VG_(printf)("Clearing %llX", addr);
+        if (node->val != NULL){
+          VG_(printf)(", which disowns %p (old rc %lu)", node->val, node->val->ref_count);
+        }
+        VG_(printf)("\n");
       }
       disownShadowValue(node->val);
       stack_push(memEntries, (void*)node);
@@ -510,7 +532,11 @@ void addMemShadow(Addr64 addr, ShadowValue* val){
   newEntry->next = shadowMemTable[key];
   shadowMemTable[key] = newEntry;
   if (PRINT_VALUE_MOVES){
-    VG_(printf)("Setting %llX to %p\n", addr, val);
+    VG_(printf)("Setting %llX to %p", addr, val);
+    if (val != NULL){
+      VG_(printf)(" (new rc %lu)", val->ref_count);
+    }
+    VG_(printf)("\n");
   }
 }
 void freeShadowTemp(ShadowTemp* temp){
@@ -586,7 +612,7 @@ VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
     ownShadowValue(temp->values[i]);
     result->values[i] = temp->values[i];
     if (PRINT_VALUE_MOVES){
-      VG_(printf)("Copying %p to new temp %p\n", temp->values[i],
+      VG_(printf)("Copying %p (new rc %lu) to new temp %p\n", temp->values[i], temp->values[i]->ref_count,
                   result);
     }
   }
@@ -636,18 +662,11 @@ void disownShadowValue(ShadowValue* val){
     if (PRINT_VALUE_MOVES){
       VG_(printf)("Disowned last reference to %p! Freeing...\n", val);
     }
-  } else {
-    if (PRINT_VALUE_MOVES){
-      VG_(printf)("Disowning %p, new ref count %lu\n", val, val->ref_count);
-    }
   }
 }
 void ownShadowValue(ShadowValue* val){
   if (val == NULL) return;
   (val->ref_count)++;
-  if (PRINT_VALUE_MOVES){
-    VG_(printf)("Owning %p, new ref count %lu\n", val, val->ref_count);
-  }
 }
 
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value){

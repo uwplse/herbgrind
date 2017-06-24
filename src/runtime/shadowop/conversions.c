@@ -199,6 +199,12 @@ ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
       ShadowTemp* result = mkShadowTemp(2);
       result->values[0] = bottom->values[0];
       ownShadowValue(result->values[0]);
+      if (PRINT_VALUE_MOVES){
+        VG_(printf)("Owning value %p (new ref count %lu) "
+                    "copied in setV128lo64\n",
+                    result->values[0],
+                    result->values[0]->ref_count);
+      }
       float v3 = getDouble(top->values[2]->real);
       float v4 = getDouble(top->values[3]->real);
       // #suuuuupersketch
@@ -222,6 +228,15 @@ ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
       result->values[1] = bottom->values[1];
       ownShadowValue(result->values[0]);
       ownShadowValue(result->values[1]);
+      if (PRINT_VALUE_MOVES){
+        VG_(printf)("Owning values %p (new ref count %lu) "
+                    "and %p (new ref count %lu) "
+                    "copied in setV128lo64\n",
+                    result->values[0],
+                    result->values[0]->ref_count,
+                    result->values[1],
+                    result->values[1]->ref_count);
+      }
       double combined = getDouble(top->values[1]->real);
       float f3, f4;
       VG_(memcpy)(&combined, &f3, sizeof(float));
