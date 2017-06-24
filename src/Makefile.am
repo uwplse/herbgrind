@@ -97,7 +97,7 @@ if VGCONF_HAVE_PLATFORM_SEC
 noinst_PROGRAMS += vgpreload_herbgrind-@VGCONF_ARCH_SEC@-@VGCONF_OS@.so
 endif
 
-VGPRELOAD_HERBGRIND_SOURCES_COMMON = helper/mathwrap.c
+VGPRELOAD_HERBGRIND_SOURCES_COMMON = helper/mathwrap.c helper/printf-wrap.c
 
 vgpreload_herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_so_SOURCES      = \
 	$(VGPRELOAD_HERBGRIND_SOURCES_COMMON)

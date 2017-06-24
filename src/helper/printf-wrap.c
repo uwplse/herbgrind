@@ -30,26 +30,14 @@
 #include "pub_tool_redir.h"
 #include "../include/herbgrind.h"
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 
-int VG_WRAP_FUNCTION_ZU(NONE, main)(int argc, char** argv);
-int VG_WRAP_FUNCTION_ZU(NONE, main)(int argc, char** argv){
-  int r = 0;
-  OrigFn fn;
-  VALGRIND_GET_ORIG_FN(fn);
-  printf("", 1.0);
-  HERBGRIND_END();
-  CALL_FN_W_WW(r, fn, argc, argv);
-  HERBGRIND_BEGIN();
-  return r;
-}
-
-int VG_REPLACE_FUNCTION_ZU(VG_Z_LIBC_SONAME, printf)(const char* format, ...);
-int VG_REPLACE_FUNCTION_ZU(VG_Z_LIBC_SONAME, printf)(const char* format, ...){
+int VG_WRAP_FUNCTION_ZU(VG_Z_LIBC_SONAME, printf)(const char* format, ...);
+int VG_WRAP_FUNCTION_ZU(VG_Z_LIBC_SONAME, printf)(const char* format, ...){
   va_list args;
   va_start(args, format);
-  for (const char* c = format; c != '\0'; c++){
+  for (const char* c = format; *c != '\0'; c++){
     if (*c == '%'){
       double d = va_arg(args, double);
       HERBGRIND_MAYBE_MARK_IMPORTANT(d);
