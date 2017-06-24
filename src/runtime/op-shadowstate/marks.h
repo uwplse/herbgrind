@@ -60,7 +60,7 @@ typedef struct _intMarkInfo {
 
 void maybeMarkImportant(Addr varAddr);
 void markImportant(Addr varAddr);
-void markEscapeFromFloat(const char* markType, Addr curAddr,
+void markEscapeFromFloat(const char* markType,
                          int mismatch,
                          int numVals, ShadowValue** values);
 IntMarkInfo* getIntMarkInfo(Addr callAddr, const char* markType);
