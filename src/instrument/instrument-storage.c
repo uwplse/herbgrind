@@ -965,7 +965,7 @@ IRExpr* getBucketAddr(IRSB* sbOut, IRExpr* memAddr){
                   mkU64((uintptr_t)shadowMemTable),
                   runBinop(sbOut, Iop_Mul64,
                            bucket,
-                           mkU64(sizeof(ShadowMemEntry*))));
+                           mkU64(sizeof(TableValueEntry*))));
 }
 
 QuickBucketResult quickGetBucketG(IRSB* sbOut, IRExpr* guard,
@@ -977,15 +977,15 @@ QuickBucketResult quickGetBucketG(IRSB* sbOut, IRExpr* guard,
   IRExpr* shouldDoAnything = runAnd(sbOut, entryExists, guard);
   IRExpr* entryAddr =
     runArrowG(sbOut, shouldDoAnything, bucketEntry,
-              ShadowMemEntry, addr);
+              TableValueEntry, addr);
   IRExpr* entryNext =
     runArrowG(sbOut, shouldDoAnything, bucketEntry,
-              ShadowMemEntry, next);
+              TableValueEntry, next);
   IRExpr* addrMatches =
     runBinop(sbOut, Iop_CmpEQ64, entryAddr, memAddr);
   IRExpr* moreChain = runNonZeroCheck64(sbOut, entryNext);
   result.entry =
-    runArrowG(sbOut, addrMatches, bucketEntry, ShadowMemEntry, val);
+    runArrowG(sbOut, addrMatches, bucketEntry, TableValueEntry, val);
   result.stillSearching =
     runAnd(sbOut, moreChain,
            runUnop(sbOut, Iop_Not1, addrMatches));
@@ -1031,7 +1031,7 @@ IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc){
   loadDirty->guard = guard;
   loadDirty->mFx = Ifx_Read;
   loadDirty->mAddr = mkU64((uintptr_t)shadowMemTable);
-  loadDirty->mSize = sizeof(ShadowMemEntry) * LARGE_PRIME;
+  loadDirty->mSize = sizeof(TableValueEntry) * LARGE_PRIME;
   addStmtToIRSB(sbOut, IRStmt_Dirty(loadDirty));
   return runITE(sbOut, guard, IRExpr_RdTmp(result), mkU64(0));
 }
@@ -1050,7 +1050,7 @@ void addClearMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memDest){
                mkU64((uintptr_t)shadowMemTable),
                runBinop(sbOut, Iop_Mul64,
                         destBucket,
-                        mkU64(sizeof(ShadowMemEntry*))));
+                        mkU64(sizeof(TableValueEntry*))));
     IRExpr* memEntry = runLoad64(sbOut, destBucketAddr);
     hasExistingShadow = runOr(sbOut, hasExistingShadow,
                               runNonZeroCheck64(sbOut, memEntry));
@@ -1098,7 +1098,7 @@ void addSetMemG(IRSB* sbOut, IRExpr* guard, int size,
   storeDirty->guard = guard;
   storeDirty->mFx = Ifx_Modify;
   storeDirty->mAddr = mkU64((uintptr_t)shadowMemTable);
-  storeDirty->mSize = sizeof(ShadowMemEntry) * LARGE_PRIME;
+  storeDirty->mSize = sizeof(TableValueEntry) * LARGE_PRIME;
   addStmtToIRSB(sbOut, IRStmt_Dirty(storeDirty));
 }
 IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr){

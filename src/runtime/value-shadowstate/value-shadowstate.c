@@ -45,20 +45,23 @@ ResultUnion computedResult;
 
 ShadowTemp* shadowTemps[MAX_TEMPS];
 ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
-ShadowMemEntry* shadowMemTable[LARGE_PRIME];
+TableValueEntry* shadowMemTable[LARGE_PRIME];
 
 Stack* freedTemps[MAX_TEMP_SHADOWS];
 Stack* freedVals;
-Stack* memEntries;
+Stack* tableEntries;
 
 Word256 getBytes;
+inline TableValueEntry* mkTableEntry(void);
 
 void initValueShadowState(void){
   for(int i = 0; i < MAX_TEMP_SHADOWS; ++i){
     freedTemps[i] = mkStack();
   }
   freedVals = mkStack();
-  memEntries = mkStack();
+  tableEntries = mkStack();
+  valueCacheSingle = VG_(HT_construct)("value cache single-precision");
+  valueCacheDouble = VG_(HT_construct)("value cache double precision");
   initExprAllocator();
 }
 
@@ -427,7 +430,7 @@ ShadowTemp* dynamicLoad256(UWord memSrc){
 }
 VG_REGPARM(1) ShadowValue* getMemShadow(Addr64 addr){
   int key = addr % LARGE_PRIME;
-  for(ShadowMemEntry* node = shadowMemTable[key];
+  for(TableValueEntry* node = shadowMemTable[key];
       node != NULL; node = node->next){
     if (node->addr == addr){
       return node->val;
@@ -454,8 +457,8 @@ VG_REGPARM(3) void setMemShadowTemp(Addr64 memDest,
 }
 void removeMemShadow(Addr64 addr){
   int key = addr % LARGE_PRIME;
-  ShadowMemEntry* prevEntry = NULL;
-  for(ShadowMemEntry* node = shadowMemTable[key];
+  TableValueEntry* prevEntry = NULL;
+  for(TableValueEntry* node = shadowMemTable[key];
       node != NULL; node = node->next){
     if (node->addr == addr){
       if (prevEntry == NULL){
@@ -472,22 +475,26 @@ void removeMemShadow(Addr64 addr){
         VG_(printf)("\n");
       }
       disownShadowValue(node->val);
-      stack_push(memEntries, (void*)node);
+      stack_push(tableEntries, (void*)node);
       break;
     }
     prevEntry = node;
   }
 }
-VG_REGPARM(0) ShadowMemEntry* newShadowMemEntry(void){
-  return VG_(malloc)("memEntry", sizeof(ShadowMemEntry));
+VG_REGPARM(0) TableValueEntry* newTableValueEntry(void){
+  return VG_(malloc)("tableEntry", sizeof(TableValueEntry));
+}
+inline TableValueEntry* mkTableEntry(void){
+  TableValueEntry* newEntry;
+  if (stack_empty(tableEntries)){
+    newEntry = VG_(malloc)("tableEntry", sizeof(TableValueEntry));
+  } else {
+    newEntry = (void*)stack_pop(tableEntries);
+  }
+  return newEntry;
 }
 void addMemShadow(Addr64 addr, ShadowValue* val){
-  ShadowMemEntry* newEntry;
-  if (stack_empty(memEntries)){
-    newEntry = VG_(malloc)("memEntry", sizeof(ShadowMemEntry));
-  } else {
-    newEntry = (void*)stack_pop(memEntries);
-  }
+  TableValueEntry* newEntry = mkTableEntry();
   newEntry->addr = addr;
   newEntry->val = val;
   ownShadowValue(val);
@@ -528,6 +535,8 @@ void freeShadowValue(ShadowValue* val){
   if (!no_exprs){
     disownConcExpr(val->expr);
   }
+  VG_(HT_remove)(val->type == Ft_Single ? valueCacheSingle : valueCacheDouble,
+                 getDouble(val->real));
   stack_push_fast(freedVals, (void*)val);
 }
 
@@ -558,14 +567,30 @@ ShadowValue* mkShadowValueBare(FloatType type){
   result->ref_count = 1;
   return result;
 }
+VgHashTable* valueCacheSingle;
+VgHashTable* valueCacheDouble;
 inline
 ShadowValue* mkShadowValue(FloatType type, double value){
-  ShadowValue* result = mkShadowValueBare(type);
-  if (!no_reals){
-    setReal(result->real, value);
-  }
-  if (!no_exprs){
-    result->expr = mkLeafConcExpr(value);
+  TableValueEntry* existingEntry =
+    VG_(HT_lookup)(type == Ft_Single ? valueCacheSingle : valueCacheDouble,
+                   *(UWord*)&value);
+  ShadowValue* result = NULL;
+  if (existingEntry == NULL){
+    result = mkShadowValueBare(type);
+    if (!no_reals){
+      setReal(result->real, value);
+    }
+    if (!no_exprs){
+      result->expr = mkLeafConcExpr(value);
+    }
+    TableValueEntry* newEntry = mkTableEntry();
+    newEntry->val = result;
+    newEntry->addr = *(UWord*)&value;
+    VG_(HT_add_node)(type == Ft_Single ? valueCacheSingle : valueCacheDouble,
+                     newEntry);
+  } else {
+    result = existingEntry->val;
+    ownShadowValue(result);
   }
   return result;
 }

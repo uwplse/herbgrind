@@ -57,11 +57,11 @@
 
 #define LARGE_PRIME 1572869
 
-typedef struct _shadowMemEntry {
-  struct _shadowMemEntry* next;
+typedef struct _tableValueEntry {
+  struct _tableValueEntry* next;
   UWord addr;
   ShadowValue* val;
-} ShadowMemEntry;
+} TableValueEntry;
 
 typedef union {
   float argValuesF[4][8];
@@ -79,13 +79,15 @@ extern ResultUnion computedResult;
 
 extern ShadowTemp* shadowTemps[MAX_TEMPS];
 extern ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
-extern ShadowMemEntry* shadowMemTable[LARGE_PRIME];
+extern TableValueEntry* shadowMemTable[LARGE_PRIME];
 
 #define MAX_TEMP_SHADOWS 8
 
 extern Stack* freedTemps[MAX_TEMP_SHADOWS];
 extern Stack* freedVals;
-extern Stack* memEntries;
+extern Stack* tableEntries;
+extern VgHashTable* valueCacheSingle;
+extern VgHashTable* valueCacheDouble;
 
 typedef struct _Word256 {
   UWord bytes[4];
@@ -106,7 +108,7 @@ ShadowTemp* dynamicLoad32(UWord memSrc);
 ShadowTemp* dynamicLoad64(UWord memSrc);
 ShadowTemp* dynamicLoad128(UWord memSrc);
 ShadowTemp* dynamicLoad256(UWord memSrc);
-VG_REGPARM(0) ShadowMemEntry* newShadowMemEntry(void);
+VG_REGPARM(0) TableValueEntry* newTableValueEntry(void);
 VG_REGPARM(3) void setMemShadowTemp(Addr64 memDest, UWord size,
                                     ShadowTemp* st);
 VG_REGPARM(1) ShadowValue* getMemShadow(Addr64 memSrc);
