@@ -601,7 +601,7 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
                          const char* parent_func, Color curColor,
                          NodePos curPos, int max_depth){
   if (max_depth == 0){
-    printBBuf(buf, "_");
+    printBBuf(buf, " _");
   } else if (expr->type == Node_Leaf){
     if (expr->isConst){
       int i = 0;
