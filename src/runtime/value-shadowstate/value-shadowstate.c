@@ -535,8 +535,13 @@ void freeShadowValue(ShadowValue* val){
   if (!no_exprs){
     disownConcExpr(val->expr);
   }
-  VG_(HT_remove)(val->type == Ft_Single ? valueCacheSingle : valueCacheDouble,
-                 getDouble(val->real));
+  double value = getDouble(val->real);
+  TableValueEntry* entry =
+    VG_(HT_remove)(val->type == Ft_Single ? valueCacheSingle : valueCacheDouble,
+                   *(UWord*)&value);
+  if (entry != NULL){
+    stack_push(tableEntries, (void*)entry);
+  }
   stack_push_fast(freedVals, (void*)val);
 }
 
