@@ -93,8 +93,8 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st);
 VG_REGPARM(2) void dynamicPut128(Int tsDest, ShadowTemp* st);
 VG_REGPARM(2) ShadowTemp* dynamicGet64(Int tsSrc,
                                        UWord tsBytes);
-VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
-                                        UWord bytes1, UWord bytes2);
+VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc, UWord bytes1, UWord bytes2);
+ShadowTemp* dynamicGet(Int tsSrc, void* bytes, int size);
 VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, int size);
 ShadowTemp* dynamicLoad32(UWord memSrc);
 ShadowTemp* dynamicLoad64(UWord memSrc);
@@ -129,6 +129,7 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(double value);
 VG_REGPARM(1) ShadowTemp* mkShadowTempTwoSingles(UWord values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSinglesG(UWord guard, float* values);
+ShadowTemp* mkShadowTempValues(void* bytes, int num_values, FloatType type);
 ShadowValue* getTS(Int idx);
 VG_REGPARM(2) void printStoreValue(const char* dest_label, ShadowValue* val);
 void printStoreValueF(ShadowValue* val, const char* format, ...);

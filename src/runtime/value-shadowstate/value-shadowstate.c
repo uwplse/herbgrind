@@ -176,161 +176,65 @@ VG_REGPARM(2) void dynamicPut128(Int tsDest, ShadowTemp* st){
     ownShadowValue(val);
   }
 }
-VG_REGPARM(1) ShadowTemp* dynamicGet64(Int tsSrc, UWord tsBytes){
-  ShadowValue* firstValue = getTS(tsSrc);
-  if (firstValue == NULL){
-    ShadowValue* secondValue = getTS(tsSrc + sizeof(float));
-    if (secondValue == NULL || secondValue->type != Ft_Single){
-      return NULL;
-    }
-    ShadowTemp* temp = mkShadowTemp(2);
-    float firstValueBytes;
-    VG_(memcpy)(&firstValueBytes, &tsBytes, sizeof(float));
-    firstValue = mkShadowValue(Ft_Single, firstValueBytes);
-    if (PRINT_VALUE_MOVES){
-      VG_(printf)("Making value %p as part of dynamicGet64\n",
-                  firstValue);
-    }
-    temp->values[0] = firstValue;
-    temp->values[1] = secondValue;
-    ownShadowValue(secondValue);
-    if (PRINT_VALUE_MOVES){
-      VG_(printf)("Owning %p (new rc %lu) as part of dynamic get.\n",
-                  secondValue, secondValue->ref_count);
-    }
-    return temp;
-  } if (firstValue->type == Ft_Double){
-    ShadowTemp* temp = mkShadowTemp(1);
-    temp->values[0] = firstValue;
-    ownShadowValue(firstValue);
-    if (PRINT_VALUE_MOVES){
-      VG_(printf)("Owning %p (new rc %lu) as part of dynamic get.\n",
-                  firstValue, firstValue->ref_count);
-    }
-    return temp;
-  } else {
-    ShadowValue* secondValue = getTS(tsSrc + sizeof(float));
-    if (secondValue == NULL){
-      float secondValueBytes;
-      VG_(memcpy)(&secondValueBytes, (&tsBytes) + sizeof(float),
-                  sizeof(float));
-      secondValue = mkShadowValue(Ft_Single, secondValueBytes);
-      if (PRINT_VALUE_MOVES){
-        VG_(printf)("Making value %p as part of dynamicGet64\n",
-                    secondValue);
-      }
-    } else {
-      ownShadowValue(secondValue);
-      if (PRINT_VALUE_MOVES){
-        VG_(printf)("Owning %p (new rc %lu) as part of dynamic get.\n",
-                    secondValue, secondValue->ref_count);
-      }
-    }
-    ownShadowValue(firstValue);
-    if (PRINT_VALUE_MOVES){
-      VG_(printf)("Owning %p (new rc %lu) as part of dynamic get.\n",
-                  firstValue, firstValue->ref_count);
-    }
-    tl_assert(secondValue->type == Ft_Single);
-    ShadowTemp* temp = mkShadowTemp(2);
-    temp->values[0] = firstValue;
-    temp->values[1] = secondValue;
-    return temp;
-  }
+VG_REGPARM(2) ShadowTemp* dynamicGet64(Int tsSrc, UWord tsBytes){
+  return dynamicGet(tsSrc, &tsBytes, 8);
 }
+
 VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
                                         UWord bytes1,
                                         UWord bytes2){
-  ShadowTemp* firstHalf = dynamicGet64(tsSrc, bytes1);
-  ShadowTemp* secondHalf = dynamicGet64(tsSrc + sizeof(double), bytes2);
-  if (firstHalf == NULL && secondHalf == NULL){
-    return NULL;
-  } else if (firstHalf == NULL){
-    switch(secondHalf->num_vals){
-    case 1:
-      {
-        if (print_types){
-          VG_(printf)("Inferred type Doublex2 because "
-                      "second half had a single double value.\n");
-        }
-        double value;
-        VG_(memcpy)(&bytes1, &value, sizeof(double));
-        firstHalf = mkShadowTempOneDouble(value);
-      }
-      break;
-    case 2:
-      {
-        if (print_types){
-          VG_(printf)("Inferred type Singlex4 because "
-                      "second half had two single values.\n");
-        }
-        firstHalf = mkShadowTempTwoSingles(bytes1);
-      }
-      break;
-    default:
-      tl_assert(0);
-      return NULL;
-    }
-  } else if (secondHalf == NULL ||
-             secondHalf->num_vals != firstHalf->num_vals){
-    if (secondHalf != NULL){
-      disownShadowTemp(secondHalf);
-    }
-    switch(firstHalf->num_vals){
-    case 1:
-      {
-        double value;
-        VG_(memcpy)(&bytes2, &value, sizeof(double));
-        secondHalf = mkShadowTempOneDouble(value);
-        if (print_types){
-          VG_(printf)("Inferred type Doublex2 because "
-                      "first half had a single double value.\n");
-        }
-      }
-      break;
-    case 2:
-      {
-        if (print_types){
-          VG_(printf)("Inferred type Singlex4 because "
-                      "second half had two single values.\n");
-        }
-        secondHalf = mkShadowTempTwoSingles(bytes2);
-      }
-      break;
-    default:
-      tl_assert(0);
-      return NULL;
-    }
-  } else {
-    if (print_types){
-      if (firstHalf->num_vals == 1){
-        VG_(printf)("Inferred type Doublex2 because "
-                    "first half had a single double value.\n");
-      } else {
-        VG_(printf)("Inferred type Singlex4 because "
-                    "second half had two single values.\n");
-      }
-    }
-  }
-  ShadowTemp* result;
-  if (firstHalf->num_vals == 1 && secondHalf->num_vals == 1){
-    result = mkShadowTemp(2);
-    result->values[0] = firstHalf->values[0];
-    result->values[1] = secondHalf->values[0];
-  } else {
-    tl_assert(firstHalf->num_vals == 2 &&
-              secondHalf->num_vals == 2);
-    result = mkShadowTemp(4);
-    result->values[0] = firstHalf->values[0];
-    result->values[1] = firstHalf->values[1];
-    result->values[2] = secondHalf->values[0];
-    result->values[3] = secondHalf->values[1];
-  }
-  freeShadowTemp(firstHalf);
-  freeShadowTemp(secondHalf);
-  return result;
+  UWord bytes[] = {bytes1, bytes2};
+  return dynamicGet(tsSrc, bytes, 16);
 }
-VG_REGPARM(2) ShadowTemp* dynamicLoad(UWord memSrc, int size){
+
+VG_REGPARM(2) ShadowTemp* dynamicGet256(Int tsSrc,
+                                        Word256* bytes){
+  return dynamicGet(tsSrc, bytes, 32);
+}
+ShadowTemp* dynamicGet(Int tsSrc, void* bytes, int size){
+  if (size == 4){
+    ShadowTemp* result = mkShadowTemp(1);
+    ShadowValue* val = getTS(tsSrc);
+    if (val == NULL) return NULL;
+    tl_assert(val->type == Ft_Single);
+    result->values[0] = val;
+    ownShadowValue(result->values[0]);
+    return result;
+  } else if (size == 8 && getTS(tsSrc) != NULL && getTS(tsSrc)->type == Ft_Double){
+    ShadowTemp* result = mkShadowTemp(1);
+    result->values[0] = getTS(tsSrc);
+    ownShadowValue(result->values[0]);
+    return result;
+  }
+  ShadowTemp* halves[2];
+  for(int i = 0; i < 2; ++i){
+    halves[i] = dynamicGet(tsSrc + (size / 2) * i, ((float*)bytes) + (i * size / 8), size / 2);
+  }
+  if (halves[0] == NULL &&
+      halves[1] == NULL){
+    return NULL;
+  } else {
+    if (halves[0] == NULL){
+      halves[0] = mkShadowTempValues(bytes, halves[1]->num_vals,
+                                     halves[1]->values[0]->type);
+    } else if (halves[1] == NULL){
+      halves[1] = mkShadowTempValues((void*)(((float*)bytes) + size / 8),
+                                     halves[0]->num_vals,
+                                     halves[0]->values[0]->type);
+    }
+    ShadowTemp* result = mkShadowTemp(halves[1]->num_vals * 2);
+    for(int i = 0 ; i < halves[1]->num_vals; ++i){
+      result->values[i] = halves[0]->values[i];
+      result->values[i + halves[1]->num_vals] =
+        halves[1]->values[i];
+    }
+    for(int i = 0; i < 2; ++i){
+      freeShadowTemp(halves[i]);
+    }
+    return result;
+  }
+}
+VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, int size){
   switch(size){
   case 1:
     return dynamicLoad32(memSrc);
@@ -728,6 +632,15 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values){
                 result->values[0], result->values[1],
                 result->values[2], result->values[3],
                 result);
+  }
+  return result;
+}
+inline ShadowTemp* mkShadowTempValues(void* bytes, int num_values, FloatType type){
+  ShadowTemp* result = mkShadowTemp(num_values);
+  for(int i = 0; i < num_values; ++i){
+    result->values[i] =
+      mkShadowValue(type,
+                    type == Ft_Single ? ((float*)bytes)[i] : ((double*)bytes)[i]);
   }
   return result;
 }
