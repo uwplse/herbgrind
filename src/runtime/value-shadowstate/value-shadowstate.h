@@ -81,11 +81,16 @@ extern ShadowTemp* shadowTemps[MAX_TEMPS];
 extern ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
 extern ShadowMemEntry* shadowMemTable[LARGE_PRIME];
 
-#define MAX_TEMP_SHADOWS 4
+#define MAX_TEMP_SHADOWS 8
 
 extern Stack* freedTemps[MAX_TEMP_SHADOWS];
 extern Stack* freedVals;
 extern Stack* memEntries;
+
+typedef struct _Word256 {
+  UWord bytes[4];
+} Word256;
+extern Word256 getBytes;
 
 void initValueShadowState(void);
 VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries);
@@ -94,11 +99,13 @@ VG_REGPARM(2) void dynamicPut128(Int tsDest, ShadowTemp* st);
 VG_REGPARM(2) ShadowTemp* dynamicGet64(Int tsSrc,
                                        UWord tsBytes);
 VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc, UWord bytes1, UWord bytes2);
+VG_REGPARM(2) ShadowTemp* dynamicGet256(Int tsSrc, Word256* bytes);
 ShadowTemp* dynamicGet(Int tsSrc, void* bytes, int size);
 VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, int size);
 ShadowTemp* dynamicLoad32(UWord memSrc);
 ShadowTemp* dynamicLoad64(UWord memSrc);
 ShadowTemp* dynamicLoad128(UWord memSrc);
+ShadowTemp* dynamicLoad256(UWord memSrc);
 VG_REGPARM(0) ShadowMemEntry* newShadowMemEntry(void);
 VG_REGPARM(3) void setMemShadowTemp(Addr64 memDest, UWord size,
                                     ShadowTemp* st);

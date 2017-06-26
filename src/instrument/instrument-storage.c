@@ -524,7 +524,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
         addPrintG2(loadedNonNull, "for value from TS(%d)\n", mkU64(tsSrc));
       }
     }
-  } else if (src_size == 4){
+  } else if (src_size == 4 || src_size == 8){
     FloatType valType = inferTSType64(tsSrc);
     if (valType == Ft_NonFloat){
       addStoreTempNonFloat(sbOut, dest);
@@ -537,8 +537,8 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
     // result back to memory/threadstate with the values copied as
     // part of the operation, so keep an eye out for this.
     if (valType == Ft_Single){
-      IRExpr* vals[4];
-      for(int i = 0; i < 4; ++i){
+      IRExpr* vals[MAX_TEMP_SHADOWS];
+      for(int i = 0; i < src_size; ++i){
         Int src_addr = tsSrc + (i * sizeof(float));
         if (tsContext[src_addr] == Ft_Single){
           vals[i] = runGetTSVal(sbOut, src_addr);
@@ -555,15 +555,15 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
           vals[i] = runMkShadowVal(sbOut, Ft_Single, valExpr);
         }
       }
-      IRExpr* temp = runMkShadowTempValues(sbOut, 4, vals);
+      IRExpr* temp = runMkShadowTempValues(sbOut, src_size, vals);
       addStoreTemp(sbOut, temp, Ft_Single, dest);
       if (print_temp_moves){
         addPrint3("6. Making %p in %d ", temp, mkU64(dest));
         addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
       }
     } else if (valType == Ft_Double){
-      IRExpr* vals[2];
-      for(int i = 0; i < 2; ++i){
+      IRExpr* vals[MAX_TEMP_SHADOWS / 2];
+      for(int i = 0; i < (src_size / 2); ++i){
         Int src_addr = tsSrc + (i * sizeof(double));
         if (tsContext[src_addr] == Ft_Double){
           vals[i] = runGetTSVal(sbOut, src_addr);
@@ -579,17 +579,25 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
           vals[i] = runMkShadowVal(sbOut, Ft_Double, valExpr);
         }
       }
-      IRExpr* temp = runMkShadowTempValues(sbOut, 2, vals);
+      IRExpr* temp = runMkShadowTempValues(sbOut, (src_size / 2), vals);
       addStoreTemp(sbOut, temp, Ft_Double, dest);
       if (print_temp_moves){
         addPrint3("7. Making %p in %d ", temp, mkU64(dest));
         addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
       }
     } else if (valType == Ft_Unknown) {
-      IRExpr* loaded = runPureCCall64_3(sbOut, dynamicGet128,
-                                        mkU64(tsSrc),
-                                        runGet64C(sbOut, tsSrc),
-                                        runGet64C(sbOut, tsSrc + sizeof(double)));
+      IRExpr* loaded;
+      if (src_size == 4){
+        loaded = runPureCCall64_3(sbOut, dynamicGet128,
+                                          mkU64(tsSrc),
+                                          runGet64C(sbOut, tsSrc),
+                                          runGet64C(sbOut, tsSrc + sizeof(double)));
+      } else {
+        tl_assert(src_size == 8);
+        addStoreC(sbOut, runGet256C(sbOut, tsSrc), &getBytes);
+        loaded = runPureCCall64_2(sbOut, dynamicGet256, mkU64(tsSrc),
+                                  mkU64((uintptr_t)&getBytes));
+      }
       addStoreTempUnknown(sbOut, loaded, dest);
       if (print_temp_moves){
         IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, loaded);
@@ -636,6 +644,8 @@ void instrumentGetI(IRSB* sbOut, IRTemp dest,
                        runGetI64(sbOut, varOffset, constOffset + 1,
                                  arrayBase, numElems));
     addStoreTempUnknown(sbOut, temp, dest);
+  } else {
+    addStoreTempUnshadowed(sbOut, dest);
   }
 }
 void instrumentLoad(IRSB* sbOut, IRTemp dest,
@@ -774,7 +784,7 @@ IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
     }
   } else if (num_vals == 2 && valType == Ft_Double) {
     tl_assert(bytesType == Ity_V128);
-    addStoreC(sbOut, argExpr, computedArgs.argValues[0]); 
+    addStoreC(sbOut, argExpr, computedArgs.argValues[0]);
     result = runPureCCall64(sbOut, mkShadowTempTwoDoubles,
                           mkU64((uintptr_t)computedArgs.argValues[0]));
   } else if (num_vals == 2 && valType == Ft_Single) {
@@ -795,7 +805,7 @@ IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
   }
   return result;
 }
-IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard, 
+IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
                       IRExpr* argExpr,
                       FloatType valType, int num_vals){
   IRExpr* result;
@@ -815,7 +825,7 @@ IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
   } else if (num_vals == 2 && valType == Ft_Single){
     tl_assert(bytesType == Ity_I64);
     result = runDirtyG_1_1(sbOut, guard, mkShadowTempTwoSingles, argExpr);
-  } else if (num_vals == 2 && valType == Ft_Double){ 
+  } else if (num_vals == 2 && valType == Ft_Double){
     tl_assert(bytesType == Ity_V128);
     addStoreGC(sbOut, guard, argExpr, computedArgs.argValues[0]);
     result = runDirtyG_1_1(sbOut, guard,
@@ -983,7 +993,7 @@ QuickBucketResult quickGetBucketG(IRSB* sbOut, IRExpr* guard,
 }
 IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
                           int size, IRExpr* memSrc){
-  QuickBucketResult qresults[4];
+  QuickBucketResult qresults[MAX_TEMP_SHADOWS];
   IRExpr* anyNonTrivialChains = mkU1(False);
   IRExpr* allNull_64 = mkU64(1);
   for(int i = 0; i < size; ++i){

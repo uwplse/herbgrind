@@ -51,6 +51,8 @@ Stack* freedTemps[MAX_TEMP_SHADOWS];
 Stack* freedVals;
 Stack* memEntries;
 
+Word256 getBytes;
+
 void initValueShadowState(void){
   for(int i = 0; i < MAX_TEMP_SHADOWS; ++i){
     freedTemps[i] = mkStack();
@@ -242,6 +244,8 @@ VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, int size){
     return dynamicLoad64(memSrc);
   case 4:
     return dynamicLoad128(memSrc);
+  case 8:
+    return dynamicLoad256(memSrc);
   default:
     tl_assert(0);
     return NULL;
@@ -359,6 +363,63 @@ ShadowTemp* dynamicLoad128(UWord memSrc){
     result->values[1] = firstHalf->values[1];
     result->values[2] = secondHalf->values[0];
     result->values[3] = secondHalf->values[1];
+  }
+  freeShadowTemp(firstHalf);
+  freeShadowTemp(secondHalf);
+  return result;
+}
+ShadowTemp* dynamicLoad256(UWord memSrc){
+  ShadowTemp* firstHalf = dynamicLoad128(memSrc);
+  ShadowTemp* secondHalf = dynamicLoad128(memSrc + sizeof(double) * 2);
+  if (firstHalf == NULL && secondHalf == NULL){
+    return NULL;
+  } else if (firstHalf == NULL){
+    switch(secondHalf->num_vals){
+    case 2:
+      firstHalf = mkShadowTempOneDouble(*(double*)(void*)memSrc);
+      break;
+    case 4:
+      firstHalf = mkShadowTempTwoSingles(*(UWord*)(void*)memSrc);
+      break;
+    default:
+      tl_assert(0);
+      return NULL;
+    }
+  } else if (secondHalf == NULL ||
+             secondHalf->num_vals != firstHalf->num_vals){
+    if (secondHalf != NULL){
+      disownShadowTemp(secondHalf);
+    }
+    switch(firstHalf->num_vals){
+    case 2:
+      secondHalf = mkShadowTempOneDouble(*(double*)(void*)memSrc);
+      break;
+    case 4:
+      secondHalf = mkShadowTempTwoSingles(*(UWord*)(void*)memSrc);
+    default:
+      tl_assert(0);
+      return NULL;
+    }
+  }
+  ShadowTemp* result;
+  if (firstHalf->num_vals == 2 && secondHalf->num_vals == 2){
+    result = mkShadowTemp(4);
+    result->values[0] = firstHalf->values[0];
+    result->values[1] = firstHalf->values[1];
+    result->values[2] = secondHalf->values[0];
+    result->values[3] = secondHalf->values[1];
+  } else {
+    tl_assert(firstHalf->num_vals == 4 &&
+              secondHalf->num_vals == 4);
+    result = mkShadowTemp(8);
+    result->values[0] = firstHalf->values[0];
+    result->values[1] = firstHalf->values[1];
+    result->values[2] = firstHalf->values[2];
+    result->values[3] = firstHalf->values[3];
+    result->values[4] = secondHalf->values[0];
+    result->values[5] = secondHalf->values[1];
+    result->values[6] = secondHalf->values[2];
+    result->values[7] = secondHalf->values[3];
   }
   freeShadowTemp(firstHalf);
   freeShadowTemp(secondHalf);

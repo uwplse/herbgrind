@@ -65,6 +65,7 @@ int valueSize(IRSB* sbOut, int idx){
   case Ity_I32:
     return sizeof(float);
   case Ity_V128:
+  case Ity_V256:
     if (tempType(idx) == Ft_Single){
       return sizeof(float);
     } else if (tempType(idx) == Ft_Double){
@@ -87,6 +88,12 @@ int numTempValues(IRSB* sbOut, int idx){
       return 4;
     } else if (tempType(idx) == Ft_Double){
       return 2;
+    }
+  case Ity_V256:
+    if (tempType(idx) == Ft_Single){
+      return 8;
+    } else if (tempType(idx) == Ft_Double){
+      return 4;
     }
   default:
     VG_(printf)("%d\n", tempType(idx));
@@ -160,6 +167,8 @@ int typeSize(IRType type){
     return 2;
   case Ity_V128:
     return 4;
+  case Ity_V256:
+    return 8;
   default:
     return 1;
   }
@@ -579,7 +588,7 @@ FloatType resultPrecision(IROp op_code){
 int isFloatType(IRType type){
   return type == Ity_I32 || type == Ity_I64
     || type == Ity_F32 || type == Ity_F64
-    || type == Ity_V128;
+    || type == Ity_V128 || type == Ity_V256;
 }
 
 int isFloat(IRTypeEnv* env, IRTemp temp){

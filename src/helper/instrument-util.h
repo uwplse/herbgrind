@@ -72,6 +72,8 @@ IRExpr* runGetI(IRSB* sbOut,
   runGetC(sbOut, Ity_I64, addr_const)
 #define runGet32C(sbOut, addr_const)            \
   runGetC(sbOut, Ity_I32, addr_const)
+#define runGet256C(sbOut, addr_const)                                 \
+  runGetC(sbOut, Ity_V256, addr_const)
 #define runGetI64(sbOut, varOffset, constOffset, arrayBase, numElems) \
   runGetI(sbOut, varOffset, constOffset, arrayBase, numElems, Ity_I64)
 #define runGetI32(sbOut, varOffset, constOffset, arrayBase, numElems) \
