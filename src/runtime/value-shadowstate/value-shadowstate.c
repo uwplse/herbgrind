@@ -536,6 +536,7 @@ void freeShadowValue(ShadowValue* val){
     disownConcExpr(val->expr);
   }
   double value = getDouble(val->real);
+  if (value == 0.0) value = 0.0;
   TableValueEntry* entry =
     VG_(HT_remove)(val->type == Ft_Single ? valueCacheSingle : valueCacheDouble,
                    *(UWord*)&value);
@@ -576,6 +577,7 @@ VgHashTable* valueCacheSingle;
 VgHashTable* valueCacheDouble;
 inline
 ShadowValue* mkShadowValue(FloatType type, double value){
+  if (value == 0.0) value = 0.0;
   TableValueEntry* existingEntry =
     VG_(HT_lookup)(type == Ft_Single ? valueCacheSingle : valueCacheDouble,
                    *(UWord*)&value);
