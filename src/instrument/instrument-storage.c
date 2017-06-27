@@ -173,7 +173,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
           addPrintG3(oldValNonNull,
                      "Disowning %p "
                      "from thread state overwrite at %d (dynamic)\n",
-                     oldVal, mkU64(tsDest));
+                     oldVal, mkU64(tsDest + (i * sizeof(float))));
         }
         addSVDisown(sbOut, oldVal);
       }
