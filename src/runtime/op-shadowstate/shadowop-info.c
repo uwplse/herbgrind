@@ -109,11 +109,11 @@ char* getAddrString(Addr addr){
   if (print_object_files){
     const HChar* objname;
     if (!VG_(get_objname)(addr, &objname)){
-      objname = "Uknown Object";
+      objname = "Unknown Object";
     }
     printBBuf(buf, " in %s", objname);
   }
-  char* result = VG_(malloc)("addr string", MAX_ADDR_STRING_SIZE - buf->bound);
+  char* result = VG_(malloc)("addr string", MAX_ADDR_STRING_SIZE - buf->bound + 1);
   VG_(strcpy)(result, _buf);
   return result;
 }
