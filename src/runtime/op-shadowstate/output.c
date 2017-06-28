@@ -117,16 +117,9 @@ void writeOutput(void){
                 markInfo->eagg.num_evals);
     } else {
       printBBuf(buf, "Result");
-      printBBuf(buf, " in %s at %s:%u (address %lX)",
-                fnname, src_filename, src_line);
-      if (print_object_files){
-        const char* objfile_name;
-        if (!VG_(get_objname)(markInfo->addr, &objfile_name)){
-          objfile_name = "Unknown Object";
-        }
-        printBBuf(buf, " %s");
-      }
-      printBBuf(buf, "\n");
+      char* addrString = getAddrString(markInfo->addr);
+      printBBuf(buf, " @ %s\n", addrString);
+      VG_(free)(addrString);
       if (output_mark_exprs && !no_exprs){
         printBBuf(buf, "  Full expr:\n");
         int numVars;
@@ -223,15 +216,9 @@ void writeOutput(void){
                 intMarkInfo->num_hits);
     } else {
       printBBuf(buf, "%s", intMarkInfo->markType);
-      printBBuf(buf, " in %s at %s:%u (address %lX)",
-                fnname, src_filename, src_line,
-                intMarkInfo->addr);
-      if (print_object_files){
-        printBBuf(buf,
-                  "  %s",
-                  objname);
-      }
-      printBBuf(buf, "\n");
+      char* addrString = getAddrString(intMarkInfo->addr);
+      printBBuf(buf, " @ %s\n", addrString);
+      VG_(free)(addrString);
       if (output_mark_exprs && !no_exprs){
         printBBuf(buf, "Full exprs:\n");
         for(int i = 0; i < intMarkInfo->nargs; ++i){
@@ -377,11 +364,6 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 "   %s",
                 addrString);
       VG_(free)(addrString);
-      if (print_object_files){
-        printBBuf(buf,
-                  " %s",
-                  objname);
-      }
       printBBuf(buf, "\n");
       printBBuf(buf,
                 "   %f bits average error\n"
