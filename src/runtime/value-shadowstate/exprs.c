@@ -286,7 +286,7 @@ ConcGraft* popConcGraftStack(int count){
   }
 }
 VG_REGPARM(1) void freeBranchConcExpr(ConcExpr* expr){
-  stack_push(branchCExprs[expr->branch.nargs], (void*)expr);
+  stack_push(branchCExprs[expr->branch.nargs - 1], (void*)expr);
   pushConcGraftStack(expr->grafts, expr->ngrafts);
 }
 void recursivelyDisownConcExpr(ConcExpr* expr, int depth){
