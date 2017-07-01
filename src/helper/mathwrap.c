@@ -69,6 +69,15 @@
     args[0] = x;                                           \
     HERBGRIND_PERFORM_OP(opname, &result, args);           \
     return result;                                         \
+  }                                                             \
+  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x);    \
+  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x){    \
+    printf("Wrapping op "#fnname"\n");                      \
+    double result;                                         \
+    double args[1];                                        \
+    args[0] = x;                                           \
+    HERBGRIND_PERFORM_OP(opname, &result, args);           \
+    return result;                                         \
   }
 
 // This macro is defined in include/hg_mathreplace_funcs.h, and
@@ -94,6 +103,15 @@ WRAP_UNARY_OPS
   }                                                                     \
   double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y);  \
   double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y){  \
+    double result;                                               \
+    double args[2];                                              \
+    args[0] = x;                                                 \
+    args[1] = y;                                                 \
+    HERBGRIND_PERFORM_OP(opname, &result, args);                 \
+    return result;                                               \
+  }                                                                 \
+  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x, double y);  \
+  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x, double y){  \
     double result;                                               \
     double args[2];                                              \
     args[0] = x;                                                 \
@@ -126,6 +144,16 @@ WRAP_BINARY_OPS
   }                                                                     \
   double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y, double z); \
   double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y, double z){ \
+    double result;                                                      \
+    double args[3];                                                     \
+    args[0] = x;                                                        \
+    args[1] = y;                                                        \
+    args[2] = z;                                                        \
+    HERBGRIND_PERFORM_OP(opname, &result, args);                        \
+    return result;                                                      \
+  }                                                                     \
+  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x, double y, double z); \
+  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x, double y, double z){ \
     double result;                                                      \
     double args[3];                                                     \
     args[0] = x;                                                        \

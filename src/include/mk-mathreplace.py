@@ -40,10 +40,7 @@ class Op(object):
             self.mpfr_func = "mpfr_{}".format(func)
         else:
             self.mpfr_func = mpfr_func
-        if (native_func == None):
-            self.native_func = func
-        else:
-            self.native_func = native_func
+        self.native_func = native_func
 
 def write_mathreplace_funcs(ops, fname):
     with open(fname, "w") as f:
@@ -203,8 +200,38 @@ def addOp(name, plain_name, nargs,
     mpfr_fn = "mpfr_" + name
     if (mpfr_func != None):
         mpfr_fn = mpfr_func
+    if native_func == None:
+        native_func = name
 
     ops.append(Op(name, plain_name, nargs,
+                  mpfr_func=mpfr_fn,
+                  needsround=needsRound,
+                  native_func=native_func))
+    ops.append(Op("ZuZu"+name, plain_name, nargs,
+                  mpfr_func=mpfr_fn,
+                  needsround=needsRound,
+                  native_func=native_func))
+    ops.append(Op("ZuZu"+name+"Zuavx", plain_name, nargs,
+                  mpfr_func=mpfr_fn,
+                  needsround=needsRound,
+                  native_func=native_func))
+    ops.append(Op("ZuZu"+name+"Zufma4", plain_name, nargs,
+                  mpfr_func=mpfr_fn,
+                  needsround=needsRound,
+                  native_func=native_func))
+    ops.append(Op("ZuZuieee754Zu"+name, plain_name, nargs,
+                  mpfr_func=mpfr_fn,
+                  needsround=needsRound,
+                  native_func=native_func))
+    ops.append(Op("ZuZuieee754Zu"+name+"Zuavx", plain_name, nargs,
+                  mpfr_func=mpfr_fn,
+                  needsround=needsRound,
+                  native_func=native_func))
+    ops.append(Op("ZuZuieee754Zu"+name+"Zusse2", plain_name, nargs,
+                  mpfr_func=mpfr_fn,
+                  needsround=needsRound,
+                  native_func=native_func))
+    ops.append(Op("ZuZuieee754Zu"+name+"Zufma4", plain_name, nargs,
                   mpfr_func=mpfr_fn,
                   needsround=needsRound,
                   native_func=native_func))
@@ -284,14 +311,20 @@ addOp("round", "round", 1, needsRound=False)
 addOp("trunc", "truncate", 1, needsRound=False)
 
 addOp("exp", "exponentiate", 1)
-addOp("__ieee754_exp_avx", "exponentiate", 1,
+addOp("ZuZuexp1", "exponentiate", 1,
       mpfr_func="mpfr_exp", native_func="exp")
+
 addOp("exp2", "base-two exponentiate", 1)
 addOp("expm1", "exponentiate minus one", 1)
+
 addOp("log", "log", 1)
-addOp("__ieee754_log_avx", "log", 1,
+addOp("ZuZulogZufinite", "log", 1,
       mpfr_func="mpfr_log", native_func="log")
+
 addOp("log10", "log base ten", 1)
+addOp("ZuZulog10Zufinite", "log", 1,
+      mpfr_func="mpfr_log10", native_func="log10")
+
 addOp("log1p", "plus one log", 1)
 addOp("log2", "log base two", 1)
 
@@ -319,11 +352,13 @@ addOp("acosh", "hyperbolic arc cosine", 1)
 addOp("atanh", "hyperbolic arc tangent", 1)
 
 addOp("atan2", "arc tangent (two arguments)", 2)
-addOp("__ieee754_atan2_avx", "arc tangent (two arguments)", 2,
-      mpfr_func="mpfr_atan2", native_func="atan2")
 addOp("hypot", "hypotenuse", 2)
 
 addOp("pow", "power", 2)
+addOp("ZuZupowZufinite", "power", 2,
+      mpfr_func="mpfr_pow", native_func="pow")
+addOp("slowpow", "power", 2,
+      mpfr_func="mpfr_pow", native_func="pow")
 addOp("fmod", "modulus", 2)
 addOp("copysign", "copy sign", 2)
 addOp("fdim", "positive difference", 2, mpfr_func="mpfr_dim")
