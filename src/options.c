@@ -66,6 +66,7 @@ Bool sound_simplify = False;
 Bool shortmark_all_exprs = False;
 Bool mark_on_escape = True;
 Bool compensation_detection = True;
+Bool only_improvable = False;
 
 Bool no_exprs = False;
 Bool no_influences = False;
@@ -100,6 +101,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--expr-colors", expr_colors, True) {}
   else if VG_XACT_CLO(arg, "--output-mark-exprs", output_mark_exprs, True) {}
   else if VG_XACT_CLO(arg, "--shortmark-all-exprs", shortmark_all_exprs, True) {}
+  else if VG_XACT_CLO(arg, "--only-improvable", only_improvable, True) {}
   else if VG_XACT_CLO(arg, "--start-off", running_depth, 0) {}
   else if VG_XACT_CLO(arg, "--always-on", always_on, True) {}
   else if VG_XACT_CLO(arg, "--output-sexp", output_sexp, True) {}

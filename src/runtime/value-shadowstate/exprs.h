@@ -109,6 +109,8 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr);
 void pushConcGraftStack(ConcGraft* graft, int count);
 ConcGraft* popConcGraftStack(int count);
 
+int hasRepeatedVars(SymbExpr* expr);
+
 void ppEquivGroup(Group group);
 void ppEquivGroups(GroupList groups);
 

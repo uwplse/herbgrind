@@ -69,5 +69,6 @@ void dedupAddInfluencesToList(InfluenceList* info, InfluenceList influences);
 void printMarkInfo(MarkInfo* info);
 int isSubexpr(SymbExpr* needle, SymbExpr* haystack, int depth);
 InfluenceList filterInfluenceSubexprs(InfluenceList influences);
+InfluenceList filterUnimprovableInfluences(InfluenceList influences);
 
 #endif

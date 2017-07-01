@@ -471,6 +471,16 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
   }
   return result;
 }
+
+int hasRepeatedVars(SymbExpr* expr){
+  tl_assert(expr->type == Node_Branch);
+  GroupList trimmedGroups =
+    groupsWithoutNonVars(expr, expr->branch.groups);
+  int result = numRepeatedVars(expr, trimmedGroups);
+  freeXA(GroupList)(trimmedGroups);
+  return result;
+}
+
 const char* opSym(ShadowOpInfo* op){
   if (op->op_code == 0x0){
     return getWrappedName(op->op_type);

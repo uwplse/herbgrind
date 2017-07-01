@@ -67,6 +67,7 @@ extern Bool sound_simplify;
 extern Bool shortmark_all_exprs;
 extern Bool mark_on_escape;
 extern Bool compensation_detection;
+extern Bool only_improvable;
 
 extern Bool no_exprs;
 extern Bool no_influences;

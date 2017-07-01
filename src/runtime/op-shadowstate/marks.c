@@ -184,3 +184,16 @@ InfluenceList filterInfluenceSubexprs(InfluenceList influences){
   }
   return result;
 }
+
+InfluenceList filterUnimprovableInfluences(InfluenceList influences){
+  InfluenceList result = NULL;
+  for(InfluenceList curNode = influences;
+      curNode != NULL;
+      curNode = curNode->next){
+    ShadowOpInfo* influence = curNode->item;
+    if (hasRepeatedVars(influence->expr)){
+      lpush(InfluenceList)(&result, influence);
+    }
+  }
+  return result;
+}

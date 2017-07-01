@@ -144,7 +144,11 @@ void writeOutput(void){
     unsigned int entryLen = ENTRY_BUFFER_SIZE - buf->bound;
     VG_(write)(fileD, _buf, entryLen);
 
-    writeInfluences(fileD, filterInfluenceSubexprs(markInfo->influences));
+    InfluenceList filteredInfluences = filterInfluenceSubexprs(markInfo->influences);
+    if (only_improvable){
+      filteredInfluences = filterUnimprovableInfluences(filteredInfluences);
+    }
+    writeInfluences(fileD, filteredInfluences);
     if (output_sexp){
       char endparens[] = "  )\n";
       VG_(write)(fileD, endparens, sizeof(endparens) - 1);
@@ -246,7 +250,11 @@ void writeOutput(void){
     unsigned int entryLen = ENTRY_BUFFER_SIZE - buf->bound;
     VG_(write)(fileD, _buf, entryLen);
 
-    writeInfluences(fileD, filterInfluenceSubexprs(intMarkInfo->influences));
+    InfluenceList filteredInfluences = filterInfluenceSubexprs(intMarkInfo->influences);
+    if (only_improvable){
+      filteredInfluences = filterUnimprovableInfluences(filteredInfluences);
+    }
+    writeInfluences(fileD, filteredInfluences);
     if (output_sexp){
       char endparens[] = "  )\n";
       VG_(write)(fileD, endparens, sizeof(endparens) - 1);
