@@ -339,13 +339,13 @@ void recursivelyOwnConcExpr(ConcExpr* expr, int depth){
 ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
                            int nargs, ConcExpr** args){
   ConcExpr* result;
-  if (stack_empty(branchCExprs[nargs])){
+  if (stack_empty(branchCExprs[nargs-1])){
     result = VG_(malloc)("expr", sizeof(ConcExpr));
     result->branch.args = VG_(malloc)("expr args", sizeof(ConcExpr*) * nargs);
     result->branch.nargs = nargs;
     result->type = Node_Branch;
   } else {
-    result = (void*)stack_pop(branchCExprs[nargs]);
+    result = (void*)stack_pop(branchCExprs[nargs-1]);
   }
   // We'll do ownership stuff at the end, leave it at 0 refs for now.
   result->ref_count = 0;
