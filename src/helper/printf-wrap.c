@@ -33,8 +33,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-int VG_WRAP_FUNCTION_ZU(VG_Z_LIBC_SONAME, printf)(const char* format, ...);
-int VG_WRAP_FUNCTION_ZU(VG_Z_LIBC_SONAME, printf)(const char* format, ...){
+int VG_REPLACE_FUNCTION_ZU(VG_Z_LIBC_SONAME, printf)(const char* format, ...);
+int VG_REPLACE_FUNCTION_ZU(VG_Z_LIBC_SONAME, printf)(const char* format, ...){
   va_list args;
   va_start(args, format);
   for (const char* c = format; *c != '\0'; c++){
