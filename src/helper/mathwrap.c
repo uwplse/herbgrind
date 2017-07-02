@@ -72,7 +72,6 @@
   }                                                             \
   double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x);    \
   double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x){    \
-    printf("Wrapping op "#fnname"\n");                      \
     double result;                                         \
     double args[1];                                        \
     args[0] = x;                                           \

@@ -481,6 +481,30 @@ int hasRepeatedVars(SymbExpr* expr){
   return result;
 }
 
+SymbExpr* varSwallow(SymbExpr* expr){
+  for(int i = 0; i < expr->branch.groups->size; ++i){
+    Group curGroup = expr->branch.groups->data[i];
+    int num_valid_group_members = 0;
+    for(Group curNode = curGroup; curNode != NULL; curNode = curNode->next){
+      SymbExpr** target = symbGraftPosGetRef(&expr, curNode->item);
+      if (target == NULL) continue;
+      tl_assert(*target != NULL);
+      num_valid_group_members ++;
+    }
+    if (num_valid_group_members > 1){
+      for(Group curNode = curGroup; curNode != NULL; curNode = curNode->next){
+        SymbExpr** target = symbGraftPosGetRef(&expr, curNode->item);
+        if (target == NULL) continue;
+        if ((*target)->type == Node_Leaf) continue;
+        if ((*target)->isConst) continue;
+        *target =
+          mkFreshSymbolicLeaf(0, (*target)->constVal);
+      }
+    }
+  }
+  return expr;
+}
+
 const char* opSym(ShadowOpInfo* op){
   if (op->op_code == 0x0){
     return getWrappedName(op->op_type);

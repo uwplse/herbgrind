@@ -434,6 +434,20 @@ SymbExpr* symbGraftPosGet(SymbExpr* expr, NodePos pos){
   }
   return curExpr;
 }
+SymbExpr** symbGraftPosGetRef(SymbExpr** expr, NodePos pos){
+  SymbExpr** curExpr = expr;
+  for(int i = 0; i < pos->len; ++i){
+    if ((*curExpr)->type == Node_Leaf){
+      return NULL;
+    }
+    if ((*curExpr)->ngrafts <= pos->data[i]){
+      return NULL;
+    }
+    SymbGraft curGraft = (*curExpr)->grafts[pos->data[i]];
+    curExpr = &(curGraft.parent->branch.args[curGraft.childIndex]);
+  }
+  return curExpr;
+}
 
 Word cmp_position(const void* node1, const void* node2){
   const VarMapEntry* entry1 = (const VarMapEntry*)node1;
