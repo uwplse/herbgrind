@@ -33,6 +33,7 @@
 #include "pub_tool_machine.h"
 #include "pub_tool_libcprint.h"
 #include "pub_tool_mallocfree.h"
+#include "pub_tool_hashtable.h"
 
 #include "../helper/instrument-util.h"
 #include "../helper/debug.h"
@@ -44,6 +45,27 @@
 
 #include "instrument-storage.h"
 #include "ownership.h"
+
+VgHashTable* opInfoTable = NULL;
+
+typedef struct _opInfoEntry {
+  struct _opInfoEntry* next;
+  UWord addr;
+  IROp op_code;
+  ShadowOpInfo* info;
+} OpInfoEntry;
+
+long int cmpOpInfoEntry(const void* node1, const void* node2);
+long int cmpOpInfoEntry(const void* node1, const void* node2){
+  const OpInfoEntry* entry1 = (const OpInfoEntry*)node1;
+  const OpInfoEntry* entry2 = (const OpInfoEntry*)node2;
+  if (entry1->addr == entry2->addr &&
+      entry1->op_code == entry2->op_code){
+    return 0;
+  } else {
+    return 1;
+  }
+}
 
 void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                           int nargs, IRExpr** argExprs,
@@ -73,8 +95,23 @@ IRExpr* runShadowOp(IRSB* sbOut, IRExpr* guard,
                     Addr curAddr, Addr block_addr,
                     int nargs, IRExpr** argExprs,
                     IRExpr* result){
-  ShadowOpInfo* info = mkShadowOpInfo(op_code, curAddr,
-                                      block_addr, nargs);
+  if (opInfoTable == NULL){
+    opInfoTable = VG_(HT_construct)("Operation Info Table");
+  }
+  OpInfoEntry key = {.addr = curAddr, .op_code = op_code};
+  OpInfoEntry* existingEntry = VG_(HT_gen_lookup)(opInfoTable, &key, cmpOpInfoEntry);
+  ShadowOpInfo* info;
+  if (existingEntry == NULL){
+    info = mkShadowOpInfo(op_code, curAddr,
+                          block_addr, nargs);
+    OpInfoEntry* newEntry = VG_(malloc)("op info entry", sizeof(OpInfoEntry));
+    newEntry->addr = curAddr;
+    newEntry->op_code = op_code;
+    newEntry->info = info;
+    VG_(HT_add_node)(opInfoTable, newEntry);
+  } else {
+    info = existingEntry->info;
+  }
   for(int i = 0; i < nargs; ++i){
     addStoreC(sbOut, argExprs[i],
               (uintptr_t)
