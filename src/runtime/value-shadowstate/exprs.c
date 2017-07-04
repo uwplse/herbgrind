@@ -36,6 +36,7 @@
 #include "pub_tool_oset.h"
 #include "../../helper/ir-info.h"
 #include "../../helper/bbuf.h"
+#include "../../helper/runtime-util.h"
 #include "../shadowop/symbolic-op.h"
 #include "../shadowop/mathreplace.h"
 #include <math.h>
@@ -481,24 +482,75 @@ int hasRepeatedVars(SymbExpr* expr){
   return result;
 }
 
+int isUnderneathGroupMember(NodePos position, Group group);
+int isUnderneathGroupMember(NodePos position, Group group){
+  for(Group curNode = group; curNode != NULL; curNode = curNode->next){
+    NodePos memberPosition = curNode->item;
+    if (position->len <= memberPosition->len) continue;
+    int isUnderneath = 1;
+    for(int i = 0; i < memberPosition->len; ++i){
+      if (position->data[i] != memberPosition->data[i]){
+        isUnderneath = 0;
+        break;
+      }
+    }
+    if (!isUnderneath) {
+      continue;
+    }
+    return 1;
+  }
+  return 0;
+}
+
+Group pruneGroupToTop(Group group);
+Group pruneGroupToTop(Group group){
+  Group result = NULL;
+  for(Group curNode = group; curNode != NULL; curNode = curNode->next){
+    if (!isUnderneathGroupMember(curNode->item, group)){
+      lpush(Group)(&result, curNode->item);
+    }
+  }
+  return result;
+}
+
 SymbExpr* varSwallow(SymbExpr* expr){
   for(int i = 0; i < expr->branch.groups->size; ++i){
-    Group curGroup = expr->branch.groups->data[i];
+    Group curGroup = pruneGroupToTop(expr->branch.groups->data[i]);
     int num_valid_group_members = 0;
+    int num_nontrivial_group_members = 0;
     for(Group curNode = curGroup; curNode != NULL; curNode = curNode->next){
-      SymbExpr** target = symbGraftPosGetRef(&expr, curNode->item);
+      SymbExpr** target = symbExprPosGetRef(&expr, curNode->item);
       if (target == NULL) continue;
       tl_assert(*target != NULL);
       num_valid_group_members ++;
     }
-    if (num_valid_group_members > 1){
+    for(int j = 0; j < expr->branch.groups->size; ++j){
+      if (i == j) continue;
+      Group otherGroup = expr->branch.groups->data[j];
+      int num_members_underneath_cur_group = 0;
+      int num_other_valid_group_members = 0;
+      for(Group otherNode = otherGroup; otherNode != NULL; otherNode = otherNode->next){
+        SymbExpr** target = symbExprPosGetRef(&expr, otherNode->item);
+        if (target == NULL) continue;
+        if ((*target)->isConst) continue;
+        num_other_valid_group_members++;
+        if (isUnderneathGroupMember(otherNode->item, curGroup)){
+          num_members_underneath_cur_group++;
+        }
+      }
+      if (num_members_underneath_cur_group > 0 &&
+          num_members_underneath_cur_group < num_other_valid_group_members){
+        num_nontrivial_group_members++;
+      }
+    }
+    if (num_valid_group_members > 1 &&
+        (num_nontrivial_group_members < 1 || unsound_var_swallow)){
       for(Group curNode = curGroup; curNode != NULL; curNode = curNode->next){
-        SymbExpr** target = symbGraftPosGetRef(&expr, curNode->item);
+        SymbExpr** target = symbExprPosGetRef(&expr, curNode->item);
         if (target == NULL) continue;
         if ((*target)->type == Node_Leaf) continue;
-        if ((*target)->isConst) continue;
         *target =
-          mkFreshSymbolicLeaf(0, (*target)->constVal);
+          mkFreshSymbolicLeaf((*target)->isConst, (*target)->constVal);
       }
     }
   }
@@ -762,7 +814,7 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
       }
     }
     printBBuf(buf, " ");
-    
+
     const char* fnname;
     if (!(VG_(get_fnname)(expr->branch.op->op_addr, &fnname))){
       fnname = "none";

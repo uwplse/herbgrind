@@ -434,7 +434,7 @@ SymbExpr* symbGraftPosGet(SymbExpr* expr, NodePos pos){
   }
   return curExpr;
 }
-SymbExpr** symbGraftPosGetRef(SymbExpr** expr, NodePos pos){
+SymbExpr** symbExprPosGetRef(SymbExpr** expr, NodePos pos){
   SymbExpr** curExpr = expr;
   for(int i = 0; i < pos->len; ++i){
     if ((*curExpr)->type == Node_Leaf){
@@ -443,8 +443,7 @@ SymbExpr** symbGraftPosGetRef(SymbExpr** expr, NodePos pos){
     if ((*curExpr)->ngrafts <= pos->data[i]){
       return NULL;
     }
-    SymbGraft curGraft = (*curExpr)->grafts[pos->data[i]];
-    curExpr = &(curGraft.parent->branch.args[curGraft.childIndex]);
+    curExpr = &((*curExpr)->branch.args[pos->data[i]]);
   }
   return curExpr;
 }

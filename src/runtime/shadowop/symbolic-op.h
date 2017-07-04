@@ -75,6 +75,6 @@ Word cmp_value(const void* node1, const void* node2);
 
 ConcExpr* concGraftPosGet(ConcExpr* expr, NodePos pos);
 SymbExpr* symbGraftPosGet(SymbExpr* expr, NodePos pos);
-SymbExpr** symbGraftPosGetRef(SymbExpr** expr, NodePos pos);
+SymbExpr** symbExprPosGetRef(SymbExpr** expr, NodePos pos);
 Word cmp_position(const void* node1, const void* node2);
 #endif
