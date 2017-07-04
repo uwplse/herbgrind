@@ -638,23 +638,8 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
     printBBuf(buf, " _");
   } else if (expr->type == Node_Leaf){
     if (expr->isConst){
-      int i = 0;
-      double val = expr->constVal;
-      if (val > 0 && val < 1){
-        while(val < 1){
-          val *= 10;
-          i++;
-        }
-        printBBuf(buf, " %fe-%d", val, i);
-      } else if (val < 0 && val > -1){
-        while(val > -1){
-          val *= 10;
-          i++;
-        }
-        printBBuf(buf, " %fe-%d", val, i);
-      } else {
-        printBBuf(buf, " %f", val);
-      }
+      printBBuf(buf, " ");
+      printBBufFloat(buf, expr->constVal);
     } else {
       printBBuf(buf, " %s", getVar(lookupVar(varMap, curPos)));
     }

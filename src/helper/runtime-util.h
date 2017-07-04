@@ -31,7 +31,10 @@
 #define _RUNTIME_UTIL_H
 
 #include "pub_tool_basics.h"
+#include "bbuf.h"
 
 Addr getCallAddr(void);
+void printBBufFloat(BBuf* buf, double value);
+void ppFloat(double value);
 
 #endif

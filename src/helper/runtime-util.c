@@ -32,6 +32,7 @@
 #include "pub_tool_threadstate.h"
 #include "pub_tool_debuginfo.h"
 #include "pub_tool_libcbase.h"
+#include "pub_tool_libcprint.h"
 
 #define NCALLFRAMES 5
 Addr getCallAddr(void){
@@ -56,4 +57,42 @@ Addr getCallAddr(void){
     return addr;
   }
   return 0;
+}
+
+void printBBufFloat(BBuf* buf, double val){
+  int i = 0;
+  if (val > 0 && val < 1){
+    while (val < 1) {
+      val *= 10;
+      i++;
+    }
+    printBBuf(buf, "%fe-%d", val, i);
+  } else if (val < 0 && val > -1){
+    while (val > -1) {
+      val *= 10;
+      i++;
+    }
+    printBBuf(buf, "%fe-%d", val, i);
+  } else {
+    printBBuf(buf, "%f", val);
+  }
+}
+
+void ppFloat(double val){
+  int i = 0;
+  if (val > 0 && val < 1){
+    while (val < 1) {
+      val *= 10;
+      i++;
+    }
+    VG_(printf)("%fe-%d", val, i);
+  } else if (val < 0 && val > -1){
+    while (val > -1) {
+      val *= 10;
+      i++;
+    }
+    VG_(printf)("%fe-%d", val, i);
+  } else {
+    VG_(printf)("%f", val);
+  }
 }
