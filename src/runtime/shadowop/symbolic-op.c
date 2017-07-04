@@ -274,7 +274,7 @@ void getGrouped(GroupList groupList, VgHashTable* valMap,
             if (childItem->item->len <
                 max_expr_block_depth){
               lpush(Group)(&newGroup,
-                           appendPos(curPos, childItem->item));
+                           appendPos(graftPos, childItem->item));
             }
           }
           XApush(GroupList)(groupList, newGroup);
