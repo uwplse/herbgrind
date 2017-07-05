@@ -127,8 +127,16 @@ ShadowTemp* getArg(int argIdx, int numChannels, FloatType argPrecision,
         computedArgs.argValuesF[argIdx][j];
       result->values[j] =
         mkShadowValue(argPrecision, value);
+      if (PRINT_VALUE_MOVES){
+        VG_(printf)("Making shadow value %p for argument in t%d.\n",
+                    result->values[j], argTemp);
+      }
     }
     if (argTemp != -1){
+      if (PRINT_TEMP_MOVES){
+        VG_(printf)("Storing shadow temp %p at t%d for argument\n",
+                    result, argTemp);
+      }
       shadowTemps[argTemp] = result;
     }
     return result;

@@ -87,6 +87,7 @@ void hg_print_usage(void);
 void hg_print_debug_usage(void);
 #define RUNNING (running_depth > 0)
 #define PRINT_VALUE_MOVES (print_value_moves && (RUNNING || always_on))
+#define PRINT_TEMP_MOVES (print_temp_moves && (RUNNING || always_on))
 #define PRINT_IN_BLOCKS (print_in_blocks && (RUNNING || always_on))
 #define PRINT_OUT_BLOCKS (print_out_blocks && (RUNNING || always_on))
 #define PRINT_IN_VEXST (print_in_vexst && (RUNNING || always_on))
