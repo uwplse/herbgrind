@@ -67,6 +67,15 @@ double getDouble(Real real){
   #endif
 }
 
+int isNaN(Real real){
+  if (no_reals) return 0.0;
+  #ifdef USE_MPFR
+  return mpfr_nan_p(real->mpfr_val);
+  #else
+  return mpf_nan_p(real->mpfr_val);
+  #endif
+}
+
 void copyReal(Real src, Real dest){
   #ifdef USE_MPFR
   mpfr_set(dest->mpfr_val, src->mpfr_val, MPFR_RNDN);

@@ -52,6 +52,7 @@ Real mkReal(void);
 void setReal(Real r, double bytes);
 
 double getDouble(Real real);
+int isNaN(Real real);
 
 void freeReal(Real real);
 void copyReal(Real src, Real dest);

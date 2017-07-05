@@ -537,6 +537,7 @@ void freeShadowValue(ShadowValue* val){
   }
   double value = getDouble(val->real);
   if (value == 0.0) value = 0.0;
+  if (isNaN(val->real)) value = NAN;
   TableValueEntry* entry =
     VG_(HT_remove)(val->type == Ft_Single ? valueCacheSingle : valueCacheDouble,
                    *(UWord*)&value);
@@ -578,6 +579,7 @@ VgHashTable* valueCacheDouble;
 inline
 ShadowValue* mkShadowValue(FloatType type, double value){
   if (value == 0.0) value = 0.0;
+  if (value != value) value = NAN;
   TableValueEntry* existingEntry =
     VG_(HT_lookup)(type == Ft_Single ? valueCacheSingle : valueCacheDouble,
                    *(UWord*)&value);
@@ -592,8 +594,6 @@ ShadowValue* mkShadowValue(FloatType type, double value){
     }
     TableValueEntry* newEntry = mkTableEntry();
     newEntry->val = result;
-    // getDouble(result) might not equal value in certain rare cases!
-    value = getDouble(result->real);
     newEntry->addr = *(UWord*)&value;
     VG_(HT_add_node)(type == Ft_Single ? valueCacheSingle : valueCacheDouble,
                      newEntry);
