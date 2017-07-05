@@ -48,18 +48,10 @@
 
 VgHashTable* opInfoTable = NULL;
 
-typedef struct _opInfoEntry {
-  struct _opInfoEntry* next;
-  UWord addr;
-  IROp op_code;
-  ShadowOpInfo* info;
-} OpInfoEntry;
-
-long int cmpOpInfoEntry(const void* node1, const void* node2);
-long int cmpOpInfoEntry(const void* node1, const void* node2){
-  const OpInfoEntry* entry1 = (const OpInfoEntry*)node1;
-  const OpInfoEntry* entry2 = (const OpInfoEntry*)node2;
-  if (entry1->addr == entry2->addr &&
+long int cmpSemOpInfoEntry(const void* node1, const void* node2){
+  const SemOpInfoEntry* entry1 = (const SemOpInfoEntry*)node1;
+  const SemOpInfoEntry* entry2 = (const SemOpInfoEntry*)node2;
+  if (entry1->call_addr == entry2->call_addr &&
       entry1->op_code == entry2->op_code){
     return 0;
   } else {
@@ -98,31 +90,20 @@ IRExpr* runShadowOp(IRSB* sbOut, IRExpr* guard,
   if (opInfoTable == NULL){
     opInfoTable = VG_(HT_construct)("Operation Info Table");
   }
-  OpInfoEntry key = {.addr = curAddr, .op_code = op_code};
-  OpInfoEntry* existingEntry = VG_(HT_gen_lookup)(opInfoTable, &key, cmpOpInfoEntry);
-  ShadowOpInfo* info;
-  if (existingEntry == NULL){
-    info = mkShadowOpInfo(op_code, curAddr,
-                          block_addr, nargs);
-    OpInfoEntry* newEntry = VG_(malloc)("op info entry", sizeof(OpInfoEntry));
-    newEntry->addr = curAddr;
-    newEntry->op_code = op_code;
-    newEntry->info = info;
-    VG_(HT_add_node)(opInfoTable, newEntry);
-  } else {
-    info = existingEntry->info;
-  }
+  ShadowOpInfoInstance* instance =
+    getSemanticOpInfoInstance(curAddr, block_addr, op_code,
+                              nargs, argExprs);
   for(int i = 0; i < nargs; ++i){
     addStoreC(sbOut, argExprs[i],
               (uintptr_t)
-              (info->exinfo.argPrecision == Ft_Single ?
+              (instance->info->exinfo.argPrecision == Ft_Single ?
                ((void*)computedArgs.argValuesF[i]) :
                ((void*)computedArgs.argValues[i])));
     if (argExprs[i]->tag == Iex_RdTmp){
-      info->argTemps[i] = argExprs[i]->Iex.RdTmp.tmp;
+      instance->argTemps[i] = argExprs[i]->Iex.RdTmp.tmp;
       cleanupAtEndOfBlock(sbOut, argExprs[i]->Iex.RdTmp.tmp);
     } else {
-      info->argTemps[i] = -1;
+      instance->argTemps[i] = -1;
     }
   }
   addStoreC(sbOut, result, &computedResult);
@@ -133,7 +114,7 @@ IRExpr* runShadowOp(IRSB* sbOut, IRExpr* guard,
   IRDirty* dirty =
     unsafeIRDirty_1_N(dest, 1, "executeShadowOp",
                       VG_(fnptr_to_fnentry)(executeShadowOp),
-                      mkIRExprVec_1(mkU64((uintptr_t)info)));
+                      mkIRExprVec_1(mkU64((uintptr_t)instance)));
   dirty->mFx = Ifx_Read;
   dirty->mAddr = mkU64((uintptr_t)&computedArgs);
   dirty->mSize =
@@ -186,10 +167,12 @@ void instrumentPossibleNegate(IRSB* sbOut,
                 Ft_Double, dest);
 }
 
-ShadowOpInfo* getSemanticOpInfo(Addr callAddr, Addr block_addr, IROp op_code, int nargs){
+ShadowOpInfoInstance* getSemanticOpInfoInstance(Addr callAddr, Addr block_addr,
+                                                IROp op_code,
+                                                int nargs, IRExpr** argExprs){
   SemOpInfoEntry key = {.call_addr = callAddr, .op_code = op_code};
   SemOpInfoEntry* entry =
-    VG_(HT_gen_lookup)(semanticOpInfoMap, &key, cmp_sem_entry_by_code);
+    VG_(HT_gen_lookup)(semanticOpInfoMap, &key, cmpSemOpInfoEntry);
   if (entry == NULL){
     ShadowOpInfo* callInfo =
       mkShadowOpInfo(op_code, callAddr, block_addr, nargs);
@@ -200,11 +183,15 @@ ShadowOpInfo* getSemanticOpInfo(Addr callAddr, Addr block_addr, IROp op_code, in
     entry->op_code = op_code;
     VG_(HT_add_node)(mathreplaceOpInfoMap, entry);
   }
-  return entry->info;
-}
-
-Word cmp_sem_entry_by_code(const void* node1, const void* node2){
-  const SemOpInfoEntry* entry1 = (const SemOpInfoEntry*)node1;
-  const SemOpInfoEntry* entry2 = (const SemOpInfoEntry*)node2;
-  return !(entry1->op_code == entry2->op_code);
+  ShadowOpInfoInstance* instance = VG_(perm_malloc)(sizeof(ShadowOpInfoInstance),
+                                                    vg_alignof(ShadowOpInfoInstance));
+  for(int i = 0;i < nargs; ++i){
+    if (argExprs[i]->tag == Iex_RdTmp){
+      instance->argTemps[i] = argExprs[i]->Iex.RdTmp.tmp;
+    } else {
+      instance->argTemps[i] = -1;
+    }
+  }
+  instance->info = entry->info;
+  return instance;
 }

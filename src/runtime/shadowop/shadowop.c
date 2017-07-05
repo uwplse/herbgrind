@@ -38,7 +38,8 @@
 #include "influence-op.h"
 #include "../../helper/ir-info.h"
 
-VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo){
+VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
+  ShadowOpInfo* opInfo = infoInstance->info;
   // Make sure the op code is sane, so that things don't go bonkers
   // later.
   tl_assert(opInfo->op_code <
@@ -58,7 +59,7 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo){
     args[i] = getArg(i,
                      opInfo->exinfo.numChannels,
                      opInfo->exinfo.argPrecision,
-                     opInfo->argTemps[i]);
+                     infoInstance->argTemps[i]);
     for (int j = 0; j < opInfo->exinfo.numChannels; ++j){
       clientArgs[j][i] =
         opInfo->exinfo.argPrecision == Ft_Double ?
@@ -110,7 +111,7 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo){
     }
   }
   for(int i = 0; i < opInfo->exinfo.nargs; ++i){
-    if (opInfo->argTemps[i] == -1){
+    if (infoInstance->argTemps[i] == -1){
       disownShadowTemp_fast(args[i]);
     }
   }

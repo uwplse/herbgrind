@@ -36,7 +36,7 @@
 #include "../value-shadowstate/shadowval.h"
 #include "../op-shadowstate/shadowop-info.h"
 
-VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfo* opInfo);
+VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* instance);
 ShadowTemp* getArg(int argIdx, int numChannels, FloatType precision,
                    IRTemp argTemp);
 ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
