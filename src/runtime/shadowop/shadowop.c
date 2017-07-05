@@ -89,7 +89,7 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
     ownNonNullShadowValue(result->values[i]);
   }
   if (PRINT_VALUE_MOVES){
-    ppIROp(opInfo->op_code);
+    ppIROp_Extended(opInfo->op_code);
     VG_(printf)(": Making value(s) ");
     for(int i = 0; i < opInfo->exinfo.numSIMDOperands; ++i){
       if (i == 0){
