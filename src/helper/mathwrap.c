@@ -31,6 +31,7 @@
 #include "pub_tool_redir.h"
 
 #include <stdio.h>
+#include <complex.h>
 
 #include "../include/herbgrind.h"
 #include "../include/mathreplace-funcs.h"
@@ -181,4 +182,71 @@ void VG_REPLACE_FUNCTION_ZU(LIBM, sincos)(double x, double* p_sin, double* p_cos
   double args[1];
   args[0] = x;
   HERBGRIND_PERFORM_SPECIAL_OP(OP_SINCOS, args, p_sin, p_cos);
+}
+
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, cexp)(complex double x);
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, cexp)(complex double x){
+  double sinCosArgs[1];
+  double expArgs[1];
+  sinCosArgs[0] = cimag(x);
+  expArgs[0] = creal(x);
+  double sinResult, cosResult, expResult;
+  HERBGRIND_PERFORM_OP(OP_SIN, &sinResult, sinCosArgs);
+  HERBGRIND_PERFORM_OP(OP_COS, &cosResult, sinCosArgs);
+  HERBGRIND_PERFORM_OP(OP_EXP, &expResult, expArgs);
+  return (expResult * cosResult) + (expResult * sinResult * I);
+}
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, clog)(complex double x);
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, clog)(complex double x){
+  double sqrtArgs[1];
+  double logArgs[1];
+  double atan2Args[2];
+  double sqrtResult, logResult, atan2Result;
+
+  // Real part
+  sqrtArgs[0] = creal(x) * creal(x) + cimag(x) * cimag(x);
+  HERBGRIND_PERFORM_OP(OP_SQRT, &sqrtResult, sqrtArgs);
+  logArgs[0] = sqrtResult;
+  HERBGRIND_PERFORM_OP(OP_LOG, &logResult, logArgs);
+
+  // Imaginary part
+  atan2Args[0] = cimag(x);
+  atan2Args[1] = creal(x);
+  HERBGRIND_PERFORM_OP(OP_ATAN2, &atan2Result, atan2Args);
+
+  return logResult + I * atan2Result;
+}
+
+complex float VG_REPLACE_FUNCTION_ZU(LIBM, __mulsc3)(complex float x, complex float y);
+complex float VG_REPLACE_FUNCTION_ZU(LIBM, __mulsc3)(complex float x, complex float y){
+  return x * y;
+}
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, __muldc3)(complex double x, complex double y);
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, __muldc3)(complex double x, complex double y){
+  return x * y;
+}
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, __multc3)(complex double x, complex double y);
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, __multc3)(complex double x, complex double y){
+  return x * y;
+}
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, __mulxc3)(complex double x, complex double y);
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, __mulxc3)(complex double x, complex double y){
+  return x * y;
+}
+
+complex float VG_REPLACE_FUNCTION_ZU(LIBM, __divsc3)(complex float x, complex float y);
+complex float VG_REPLACE_FUNCTION_ZU(LIBM, __divsc3)(complex float x, complex float y){
+  return x / y;
+}
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divdc3)(complex double x, complex double y);
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divdc3)(complex double x, complex double y){
+  return x / y;
+}
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divtc3)(complex double x, complex double y);
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divtc3)(complex double x, complex double y){
+  return x / y;
+}
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divxc3)(complex double x, complex double y);
+complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divxc3)(complex double x, complex double y){
+  return x / y;
 }
