@@ -38,6 +38,9 @@
 
 #include "../../options.h"
 #include "../../helper/debug.h"
+#include "../../helper/runtime-util.h"
+
+#include <math.h>
 
 ArgUnion computedArgs;
 
@@ -182,19 +185,43 @@ VG_REGPARM(2) void dynamicPut128(Int tsDest, ShadowTemp* st){
   }
 }
 VG_REGPARM(2) ShadowTemp* dynamicGet64(Int tsSrc, UWord tsBytes){
-  return dynamicGet(tsSrc, &tsBytes, 8);
+  ShadowTemp* result = dynamicGet(tsSrc, &tsBytes, 8);
+  if (result != NULL && (PRINT_VALUE_MOVES || PRINT_TEMP_MOVES)){
+    VG_(printf)("[dynamicGet64] Making %p for value(s) ", result);
+    for(int i = 0; i < result->num_vals; ++i){
+      VG_(printf)("%p ", result->values[i]);
+    }
+    VG_(printf)(" from TS(%d)\n", tsSrc);
+  }
+  return result;
 }
 
 VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
                                         UWord bytes1,
                                         UWord bytes2){
   UWord bytes[] = {bytes1, bytes2};
-  return dynamicGet(tsSrc, bytes, 16);
+  ShadowTemp* result = dynamicGet(tsSrc, bytes, 16);
+  if (result != NULL && (PRINT_VALUE_MOVES || PRINT_TEMP_MOVES)){
+    VG_(printf)("[dynamicGet128] Making %p for value(s) ", result);
+    for(int i = 0; i < result->num_vals; ++i){
+      VG_(printf)("%p ", result->values[i]);
+    }
+    VG_(printf)(" from TS(%d)\n", tsSrc);
+  }
+  return result;
 }
 
 VG_REGPARM(2) ShadowTemp* dynamicGet256(Int tsSrc,
                                         Word256* bytes){
-  return dynamicGet(tsSrc, bytes, 32);
+  ShadowTemp* result = dynamicGet(tsSrc, bytes, 32);
+  if (result != NULL && (PRINT_VALUE_MOVES || PRINT_TEMP_MOVES)){
+    VG_(printf)("[dynamicGet256] Making %p for value(s) ", result);
+    for(int i = 0; i < result->num_vals; ++i){
+      VG_(printf)("%p, ", result->values[i]);
+    }
+    VG_(printf)(" from TS(%d)\n", tsSrc);
+  }
+  return result;
 }
 ShadowTemp* dynamicGet(Int tsSrc, void* bytes, int size){
   if (size == 4){
@@ -610,7 +637,8 @@ VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
     ownShadowValue(temp->values[i]);
     result->values[i] = temp->values[i];
     if (PRINT_VALUE_MOVES){
-      VG_(printf)("Copying %p (new rc %lu) to new temp %p\n", temp->values[i], temp->values[i]->ref_count,
+      VG_(printf)("Copying %p (new rc %lu) from %p to new temp %p\n",
+                  temp->values[i], temp->values[i]->ref_count, temp,
                   result);
     }
   }
