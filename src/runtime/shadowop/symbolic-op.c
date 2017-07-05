@@ -33,6 +33,7 @@
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_libcbase.h"
 #include "pub_tool_xarray.h"
+#include "../../helper/runtime-util.h"
 
 #define GENERALIZE_DEPTH 2
 
@@ -130,11 +131,6 @@ Word cmp_value(const void* node1, const void* node2){
   } else {
     return 1;
   }
-}
-
-inline
-int NaNSafeEquals(double a, double b){
-  return a == b || (a != a && b != b);
 }
 
 void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr,
