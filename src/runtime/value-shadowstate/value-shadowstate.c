@@ -592,6 +592,8 @@ ShadowValue* mkShadowValue(FloatType type, double value){
     }
     TableValueEntry* newEntry = mkTableEntry();
     newEntry->val = result;
+    // getDouble(result) might not equal value in certain rare cases!
+    value = getDouble(result->real);
     newEntry->addr = *(UWord*)&value;
     VG_(HT_add_node)(type == Ft_Single ? valueCacheSingle : valueCacheDouble,
                      newEntry);
