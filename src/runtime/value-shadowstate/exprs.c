@@ -514,6 +514,9 @@ Group pruneGroupToTop(Group group){
 }
 
 SymbExpr* varSwallow(SymbExpr* expr){
+  VG_(printf)("Running var swallow on ");
+  ppSymbExpr(expr);
+  VG_(printf)("\n");
   for(int i = 0; i < expr->branch.groups->size; ++i){
     Group curGroup = pruneGroupToTop(expr->branch.groups->data[i]);
     int num_valid_group_members = 0;

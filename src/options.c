@@ -62,7 +62,7 @@ Bool print_object_files = False;
 Bool print_subexpr_locations = False;
 Bool output_mark_exprs = False;
 Bool output_sexp = False;
-Bool sound_simplify = False;
+Bool sound_simplify = True;
 Bool shortmark_all_exprs = False;
 Bool mark_on_escape = True;
 Bool compensation_detection = True;
@@ -98,7 +98,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-object-files", print_object_files, True) {}
   else if VG_XACT_CLO(arg, "--output-subexpr-sources", print_subexpr_locations, True) {}
   else if VG_XACT_CLO(arg, "--dont-ignore-pure-zeroes", dont_ignore_pure_zeroes, True) {}
-  else if VG_XACT_CLO(arg, "--sound-simplify", sound_simplify, True) {}
+  else if VG_XACT_CLO(arg, "--no-sound-simplify", sound_simplify, False) {}
   else if VG_XACT_CLO(arg, "--unsound-var-swallow", unsound_var_swallow, True) {}
   else if VG_XACT_CLO(arg, "--expr-colors", expr_colors, True) {}
   else if VG_XACT_CLO(arg, "--output-mark-exprs", output_mark_exprs, True) {}
@@ -149,8 +149,8 @@ void hg_print_usage(void){
               "which object file it came from.\n"
               "    --output-mark-exprs     "
               "Print the full expressions for marks.\n"
-              "    --sound-simplify    "
-              "Simplify expressions in simple ways which don't affect "
+              "    --no-sound-simplify    "
+              "Don't simplify expressions in simple ways which don't affect "
               "their floating point behavior.\n"
               "    --shortmark-all-exprs    "
               "Mark every subexpression with it's address, without any "
