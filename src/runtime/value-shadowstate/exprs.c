@@ -513,23 +513,62 @@ Group pruneGroupToTop(Group group){
   return result;
 }
 
-SymbExpr* varSwallow(SymbExpr* expr){
-  VG_(printf)("Running var swallow on ");
-  ppSymbExpr(expr);
-  VG_(printf)("\n");
-  for(int i = 0; i < expr->branch.groups->size; ++i){
-    Group curGroup = pruneGroupToTop(expr->branch.groups->data[i]);
-    int num_valid_group_members = 0;
-    int num_nontrivial_group_members = 0;
-    for(Group curNode = curGroup; curNode != NULL; curNode = curNode->next){
-      SymbExpr** target = symbExprPosGetRef(&expr, curNode->item);
-      if (target == NULL) continue;
-      tl_assert(*target != NULL);
-      num_valid_group_members ++;
+Group pruneGroupToValidVars(Group group, SymbExpr* structure);
+Group pruneGroupToValidVars(Group group, SymbExpr* structure){
+  Group result = NULL;
+  for(Group curNode = group; curNode != NULL; curNode = curNode->next){
+    SymbExpr* curExpr = structure;
+    NodePos pos = curNode->item;
+    for(int i = 0; i < pos->len; ++i){
+      if (curExpr->type == Node_Leaf){
+        goto next;
+      }
+      if (curExpr->branch.nargs <= pos->data[i]){
+        goto next;
+      }
+      if (sound_simplify){
+        switch((int)curExpr->branch.op->op_code){
+        case Iop_Mul32F0x4:
+        case Iop_Mul64F0x2:
+        case Iop_Mul32Fx8:
+        case Iop_Mul64Fx4:
+        case Iop_Mul32Fx4:
+        case Iop_Mul64Fx2:
+        case Iop_MulF64:
+        case Iop_MulF128:
+        case Iop_MulF32:
+        case Iop_MulF64r32:{
+          SymbExpr* arg0 = curExpr->branch.args[0];
+          SymbExpr* arg1 = curExpr->branch.args[1];
+          if ((arg0->isConst && arg0->constVal == 0.0) ||
+              (arg1->isConst && arg1->constVal == 0.0)){
+            goto next;
+          }
+        }
+          break;
+        default:
+          break;
+        }
+      }
+      curExpr = curExpr->branch.args[pos->data[i]];
     }
+    if (!curExpr->isConst){
+      lpush(Group)(&result, curNode->item);
+    }
+  next:;
+  }
+  return result;
+}
+
+SymbExpr* varSwallow(SymbExpr* expr){
+  for(int i = 0; i < expr->branch.groups->size; ++i){
+    Group curGroup = pruneGroupToValidVars(pruneGroupToTop(expr->branch.groups->data[i]),
+                                           expr);
+    if (length(Group)(&curGroup) < 1) continue;
+    int num_nontrivial_group_members = 0;
     for(int j = 0; j < expr->branch.groups->size; ++j){
       if (i == j) continue;
-      Group otherGroup = expr->branch.groups->data[j];
+      Group otherGroup = pruneGroupToValidVars(expr->branch.groups->data[j], expr);
       int num_members_underneath_cur_group = 0;
       int num_other_valid_group_members = 0;
       for(Group otherNode = otherGroup; otherNode != NULL; otherNode = otherNode->next){
@@ -546,7 +585,7 @@ SymbExpr* varSwallow(SymbExpr* expr){
         num_nontrivial_group_members++;
       }
     }
-    if (num_valid_group_members > 1 &&
+    if (length(Group)(&curGroup) > 1 &&
         (num_nontrivial_group_members < 1 || unsound_var_swallow)){
       for(Group curNode = curGroup; curNode != NULL; curNode = curNode->next){
         SymbExpr** target = symbExprPosGetRef(&expr, curNode->item);
@@ -889,7 +928,7 @@ int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups){
   for(int i = 0; i < trimmedGroups->size; ++i){
     for(Group curNode = trimmedGroups->data[i];
         curNode != NULL; curNode = curNode->next){
-      SymbExpr* exprNode = symbGraftPosGet(expr, curNode->item);
+      SymbExpr* exprNode = symbExprPosGet(expr, curNode->item);
       if (exprNode->type == Node_Leaf &&
           !exprNode->isConst && curNode->item->len < MAX_FOLD_DEPTH){
         acc += 1;

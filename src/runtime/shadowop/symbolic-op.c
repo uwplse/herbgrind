@@ -183,7 +183,7 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
 
     while(curGroup != NULL){
       NodePos groupMemberPos = lpop(Group)(&curGroup);
-      if (symbGraftPosGet(symbExpr, groupMemberPos) == NULL){
+      if (symbExprPosGet(symbExpr, groupMemberPos) == NULL){
         continue;
       }
       double nodeValue = concGraftPosGet(concExpr, groupMemberPos)->value;
@@ -320,7 +320,7 @@ GroupList groupsWithoutNonVars(SymbExpr* structure, GroupList list){
   for(int i = 0; i < list->size; ++i){
     for(Group curNode = list->data[i]; curNode != NULL;
         curNode = curNode->next){
-      SymbExpr* target = symbGraftPosGet(structure, curNode->item);
+      SymbExpr* target = symbExprPosGet(structure, curNode->item);
       // So the position could possibly be invalid, because of the
       // fact that expressions share structure, and prunings, but
       // don't share their equivalence maps, so those might get out of
@@ -416,17 +416,16 @@ ConcExpr* concGraftPosGet(ConcExpr* expr, NodePos pos){
   }
   return curExpr;
 }
-SymbExpr* symbGraftPosGet(SymbExpr* expr, NodePos pos){
+SymbExpr* symbExprPosGet(SymbExpr* expr, NodePos pos){
   SymbExpr* curExpr = expr;
   for(int i = 0; i < pos->len; ++i){
     if (curExpr->type == Node_Leaf){
       return NULL;
     }
-    if (curExpr->ngrafts <= pos->data[i]){
+    if (curExpr->branch.nargs <= pos->data[i]){
       return NULL;
     }
-    SymbGraft curGraft = curExpr->grafts[pos->data[i]];
-    curExpr = curGraft.parent->branch.args[curGraft.childIndex];
+    curExpr = curExpr->branch.args[pos->data[i]];
   }
   return curExpr;
 }
