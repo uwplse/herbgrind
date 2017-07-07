@@ -68,7 +68,7 @@ double getDouble(Real real){
 }
 
 int isNaN(Real real){
-  if (no_reals) return 0.0;
+  if (no_reals) return 0;
   #ifdef USE_MPFR
   return mpfr_nan_p(real->mpfr_val);
   #else

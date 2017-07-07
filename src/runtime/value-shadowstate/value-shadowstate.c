@@ -611,7 +611,7 @@ ShadowValue* mkShadowValue(FloatType type, double value){
     VG_(HT_lookup)(type == Ft_Single ? valueCacheSingle : valueCacheDouble,
                    *(UWord*)&value);
   ShadowValue* result = NULL;
-  if (existingEntry == NULL){
+  if (existingEntry == NULL || no_reals){
     result = mkShadowValueBare(type);
     if (!no_reals){
       setReal(result->real, value);
