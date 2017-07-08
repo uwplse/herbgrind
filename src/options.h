@@ -68,6 +68,7 @@ extern Bool shortmark_all_exprs;
 extern Bool mark_on_escape;
 extern Bool compensation_detection;
 extern Bool only_improvable;
+extern Bool var_swallow;
 extern Bool unsound_var_swallow;
 
 extern Bool no_exprs;

@@ -309,7 +309,9 @@ void writeInfluences(Int fileD, InfluenceList influences){
       curNode != NULL; curNode = curNode->next){
     ShadowOpInfo* opinfo = curNode->item;
 
-    opinfo->expr = varSwallow(opinfo->expr);
+    if (var_swallow){
+      opinfo->expr = varSwallow(opinfo->expr);
+    }
     int numVars;
     char* exprString = symbExprToString(opinfo->expr, &numVars);
     char* varString = symbExprVarString(numVars);
