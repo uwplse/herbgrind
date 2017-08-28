@@ -573,7 +573,6 @@ double runEmulatedOp(IROp op_code, double* args){
   case Iop_Add64Fx4:
   case Iop_Add32Fx4:
   case Iop_Add64Fx2:
-  case Iop_AddF128:
   case Iop_AddF64:
   case Iop_AddF32:
   case Iop_AddF64r32:
@@ -585,7 +584,6 @@ double runEmulatedOp(IROp op_code, double* args){
   case Iop_Sub64Fx4:
   case Iop_Sub32Fx4:
   case Iop_Sub64Fx2:
-  case Iop_SubF128:
   case Iop_SubF64:
   case Iop_SubF32:
   case Iop_SubF64r32:
@@ -597,7 +595,6 @@ double runEmulatedOp(IROp op_code, double* args){
   case Iop_Mul32Fx4:
   case Iop_Mul64Fx2:
   case Iop_MulF64:
-  case Iop_MulF128:
   case Iop_MulF32:
   case Iop_MulF64r32:
     return args[0] * args[1];
@@ -607,7 +604,6 @@ double runEmulatedOp(IROp op_code, double* args){
   case Iop_Div64Fx4:
   case Iop_Div32Fx4:
   case Iop_Div64Fx2:
-  case Iop_DivF128:
   case Iop_DivF64:
   case Iop_DivF32:
   case Iop_DivF64r32:
