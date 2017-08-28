@@ -184,7 +184,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   }
   if (print_inputs){
     for(int i = 0; i < opinfo->exinfo.nargs; ++i){
-      VG_(printf)("Arg %d is computed as %f, and is shadowed as %f",
+      VG_(printf)("Arg %d is computed as %f, and is shadowed as %f\n",
                   i + 1, clientArgs[i], getDouble(args[i]->real));
     }
   }
