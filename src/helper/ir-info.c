@@ -631,10 +631,10 @@ double runEmulatedOp(IROp op_code, double* args){
   case Iop_MAddF64r32:
     return fma(args[0], args[1], args[2]);
   case Iop_MSubF32:
-    return fmsf(args[0], args[1], args[2]);
+    return fmaf(args[0], args[1], -args[2]);
   case Iop_MSubF64:
   case Iop_MSubF64r32:
-    return fma(args[0], args[1], args[2]);
+    return fma(args[0], args[1], -args[2]);
   case Iop_ScaleF64:
   case Iop_XorV128:
   case Iop_Yl2xp1F64:
