@@ -219,7 +219,7 @@ VG_REGPARM(2) ShadowTemp* dynamicGet256(Int tsSrc,
     for(int i = 0; i < result->num_vals; ++i){
       VG_(printf)("%p, ", result->values[i]);
     }
-    VG_(printf)(" from TS(%d)\n", tsSrc);
+    VG_(printf)("from TS(%d)\n", tsSrc);
   }
   return result;
 }
@@ -240,7 +240,7 @@ ShadowTemp* dynamicGet(Int tsSrc, void* bytes, int size){
   }
   ShadowTemp* halves[2];
   for(int i = 0; i < 2; ++i){
-    halves[i] = dynamicGet(tsSrc + (size / 2) * i, ((float*)bytes) + (i * size / 8), size / 2);
+    halves[i] = dynamicGet(tsSrc + (size / 2) * i, ((float*)bytes) + (i * size / 4), size / 2);
   }
   if (halves[0] == NULL &&
       halves[1] == NULL){
@@ -250,7 +250,7 @@ ShadowTemp* dynamicGet(Int tsSrc, void* bytes, int size){
       halves[0] = mkShadowTempValues(bytes, halves[1]->num_vals,
                                      halves[1]->values[0]->type);
     } else if (halves[1] == NULL){
-      halves[1] = mkShadowTempValues((void*)(((float*)bytes) + size / 8),
+      halves[1] = mkShadowTempValues((void*)(((float*)bytes) + size / 4),
                                      halves[0]->num_vals,
                                      halves[0]->values[0]->type);
     }
