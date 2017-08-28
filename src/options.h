@@ -32,13 +32,13 @@
 
 #include "pub_tool_basics.h"
 
+extern int running_depth;
+extern Bool always_on;
+
 // Options for printing the VEX blocks that pass through
 // Herbgrind. print_in_blocks prints the VEX super blocks that
 // Herbgrind receives, and print_out_blocks prints the VEX blocks that
 // Herbgrind passes back to Valgrind for execution.
-extern int running_depth;
-extern Bool always_on;
-
 extern Bool print_in_blocks;
 extern Bool print_out_blocks;
 extern Bool print_block_boundries;
