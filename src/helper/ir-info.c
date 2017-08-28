@@ -534,78 +534,87 @@ const char* getOpcodeSymbol(IROp op_code){
 double runEmulatedOp(IROp op_code, double* args){
   switch((int)op_code){
   case Iop_Abs32Fx4:
-  case Iop_Abs64Fx2:
-  case Iop_AbsF32:
-  case Iop_AbsF64:
   case Iop_Abs32Fx2:
+  case Iop_AbsF32:
+    return fabsf(args[0]);
+  case Iop_Abs64Fx2:
+  case Iop_AbsF64:
     return fabs(args[0]);
+  case IEop_Neg32F0x4:
   case Iop_Neg32Fx4:
+  case Iop_Neg32Fx2:
+  case Iop_NegF32:
+    return -(float)args[0];
   case Iop_Neg64Fx2:
   case IEop_Neg64F0x2:
-  case Iop_NegF32:
   case Iop_NegF64:
-  case Iop_Neg32Fx2:
-  case IEop_Neg32F0x4:
     return -args[0];
-  case Iop_Sqrt64F0x2:
   case Iop_Sqrt32F0x4:
+  case Iop_SqrtF32:
+    return sqrtf(args[0]);
+  case Iop_Sqrt64F0x2:
   case Iop_Sqrt64Fx2:
   case Iop_SqrtF64:
-  case Iop_SqrtF32:
     return sqrt(args[0]);
     // Binary Ops
   case Iop_Max32Fx4:
   case Iop_Max32Fx2:
+  case Iop_Max32F0x4:
+    return fmaxf(args[0], args[1]);
   case Iop_Max64Fx2:
   case Iop_Max64F0x2:
-  case Iop_Max32F0x4:
     return fmax(args[0], args[1]);
   case Iop_Min32Fx4:
   case Iop_Min32Fx2:
+  case Iop_Min32F0x4:
+    return fminf(args[0], args[1]);
   case Iop_Min64Fx2:
   case Iop_Min64F0x2:
-  case Iop_Min32F0x4:
     return fmin(args[0], args[1]);
-  case Iop_Add32Fx2:
-  case Iop_Add32F0x4:
-  case Iop_Add64F0x2:
   case Iop_Add32Fx8:
-  case Iop_Add64Fx4:
+  case Iop_Add32F0x4:
   case Iop_Add32Fx4:
+  case Iop_Add32Fx2:
+  case Iop_AddF32:
+    return ((float)args[0]) + ((float)(args[1]));
+  case Iop_Add64F0x2:
+  case Iop_Add64Fx4:
   case Iop_Add64Fx2:
   case Iop_AddF64:
-  case Iop_AddF32:
   case Iop_AddF64r32:
     return args[0] + args[1];
+  case Iop_SubF32:
   case Iop_Sub32Fx2:
   case Iop_Sub32F0x4:
-  case Iop_Sub64F0x2:
-  case Iop_Sub32Fx8:
-  case Iop_Sub64Fx4:
   case Iop_Sub32Fx4:
+  case Iop_Sub32Fx8:
+    return ((float)args[0]) - ((float)(args[1]));
+  case Iop_Sub64F0x2:
+  case Iop_Sub64Fx4:
   case Iop_Sub64Fx2:
   case Iop_SubF64:
-  case Iop_SubF32:
   case Iop_SubF64r32:
     return args[0] - args[1];
-  case Iop_Mul32F0x4:
-  case Iop_Mul64F0x2:
-  case Iop_Mul32Fx8:
-  case Iop_Mul64Fx4:
+  case Iop_MulF32:
   case Iop_Mul32Fx4:
+  case Iop_Mul32F0x4:
+  case Iop_Mul32Fx8:
+    return ((float)args[0]) * ((float)(args[1]));
+  case Iop_Mul64F0x2:
+  case Iop_Mul64Fx4:
   case Iop_Mul64Fx2:
   case Iop_MulF64:
-  case Iop_MulF32:
   case Iop_MulF64r32:
     return args[0] * args[1];
   case Iop_Div32F0x4:
-  case Iop_Div64F0x2:
-  case Iop_Div32Fx8:
-  case Iop_Div64Fx4:
   case Iop_Div32Fx4:
+  case Iop_Div32Fx8:
+  case Iop_DivF32:
+    return ((float)args[0]) / ((float)args[1]);
+  case Iop_Div64F0x2:
+  case Iop_Div64Fx4:
   case Iop_Div64Fx2:
   case Iop_DivF64:
-  case Iop_DivF32:
   case Iop_DivF64r32:
     return args[0] / args[1];
   case Iop_SinF64:
@@ -617,10 +626,12 @@ double runEmulatedOp(IROp op_code, double* args){
   case Iop_AtanF64:
     return atan(args[0]/args[1]);
   case Iop_MAddF32:
+    return fmaf(args[0], args[1], args[2]);
   case Iop_MAddF64:
   case Iop_MAddF64r32:
     return fma(args[0], args[1], args[2]);
   case Iop_MSubF32:
+    return fmsf(args[0], args[1], args[2]);
   case Iop_MSubF64:
   case Iop_MSubF64r32:
     return fma(args[0], args[1], args[2]);
