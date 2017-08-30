@@ -36,6 +36,8 @@
 #include "pub_tool_threadstate.h"
 #include "pub_tool_mallocfree.h"
 
+#include "../shadowop/influence-op.h"
+
 #include "../../options.h"
 #include "../../helper/debug.h"
 #include "../../helper/runtime-util.h"
@@ -588,6 +590,9 @@ ShadowValue* copyShadowValue(ShadowValue* val){
   if (!no_exprs){
     recursivelyOwnConcExpr(copy->expr,
                            max_expr_block_depth * 2);
+  }
+  if (!no_influences){
+    copy->influences = cloneInfluences(val->influences);
   }
   return copy;
 }
