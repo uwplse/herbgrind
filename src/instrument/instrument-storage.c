@@ -435,7 +435,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* temp = runMkShadowTempValues(sbOut, 1, &val);
       if (PRINT_VALUE_MOVES){
         addPrint3("Getting val %p from TS(%d) ", val, mkU64(tsSrc));
-        addPrint2("into temp %p\n", temp);
+        addPrint3("into t%d (%p)\n", mkU64(dest), temp);
       }
       addStoreTemp(sbOut, temp, Ft_Single, dest);
       if (print_temp_moves){
@@ -449,7 +449,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
                                             &loadedVal);
       if (PRINT_VALUE_MOVES){
         addPrintG3(loadedValNonNull, "Getting val %p from TS(%d) ", loadedVal, mkU64(tsSrc));
-        addPrintG2(loadedValNonNull, "into temp %p\n", temp);
+        addPrintG3(loadedValNonNull, "into t%d (%p)\n", mkU64(dest), temp);
       }
       addStoreTempUnknown(sbOut, temp, dest);
       if (print_temp_moves){
