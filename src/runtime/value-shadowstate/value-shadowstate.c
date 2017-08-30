@@ -249,7 +249,12 @@ ShadowTemp* dynamicGet(Int tsSrc, void* bytes, int size){
     if (halves[0] == NULL){
       halves[0] = mkShadowTempValues(bytes, halves[1]->num_vals,
                                      halves[1]->values[0]->type);
-    } else if (halves[1] == NULL){
+    } else if (halves[1] == NULL ||
+               halves[1]->values[0]->type != halves[0]->values[0]->type){
+      if (halves[1] != NULL){
+        // MISMATCHED READ! Is this normal?
+        freeShadowTemp(halves[1]);
+      }
       halves[1] = mkShadowTempValues((void*)(((float*)bytes) + size / 4),
                                      halves[0]->num_vals,
                                      halves[0]->values[0]->type);
