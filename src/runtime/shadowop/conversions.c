@@ -412,3 +412,39 @@ ShadowTemp* i32UtoV128(ShadowTemp* t){
   }
   return result;
 }
+
+VG_REGPARM(2)
+ShadowTemp* i32Uto64(ShadowTemp* t){
+  tl_assert(t);
+  tl_assert(t->num_vals == 1);
+  tl_assert(t->values[0] != NULL);
+  ShadowTemp* result = mkShadowTemp(2);
+  result->values[0] = t->values[0];
+  ownShadowValue(result->values[0]);
+  result->values[1] = mkShadowValue(Ft_Single, 0.0);
+  if (PRINT_VALUE_MOVES){
+    VG_(printf)("Copying shadow value %p to %p, "
+                "and making value %p "
+                "as part of i32Uto64\n",
+                result->values[0], result,
+                result->values[1]);
+  }
+  return result;
+}
+
+VG_REGPARM(2)
+ShadowTemp* i64to32(ShadowTemp* t){
+  tl_assert(t);
+  tl_assert(t->num_vals == 2);
+  tl_assert(t->values[0] != NULL);
+  ShadowTemp* result = mkShadowTemp(1);
+  result->values[0] = t->values[0];
+  tl_assert(t->values[0]);
+  ownShadowValue(result->values[0]);
+  if (PRINT_VALUE_MOVES){
+    VG_(printf)("Copying shadow value %p to %p, "
+                "as part of 64to32\n",
+                result->values[0], result);
+  }
+  return result;
+}

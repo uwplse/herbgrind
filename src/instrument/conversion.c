@@ -289,6 +289,8 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
   case Iop_V128HIto64:
   case Iop_64UtoV128:
   case Iop_32UtoV128:
+  case Iop_32Uto64:
+  case Iop_64to32:
     {
       ShadowTemp* (*convertFunc)(ShadowTemp* input);
       switch(op_code){
@@ -312,6 +314,12 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
         break;
       case Iop_32UtoV128:
         convertFunc = i32UtoV128;
+        break;
+      case Iop_32Uto64:
+        convertFunc = i32Uto64;
+        break;
+      case Iop_64to32:
+        convertFunc = i64to32;
         break;
       default:
         tl_assert(0);
@@ -545,6 +553,8 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
 Bool isConversionOp(IROp op_code){
   switch(op_code){
     // Unary ops
+  case Iop_32Uto64:
+  case Iop_64to32:
   case Iop_ZeroHI96ofV128:
   case Iop_ZeroHI64ofV128:
   case Iop_V128to32:
@@ -577,6 +587,8 @@ Bool isConversionOp(IROp op_code){
 
 int conversionInputArgIndex(IROp op_code){
   switch(op_code){
+  case Iop_32Uto64:
+  case Iop_64to32:
   case Iop_ZeroHI96ofV128:
   case Iop_ZeroHI64ofV128:
   case Iop_V128to32:
@@ -607,6 +619,8 @@ int conversionInputArgIndex(IROp op_code){
 }
 int numConversionInputs(IROp op_code){
   switch(op_code){
+  case Iop_32Uto64:
+  case Iop_64to32:
   case Iop_ZeroHI96ofV128:
   case Iop_ZeroHI64ofV128:
   case Iop_V128to32:

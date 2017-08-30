@@ -318,7 +318,6 @@ Bool isSpecialOp(IROp op_code){
   case Iop_AndV128:
   case Iop_OrV128:
   case Iop_NotV128:
-  case Iop_64to32:
   case Iop_Shr64:
   case Iop_Shl64:
   case Iop_Sar64:
@@ -337,7 +336,6 @@ void handleSpecialOp(IRSB* sbOut, IROp op_code,
   case Iop_AndV128:
   case Iop_OrV128:
   case Iop_NotV128:
-  case Iop_64to32:
   case Iop_Shr64:
   case Iop_Shl64:
   case Iop_Sar64:
@@ -354,6 +352,8 @@ void handleSpecialOp(IRSB* sbOut, IROp op_code,
 
 Bool isFloatOp(IROp op_code){
   switch(op_code){
+  case Iop_32Uto64:
+  case Iop_64to32:
   case Iop_32UtoV128:
   case Iop_64UtoV128:
   case Iop_RecipEst32Fx4:
