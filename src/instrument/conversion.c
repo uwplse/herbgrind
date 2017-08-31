@@ -319,8 +319,28 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       case Iop_32Uto64:
         convertFunc = i32Uto64;
         break;
-      case Iop_64to32:
+      case Iop_64to32:{
+        // This is the one conversion that can fail based on the FORM
+        // of the shadow temp. If its not two singles, but is instead
+        // one double, then taking the first half is meaningless. So
+        // we only execute the conversion if the number of values
+        // matches "2", which we check here.
+        IRExpr* numValsMatch;
+        if (inputPreexisting == NULL){
+          numValsMatch = runBinop(sbOut, Iop_CmpEQ64, mkU64(2),
+                                  runArrow(sbOut, shadowInputs[0], ShadowTemp,
+                                           num_vals));
+          inputPreexisting = numValsMatch;
+        } else {
+          numValsMatch = runBinop(sbOut, Iop_CmpEQ64, mkU64(2),
+                                          runArrowG(sbOut, inputPreexisting,
+                                                    shadowInputs[0], ShadowTemp,
+                                                    num_vals));
+          inputPreexisting = runAnd(sbOut, inputPreexisting,
+                                    numValsMatch);
+        }
         convertFunc = i64to32;
+      }
         break;
       default:
         tl_assert(0);
