@@ -120,6 +120,9 @@ int numChannelsIn(IROp op_code){
   case Iop_Min64F0x2:
   case Iop_Max64F0x2:
   /* case Iop_XorV128: */
+  case Iop_CmpLT32F0x4:
+  case Iop_CmpLT64F0x2:
+  case Iop_CmpLE64F0x2:
     return 2;
   case Iop_RecpExpF64:
   case Iop_RecpExpF32:
@@ -134,6 +137,8 @@ int numChannelsIn(IROp op_code){
   case Iop_2xm1F64:
   case Iop_SqrtF64:
   case Iop_SqrtF32:
+  case Iop_CmpF64:
+  case Iop_CmpF32:
     return 1;
     // Ternary Ops
   case Iop_Add32Fx8:
