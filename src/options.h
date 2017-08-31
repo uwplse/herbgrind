@@ -46,6 +46,7 @@ extern Bool print_run_blocks;
 
 extern Bool print_temp_moves;
 extern Bool print_value_moves;
+extern Bool print_expr_refs;
 extern Bool print_semantic_ops;
 extern Bool print_conversions;
 extern Bool print_types;

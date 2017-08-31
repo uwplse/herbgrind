@@ -45,6 +45,7 @@ Bool print_run_blocks = False;
 
 Bool print_temp_moves = False;
 Bool print_value_moves = False;
+Bool print_expr_refs = False;
 Bool print_semantic_ops = False;
 Bool print_conversions = False;
 Bool print_types = False;
@@ -87,6 +88,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-run-blocks", print_run_blocks, True) {}
   else if VG_XACT_CLO(arg, "--print-temp-moves", print_temp_moves, True) {}
   else if VG_XACT_CLO(arg, "--print-value-moves", print_value_moves, True) {}
+  else if VG_XACT_CLO(arg, "--print-expr-refs", print_expr_refs, True) {}
   else if VG_XACT_CLO(arg, "--print-semantic-ops", print_semantic_ops, True) {}
   else if VG_XACT_CLO(arg, "--print-conversions", print_conversions, True) {}
   else if VG_XACT_CLO(arg, "--print-types", print_types, True) {}
@@ -182,6 +184,8 @@ void hg_print_debug_usage(void){
               "Prints each shadow temp movement.\n"
               " --print-value-moves "
               "Prints each shadow value movement.\n"
+              " --print-expr-refs "
+              "Prints the reference counts for expressions when they are updated.\n"
               " --print-semantic-ops "
               "Prints each semantic op executed\n"
               " --print-conversions "
