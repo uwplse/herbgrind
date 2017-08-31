@@ -122,6 +122,10 @@ ShadowTemp* getArg(int argIdx, int numChannels, FloatType argPrecision,
   if (argTemp == -1 ||
       shadowTemps[argTemp] == NULL){
     ShadowTemp* result = mkShadowTemp(numChannels);
+    if (PRINT_TEMP_MOVES){
+      VG_(printf)("Making shadow temp %p (%d vals) for argument %d\n",
+                  result, numChannels, argIdx);
+    }
     for(int j = 0; j < numChannels; j++){
       double value = argPrecision == Ft_Double ?
         computedArgs.argValues[argIdx][j] :
@@ -129,14 +133,14 @@ ShadowTemp* getArg(int argIdx, int numChannels, FloatType argPrecision,
       result->values[j] =
         mkShadowValue(argPrecision, value);
       if (PRINT_VALUE_MOVES){
-        VG_(printf)("Making shadow value %p for argument in t%d.\n",
-                    result->values[j], argTemp);
+        VG_(printf)("Making shadow value %p for argument %d (%p) in t%d.\n",
+                    result->values[j], argIdx, result, argTemp);
       }
     }
     if (argTemp != -1){
       if (PRINT_TEMP_MOVES){
-        VG_(printf)("Storing shadow temp %p at t%d for argument\n",
-                    result, argTemp);
+        VG_(printf)("Storing shadow temp %p (%d vals) at t%d for argument\n",
+                    result, numChannels, argTemp);
       }
       shadowTemps[argTemp] = result;
     }
@@ -191,6 +195,10 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   ShadowValue* result = mkShadowValueBare(opinfo->exinfo.argPrecision);
   execRealOp(opinfo->op_code, &(result->real), args);
   execSymbolicOp(opinfo, &(result->expr), result->real, args);
+  if (print_expr_refs){
+    VG_(printf)("Making new expression %p for value %p with 0 references.\n",
+                result->expr, result);
+  }
   if (print_errors_long || print_errors){
     printOpInfo(opinfo);
     VG_(printf)(":\n");

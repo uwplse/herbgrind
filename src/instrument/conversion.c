@@ -62,7 +62,8 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     VG_(printf)("\n");
     addPrint("Running ");
     addPrintOp(op_code);
-    addPrint("\n");
+    addPrint(" to ");
+    addPrint2("t%d\n", mkU64(dest));
   }
 
   if (numConversionInputs(op_code) == 1){

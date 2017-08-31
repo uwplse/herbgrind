@@ -292,9 +292,18 @@ VG_REGPARM(1) void freeBranchConcExpr(ConcExpr* expr){
 }
 void recursivelyDisownConcExpr(ConcExpr* expr, int depth){
   if (depth == 0) return;
-  tl_assert(expr->ref_count > 0);
+  tl_assert2(expr->ref_count > 0,
+             "The ref count of %p is already zero, and we're trying to decrease it!\n",
+             expr);
+  if (print_expr_refs){
+    VG_(printf)("Decreasing ref count of expr %p from %d to %d\n",
+                expr, expr->ref_count, expr->ref_count - 1);
+  }
   (expr->ref_count)--;
   if (expr->ref_count == 0){
+    if (print_expr_refs){
+      VG_(printf)("No references left for expr %p! Freeing...\n", expr);
+    }
     if (expr->type == Node_Leaf){
       stack_push(leafCExprs, (void*)expr);
     } else {
@@ -329,6 +338,10 @@ ConcExpr* mkLeafConcExpr(double value){
 
 void recursivelyOwnConcExpr(ConcExpr* expr, int depth){
   if (depth == 0) return;
+  if (print_expr_refs){
+    VG_(printf)("Increasing ref count of expr %p from %d to %d\n",
+                expr, expr->ref_count, expr->ref_count + 1);
+  }
   (expr->ref_count)++;
   if (expr->type == Node_Branch){
     for(int i = 0; i < expr->branch.nargs; ++i){
@@ -349,6 +362,9 @@ ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
     result = (void*)stack_pop(branchCExprs[nargs-1]);
   }
   // We'll do ownership stuff at the end, leave it at 0 refs for now.
+  if (print_expr_refs){
+    VG_(printf)("Making new expression %p with 0 references\n", result);
+  }
   result->ref_count = 0;
   result->value = value;
   result->branch.op = op;

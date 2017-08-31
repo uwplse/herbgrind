@@ -589,9 +589,9 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* loaded;
       if (src_size == 4){
         loaded = runPureCCall64_3(sbOut, dynamicGet128,
-                                          mkU64(tsSrc),
-                                          runGet64C(sbOut, tsSrc),
-                                          runGet64C(sbOut, tsSrc + sizeof(double)));
+                                  mkU64(tsSrc),
+                                  runGet64C(sbOut, tsSrc),
+                                  runGet64C(sbOut, tsSrc + sizeof(double)));
       } else {
         tl_assert(src_size == 8);
         addStoreC(sbOut, runGet256C(sbOut, tsSrc), &getBytes);

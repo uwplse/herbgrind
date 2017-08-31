@@ -567,6 +567,10 @@ void freeShadowValue(ShadowValue* val){
     (void)lpop(InfluenceList)(&(val->influences));
   }
   if (!no_exprs){
+    if (print_expr_refs){
+      VG_(printf)("Disowning expression %p as part of freeing val %p\n",
+                  val->expr, val);
+    }
     disownConcExpr(val->expr);
   }
   double value = getDouble(val->real);
@@ -703,6 +707,9 @@ void disownShadowValue(ShadowValue* val){
 void ownShadowValue(ShadowValue* val){
   if (val == NULL) return;
   (val->ref_count)++;
+  if (PRINT_VALUE_MOVES){
+    VG_(printf)("Owning shadow value %p (new ref count %lu)\n", val, val->ref_count);
+  }
 }
 
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value){
