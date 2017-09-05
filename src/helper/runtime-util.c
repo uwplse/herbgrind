@@ -73,6 +73,21 @@ void printBBufFloat(BBuf* buf, double val){
       i++;
     }
     printBBuf(buf, "%fe-%d", val, i);
+    // Floating-point error can make this value 10 - eps when it's
+    // supposed to be 10, and valgrind will round it to 6 digits when
+    // printing, producing 10.
+  } else if (val >= 9.9999999){
+    while (val >= 9.9999999){
+      val /= 10;
+      i++;
+    }
+    printBBuf(buf, "%fe%d", val, i);
+  } else if (val <= -9.9999999){
+    while (val <= -9.9999999){
+      val /= 10;
+      i++;
+    }
+    printBBuf(buf, "%fe%d", val, i);
   } else {
     printBBuf(buf, "%f", val);
   }
