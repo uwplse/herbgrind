@@ -208,9 +208,10 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   }
   execLocalOp(opinfo, result->real, result, args);
   if (print_errors_long || print_errors){
-    VG_(printf)("Global:\n");
+    VG_(printf)("Global:");
   }
-  updateError(&(opinfo->eagg), result->real, clientResult);
+  updateError(&(opinfo->agg.global_error), result->real, clientResult);
+  updateRanges(&(opinfo->agg.inputs), args, opinfo->exinfo.nargs);
   if (print_semantic_ops){
     VG_(printf)("%p = ", result);
     ppIROp(opinfo->op_code);

@@ -36,6 +36,8 @@
 #include "../../helper/bbuf.h"
 #include "../shadowop/mathreplace.h"
 
+#include <math.h>
+
 VgHashTable* mathreplaceOpInfoMap = NULL;
 VgHashTable* semanticOpInfoMap = NULL;
 
@@ -52,12 +54,7 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
   result->op_code = op_code;
   result->op_addr = op_addr;
   result->block_addr = block_addr;
-  result->eagg.max_error = -1;
-  result->eagg.total_error = 0;
-  result->eagg.num_evals = 0;
-  result->local_eagg.max_error = -1;
-  result->local_eagg.total_error = 0;
-  result->local_eagg.num_evals = 0;
+
   result->expr = NULL;
   result->exinfo.numSIMDOperands =
     op_code == 0x0 ? 1 : numSIMDOperands(op_code);
@@ -67,7 +64,24 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
   result->exinfo.nargs = nargs;
   result->exinfo.argPrecision =
     op_code == 0x0 ? Ft_Double : argPrecision(op_code);
+  initializeAggregate(&(result->agg), nargs);
   return result;
+}
+
+void initializeErrorAggregate(ErrorAggregate* error_agg){
+  error_agg->max_error = -1;
+  error_agg->total_error = 0;
+  error_agg->num_evals = 0;
+}
+
+void initializeAggregate(Aggregate* agg, int nargs){
+  initializeErrorAggregate(&(agg->global_error));
+  initializeErrorAggregate(&(agg->local_error));
+  agg->inputs.ranges = VG_(malloc)("input ranges", nargs * sizeof(Range));
+  for(int i = 0; i < nargs; ++i){
+    agg->inputs.ranges[i].min = INFINITY;
+    agg->inputs.ranges[i].max = -INFINITY;
+  }
 }
 
 void ppAddr(Addr addr){

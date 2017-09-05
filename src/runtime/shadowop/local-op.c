@@ -52,7 +52,7 @@ void execLocalOp(ShadowOpInfo* info, Real realVal,
       runEmulatedOp(info->op_code, exactRoundedArgs);
   }
   double bitsLocalError =
-    updateError(&(info->local_eagg), realVal, locallyApproximateResult);
+    updateError(&(info->agg.local_error), realVal, locallyApproximateResult);
 
   if (bitsLocalError >= error_threshold){
     if (print_flagged){

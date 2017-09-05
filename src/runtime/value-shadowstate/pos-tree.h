@@ -36,6 +36,7 @@ typedef struct _posTreeNode* NodePos;
 
 Xarray_H(NodePos, PosList);
 struct _posTreeNode {
+  NodePos parent;
   PosList children;
   unsigned char* data;
   int len;
@@ -46,6 +47,7 @@ extern NodePos null_pos;
 void initializePositionTree(void);
 
 NodePos rconsPos(NodePos parent, unsigned char childIndex);
+NodePos rtail(NodePos parent);
 NodePos appendPos(NodePos prefix, NodePos suffix);
 
 UWord hashPosition(NodePos node);

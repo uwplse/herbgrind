@@ -28,6 +28,7 @@
 */
 
 #include "error.h"
+#include "../value-shadowstate/shadowval.h"
 
 #include "mpfr.h"
 #include "pub_tool_libcprint.h"
@@ -45,6 +46,9 @@ double updateError(ErrorAggregate* eagg,
   }
   eagg->total_error += bitsError;
   eagg->num_evals += 1;
+
+
+  // Debug printing code
 
   if (print_errors_long || print_errors){
     if (print_errors_long){
@@ -84,4 +88,16 @@ ULong ulpd(double x, double y){
   yy = yy < 0 ? LLONG_MIN - yy : yy;
 
   return xx >= yy ? xx - yy : yy - xx;
+}
+
+void updateRanges(InputsRecord* record, ShadowValue** args, int nargs){
+  for (int i = 0; i < nargs; ++i){
+    double argVal = getDouble(args[i]->real);
+    if (record->ranges[i].min > argVal){
+      record->ranges[i].min = argVal;
+    }
+    if (record->ranges[i].max < argVal){
+      record->ranges[i].max = argVal;
+    }
+  }
 }

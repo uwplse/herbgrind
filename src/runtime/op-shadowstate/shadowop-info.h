@@ -51,6 +51,21 @@ typedef struct _ErrorAggregate {
   long long int num_evals;
 } ErrorAggregate;
 
+typedef struct _Range {
+  double min;
+  double max;
+} Range;
+
+typedef struct _InputsRecord {
+  Range* ranges;
+} InputsRecord;
+
+typedef struct _Aggregate {
+  ErrorAggregate global_error;
+  ErrorAggregate local_error;
+  InputsRecord inputs;
+} Aggregate;
+
 typedef struct _ExtraInfo {
   int numSIMDOperands;
   int numChannels;
@@ -65,8 +80,7 @@ typedef struct _ShadowOpInfo {
 
   Addr op_addr;
   Addr block_addr;
-  ErrorAggregate eagg;
-  ErrorAggregate local_eagg;
+  Aggregate agg;
   SymbExpr* expr;
   ExtraInfo exinfo;
 } ShadowOpInfo;
@@ -100,6 +114,9 @@ typedef struct _semOpInfoEntry {
 void initOpShadowState(void);
 ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
                              int nargs);
+void initializeAggregate(Aggregate* agg, int nargs);
+void initializeErrorAggregate(ErrorAggregate* error_agg);
+
 void printOpInfo(ShadowOpInfo* opinfo);
 void ppAddr(Addr addr);
 char* getAddrString(Addr addr);

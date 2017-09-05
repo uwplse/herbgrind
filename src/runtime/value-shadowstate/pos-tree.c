@@ -56,10 +56,14 @@ NodePos rconsPos(NodePos parent, unsigned char childIndex){
     newNode->len = parent->len + 1;
     VG_(memcpy)(newNode->data, parent->data, parent->len);
     newNode->data[parent->len] = parent->children->size;
+    newNode->parent = parent;
     XApush(PosList)(parent->children, newNode);
   }
   NodePos result = parent->children->data[childIndex];
   return result;
+}
+NodePos rtail(NodePos child){
+  return child->parent;
 }
 NodePos appendPos(NodePos prefix, NodePos suffix){
   NodePos curPos = prefix;

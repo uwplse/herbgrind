@@ -104,7 +104,8 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
     printOpInfo(info);
     VG_(printf)(":\n");
   }
-  updateError(&(info->eagg), shadowResult->real, *resLoc);
+  updateError(&(info->agg.global_error), shadowResult->real, *resLoc);
+  updateRanges(&(info->agg.inputs), shadowArgs, nargs);
 }
 
 ShadowOpInfo* getWrappedOpInfo(Addr callAddr, OpType opType, int nargs){

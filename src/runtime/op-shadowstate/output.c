@@ -37,7 +37,9 @@
 #include "pub_tool_mallocfree.h"
 #include "shadowop-info.h"
 #include "../../options.h"
-#include "../../helper/bbuf.h"
+
+#include "../shadowop/symbolic-op.h"
+#include "../../helper/runtime-util.h"
 
 #define ENTRY_BUFFER_SIZE 2048000
 
@@ -99,7 +101,7 @@ void writeOutput(void){
       if (output_mark_exprs && !no_exprs){
         printBBuf(buf, "  (full-expr \n");
         int numVars;
-        char* exprString = symbExprToString(markInfo->expr, &numVars);
+        char* exprString = symbExprToString(markInfo->expr, &numVars, NULL);
         char* varString = symbExprVarString(numVars);
         printBBuf(buf,
                   "    (FPCore %s\n"
@@ -123,7 +125,7 @@ void writeOutput(void){
       if (output_mark_exprs && !no_exprs){
         printBBuf(buf, "  Full expr:\n");
         int numVars;
-        char* exprString = symbExprToString(markInfo->expr, &numVars);
+        char* exprString = symbExprToString(markInfo->expr, &numVars, NULL);
         char* varString = symbExprVarString(numVars);
         printBBuf(buf,
                   "    (FPCore %s\n"
@@ -200,7 +202,7 @@ void writeOutput(void){
         for(int i = 0; i < intMarkInfo->nargs; ++i){
           int numVars;
           char* exprString = symbExprToString(intMarkInfo->exprs[i],
-                                              &numVars);
+                                              &numVars, NULL);
           char* varString = symbExprVarString(numVars);
           printBBuf(buf,
                     "    (FPCore %s\n"
@@ -228,7 +230,7 @@ void writeOutput(void){
         for(int i = 0; i < intMarkInfo->nargs; ++i){
           int numVars;
           char* exprString = symbExprToString(intMarkInfo->exprs[i],
-                                              &numVars);
+                                              &numVars, NULL);
           char* varString = symbExprVarString(numVars);
           printBBuf(buf,
                     "    (FPCore %s\n"
@@ -313,7 +315,8 @@ void writeInfluences(Int fileD, InfluenceList influences){
       opinfo->expr = varSwallow(opinfo->expr);
     }
     int numVars;
-    char* exprString = symbExprToString(opinfo->expr, &numVars);
+    Range* varRanges;
+    char* exprString = symbExprToString(opinfo->expr, &numVars, &varRanges);
     char* varString = symbExprVarString(numVars);
 
     if (!VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
@@ -350,19 +353,21 @@ void writeInfluences(Int fileD, InfluenceList influences){
                   "    (objectfile \"%s\")\n",
                   objname);
       }
+      ErrorAggregate local_error = opinfo->agg.local_error;
+      ErrorAggregate global_error = opinfo->agg.global_error;
       printBBuf(buf,
                 "     (avg-error %f)\n"
                 "     (max-error %f)\n"
                 "     (avg-local-error %f)\n"
                 "     (max-local-error %f)\n"
                 "     (num-calls %lld))\n",
-                opinfo->eagg.total_error
-                / opinfo->eagg.num_evals,
-                opinfo->eagg.max_error,
-                opinfo->local_eagg.total_error
-                / opinfo->eagg.num_evals,
-                opinfo->local_eagg.max_error,
-                opinfo->eagg.num_evals);
+                global_error.total_error
+                / global_error.num_evals,
+                global_error.max_error,
+                local_error.total_error
+                / global_error.num_evals,
+                local_error.max_error,
+                global_error.num_evals);
       printBBuf(buf, "    )\n");
     } else {
       printBBuf(buf,
@@ -370,25 +375,32 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 "    (FPCore %s\n"
                 "     %s)\n",
                 varString, exprString);
+      if (numVars > 0){
+        printBBuf(buf, "   ");
+        writeRanges(buf, varRanges, numVars);
+        printBBuf(buf, "\n");
+      }
       char* addrString = getAddrString(opinfo->op_addr);
       printBBuf(buf,
                 "   %s",
                 addrString);
       VG_(free)(addrString);
       printBBuf(buf, "\n");
+      ErrorAggregate local_error = opinfo->agg.local_error;
+      ErrorAggregate global_error = opinfo->agg.global_error;
       printBBuf(buf,
                 "   %f bits average error\n"
                 "   %f bits max error\n"
                 "   %f bits average local error\n"
                 "   %f bits max local error\n"
                 "   Aggregated over %lld instances\n",
-                opinfo->eagg.total_error
-                / opinfo->eagg.num_evals,
-                opinfo->eagg.max_error,
-                opinfo->local_eagg.total_error
-                / opinfo->eagg.num_evals,
-                opinfo->local_eagg.max_error,
-                opinfo->eagg.num_evals);
+                global_error.total_error
+                / global_error.num_evals,
+                global_error.max_error,
+                local_error.total_error
+                / global_error.num_evals,
+                local_error.max_error,
+                global_error.num_evals);
     }
     unsigned int entryLen = ENTRY_BUFFER_SIZE - buf->bound;
     VG_(free)(exprString);
@@ -398,5 +410,19 @@ void writeInfluences(Int fileD, InfluenceList influences){
   if (output_sexp){
     char endparen[] = "    )\n";
     VG_(write)(fileD, endparen, sizeof(endparen) - 1);
+  }
+}
+
+void writeRanges(BBuf* buf, Range* ranges, int numVars){
+  printBBuf(buf, "With");
+  for(int i = 0; i < numVars; ++i){
+    Range varRange = ranges[i];
+    if (i > 0){
+      printBBuf(buf, ",");
+    }
+    printBBuf(buf, " ");
+    printBBufFloat(buf, varRange.min);
+    printBBuf(buf, " < %s < ", getVar(i));
+    printBBufFloat(buf, varRange.max);
   }
 }

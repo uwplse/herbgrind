@@ -32,9 +32,12 @@
 
 #include "marks.h"
 
+#include "../../helper/bbuf.h"
+
 void writeOutput(void);
 
 const char* getOutputFilename(void);
 int haveErroneousIntMarks(void);
 void writeInfluences(Int fileD, InfluenceList influences);
+void writeRanges(BBuf* buf, Range* ranges, int numVars);
 #endif

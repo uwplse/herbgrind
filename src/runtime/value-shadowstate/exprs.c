@@ -656,7 +656,7 @@ void ppConcExprNoGrafts(ConcExpr* expr){
 }
 
 void ppSymbExpr(SymbExpr* expr){
-  char* stringRep = symbExprToString(expr, NULL);
+  char* stringRep = symbExprToString(expr, NULL, NULL);
   tl_assert(stringRep != NULL);
   VG_(printf)("%s", stringRep);
   VG_(free)(stringRep);
@@ -686,7 +686,7 @@ void printColorCode(BBuf* buffer, Color color){
 void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
                          const char* parent_func, Color curColor,
                          NodePos curPos, int max_depth);
-char* symbExprToString(SymbExpr* expr, int* numVarsOut){
+char* symbExprToString(SymbExpr* expr, int* numVarsOut, Range** varRanges){
   if (no_exprs){
     char* buf = VG_(malloc)("buffer data", 2);
     buf[0] = '\0';
@@ -734,8 +734,12 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
     VG_(realloc_shrink)(_buf,
                         MAX_EXPR_LEN - bbuf->bound + 10);
     VG_(free)(bbuf);
+    int numVars = countVars(varMap);
     if (numVarsOut != NULL){
-      *numVarsOut = countVars(varMap);
+      *numVarsOut = numVars;
+    }
+    if (varRanges != NULL){
+      *varRanges = getRanges(varMap, expr, numVars);
     }
     freeVarMap(varMap);
     return _buf;
@@ -909,21 +913,6 @@ FoldBlock_H(int);
 FoldBlock_Impl(int);
 FoldBlock_H_Named(BBuf*, BBuf);
 FoldBlock_Impl_Named(BBuf*, BBuf);
-int numVarNodes(SymbExpr* expr){
-  return foldExpr(int)
-    (0, expr,
-     lambda (int, (int acc, SymbExpr* curExpr,
-                   NodePos curPos, VarMap* varMap,
-                   int depth, int isGraft) {
-               if (curExpr->type == Node_Leaf &&
-                   !curExpr->isConst && depth <= MAX_FOLD_DEPTH){
-                 return acc + 1;
-               } else {
-                 return acc;
-               }
-             }),
-     foldId(int));
-}
 int countVars(VarMap* map){
   OSet* vars = VG_(OSetWord_Create)(VG_(malloc), "varset",
                                     VG_(free));
@@ -939,6 +928,28 @@ int countVars(VarMap* map){
   VG_(OSetWord_Destroy)(vars);
   return result;
 }
+Range* getRanges(VarMap* map, SymbExpr* expr, int num_vars){
+  Range* ranges = VG_(malloc)("expr ranges", sizeof(Range) * num_vars);
+
+  OSet* vars = VG_(OSetWord_Create)(VG_(malloc), "varset",
+                                    VG_(free));
+  int nextVarIdx = 0;
+  VG_(HT_ResetIter)(map->existingEntries);
+  VarMapEntry* entry;
+  while((entry = VG_(HT_Next)(map->existingEntries)) != NULL){
+    if (!VG_(OSetWord_Contains)(vars, entry->varIdx)){
+      VG_(OSetWord_Insert)(vars, entry->varIdx);
+
+      NodePos samplePos = entry->position;
+      SymbExpr* parent = symbExprPosGet(expr, rtail(samplePos));
+      int childIndex = samplePos->data[samplePos->len - 1];
+      tl_assert(parent->type == Node_Branch);
+      ranges[nextVarIdx] = parent->branch.op->agg.inputs.ranges[childIndex];
+      nextVarIdx++;
+    }
+  }
+  return ranges;
+}
 int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups){
   int acc = 0;
   for(int i = 0; i < trimmedGroups->size; ++i){
@@ -953,15 +964,6 @@ int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups){
     acc -= 1;
   }
   return acc;
-}
-int numExprVars(SymbExpr* expr){
-  GroupList trimmedGroups =
-    groupsWithoutNonVars(expr, expr->branch.groups);
-  int numNodes = numVarNodes(expr);
-  int numRepetitions = numRepeatedVars(expr, trimmedGroups);
-  int result = numNodes - numRepetitions;
-  freeXA(GroupList)(trimmedGroups);
-  return result;
 }
 char* symbExprVarString(int numVars){
   char* buf = NULL;
