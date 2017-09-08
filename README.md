@@ -1,7 +1,7 @@
 Herbgrind -- A Valgrind Tool For Herbie
 =======================================
 
-<img src="docs/logo.jpg" alt="Herbgrind logo" width="150"/>
+<img src="docs/logo.jpg" alt="Herbgrind logo" width="50%"/>
 
 Herbgrind is a valgrind tool for tracking floating point imprecision
 in binary programs, inspired by FpDebug. Herbgrind is still pretty
