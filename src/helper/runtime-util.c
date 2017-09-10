@@ -33,6 +33,7 @@
 #include "pub_tool_debuginfo.h"
 #include "pub_tool_libcbase.h"
 #include "pub_tool_libcprint.h"
+#include <math.h>
 
 #define NCALLFRAMES 5
 Addr getCallAddr(void){
@@ -61,7 +62,13 @@ Addr getCallAddr(void){
 
 void printBBufFloat(BBuf* buf, double val){
   int i = 0;
-  if (val > 0 && val < 1){
+  if (val != val){
+    printBBuf(buf, "*****");
+  } else if (val == INFINITY){
+    printBBuf(buf, "+Inf");
+  } else if (val == -INFINITY){
+    printBBuf(buf, "-Inf");
+  } else if (val > 0 && val < 1){
     while (val < 1) {
       val *= 10;
       i++;
@@ -95,7 +102,13 @@ void printBBufFloat(BBuf* buf, double val){
 
 void ppFloat(double val){
   int i = 0;
-  if (val > 0 && val < 1){
+  if (val != val){
+    VG_(printf)("*****");
+  } else if (val == INFINITY){
+    VG_(printf)("+Inf");
+  } else if (val == -INFINITY){
+    VG_(printf)("-Inf");
+  } else if (val > 0 && val < 1){
     while (val < 1) {
       val *= 10;
       i++;
