@@ -39,5 +39,5 @@ void writeOutput(void);
 const char* getOutputFilename(void);
 int haveErroneousIntMarks(void);
 void writeInfluences(Int fileD, InfluenceList influences);
-void writeRanges(BBuf* buf, Range* ranges, int numVars);
+void writeRanges(BBuf* buf, RangeRecord* ranges, int numVars);
 #endif

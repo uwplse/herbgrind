@@ -35,9 +35,9 @@
 #include "../../options.h"
 #include "pub_tool_libcprint.h"
 
-void execLocalOp(ShadowOpInfo* info, Real realVal,
+double execLocalOp(ShadowOpInfo* info, Real realVal,
                  ShadowValue* res, ShadowValue** args){
-  if (no_reals) return;
+  if (no_reals) return 0;
   int nargs = info->exinfo.nargs;
   double exactRoundedArgs[4];
   for(int i = 0; i < nargs; ++i){
@@ -62,4 +62,6 @@ void execLocalOp(ShadowOpInfo* info, Real realVal,
     }
     trackOpAsInfluence(info, res);
   }
+
+  return bitsLocalError;
 }

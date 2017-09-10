@@ -62,6 +62,7 @@ Bool expr_colors = False;
 Bool print_object_files = False;
 Bool print_subexpr_locations = False;
 Bool output_mark_exprs = False;
+Bool detailed_ranges = False;
 Bool output_sexp = False;
 Bool sound_simplify = True;
 Bool shortmark_all_exprs = False;
@@ -106,13 +107,15 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--unsound-var-swallow", unsound_var_swallow, True) {}
   else if VG_XACT_CLO(arg, "--expr-colors", expr_colors, True) {}
   else if VG_XACT_CLO(arg, "--output-mark-exprs", output_mark_exprs, True) {}
+  else if VG_XACT_CLO(arg, "--detailed-ranges", detailed_ranges, True) {}
   else if VG_XACT_CLO(arg, "--shortmark-all-exprs", shortmark_all_exprs, True) {}
   else if VG_XACT_CLO(arg, "--only-improvable", only_improvable, True) {}
   else if VG_XACT_CLO(arg, "--start-off", running_depth, 0) {}
   else if VG_XACT_CLO(arg, "--always-on", always_on, True) {}
   else if VG_XACT_CLO(arg, "--output-sexp", output_sexp, True) {}
   else if VG_XACT_CLO(arg, "--no-mark-on-escape", mark_on_escape, False) {}
-  else if VG_XACT_CLO(arg, "--no-compensation-detection", compensation_detection, False) {}
+  else if VG_XACT_CLO(arg, "--no-compensation-detection", compensation_detection, False)
+                       {}
   else if VG_XACT_CLO(arg, "--no-exprs", no_exprs, True) {}
   else if VG_XACT_CLO(arg, "--no-influences", no_influences, True) {}
   else if VG_XACT_CLO(arg, "--no-reals", no_reals, True) {}
@@ -153,6 +156,8 @@ void hg_print_usage(void){
               "which object file it came from.\n"
               "    --output-mark-exprs     "
               "Print the full expressions for marks.\n"
+              "    --detailed-ranges     "
+              "Print more detailed information about the input ranges.\n"
               "    --no-sound-simplify    "
               "Don't simplify expressions in simple ways which don't affect "
               "their floating point behavior.\n"

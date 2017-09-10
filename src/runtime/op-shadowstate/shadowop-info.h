@@ -56,8 +56,13 @@ typedef struct _Range {
   double max;
 } Range;
 
+typedef struct _RangeRecord {
+  Range neg_range;
+  Range pos_range;
+} RangeRecord;
+
 typedef struct _InputsRecord {
-  Range* ranges;
+  RangeRecord* range_records;
 } InputsRecord;
 
 typedef struct _Aggregate {
@@ -116,6 +121,10 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
                              int nargs);
 void initializeAggregate(Aggregate* agg, int nargs);
 void initializeErrorAggregate(ErrorAggregate* error_agg);
+
+typedef struct _ShadowValue ShadowValue;
+void updateRanges(InputsRecord* record, ShadowValue** args, int nargs);
+void initRange(Range* range);
 
 void printOpInfo(ShadowOpInfo* opinfo);
 void ppAddr(Addr addr);

@@ -126,13 +126,13 @@ int numVarNodes(SymbExpr* expr);
 int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups);
 int numExprVars(SymbExpr* expr);
 int countVars(VarMap* map);
-Range* getRanges(VarMap* map, SymbExpr* expr, int num_vars);
+RangeRecord* getRanges(VarMap* map, SymbExpr* expr, int num_vars);
 char* symbExprVarString(int num_vars);
 
 const char* getVar(int idx);
 int varLengthLookup(VarMap* map, NodePos pos);
 // Free this when you're done with it.
-char* symbExprToString(SymbExpr* expr, int* outNumVars, Range** varRanges);
+char* symbExprToString(SymbExpr* expr, int* outNumVars, RangeRecord** varRanges);
 // Returns the number of bytes written
 int writeSymbExprToString(char* buf, SymbExpr* expr,
                           NodePos curpos, VarMap* varmap,

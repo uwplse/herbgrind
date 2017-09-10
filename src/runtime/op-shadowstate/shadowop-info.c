@@ -77,11 +77,18 @@ void initializeErrorAggregate(ErrorAggregate* error_agg){
 void initializeAggregate(Aggregate* agg, int nargs){
   initializeErrorAggregate(&(agg->global_error));
   initializeErrorAggregate(&(agg->local_error));
-  agg->inputs.ranges = VG_(malloc)("input ranges", nargs * sizeof(Range));
+  agg->inputs.range_records = VG_(malloc)("input ranges", nargs * sizeof(RangeRecord));
   for(int i = 0; i < nargs; ++i){
-    agg->inputs.ranges[i].min = INFINITY;
-    agg->inputs.ranges[i].max = -INFINITY;
+    initRange(&(agg->inputs.range_records[i].pos_range));
+    if (detailed_ranges){
+      initRange(&(agg->inputs.range_records[i].neg_range));
+    }
   }
+}
+
+void initRange(Range* range){
+  range->min = INFINITY;
+  range->max = -INFINITY;
 }
 
 void ppAddr(Addr addr){
@@ -140,4 +147,26 @@ void printOpInfo(ShadowOpInfo* opinfo){
   }
   VG_(printf)(" at ");
   ppAddr(opinfo->op_addr);
+}
+
+void updateRanges(InputsRecord* record, ShadowValue** args, int nargs){
+  for (int i = 0; i < nargs; ++i){
+    double argVal = getDouble(args[i]->real);
+    RangeRecord* inputRec = record->range_records + i;
+    if (argVal > 0 || !detailed_ranges){
+      if (inputRec->pos_range.min > argVal){
+        inputRec->pos_range.min = argVal;
+      }
+      if (inputRec->pos_range.max < argVal){
+        inputRec->pos_range.max = argVal;
+      }
+    } else {
+      if (inputRec->neg_range.min > argVal){
+        inputRec->neg_range.min = argVal;
+      }
+      if (inputRec->neg_range.max < argVal){
+        inputRec->neg_range.max = argVal;
+      }
+    }
+  }
 }

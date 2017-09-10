@@ -686,7 +686,7 @@ void printColorCode(BBuf* buffer, Color color){
 void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
                          const char* parent_func, Color curColor,
                          NodePos curPos, int max_depth);
-char* symbExprToString(SymbExpr* expr, int* numVarsOut, Range** varRanges){
+char* symbExprToString(SymbExpr* expr, int* numVarsOut, RangeRecord** varRanges){
   if (no_exprs){
     char* buf = VG_(malloc)("buffer data", 2);
     buf[0] = '\0';
@@ -928,8 +928,8 @@ int countVars(VarMap* map){
   VG_(OSetWord_Destroy)(vars);
   return result;
 }
-Range* getRanges(VarMap* map, SymbExpr* expr, int num_vars){
-  Range* ranges = VG_(malloc)("expr ranges", sizeof(Range) * num_vars);
+RangeRecord* getRanges(VarMap* map, SymbExpr* expr, int num_vars){
+  RangeRecord* range_recs = VG_(malloc)("expr ranges", sizeof(RangeRecord) * num_vars);
 
   OSet* vars = VG_(OSetWord_Create)(VG_(malloc), "varset",
                                     VG_(free));
@@ -944,11 +944,11 @@ Range* getRanges(VarMap* map, SymbExpr* expr, int num_vars){
       SymbExpr* parent = symbExprPosGet(expr, rtail(samplePos));
       int childIndex = samplePos->data[samplePos->len - 1];
       tl_assert(parent->type == Node_Branch);
-      ranges[nextVarIdx] = parent->branch.op->agg.inputs.ranges[childIndex];
+      range_recs[nextVarIdx] = parent->branch.op->agg.inputs.range_records[childIndex];
       nextVarIdx++;
     }
   }
-  return ranges;
+  return range_recs;
 }
 int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups){
   int acc = 0;

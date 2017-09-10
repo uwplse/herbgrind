@@ -32,11 +32,9 @@
 
 #include "../value-shadowstate/real.h"
 #include "../op-shadowstate/shadowop-info.h"
-#include "../value-shadowstate/shadowval.h"
 
 double updateError(ErrorAggregate* eagg,
                    Real realVal, double computedVal);
 ULong ulpd(double val1, double val2);
-void updateRanges(InputsRecord* record, ShadowValue** args, int nargs);
 
 #endif

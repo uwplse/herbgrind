@@ -34,7 +34,7 @@
 #include "../value-shadowstate/shadowval.h"
 #include "../op-shadowstate/shadowop-info.h"
 
-void execLocalOp(ShadowOpInfo* info, Real realVal,
-                 ShadowValue* res, ShadowValue** args);
+double execLocalOp(ShadowOpInfo* info, Real realVal,
+                   ShadowValue* res, ShadowValue** args);
 
 #endif

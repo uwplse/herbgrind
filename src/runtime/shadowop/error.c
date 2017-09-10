@@ -89,15 +89,3 @@ ULong ulpd(double x, double y){
 
   return xx >= yy ? xx - yy : yy - xx;
 }
-
-void updateRanges(InputsRecord* record, ShadowValue** args, int nargs){
-  for (int i = 0; i < nargs; ++i){
-    double argVal = getDouble(args[i]->real);
-    if (record->ranges[i].min > argVal){
-      record->ranges[i].min = argVal;
-    }
-    if (record->ranges[i].max < argVal){
-      record->ranges[i].max = argVal;
-    }
-  }
-}
