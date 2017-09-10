@@ -13,10 +13,10 @@
    inkscape:export-ydpi="90"
    inkscape:export-xdpi="90"
    inkscape:export-filename="/home/alex/images/herbgrind-logo-2-perspective.png"
-   sodipodi:docname="herbgrind-logo-2.5.svg"
-   width="210mm"
-   height="297mm"
-   viewBox="0 0 744.09448819 1052.3622047"
+   sodipodi:docname="logo-drawing.svg"
+   width="176.21866mm"
+   height="129.67194mm"
+   viewBox="0 0 624.39682 459.46749"
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725">
@@ -28,8 +28,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="656.16357"
-     inkscape:cy="411.48864"
+     inkscape:cx="539.2328"
+     inkscape:cy="209.05009"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -37,7 +37,11 @@
      inkscape:window-height="1057"
      inkscape:window-x="0"
      inkscape:window-y="23"
-     inkscape:window-maximized="0" />
+     inkscape:window-maximized="0"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
   <defs
      id="defs4">
     <pattern
@@ -799,7 +803,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -807,7 +811,8 @@
      style="display:inline"
      id="layer1"
      inkscape:groupmode="layer"
-     inkscape:label="Layer 1">
+     inkscape:label="Layer 1"
+     transform="translate(-116.93077,-390.45617)">
     <path
        inkscape:export-ydpi="90"
        inkscape:export-xdpi="90"
