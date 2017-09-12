@@ -114,6 +114,7 @@ void initializeAggregate(Aggregate* agg, int nargs);
 void initializeErrorAggregate(ErrorAggregate* error_agg);
 
 typedef struct _ShadowValue ShadowValue;
+void updateInputRecords(InputsRecord* record, ShadowValue** args, int nargs);
 
 void printOpInfo(ShadowOpInfo* opinfo);
 void ppAddr(Addr addr);

@@ -67,6 +67,12 @@ ShadowValue* newShadowValue(FloatType type){
   }
   return result;
 }
+void updateRanges(RangeRecord* records, ShadowValue** args, int nargs){
+  for (int i = 0; i < nargs; ++i){
+    updateRangeRecord(records + i, getDouble(args[i]->real));
+  }
+}
+
 VG_REGPARM(2) void assertValValid(const char* label, ShadowValue* val){
   tl_assert2(val->real != NULL, "%s: value is %p", label, val);
 }

@@ -144,24 +144,8 @@ void printOpInfo(ShadowOpInfo* opinfo){
   ppAddr(opinfo->op_addr);
 }
 
-void updateRanges(InputsRecord* record, ShadowValue** args, int nargs){
+void updateInputRecords(InputsRecord* record, ShadowValue** args, int nargs){
   for (int i = 0; i < nargs; ++i){
-    double argVal = getDouble(args[i]->real);
-    RangeRecord* inputRec = record->range_records + i;
-    if (argVal > 0 || !detailed_ranges){
-      if (inputRec->pos_range.min > argVal){
-        inputRec->pos_range.min = argVal;
-      }
-      if (inputRec->pos_range.max < argVal){
-        inputRec->pos_range.max = argVal;
-      }
-    } else {
-      if (inputRec->neg_range.min > argVal){
-        inputRec->neg_range.min = argVal;
-      }
-      if (inputRec->neg_range.max < argVal){
-        inputRec->neg_range.max = argVal;
-      }
-    }
+    updateRangeRecord(record->range_records + i, getDouble(args[i]->real));
   }
 }
