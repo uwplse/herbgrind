@@ -86,11 +86,6 @@ void initializeAggregate(Aggregate* agg, int nargs){
   }
 }
 
-void initRange(Range* range){
-  range->min = INFINITY;
-  range->max = -INFINITY;
-}
-
 void ppAddr(Addr addr){
   const HChar* src_filename;
   const HChar* fnname;

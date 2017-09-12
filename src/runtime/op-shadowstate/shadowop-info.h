@@ -37,6 +37,7 @@
 #include "../../helper/ir-info.h"
 
 #include "../value-shadowstate/exprs.hh"
+#include "../value-shadowstate/range.h"
 #include "../../instrument/floattypes.h"
 #include "../../include/mathreplace-funcs.h"
 
@@ -50,16 +51,6 @@ typedef struct _ErrorAggregate {
   double total_error;
   long long int num_evals;
 } ErrorAggregate;
-
-typedef struct _Range {
-  double min;
-  double max;
-} Range;
-
-typedef struct _RangeRecord {
-  Range neg_range;
-  Range pos_range;
-} RangeRecord;
 
 typedef struct _InputsRecord {
   RangeRecord* range_records;
@@ -123,8 +114,6 @@ void initializeAggregate(Aggregate* agg, int nargs);
 void initializeErrorAggregate(ErrorAggregate* error_agg);
 
 typedef struct _ShadowValue ShadowValue;
-void updateRanges(InputsRecord* record, ShadowValue** args, int nargs);
-void initRange(Range* range);
 
 void printOpInfo(ShadowOpInfo* opinfo);
 void ppAddr(Addr addr);
