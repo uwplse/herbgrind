@@ -52,8 +52,15 @@ typedef struct _valMapEntry {
   UWord groupIdx;
 } ValMapEntry;
 
+typedef struct _rangeMapEntry {
+  struct _rangeMapEntry* next;
+  UWord positionHash;
+  NodePos position;
+  RangeRecord range_rec;
+} RangeMapEntry;
+
 void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
-                    Real real, ShadowValue** args);
+                    Real real, ShadowValue** args, Bool problematic);
 void generalizeSymbolicExpr(SymbExpr** symexpr, ConcExpr* cexpr);
 
 void generalizeStructure(SymbExpr* symbexpr, ConcExpr* concExpr,
@@ -73,7 +80,7 @@ int lookupVal(VgHashTable* valmap, double val);
 UWord hashValue(double val);
 Word cmp_value(const void* node1, const void* node2);
 
-ConcExpr* concGraftPosGet(ConcExpr* expr, NodePos pos);
+ConcExpr* concExprPosGet(ConcExpr* expr, NodePos pos);
 SymbExpr* symbExprPosGet(SymbExpr* expr, NodePos pos);
 SymbExpr** symbExprPosGetRef(SymbExpr** expr, NodePos pos);
 Word cmp_position(const void* node1, const void* node2);

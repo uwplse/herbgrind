@@ -53,7 +53,7 @@ SymbExpr* symbGraftChild(SymbGraft graft){
 }
 
 void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
-                    Real real, ShadowValue** args){
+                    Real real, ShadowValue** args, Bool problematic){
   if (no_exprs){
     return;
   }
@@ -64,6 +64,9 @@ void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
   *result = mkBranchConcExpr(getDouble(real), opinfo,
                              opinfo->exinfo.nargs, exprArgs);
   generalizeSymbolicExpr(&(opinfo->expr), *result);
+  if (problematic){
+    updateProblematicRanges(opinfo->expr, *result);
+  }
 }
 
 void generalizeSymbolicExpr(SymbExpr** symbexpr, ConcExpr* cexpr){
@@ -186,7 +189,7 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
       if (symbExprPosGet(symbExpr, groupMemberPos) == NULL){
         continue;
       }
-      double nodeValue = concGraftPosGet(concExpr, groupMemberPos)->value;
+      double nodeValue = concExprPosGet(concExpr, groupMemberPos)->value;
       if (newCurGroup == NULL){
         canonicalValue = nodeValue;
         lpush(Group)(&(newCurGroup), groupMemberPos);
@@ -201,6 +204,13 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
             lpush(Group)(&newSplitGroup, groupMemberPos);
             addValEntry(splitMap, nodeValue, newGroups->size);
             XApush(GroupList)(newGroups, newSplitGroup);
+            RangeRecord* existingRange =
+              lookupRangeRecord(symbExpr->branch.varProblematicRanges,
+                                groups->data[i]->item);
+            tl_assert(existingRange != NULL);
+            addRangeEntryCopy(symbExpr->branch.varProblematicRanges,
+                              groupMemberPos,
+                              existingRange);
           } else {
             lpush(Group)(&(newGroups->data[splitGroup]), groupMemberPos);
           }
@@ -402,7 +412,7 @@ void freeVarMap(VarMap* map){
   VG_(free)(map);
 }
 
-ConcExpr* concGraftPosGet(ConcExpr* expr, NodePos pos){
+ConcExpr* concExprPosGet(ConcExpr* expr, NodePos pos){
   ConcExpr* curExpr = expr;
   for(int i = 0; i < pos->len; ++i){
     if (curExpr->type == Node_Leaf){

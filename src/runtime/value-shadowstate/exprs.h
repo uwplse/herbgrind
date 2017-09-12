@@ -34,6 +34,7 @@
 #include "pos-tree.h"
 
 #include "../op-shadowstate/shadowop-info.h"
+#include "range.h"
 
 #include "../../helper/list.h"
 #include "../../helper/xarray.h"
@@ -88,6 +89,7 @@ struct _SymbExpr {
     int nargs;
     SymbExpr** args;
     GroupList groups;
+    VgHashTable* varProblematicRanges;
   } branch;
 };
 
@@ -112,6 +114,14 @@ ConcGraft* popConcGraftStack(int count);
 int hasRepeatedVars(SymbExpr* expr);
 SymbExpr* varSwallow(SymbExpr* expr);
 
+void initializeProblematicRanges(SymbExpr* symbExpr);
+void addRangeEntryCopy(VgHashTable* rangeMap, NodePos position, RangeRecord* original);
+void addInitialRangeEntry(VgHashTable* rangeMap, NodePos position);
+void updateProblematicRanges(SymbExpr* symbExpr, ConcExpr* cexpr);
+RangeRecord* lookupRangeRecord(VgHashTable* rangeMap, NodePos position);
+void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
+               SymbExpr* expr, int num_vars);
+
 void ppEquivGroup(Group group);
 void ppEquivGroups(GroupList groups);
 
@@ -126,13 +136,12 @@ int numVarNodes(SymbExpr* expr);
 int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups);
 int numExprVars(SymbExpr* expr);
 int countVars(VarMap* map);
-RangeRecord* getRanges(VarMap* map, SymbExpr* expr, int num_vars);
 char* symbExprVarString(int num_vars);
 
 const char* getVar(int idx);
 int varLengthLookup(VarMap* map, NodePos pos);
 // Free this when you're done with it.
-char* symbExprToString(SymbExpr* expr, int* outNumVars, RangeRecord** varRanges);
+char* symbExprToString(SymbExpr* expr, int* outNumVars);
 // Returns the number of bytes written
 int writeSymbExprToString(char* buf, SymbExpr* expr,
                           NodePos curpos, VarMap* varmap,

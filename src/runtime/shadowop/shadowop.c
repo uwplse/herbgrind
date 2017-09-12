@@ -29,6 +29,7 @@
 
 #include "shadowop.h"
 #include "../value-shadowstate/value-shadowstate.h"
+#include "../value-shadowstate/range.h"
 #include "realop.h"
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcassert.h"
@@ -179,7 +180,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
       if (getDouble(args[0]->real) == 0 || getDouble(args[1]->real) == 0){
         ShadowValue* result =
           mkShadowValue(opinfo->exinfo.argPrecision, 0);
-        execSymbolicOp(opinfo, &(result->expr), result->real, args);
+        execSymbolicOp(opinfo, &(result->expr), result->real, args, False);
         return result;
       }
     default:
@@ -194,11 +195,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   }
   ShadowValue* result = mkShadowValueBare(opinfo->exinfo.argPrecision);
   execRealOp(opinfo->op_code, &(result->real), args);
-  execSymbolicOp(opinfo, &(result->expr), result->real, args);
-  if (print_expr_refs){
-    VG_(printf)("Making new expression %p for value %p with 0 references.\n",
-                result->expr, result);
-  }
+
   if (print_errors_long || print_errors){
     printOpInfo(opinfo);
     VG_(printf)(":\n");
@@ -210,8 +207,15 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   if (print_errors_long || print_errors){
     VG_(printf)("Global:");
   }
-  updateError(&(opinfo->agg.global_error), result->real, clientResult);
-  updateRanges(&(opinfo->agg.inputs), args, opinfo->exinfo.nargs);
+  double bitsGlobalError =
+    updateError(&(opinfo->agg.global_error), result->real, clientResult);
+  execSymbolicOp(opinfo, &(result->expr), result->real, args,
+                 bitsGlobalError > error_threshold);
+  if (print_expr_refs){
+    VG_(printf)("Making new expression %p for value %p with 0 references.\n",
+                result->expr, result);
+  }
+  updateRanges(opinfo->agg.inputs.range_records, args, opinfo->exinfo.nargs);
   if (print_semantic_ops){
     VG_(printf)("%p = ", result);
     ppIROp(opinfo->op_code);

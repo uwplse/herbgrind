@@ -40,6 +40,7 @@
 #include "../shadowop/symbolic-op.h"
 #include "../shadowop/mathreplace.h"
 #include <math.h>
+#include <inttypes.h>
 
 Stack* leafCExprs;
 Stack* branchCExprs[MAX_BRANCH_ARGS];
@@ -485,6 +486,7 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
       result->grafts[i].childIndex = cexpr->grafts[i].childIndex;
     }
     result->branch.groups = getExprsEquivGroups(cexpr, result);
+    initializeProblematicRanges(result);
   }
   return result;
 }
@@ -615,6 +617,235 @@ SymbExpr* varSwallow(SymbExpr* expr){
   return expr;
 }
 
+// This function initializes a range table for the given symbolic
+// expression. Range tables are maps from node positions to
+// RangeRecord's, which should be an up-to-date record of the inputs
+// at that position. Range tables should maintain the following
+// invariant: there is an entry for exactly one member of each
+// equivalence group in the symbolic expression, INCLUDING implicit
+// equivalence groups. That means that if a node exists in the
+// symbolic expression, and it's not in an explicit equivalence group
+// (e.g. isn't in the GroupList), it should have it's own range map
+// entry. For nodes that are part of explicit equivalence groups, the
+// first node in the group will act as a stand-in for all nodes in the
+// group. Keep in mind this means that when groups are split, new
+// entries must be added to the range table.
+void initializeProblematicRanges(SymbExpr* symbExpr){
+  // This should be called after all other initialization of the
+  // symbolic expression has been done, and only on symbolic
+  // expressions which represent branch nodes. Leaf node expressions
+  // don't have range maps or equivalence groups, since they would be
+  // trivial.
+  tl_assert(symbExpr->type == Node_Branch);
+
+
+  // To make sure we properly adhere to the invariant mentioned above,
+  // we'll keep track of which nodes have been seen in equivalence
+  // groups, and should therefore only be added by group, not
+  // seperately, to the range table.
+  OSet* nodesInGroups = VG_(OSetWord_Create)(VG_(malloc), "varset", VG_(free));
+  // Initialize the range table.
+  symbExpr->branch.varProblematicRanges =
+    VG_(HT_construct)("Variable problematic ranges table");
+
+  // Part (a)
+
+  // First thing we'll do is go through each group and add the first
+  // members position to the range table.
+  for(int i = 0; i < symbExpr->branch.groups->size; ++i){
+    // Create a range map entry with an embedded range record for this
+    // group. We won't actually give the range record any inputs yet,
+    // because we don't know if the current inputs are problematic,
+    // and if they are we'll update the ranges later in the symbolic
+    // op with that info.
+    addInitialRangeEntry(symbExpr->branch.varProblematicRanges,
+                         symbExpr->branch.groups->data[i]->item);
+
+    // Add every node in this group to the set of nodes in groups, so
+    // that we don't add them again.
+    for(Group curNode = symbExpr->branch.groups->data[i];
+        curNode != NULL; curNode = curNode->next){
+      VG_(OSetWord_Insert)(nodesInGroups, (UWord)(uintptr_t)curNode->item);
+    }
+  }
+
+  // Part (b)
+
+  // Now, there are some nodes not captured by groups, because
+  // singleton groups get pruned (and sometimes not created in the
+  // first place). So we're going to look at the problematic range
+  // tables of our children, and use those to populate the rest of our
+  // range table. This works for a kind of subtle reason. We can
+  // assume inductively that our children have range tables which
+  // satisfy the invariant, since they called this function before
+  // us. This means they have an entry their range table for every
+  // node below them, EXCEPT if that node is part of an equivalence
+  // group and not the first element of that group. In this case we
+  // know that every time our subexpression saw that node, it had an
+  // identical value to a node that IS in our range table. Since the
+  // times we see nodes underneath this subexpression are a subset of
+  // the times that the subexpression sees them, that means that the
+  // node is already part of a group that this expression has
+  // too. Therefore, we would have already added it to our range table
+  // in the step above.
+  for (int i = 0; i < symbExpr->branch.nargs; ++i){
+    SymbExpr* childNode = symbExpr->branch.args[i];
+    // We also need to add our children themselves directly to our
+    // range table, since they aren't in their own range tables.
+
+    // We'll add them indexed by the singleton position of their child
+    // index, since they are only one level down from us.
+    NodePos childPos = rconsPos(null_pos, i);
+    // If they are equivalent to something else and we already added
+    // them, don't add them again.
+    if (!(VG_(OSetWord_Contains)(nodesInGroups, (UWord)(uintptr_t)childPos))){
+      addInitialRangeEntry(symbExpr->branch.varProblematicRanges, childPos);
+    }
+    // If our child is a branch, pull in it's range table without the
+    // actual ranges, since the ranges themselves are
+    // context-sensitive.
+    if (childNode->type == Node_Branch){
+      VgHashTable* childMap = childNode->branch.varProblematicRanges;
+      VG_(HT_ResetIter)(childMap);
+      RangeMapEntry* entry;
+      while((entry = VG_(HT_Next)(childMap)) != NULL){
+        NodePos childEntryPos = rconsPos(entry->position, i);
+
+        // Again, only pull entries in if we DIDN'T add them in part (a).
+        if (!(VG_(OSetWord_Contains)(nodesInGroups, (UWord)(uintptr_t)childEntryPos))){
+          addInitialRangeEntry(symbExpr->branch.varProblematicRanges, childEntryPos);
+        }
+      }
+    }
+  }
+}
+
+void addRangeEntryCopy(VgHashTable* rangeMap, NodePos position, RangeRecord* original){
+  RangeMapEntry* newEntry =
+    VG_(malloc)("variable range map entry", sizeof(RangeMapEntry));
+  copyRangeRecordInPlace(&(newEntry->range_rec), original);
+
+  newEntry->positionHash = hashPosition(position);
+  newEntry->position = position;
+  VG_(HT_add_node)(rangeMap, newEntry);
+}
+void addInitialRangeEntry(VgHashTable* rangeMap, NodePos position){
+  RangeMapEntry* newEntry =
+    VG_(malloc)("variable range map entry", sizeof(RangeMapEntry));
+  initRangeRecord(&(newEntry->range_rec));
+
+  newEntry->positionHash = hashPosition(position);
+  newEntry->position = position;
+  VG_(HT_add_node)(rangeMap, newEntry);
+}
+
+List_H(RangeMapEntry*, RangeEntryList);
+List_Impl(RangeMapEntry*, RangeEntryList);
+
+void updateProblematicRanges(SymbExpr* symbExpr, ConcExpr* cexpr){
+  VgHashTable* rangeTable = symbExpr->branch.varProblematicRanges;
+  RangeEntryList expiredEntries = NULL;
+
+  VG_(HT_ResetIter)(rangeTable);
+  RangeMapEntry* entry;
+  while((entry = VG_(HT_Next)(rangeTable)) != NULL){
+    ConcExpr* sampleConcNode = concExprPosGet(cexpr, entry->position);
+    // The node mentioned by this table entry might not exist in the
+    // concrete expression we're generalizing with, in which case it
+    // won't exist anymore in the symbolic expression either. If
+    // that's the case, we'll remove it from the range table so that
+    // we don't bother trying to maintain it later.
+    if (sampleConcNode == NULL){
+      // Unfortunately, we can't remove the node directly from the
+      // table since that would violate the iterator invariants, so
+      // we'll just add it to a stack to be removed at the end of the
+      // update.
+      lpush(RangeEntryList)(&expiredEntries, entry);
+    } else {
+      // If the node DOES exist, we should update the range table entry.
+      updateRangeRecord(&(entry->range_rec), sampleConcNode->value);
+    }
+  }
+  // Remove all the expired entries.
+  while(length(RangeEntryList)(&expiredEntries) > 0){
+    RangeMapEntry* expiredEntry = lpop(RangeEntryList)(&expiredEntries);
+    VG_(HT_gen_remove)(rangeTable, expiredEntry, cmp_position);
+  }
+}
+
+RangeRecord* lookupRangeRecord(VgHashTable* rangeMap, NodePos position){
+  RangeMapEntry key = {.position = position,
+                       .positionHash = hashPosition(position)};
+  RangeMapEntry* entry =
+    VG_(HT_gen_lookup)(rangeMap, &key, cmp_position);
+  if (entry == NULL) return NULL;
+  return &(entry->range_rec);
+}
+
+void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problematicRanges,
+                               SymbExpr* curExpr, int* nextVarIdx, NodePos curPos,
+                               OSet* seenNodes, VgHashTable* rangeTable);
+void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
+               SymbExpr* expr, int num_vars){
+  tl_assert(expr->type == Node_Branch);
+  OSet* seenNodes = VG_(OSetWord_Create)(VG_(malloc), "Seen Nodes",
+                                         VG_(free));
+
+  *totalRangesOut = VG_(malloc)("expr ranges", sizeof(RangeRecord) * num_vars);
+  *problematicRangesOut = VG_(malloc)("problematic ranges",
+                                      sizeof(RangeRecord) * num_vars);
+  int nextVarIdx = 0;
+
+  GroupList groups = expr->branch.groups;
+  (void)groups;
+  (void)nextVarIdx;
+  for(int i = 0; i < groups->size; ++i){
+    Group curGroup = groups->data[i];
+    NodePos samplePos = curGroup->item;
+    SymbExpr* sampleParent = symbExprPosGet(expr, rtail(samplePos));
+
+    int childIndex = samplePos->data[samplePos->len - 1];
+    (*totalRangesOut)[nextVarIdx] =
+      sampleParent->branch.op->agg.inputs.range_records[childIndex];
+    VgHashTable* rangeTable = expr->branch.varProblematicRanges;
+    RangeRecord* entry = lookupRangeRecord(rangeTable, samplePos);
+    (*problematicRangesOut)[nextVarIdx] = *entry;
+    nextVarIdx++;
+
+    for(Group curNode = curGroup; curNode != NULL; curNode = curNode->next){
+      VG_(OSetWord_Insert)(seenNodes, (UWord)(uintptr_t)curNode->item);
+    }
+  }
+
+  recursivelyPopulateRanges(*totalRangesOut, *problematicRangesOut,
+                            expr, &nextVarIdx, null_pos,
+                            seenNodes, expr->branch.varProblematicRanges);
+  VG_(OSetWord_Destroy)(seenNodes);
+}
+
+void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problematicRanges,
+                               SymbExpr* curExpr, int* nextVarIdx, NodePos curPos,
+                               OSet* seenNodes, VgHashTable* rangeTable){
+  tl_assert(curExpr->type == Node_Branch);
+  for(int i = 0; i < curExpr->branch.nargs; ++i){
+    SymbExpr* childExpr = curExpr->branch.args[i];
+    NodePos childPos = rconsPos(curPos, i);
+    if (childExpr->type == Node_Leaf){
+      if (!childExpr->isConst &&
+          !(VG_(OSetWord_Contains)(seenNodes, (UWord)(uintptr_t)childPos))){
+        totalRanges[*nextVarIdx] = curExpr->branch.op->agg.inputs.range_records[i];
+        problematicRanges[*nextVarIdx] =
+          *(lookupRangeRecord(rangeTable, rconsPos(curPos, i)));
+        (*nextVarIdx)++;
+      }
+    } else {
+      recursivelyPopulateRanges(totalRanges, problematicRanges,
+                                childExpr, nextVarIdx, rconsPos(curPos, i),
+                                seenNodes, rangeTable);
+    }
+  }
+}
+
 const char* opSym(ShadowOpInfo* op){
   if (op->op_code == 0x0){
     return getWrappedName(op->op_type);
@@ -656,7 +887,7 @@ void ppConcExprNoGrafts(ConcExpr* expr){
 }
 
 void ppSymbExpr(SymbExpr* expr){
-  char* stringRep = symbExprToString(expr, NULL, NULL);
+  char* stringRep = symbExprToString(expr, NULL);
   tl_assert(stringRep != NULL);
   VG_(printf)("%s", stringRep);
   VG_(free)(stringRep);
@@ -686,7 +917,7 @@ void printColorCode(BBuf* buffer, Color color){
 void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
                          const char* parent_func, Color curColor,
                          NodePos curPos, int max_depth);
-char* symbExprToString(SymbExpr* expr, int* numVarsOut, RangeRecord** varRanges){
+char* symbExprToString(SymbExpr* expr, int* numVarsOut){
   if (no_exprs){
     char* buf = VG_(malloc)("buffer data", 2);
     buf[0] = '\0';
@@ -737,9 +968,6 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut, RangeRecord** varRanges)
     int numVars = countVars(varMap);
     if (numVarsOut != NULL){
       *numVarsOut = numVars;
-    }
-    if (varRanges != NULL){
-      *varRanges = getRanges(varMap, expr, numVars);
     }
     freeVarMap(varMap);
     return _buf;
@@ -927,28 +1155,6 @@ int countVars(VarMap* map){
   }
   VG_(OSetWord_Destroy)(vars);
   return result;
-}
-RangeRecord* getRanges(VarMap* map, SymbExpr* expr, int num_vars){
-  RangeRecord* range_recs = VG_(malloc)("expr ranges", sizeof(RangeRecord) * num_vars);
-
-  OSet* vars = VG_(OSetWord_Create)(VG_(malloc), "varset",
-                                    VG_(free));
-  int nextVarIdx = 0;
-  VG_(HT_ResetIter)(map->existingEntries);
-  VarMapEntry* entry;
-  while((entry = VG_(HT_Next)(map->existingEntries)) != NULL){
-    if (!VG_(OSetWord_Contains)(vars, entry->varIdx)){
-      VG_(OSetWord_Insert)(vars, entry->varIdx);
-
-      NodePos samplePos = entry->position;
-      SymbExpr* parent = symbExprPosGet(expr, rtail(samplePos));
-      int childIndex = samplePos->data[samplePos->len - 1];
-      tl_assert(parent->type == Node_Branch);
-      range_recs[nextVarIdx] = parent->branch.op->agg.inputs.range_records[childIndex];
-      nextVarIdx++;
-    }
-  }
-  return range_recs;
 }
 int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups){
   int acc = 0;

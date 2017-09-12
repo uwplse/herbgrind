@@ -77,8 +77,15 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
 
   Addr callAddr = getCallAddr();
   ShadowOpInfo* info = getWrappedOpInfo(callAddr, type, nargs);
+  if (print_errors_long || print_errors){
+    printOpInfo(info);
+    VG_(printf)(":\n");
+  }
+  double bitsGlobalError =
+    updateError(&(info->agg.global_error), shadowResult->real, *resLoc);
   execSymbolicOp(info, &(shadowResult->expr),
-                 shadowResult->real, shadowArgs);
+                 shadowResult->real, shadowArgs,
+                 bitsGlobalError > error_threshold);
   if (!no_reals){
     execLocalOp(info, shadowResult->real, shadowResult, shadowArgs);
   }
@@ -100,12 +107,7 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
       VG_(printf)(")\n");
     }
   }
-  if (print_errors_long || print_errors){
-    printOpInfo(info);
-    VG_(printf)(":\n");
-  }
-  updateError(&(info->agg.global_error), shadowResult->real, *resLoc);
-  updateRanges(&(info->agg.inputs), shadowArgs, nargs);
+  updateRanges(info->agg.inputs.range_records, shadowArgs, nargs);
 }
 
 ShadowOpInfo* getWrappedOpInfo(Addr callAddr, OpType opType, int nargs){
@@ -176,7 +178,7 @@ ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs){
     {
       int (*mpfr_func)(mpfr_t, mpfr_srcptr);
       GET_UNARY_OPS_NOROUND_F(mpfr_func, type);
-      
+
       mpfr_func(result->real->RVAL, shadowArgs[0]->real->RVAL);
     }
     break;
@@ -184,7 +186,7 @@ ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs){
     {
       int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
       GET_BINARY_OPS_F(mpfr_func, type);
-      
+
       mpfr_func(result->real->RVAL,
                 shadowArgs[0]->real->RVAL,
                 shadowArgs[1]->real->RVAL, MPFR_RNDN);
@@ -194,7 +196,7 @@ ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs){
     {
       int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
       GET_TERNARY_OPS_F(mpfr_func, type);
-      
+
       mpfr_func(result->real->RVAL,
                 shadowArgs[0]->real->RVAL,
                 shadowArgs[1]->real->RVAL,

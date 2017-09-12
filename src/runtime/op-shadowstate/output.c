@@ -101,7 +101,7 @@ void writeOutput(void){
       if (output_mark_exprs && !no_exprs){
         printBBuf(buf, "  (full-expr \n");
         int numVars;
-        char* exprString = symbExprToString(markInfo->expr, &numVars, NULL);
+        char* exprString = symbExprToString(markInfo->expr, &numVars);
         char* varString = symbExprVarString(numVars);
         printBBuf(buf,
                   "    (FPCore %s\n"
@@ -125,7 +125,7 @@ void writeOutput(void){
       if (output_mark_exprs && !no_exprs){
         printBBuf(buf, "  Full expr:\n");
         int numVars;
-        char* exprString = symbExprToString(markInfo->expr, &numVars, NULL);
+        char* exprString = symbExprToString(markInfo->expr, &numVars);
         char* varString = symbExprVarString(numVars);
         printBBuf(buf,
                   "    (FPCore %s\n"
@@ -201,8 +201,7 @@ void writeOutput(void){
         printBBuf(buf, "  (full-exprs \n");
         for(int i = 0; i < intMarkInfo->nargs; ++i){
           int numVars;
-          char* exprString = symbExprToString(intMarkInfo->exprs[i],
-                                              &numVars, NULL);
+          char* exprString = symbExprToString(intMarkInfo->exprs[i], &numVars);
           char* varString = symbExprVarString(numVars);
           printBBuf(buf,
                     "    (FPCore %s\n"
@@ -230,7 +229,7 @@ void writeOutput(void){
         for(int i = 0; i < intMarkInfo->nargs; ++i){
           int numVars;
           char* exprString = symbExprToString(intMarkInfo->exprs[i],
-                                              &numVars, NULL);
+                                              &numVars);
           char* varString = symbExprVarString(numVars);
           printBBuf(buf,
                     "    (FPCore %s\n"
@@ -315,9 +314,12 @@ void writeInfluences(Int fileD, InfluenceList influences){
       opinfo->expr = varSwallow(opinfo->expr);
     }
     int numVars;
-    RangeRecord* varRanges;
-    char* exprString = symbExprToString(opinfo->expr, &numVars, &varRanges);
+    char* exprString = symbExprToString(opinfo->expr, &numVars);
     char* varString = symbExprVarString(numVars);
+
+    RangeRecord* totalRanges = NULL;
+    RangeRecord* problematicRanges = NULL;
+    getRanges(&totalRanges, &problematicRanges, opinfo->expr, numVars);
 
     if (!VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
                                    NULL, &src_line)){
@@ -376,8 +378,9 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 "     %s)\n",
                 varString, exprString);
       if (numVars > 0){
-        printBBuf(buf, "   ");
-        writeRanges(buf, varRanges, numVars);
+        writeRanges(buf, numVars, totalRanges, problematicRanges);
+        (void)problematicRanges;
+        (void)totalRanges;
         printBBuf(buf, "\n");
       }
       char* addrString = getAddrString(opinfo->op_addr);
@@ -413,7 +416,8 @@ void writeInfluences(Int fileD, InfluenceList influences){
   }
 }
 
-void writeRanges(BBuf* buf, RangeRecord* ranges, int numVars){
+void writeRanges(BBuf* buf, int numVars,
+                 RangeRecord* ranges, RangeRecord* problematicRanges){
   if (detailed_ranges){
     printBBuf(buf, "\n        Postive Values:\n");
     for (int i = 0; i < numVars; ++i){
@@ -433,28 +437,40 @@ void writeRanges(BBuf* buf, RangeRecord* ranges, int numVars){
       printBBufFloat(buf, varRange.neg_range.max);
       printBBuf(buf, "\n");
     }
-    /* printBBuf(buf, "\n        Postive Problematic Values:\n"); */
-    /* for (int i = 0; i < numVars; ++i){ */
-    /*   RangeRecord varRange = ranges[i]; */
-    /*   printBBuf(buf, "        "); */
-    /*   printBBufFloat(buf, varRange.pos_error_range.min); */
-    /*   printBBuf(buf,           " < %s < ", getVar(i)); */
-    /*   printBBufFloat(buf, varRange.pos_error_range.max); */
-    /*   printBBuf(buf, "\n"); */
-    /* } */
-    /* printBBuf(buf, "\n        Negative Problematic Values:\n"); */
-    /* for (int i = 0; i < numVars; ++i){ */
-    /*   RangeRecord varRange = ranges[i]; */
-    /*   printBBuf(buf, "        "); */
-    /*   printBBufFloat(buf, varRange.neg_error_range.min); */
-    /*   printBBuf(buf,           " < %s < ", getVar(i)); */
-    /*   printBBufFloat(buf, varRange.neg_error_range.max); */
-    /*   printBBuf(buf, "\n"); */
-    /* } */
+    printBBuf(buf, "\n        Postive Problematic Values:\n");
+    for (int i = 0; i < numVars; ++i){
+      tl_assert(problematicRanges != NULL);
+      RangeRecord varRange = problematicRanges[i];
+      printBBuf(buf, "        ");
+      printBBufFloat(buf, varRange.pos_range.min);
+      printBBuf(buf,           " < %s < ", getVar(i));
+      printBBufFloat(buf, varRange.pos_range.max);
+      printBBuf(buf, "\n");
+    }
+    printBBuf(buf, "\n        Negative Problematic Values:\n");
+    for (int i = 0; i < numVars; ++i){
+      RangeRecord varRange = problematicRanges[i];
+      printBBuf(buf, "        ");
+      printBBufFloat(buf, varRange.neg_range.min);
+      printBBuf(buf,           " < %s < ", getVar(i));
+      printBBufFloat(buf, varRange.neg_range.max);
+      printBBuf(buf, "\n");
+    }
   } else {
-    printBBuf(buf, "With");
+    printBBuf(buf,   "      With");
     for(int i = 0; i < numVars; ++i){
       RangeRecord varRange = ranges[i];
+      if (i > 0){
+        printBBuf(buf, ",");
+      }
+      printBBuf(buf, " ");
+      printBBufFloat(buf, varRange.pos_range.min);
+      printBBuf(buf, " < %s < ", getVar(i));
+      printBBufFloat(buf, varRange.pos_range.max);
+    }
+    printBBuf(buf, "\n      Problematic inputs:");
+    for(int i = 0; i < numVars; ++i){
+      RangeRecord varRange = problematicRanges[i];
       if (i > 0){
         printBBuf(buf, ",");
       }
