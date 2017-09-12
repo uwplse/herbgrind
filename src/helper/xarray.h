@@ -81,7 +81,7 @@
     
 
 #define mkXA(type) mkXA_##type
-#define mkXA_w_initial(type) mkXA_##type
+#define mkXA_w_initial(type) mkXA_w_initial_##type
 #define XApush(type) XApush_##type
 #define freeXA(type) freeXA_##type
 #define finalizeXA(type) finalizeXA_##type
