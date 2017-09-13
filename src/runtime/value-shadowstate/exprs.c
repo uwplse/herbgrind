@@ -784,7 +784,7 @@ RangeRecord* lookupRangeRecord(VgHashTable* rangeMap, NodePos position){
 
 void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problematicRanges,
                                SymbExpr* curExpr, int* nextVarIdx, NodePos curPos,
-                               OSet* seenNodes, VgHashTable* rangeTable);
+                               OSet* seenNodes, VgHashTable* rangeTable, int max_depth);
 void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
                SymbExpr* expr, int num_vars){
   tl_assert(expr->type == Node_Branch);
@@ -801,7 +801,23 @@ void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
   (void)nextVarIdx;
   for(int i = 0; i < groups->size; ++i){
     Group curGroup = groups->data[i];
-    NodePos samplePos = curGroup->item;
+
+    // This chunk of code gets the first position in the group which
+    // still exists in the tree. If every position in the group
+    // doesn't exist anymore, then we skip this iteration of the for
+    // loop.
+    NodePos samplePos;
+    {
+      Group curNode = curGroup;
+      for(curNode = curGroup;
+          curNode != NULL && symbExprPosGet(expr, curNode->item) == NULL;
+          curNode = curNode->next);
+      if (curNode == NULL){
+        continue;
+      }
+      samplePos = curNode->item;
+    }
+
     SymbExpr* sampleParent = symbExprPosGet(expr, rtail(samplePos));
 
     int childIndex = samplePos->data[samplePos->len - 1];
@@ -819,18 +835,19 @@ void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
 
   recursivelyPopulateRanges(*totalRangesOut, *problematicRangesOut,
                             expr, &nextVarIdx, null_pos,
-                            seenNodes, expr->branch.varProblematicRanges);
+                            seenNodes, expr->branch.varProblematicRanges,
+                            MAX_FOLD_DEPTH);
   VG_(OSetWord_Destroy)(seenNodes);
 }
 
 void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problematicRanges,
                                SymbExpr* curExpr, int* nextVarIdx, NodePos curPos,
-                               OSet* seenNodes, VgHashTable* rangeTable){
+                               OSet* seenNodes, VgHashTable* rangeTable, int max_depth){
   tl_assert(curExpr->type == Node_Branch);
   for(int i = 0; i < curExpr->branch.nargs; ++i){
     SymbExpr* childExpr = curExpr->branch.args[i];
     NodePos childPos = rconsPos(curPos, i);
-    if (childExpr->type == Node_Leaf){
+    if (childExpr->type == Node_Leaf || max_depth == 1){
       if (!childExpr->isConst &&
           !(VG_(OSetWord_Contains)(seenNodes, (UWord)(uintptr_t)childPos))){
         totalRanges[*nextVarIdx] = curExpr->branch.op->agg.inputs.range_records[i];
@@ -841,7 +858,7 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
     } else {
       recursivelyPopulateRanges(totalRanges, problematicRanges,
                                 childExpr, nextVarIdx, rconsPos(curPos, i),
-                                seenNodes, rangeTable);
+                                seenNodes, rangeTable, max_depth - 1);
     }
   }
 }
