@@ -121,6 +121,7 @@ void updateProblematicRanges(SymbExpr* symbExpr, ConcExpr* cexpr);
 RangeRecord* lookupRangeRecord(VgHashTable* rangeMap, NodePos position);
 void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
                SymbExpr* expr, int num_vars);
+void ppRangeTable(VgHashTable* rangeTable);
 
 void ppEquivGroup(Group group);
 void ppEquivGroups(GroupList groups);

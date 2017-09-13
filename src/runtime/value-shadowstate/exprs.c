@@ -863,6 +863,17 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
   }
 }
 
+void ppRangeTable(VgHashTable* rangeTable){
+  VG_(HT_ResetIter)(rangeTable);
+  RangeMapEntry* entry;
+  while((entry = VG_(HT_Next)(rangeTable)) != NULL){
+    ppNodePos(entry->position);
+    VG_(printf)(" -> [%f, %f]\n",
+                entry->range_rec.neg_range.min,
+                entry->range_rec.pos_range.max);
+  }
+}
+
 const char* opSym(ShadowOpInfo* op){
   if (op->op_code == 0x0){
     return getWrappedName(op->op_type);
