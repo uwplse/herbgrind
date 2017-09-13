@@ -179,6 +179,7 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
   GroupList newGroups = mkXA(GroupList)();
   for(int i = 0; i < groups->size; i++){
     Group curGroup = groups->data[i];
+    NodePos canonicalPos = curGroup->item;
     Group newCurGroup = NULL;
 
     double canonicalValue = 0.0;
@@ -187,6 +188,17 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
     while(curGroup != NULL){
       NodePos groupMemberPos = lpop(Group)(&curGroup);
       if (symbExprPosGet(symbExpr, groupMemberPos) == NULL){
+        if (newCurGroup == NULL){
+          if (curGroup == NULL){
+            break;
+          }
+          RangeRecord* existingRange =
+            lookupRangeRecord(symbExpr->branch.varProblematicRanges,
+                              canonicalPos);
+          addRangeEntryCopy(symbExpr->branch.varProblematicRanges,
+                            curGroup->item, existingRange);
+          canonicalPos = curGroup->item;
+        }
         continue;
       }
       double nodeValue = concExprPosGet(concExpr, groupMemberPos)->value;
@@ -206,7 +218,7 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
             XApush(GroupList)(newGroups, newSplitGroup);
             RangeRecord* existingRange =
               lookupRangeRecord(symbExpr->branch.varProblematicRanges,
-                                groups->data[i]->item);
+                                canonicalPos);
             tl_assert(existingRange != NULL);
             addRangeEntryCopy(symbExpr->branch.varProblematicRanges,
                               groupMemberPos,
