@@ -213,6 +213,10 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
         + sizeof(computedResult)
         + sizeof(shadowTemps);
       addStmtToIRSB(sbOut, IRStmt_Dirty(dirty));
+
+      if (follow_real_execution){
+        addStmtToIRSB(sbOut, IRStmt_WrTmp(dest, runLoad64C(sbOut, &computedResult)));
+      }
     }
     break;
   case Iop_CmpEQ32Fx2:
@@ -292,7 +296,7 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
       cleanupAtEndOfBlock(sbOut, dest);
 
       IRDirty* dirty =
-        unsafeIRDirty_0_N(2, "checkCompare",
+        unsafeIRDirty_0_N(2, "checkConvert",
                           VG_(fnptr_to_fnentry)(checkConvert),
                           mkIRExprVec_3(mkU64(argPrecision),
                                         mkU64(argTemp),
@@ -304,6 +308,9 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
         + sizeof(computedResult)
         + sizeof(shadowTemps);
       addStmtToIRSB(sbOut, IRStmt_Dirty(dirty));
+      if (follow_real_execution){
+        addStmtToIRSB(sbOut, IRStmt_WrTmp(dest, runLoad64C(sbOut, &computedResult)));
+      }
     }
     break;
   default:

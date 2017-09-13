@@ -71,6 +71,7 @@ Bool compensation_detection = True;
 Bool only_improvable = False;
 Bool var_swallow = True;
 Bool unsound_var_swallow = False;
+Bool follow_real_execution = False;
 
 Bool no_exprs = False;
 Bool no_influences = False;
@@ -105,6 +106,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--no-sound-simplify", sound_simplify, False) {}
   else if VG_XACT_CLO(arg, "--no-var-swallow", var_swallow, False) {}
   else if VG_XACT_CLO(arg, "--unsound-var-swallow", unsound_var_swallow, True) {}
+  else if VG_XACT_CLO(arg, "--follow-real-execution", follow_real_execution, False) {}
   else if VG_XACT_CLO(arg, "--expr-colors", expr_colors, True) {}
   else if VG_XACT_CLO(arg, "--output-mark-exprs", output_mark_exprs, True) {}
   else if VG_XACT_CLO(arg, "--detailed-ranges", detailed_ranges, True) {}

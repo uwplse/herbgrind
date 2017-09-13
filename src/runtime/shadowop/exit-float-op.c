@@ -63,6 +63,9 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
     markEscapeFromFloat("Compare",
                         actualResult != computedValue,
                         2, values);
+    if (follow_real_execution){
+      computedResult.f[0] = *((float*)&actualResult);
+    }
   }
   case Iop_CmpLT32F0x4:
   case Iop_CmpLT64F0x2: {
@@ -88,6 +91,9 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
     markEscapeFromFloat("Compare",
                         actualResult != computedValue,
                         2, values);
+    if (follow_real_execution){
+      computedResult.f[0] = *((float*)&actualResult);
+    }
   }
     break;
   case Iop_CmpLE64F0x2: {
@@ -111,6 +117,9 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
     markEscapeFromFloat("Compare",
                         actualResult != computedValue,
                         2, values);
+    if (follow_real_execution){
+      computedResult.f[0] = *((float*)&actualResult);
+    }
   }
     break;
   default:
@@ -134,5 +143,8 @@ VG_REGPARM(3) void checkConvert(FloatType argPrecision, IRTemp tmp,
                       1, &(arg->values[0]));
   if (tmp == -1){
     disownShadowTemp_fast(arg);
+  }
+  if (follow_real_execution){
+    computedResult.f[0] = *((float*)&correctResult);
   }
 }
