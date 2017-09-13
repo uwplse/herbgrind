@@ -229,7 +229,10 @@ ShadowTemp* dynamicGet(Int tsSrc, void* bytes, int size){
   if (size == 4){
     ShadowTemp* result = mkShadowTemp(1);
     ShadowValue* val = getTS(tsSrc);
-    if (val == NULL) return NULL;
+    if (val == NULL) {
+      freeShadowTemp(result);
+      return NULL;
+    }
     tl_assert(val->type == Ft_Single);
     result->values[0] = val;
     ownShadowValue(result->values[0]);
