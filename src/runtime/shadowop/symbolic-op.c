@@ -256,9 +256,10 @@ void getGrouped(GroupList groupList, VgHashTable* valMap,
     ConcExpr* curNode = curGraft.parent;
     SymbExpr* symbNode = symbGraft.parent;
     NodePos graftPos = rconsPos(curPos, i);
+    double value = concGraftChild(curGraft)->value;
 
     int existingEntry =
-      lookupVal(valMap, concGraftChild(curGraft)->value);
+      lookupVal(valMap, value);
     int groupIdx;
     if (existingEntry == -1){
       groupIdx = groupList->size;

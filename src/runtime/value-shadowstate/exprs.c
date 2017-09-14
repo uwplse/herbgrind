@@ -52,7 +52,7 @@ StackArray concGraftStacks;
 
 const char* varnames[] = {"x", "y", "z", "a", "b", "c",
                           "i", "j", "k", "l", "m", "n"};
-#define MAX_FOLD_DEPTH (max_expr_block_depth * 2)
+#define MAX_FOLD_DEPTH max_expr_block_depth
 
 #define lambda(return_type, function_body)      \
   ({                                            \
@@ -709,7 +709,7 @@ void initializeProblematicRanges(SymbExpr* symbExpr){
       VG_(HT_ResetIter)(childMap);
       RangeMapEntry* entry;
       while((entry = VG_(HT_Next)(childMap)) != NULL){
-        NodePos childEntryPos = rconsPos(entry->position, i);
+        NodePos childEntryPos = appendPos(childPos, entry->position);
 
         // Again, only pull entries in if we DIDN'T add them in part (a).
         if (!(VG_(OSetWord_Contains)(nodesInGroups, (UWord)(uintptr_t)childEntryPos))){
@@ -851,13 +851,20 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
       if (!childExpr->isConst &&
           !(VG_(OSetWord_Contains)(seenNodes, (UWord)(uintptr_t)childPos))){
         totalRanges[*nextVarIdx] = curExpr->branch.op->agg.inputs.range_records[i];
-        problematicRanges[*nextVarIdx] =
-          *(lookupRangeRecord(rangeTable, rconsPos(curPos, i)));
+        RangeRecord* result = lookupRangeRecord(rangeTable, childPos);
+        if (result == NULL){
+          VG_(printf)("Couldn't find range table entry for ");
+          ppNodePos(childPos);
+          VG_(printf)("\nTable is:\n");
+          ppRangeTable(rangeTable);
+          tl_assert(result != NULL);
+        }
+        problematicRanges[*nextVarIdx] = *result;
         (*nextVarIdx)++;
       }
     } else {
       recursivelyPopulateRanges(totalRanges, problematicRanges,
-                                childExpr, nextVarIdx, rconsPos(curPos, i),
+                                childExpr, nextVarIdx, childPos,
                                 seenNodes, rangeTable, max_depth - 1);
     }
   }
