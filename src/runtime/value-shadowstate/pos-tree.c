@@ -81,9 +81,5 @@ void ppNodePos(NodePos pos){
   VG_(printf)(" ]");
 }
 UWord hashPosition(NodePos node){
-  UWord hash = 0;
-  for(int i = 0; i < node->len; ++i){
-    hash = 31 * hash + node->data[i] + 1;
-  }
-  return hash;
+  return (UWord)(void*)hash;
 }
