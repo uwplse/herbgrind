@@ -424,7 +424,7 @@ void writeRanges(BBuf* buf, int numVars,
       RangeRecord varRange = ranges[i];
       printBBuf(buf, "        ");
       printBBufFloat(buf, varRange.pos_range.min);
-      printBBuf(buf,           " < %s < ", getVar(i));
+      printBBuf(buf,           " <= %s <= ", getVar(i));
       printBBufFloat(buf, varRange.pos_range.max);
       printBBuf(buf, "\n");
     }
@@ -433,7 +433,7 @@ void writeRanges(BBuf* buf, int numVars,
       RangeRecord varRange = ranges[i];
       printBBuf(buf, "        ");
       printBBufFloat(buf, varRange.neg_range.min);
-      printBBuf(buf,           " < %s < ", getVar(i));
+      printBBuf(buf,           " <= %s <= ", getVar(i));
       printBBufFloat(buf, varRange.neg_range.max);
       printBBuf(buf, "\n");
     }
@@ -443,7 +443,7 @@ void writeRanges(BBuf* buf, int numVars,
       RangeRecord varRange = problematicRanges[i];
       printBBuf(buf, "        ");
       printBBufFloat(buf, varRange.pos_range.min);
-      printBBuf(buf,           " < %s < ", getVar(i));
+      printBBuf(buf,           " <= %s <= ", getVar(i));
       printBBufFloat(buf, varRange.pos_range.max);
       printBBuf(buf, "\n");
     }
@@ -452,7 +452,7 @@ void writeRanges(BBuf* buf, int numVars,
       RangeRecord varRange = problematicRanges[i];
       printBBuf(buf, "        ");
       printBBufFloat(buf, varRange.neg_range.min);
-      printBBuf(buf,           " < %s < ", getVar(i));
+      printBBuf(buf,           " <= %s <= ", getVar(i));
       printBBufFloat(buf, varRange.neg_range.max);
       printBBuf(buf, "\n");
     }
@@ -465,7 +465,7 @@ void writeRanges(BBuf* buf, int numVars,
       }
       printBBuf(buf, " ");
       printBBufFloat(buf, varRange.pos_range.min);
-      printBBuf(buf, " < %s < ", getVar(i));
+      printBBuf(buf, " <= %s <= ", getVar(i));
       printBBufFloat(buf, varRange.pos_range.max);
     }
     printBBuf(buf, "\n      Problematic inputs:");
@@ -476,7 +476,7 @@ void writeRanges(BBuf* buf, int numVars,
       }
       printBBuf(buf, " ");
       printBBufFloat(buf, varRange.pos_range.min);
-      printBBuf(buf, " < %s < ", getVar(i));
+      printBBuf(buf, " <= %s <= ", getVar(i));
       printBBufFloat(buf, varRange.pos_range.max);
     }
   }
