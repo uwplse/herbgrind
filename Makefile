@@ -220,10 +220,13 @@ wc:
 loc:
 	sloccount $(SOURCES) $(HEADERS)
 
+clean:
+	touch vlagrind/README
+
 clean-deps:
 	rm -rf valgrind/ deps/
 
-clean:
+clean-files:
 	rm vgcore*
 
 clear-preload:
