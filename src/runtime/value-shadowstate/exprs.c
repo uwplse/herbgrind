@@ -712,7 +712,8 @@ void initializeProblematicRanges(SymbExpr* symbExpr){
         NodePos childEntryPos = appendPos(childPos, entry->position);
 
         // Again, only pull entries in if we DIDN'T add them in part (a).
-        if (!(VG_(OSetWord_Contains)(nodesInGroups, (UWord)(uintptr_t)childEntryPos))){
+        if (childEntryPos->len < MAX_FOLD_DEPTH &&
+            !(VG_(OSetWord_Contains)(nodesInGroups, (UWord)(uintptr_t)childEntryPos))){
           addInitialRangeEntry(symbExpr->branch.varProblematicRanges, childEntryPos);
         }
       }
