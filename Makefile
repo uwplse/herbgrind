@@ -221,7 +221,7 @@ loc:
 	sloccount $(SOURCES) $(HEADERS)
 
 clean:
-	touch vlagrind/README
+	touch valgrind/README
 
 clean-deps:
 	rm -rf valgrind/ deps/
