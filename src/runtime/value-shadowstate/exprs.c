@@ -797,7 +797,7 @@ void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
                                       sizeof(RangeRecord) * num_vars);
   int nextVarIdx = 0;
 
-  GroupList groups = expr->branch.groups;
+  GroupList groups = groupsWithoutNonVars(expr, expr->branch.groups);
   (void)groups;
   (void)nextVarIdx;
   for(int i = 0; i < groups->size; ++i){
