@@ -319,7 +319,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
 
     RangeRecord* totalRanges = NULL;
     RangeRecord* problematicRanges = NULL;
-    /* getRanges(&totalRanges, &problematicRanges, opinfo->expr, numVars); */
+    getRanges(&totalRanges, &problematicRanges, opinfo->expr, numVars);
 
     if (!VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
                                    NULL, &src_line)){
@@ -378,7 +378,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 "     %s)\n",
                 varString, exprString);
       if (numVars > 0){
-        /* writeRanges(buf, numVars, totalRanges, problematicRanges); */
+        writeRanges(buf, numVars, totalRanges, problematicRanges);
         (void)problematicRanges;
         (void)totalRanges;
         printBBuf(buf, "\n");
