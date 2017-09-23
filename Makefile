@@ -184,7 +184,8 @@ configure-mpfr-32:
 		./configure --prefix=$(shell pwd)/deps/mpfr-32/$(HG_LOCAL_INSTALL_NAME) \
 		            --with-gmp-build=$(shell pwd)/deps/gmp-32 \
 		            --build=i386 \
-		            $(MPFR_CONFIGURE_FLAGS)
+		            $(MPFR_CONFIGURE_FLAGS) &&
+		aclocal
 
 configure-mpfr-64:
 	cd deps/mpfr-64/ && \
@@ -192,7 +193,8 @@ configure-mpfr-64:
 		./configure --prefix=$(shell pwd)/deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME) \
 		            --with-gmp-build=$(shell pwd)/deps/gmp-64 \
 		            --build=amd64 \
-		            $(MPFR_CONFIGURE_FLAGS)
+		            $(MPFR_CONFIGURE_FLAGS) && \
+		aclocal
 
 # Use the mpfr readme to tell if mpfr has been extracted yet.
 deps/mpfr-%/herbgrind-install/lib/libmpfr.a: setup/mpfr-$(MPFR_VERSION).tar.xz setup/patch_mpfr.sh
