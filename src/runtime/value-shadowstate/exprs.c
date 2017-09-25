@@ -719,6 +719,7 @@ void initializeProblematicRanges(SymbExpr* symbExpr){
       }
     }
   }
+  VG_(OSetWord_Destroy)(nodesInGroups);
 }
 
 void addRangeEntryCopy(VgHashTable* rangeMap, NodePos position, RangeRecord* original){
