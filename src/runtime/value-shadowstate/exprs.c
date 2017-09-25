@@ -799,11 +799,21 @@ void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
   int nextVarIdx = 0;
 
   GroupList groups = groupsWithoutNonVars(expr, expr->branch.groups);
-  (void)groups;
-  (void)nextVarIdx;
   for(int i = 0; i < groups->size; ++i){
     Group curGroup = groups->data[i];
 
+    // We will collect two node positions for this group:
+    //
+    // 1. The canonical position is the first position in the existing
+    // group, by which the range table netry for this group is
+    // indexed.
+    //
+    // 2. The sample position is the first position in the group which
+    // has a corresponding node in the current tree.
+    //
+    // Note that these two positions can be the same, and will in the
+    // absense of tree pruning.
+    NodePos canonicalPos = curGroup->item;
     // This chunk of code gets the first position in the group which
     // still exists in the tree. If every position in the group
     // doesn't exist anymore, then we skip this iteration of the for
@@ -826,7 +836,7 @@ void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
     (*totalRangesOut)[nextVarIdx] =
       sampleParent->branch.op->agg.inputs.range_records[childIndex];
     VgHashTable* rangeTable = expr->branch.varProblematicRanges;
-    RangeRecord* entry = lookupRangeRecord(rangeTable, samplePos);
+    RangeRecord* entry = lookupRangeRecord(rangeTable, canonicalPos);
     (*problematicRangesOut)[nextVarIdx] = *entry;
     nextVarIdx++;
 
