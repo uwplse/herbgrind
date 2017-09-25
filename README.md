@@ -61,3 +61,5 @@ Running
 -------
 
 To run, just run "*path-to-herbgrind*/valgrind/herbgrind-install/bin/valgrind --tool=herbgrind *executable-to-run-on*"
+
+<img src="docs/logo-drawing.png" alt="Herbgrind logo" width="50%"/>
