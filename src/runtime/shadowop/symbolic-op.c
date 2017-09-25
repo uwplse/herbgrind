@@ -279,7 +279,7 @@ void getGrouped(GroupList groupList, VgHashTable* valMap,
         curChild->type == Node_Branch &&
         symbChild->type == Node_Branch &&
         curChild->branch.op == symbChild->branch.op){
-      if (maxDepth > 0){
+      if (maxDepth > 1){
         getGrouped(groupList, valMap,
                    curNode->branch.args[curGraft.childIndex],
                    symbNode->branch.args[curGraft.childIndex],
