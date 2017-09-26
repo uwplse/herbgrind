@@ -619,6 +619,8 @@ SymbExpr* varSwallow(SymbExpr* expr){
   return expr;
 }
 
+void recursivelyInitializeRanges(SymbExpr* curExpr, NodePos curPos, OSet* seenNodes,
+                                 VgHashTable* rangeTable, int max_depth);
 // This function initializes a range table for the given symbolic
 // expression. Range tables are maps from node positions to
 // RangeRecord's, which should be an up-to-date record of the inputs
@@ -691,37 +693,23 @@ void initializeProblematicRanges(SymbExpr* symbExpr){
   // too. Therefore, we would have already added it to our range table
   // in the step above.
   for (int i = 0; i < symbExpr->branch.nargs; ++i){
-    SymbExpr* childNode = symbExpr->branch.args[i];
-    // We also need to add our children themselves directly to our
-    // range table, since they aren't in their own range tables.
-
-    // We'll add them indexed by the singleton position of their child
-    // index, since they are only one level down from us.
-    NodePos childPos = rconsPos(null_pos, i);
-    // If they are equivalent to something else and we already added
-    // them, don't add them again.
-    if (!(VG_(OSetWord_Contains)(nodesInGroups, (UWord)(uintptr_t)childPos))){
-      addInitialRangeEntry(symbExpr->branch.varProblematicRanges, childPos);
-    }
-    // If our child is a branch, pull in it's range table without the
-    // actual ranges, since the ranges themselves are
-    // context-sensitive.
-    if (childNode->type == Node_Branch){
-      VgHashTable* childMap = childNode->branch.varProblematicRanges;
-      VG_(HT_ResetIter)(childMap);
-      RangeMapEntry* entry;
-      while((entry = VG_(HT_Next)(childMap)) != NULL){
-        NodePos childEntryPos = appendPos(childPos, entry->position);
-
-        // Again, only pull entries in if we DIDN'T add them in part (a).
-        if (childEntryPos->len <= MAX_FOLD_DEPTH &&
-            !(VG_(OSetWord_Contains)(nodesInGroups, (UWord)(uintptr_t)childEntryPos))){
-          addInitialRangeEntry(symbExpr->branch.varProblematicRanges, childEntryPos);
-        }
-      }
-    }
+    recursivelyInitializeRanges(symbExpr->branch.args[i], rconsPos(null_pos, i),
+                                nodesInGroups, symbExpr->branch.varProblematicRanges,
+                                MAX_FOLD_DEPTH);
   }
   VG_(OSetWord_Destroy)(nodesInGroups);
+}
+void recursivelyInitializeRanges(SymbExpr* curExpr, NodePos curPos, OSet* nodesInGroups,
+                                 VgHashTable* rangeTable, int max_depth){
+  if (!(VG_(OSetWord_Contains)(nodesInGroups, (UWord)(uintptr_t)curPos))){
+    addInitialRangeEntry(rangeTable, curPos);
+  }
+  if (max_depth > 1 && curExpr->type == Node_Branch){
+    for(int i = 0; i < curExpr->branch.nargs; ++i){
+      recursivelyInitializeRanges(curExpr->branch.args[i], rconsPos(curPos, i),
+                                  nodesInGroups, rangeTable, max_depth - 1);
+    }
+  }
 }
 
 void addRangeEntryCopy(VgHashTable* rangeMap, NodePos position, RangeRecord* original){
