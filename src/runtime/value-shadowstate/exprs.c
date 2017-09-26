@@ -821,14 +821,28 @@ void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
       }
       samplePos = curNode->item;
     }
+    tl_assert(samplePos->len <= MAX_FOLD_DEPTH);
 
     SymbExpr* sampleParent = symbExprPosGet(expr, rtail(samplePos));
 
     int childIndex = samplePos->data[samplePos->len - 1];
+    tl_assert(nextVarIdx < num_vars);
     (*totalRangesOut)[nextVarIdx] =
       sampleParent->branch.op->agg.inputs.range_records[childIndex];
     VgHashTable* rangeTable = expr->branch.varProblematicRanges;
     RangeRecord* entry = lookupRangeRecord(rangeTable, canonicalPos);
+    if (entry == NULL){
+      VG_(printf)("Expr: ");
+      ppSymbExpr(expr);
+      VG_(printf)(" (%p)\n", expr);
+      VG_(printf)("Couldn't find range table entry for ");
+      ppNodePos(samplePos);
+      VG_(printf)("\nTable is:\n");
+      ppRangeTable(rangeTable);
+      VG_(printf)("Groups are:\n");
+      ppEquivGroups(groups);
+      tl_assert(entry != NULL);
+    }
     (*problematicRangesOut)[nextVarIdx] = *entry;
     nextVarIdx++;
 
