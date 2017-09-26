@@ -337,7 +337,8 @@ GroupList dedupGroups(GroupList list){
   freeXA(GroupList)(list);
   return newGroupList;
 }
-GroupList groupsWithoutNonVars(SymbExpr* structure, GroupList list){
+GroupList groupsWithoutNonVars(SymbExpr* structure, GroupList list,
+                               int max_depth){
   GroupList newGroupList = mkXA(GroupList)();
   if (list->size == 0) return newGroupList;
   for(int i = 0; i < list->size; ++i){
@@ -348,7 +349,8 @@ GroupList groupsWithoutNonVars(SymbExpr* structure, GroupList list){
       // fact that expressions share structure, and prunings, but
       // don't share their equivalence maps, so those might get out of
       // date if a child expression decides to prune.
-      if (target != NULL && target->type == Node_Leaf &&
+      if (target != NULL &&
+          (target->type == Node_Leaf || curNode->item->len == max_depth) &&
           !target->isConst){
         XApush(GroupList)(newGroupList, list->data[i]);
         break;

@@ -172,7 +172,8 @@ T foldExpr_##N(T initial, SymbExpr* expr,                               \
   return foldExpr_##N##_                                                \
     (initial, expr, null_pos,                                           \
      mkVarMap(expr->type == Node_Branch ?                               \
-              groupsWithoutNonVars(expr, expr->branch.groups) :        \
+              groupsWithoutNonVars(expr, expr->branch.groups,           \
+                                   MAX_FOLD_DEPTH) :                    \
               mkXA(GroupList)()),                                       \
      0, 0, pre_f, post_f);                                              \
 }                                                                       \
@@ -235,7 +236,8 @@ T foldId_##N(T v, SymbExpr* e, NodePos p,                               \
     return foldBlock_##N##_                                             \
       (initial, expr, null_pos,                                         \
        mkVarMap(expr->type == Node_Branch ?                             \
-                groupsWithoutNonVars(expr, expr->branch.groups) :     \
+                groupsWithoutNonVars(expr, expr->branch.groups,         \
+                                     MAX_FOLD_DEPTH) :                  \
                 mkXA(GroupList)()),                                     \
        0, 0, pre_f, post_f);                                            \
   }                                                                     \
@@ -494,7 +496,7 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
 int hasRepeatedVars(SymbExpr* expr){
   tl_assert(expr->type == Node_Branch);
   GroupList trimmedGroups =
-    groupsWithoutNonVars(expr, expr->branch.groups);
+    groupsWithoutNonVars(expr, expr->branch.groups, MAX_FOLD_DEPTH);
   int result = numRepeatedVars(expr, trimmedGroups);
   freeXA(GroupList)(trimmedGroups);
   return result;
@@ -798,7 +800,9 @@ void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
                                       sizeof(RangeRecord) * num_vars);
   int nextVarIdx = 0;
 
-  GroupList groups = groupsWithoutNonVars(expr, expr->branch.groups);
+  GroupList groups =
+    groupsWithoutNonVars(expr, expr->branch.groups,
+                         MAX_FOLD_DEPTH);
   for(int i = 0; i < groups->size; ++i){
     Group curGroup = groups->data[i];
 
@@ -992,7 +996,7 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
     }
   } else {
     VarMap* varMap =
-      mkVarMap(groupsWithoutNonVars(expr, expr->branch.groups));
+      mkVarMap(groupsWithoutNonVars(expr, expr->branch.groups, MAX_FOLD_DEPTH));
     const char* toplevel_func;
     if (!VG_(get_fnname)(expr->branch.op->op_addr, &toplevel_func)){
       toplevel_func = "none";
@@ -1023,9 +1027,7 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
 void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
                          const char* parent_func, Color curColor,
                          NodePos curPos, int max_depth){
-  if (max_depth == 0){
-    printBBuf(buf, " _");
-  } else if (expr->type == Node_Leaf){
+  if (max_depth == 0 || expr->type == Node_Leaf){
     if (expr->isConst){
       printBBuf(buf, " ");
       printBBufFloat(buf, expr->constVal);
