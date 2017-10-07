@@ -38,97 +38,85 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
   for(int i = 0; i < 2; ++i){
     args[i] = getArg(i, numChannelsIn(info->op_code), info->precision, info->argTemps[i]);
   }
-  switch(info->op_code){
-  case Iop_CmpF64:
-  case Iop_CmpF32:{
+  int correctOutput;
+  if (numSIMDOperands(info->op_code) == 1){
     double correctFst = getDouble(args[0]->values[0]->real);
     double correctSnd = getDouble(args[1]->values[0]->real);
-    int actualResult;
-    if (correctFst != correctFst ||
-        correctSnd != correctSnd){
-      actualResult = 0x45;
-    } else if (correctFst < correctSnd){
-      actualResult = 0x01;
-    } else if (correctFst > correctSnd){
-      actualResult = 0x00;
-    } else {
-      actualResult = 0x40;
+    switch(info->op_code){
+    case Iop_CmpF64:
+    case Iop_CmpF32:{
+      if (correctFst != correctFst ||
+          correctSnd != correctSnd){
+        correctOutput = 0x45;
+      } else if (correctFst < correctSnd){
+        correctOutput = 0x01;
+      } else if (correctFst > correctSnd){
+        correctOutput = 0x00;
+      } else {
+        correctOutput = 0x40;
+      }
     }
-    int computedValue =
-      *((int*)&computedResult.f[0]);
-    ShadowValue* values[2];
-    for(int i = 0; i < 2; ++i){
-      values[i] = args[i]->values[0];
+    case Iop_CmpLT32F0x4:
+    case Iop_CmpLT64F0x2: {
+      if (correctFst != correctFst ||
+          correctSnd != correctSnd){
+        correctOutput = 0x0;
+      } else if (correctFst < correctSnd){
+        correctOutput = 0x01;
+      } else if (correctFst > correctSnd){
+        correctOutput = 0x00;
+      } else {
+        correctOutput = 0x00;
+      }
     }
-    markEscapeFromFloat("Compare",
-                        actualResult != computedValue,
-                        2, values);
-    if (follow_real_execution){
-      computedResult.f[0] = *((float*)&actualResult);
+      break;
+    case Iop_CmpLE64F0x2: {
+      if (correctFst != correctFst ||
+          correctSnd != correctSnd) {
+        correctOutput = 0x00;
+      } else if (correctFst <= correctSnd) {
+        correctOutput = 0x01;
+      } else {
+        correctOutput = 0x00;
+      }
     }
-  }
-  case Iop_CmpLT32F0x4:
-  case Iop_CmpLT64F0x2: {
-    double correctFst = getDouble(args[0]->values[0]->real);
-    double correctSnd = getDouble(args[1]->values[0]->real);
-    int actualResult;
-    if (correctFst != correctFst ||
-        correctSnd != correctSnd){
-      actualResult = 0x0;
-    } else if (correctFst < correctSnd){
-      actualResult = 0x01;
-    } else if (correctFst > correctSnd){
-      actualResult = 0x00;
-    } else {
-      actualResult = 0x00;
+      break;
+    case Iop_CmpUN64F0x2:
+    case Iop_CmpUN32F0x4:{
+      if (correctFst == correctSnd){
+        correctOutput = 0x01;
+      } else {
+        correctOutput = 0x00;
+      }
     }
-    int computedValue =
-      *((int*)&computedResult.f[0]);
-    ShadowValue* values[2];
-    for(int i = 0; i < 2; ++i){
-      values[i] = args[i]->values[0];
+      break;
+    default:
+      tl_assert(0);
+      return;
     }
-    markEscapeFromFloat("Compare",
-                        actualResult != computedValue,
-                        2, values);
-    if (follow_real_execution){
-      computedResult.f[0] = *((float*)&actualResult);
-    }
-  }
-    break;
-  case Iop_CmpLE64F0x2: {
-    double correctFst = getDouble(args[0]->values[0]->real);
-    double correctSnd = getDouble(args[1]->values[0]->real);
-    int actualResult;
-    if (correctFst != correctFst ||
-        correctSnd != correctSnd) {
-      actualResult = 0x00;
-    } else if (correctFst <= correctSnd) {
-      actualResult = 0x01;
-    } else {
-      actualResult = 0x00;
-    }
-    int computedValue =
-      *((int*)&computedResult.f[0]);
-    ShadowValue* values[2];
-    for(int i = 0; i < 2; ++i){
-      values[i] = args[i]->values[0];
-    }
-    markEscapeFromFloat("Compare",
-                        actualResult != computedValue,
-                        2, values);
-    if (follow_real_execution){
-      computedResult.f[0] = *((float*)&actualResult);
-    }
-  }
-    break;
-  default:
+  } else {
     tl_assert(0);
-    return;
+  }
+  if (numSIMDOperands(info->op_code) == 1){
+    int computedOutput =
+      *((int*)&computedResult.f[0]);
+    ShadowValue* values[2];
+    for(int i = 0; i < 2; ++i){
+      values[i] = args[i]->values[0];
+    }
+    markEscapeFromFloat("Compare",
+                        correctOutput != computedOutput,
+                        2, values);
+    if (follow_real_execution){
+      computedResult.f[0] = *((float*)&correctOutput);
+    }
+  } else {
+    ppIROp_Extended(info->op_code);
+    tl_assert(0);
   }
   for(int i = 0; i < 2; ++i){
     if (info->argTemps[i] == -1){
-      disownShadowTemp_fast(args[0]);
+      disownShadowTemp_fast(args[i]);
     }
   }
 }
