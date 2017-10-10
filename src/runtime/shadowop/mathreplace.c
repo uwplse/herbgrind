@@ -107,7 +107,9 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
       VG_(printf)(")\n");
     }
   }
-  updateRanges(info->agg.inputs.range_records, shadowArgs, nargs);
+  if (ranges){
+    updateRanges(info->agg.inputs.range_records, shadowArgs, nargs);
+  }
 }
 
 ShadowOpInfo* getWrappedOpInfo(Addr callAddr, OpType opType, int nargs){
