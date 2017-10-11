@@ -215,7 +215,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
     VG_(printf)("Making new expression %p for value %p with 0 references.\n",
                 result->expr, result);
   }
-  if (ranges){
+  if (use_ranges){
     updateRanges(opinfo->agg.inputs.range_records, args, opinfo->exinfo.nargs);
   }
   if (print_semantic_ops){

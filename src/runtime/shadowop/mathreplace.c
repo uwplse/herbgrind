@@ -107,7 +107,7 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
       VG_(printf)(")\n");
     }
   }
-  if (ranges){
+  if (use_ranges){
     updateRanges(info->agg.inputs.range_records, shadowArgs, nargs);
   }
 }

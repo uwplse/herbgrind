@@ -77,7 +77,7 @@ extern Bool follow_real_execution;
 extern Bool no_exprs;
 extern Bool no_influences;
 extern Bool no_reals;
-extern Bool ranges;
+extern Bool use_ranges;
 
 extern Int precision;
 extern Int max_expr_block_depth;
