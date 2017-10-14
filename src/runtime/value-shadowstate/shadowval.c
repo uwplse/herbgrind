@@ -89,6 +89,13 @@ VG_REGPARM(3) void assertValType(const char* label, ShadowValue* val, FloatType 
              "%s: Expected type %d for %p, got %d\n",
              label, type, val, val->type);
 }
+VG_REGPARM(3) void assertTempType(const char* label, ShadowTemp* temp, FloatType type){
+  for(int i = 0; i < temp->num_vals; ++i){
+    tl_assert2(temp->values[i]->type == type,
+               "%s: Expected type %d for %p, got %d\n",
+               label, type, temp->values[i], temp->values[i]->type);
+  }
+}
 VG_REGPARM(3) void assertNumVals(const char* label, ShadowTemp* temp,
                                  int num_vals){
   tl_assert2(temp->num_vals == num_vals,
@@ -101,4 +108,31 @@ VG_REGPARM(3) void assertNumValsNot(const char* label,
   tl_assert2(temp->num_vals != num_vals,
              "%s: Expected not %d vals in %p, got %d\n",
              label, num_vals, temp, temp->num_vals);
+}
+
+VG_REGPARM(3) void assertDynamicSize(const char* label,
+                                     ShadowTemp* temp,
+                                     int num_halfwords){
+  if (temp == NULL) return;
+  if (temp->values[0]->type == Ft_Single){
+    tl_assert2(temp->num_vals == num_halfwords,
+               "%s: Expected %d vals in %p (of type Single), got %d",
+               label, num_halfwords, temp, temp->num_vals);
+    for(int i = 1; i < temp->num_vals; ++i){
+      tl_assert2(temp->values[i]->type == Ft_Single,
+                 "%s: Value %d in %p is not a Single, but value 0 is!",
+                 label, i, temp);
+    }
+  } else {
+    tl_assert2(temp->values[0]->type == Ft_Double,
+               "%s: Invalid type %d!",temp->values[0]->type);
+    tl_assert2(temp->num_vals == num_halfwords / 2,
+               "%s: Expected %d vals in %p (of type Double), got %d",
+               label, num_halfwords / 2, temp, temp->num_vals);
+    for(int i = 1; i < temp->num_vals; ++i){
+      tl_assert2(temp->values[i]->type == Ft_Double,
+                 "%s: Value %d in %p is not a Double, but value 0 is!",
+                 label, i, temp);
+    }
+  }
 }

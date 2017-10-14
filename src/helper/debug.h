@@ -32,6 +32,10 @@
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertValType", VG_(fnptr_to_fnentry)(assertValType), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_val_expr, mkU64(val_type)))))
 #define addValTypeAssertG(sbOut, guard, label, shadow_val_expr, val_type) \
   addStmtToIRSB(sbOut, mkDirtyG_0_3(assertValType, mkU64((uintptr_t)label), shadow_val_expr, mkU64(val_type), guard))
+#define addTempTypeAssert(sbOut, label, shadow_temp_expr, val_type)     \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertTempType", VG_(fnptr_to_fnentry)(assertTempType), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_temp_expr, mkU64(val_type)))))
+#define addTempTypeAssertG(sbOut, guard, label, shadow_temp_expr, val_type) \
+  addStmtToIRSB(sbOut, mkDirtyG_0_3(assertTempType, mkU64((uintptr_t)label), shadow_temp_expr, mkU64(val_type), guard))
 #define addNumValsAssert(sbOut, label, shadow_expr, num_vals)     \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumVals", VG_(fnptr_to_fnentry)(assertNumVals), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_expr, mkU64(num_vals)))))
 #define addNumValsAssertNot(sbOut, label, shadow_expr, num_vals)     \
@@ -50,6 +54,17 @@
   addStmtToIRSB(sbOut, mkDirtyG_0_2(assertTempValid, \
                                     mkU64((uintptr_t)label), \
                                     temp, guard))
+
+#define addAssertDynamicSize(sbOut, label, temp, num_halfwords) \
+  addStmtToIRSB(sbOut, mkDirty_0_3(assertDynamicSize,           \
+                                   mkU64((uintptr_t)label),     \
+                                   temp, mkU64(num_halfwords)))
+
+#define addAssertDynamicSizeG(sbOut, guard, label, temp, num_halfwords)  \
+  addStmtToIRSB(sbOut, mkDirtyG_0_3(assertDynamicSize,           \
+                                    mkU64((uintptr_t)label),     \
+                                    temp, mkU64(num_halfwords),  \
+                                    guard))
 
 static inline
 void assertNEQ(char* message, int val1, int val2){
