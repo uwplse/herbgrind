@@ -66,7 +66,7 @@ void changeSingleValueType(ShadowTemp* temp, FloatType type);
 
 UWord hashDouble(double val);
 ShadowValue* newShadowValue(FloatType type);
-void updateRanges(RangeRecord* records, ShadowValue** args, int nargs);
+void updateRanges(RangeRecord* records, double* args, int nargs);
 VG_REGPARM(2) void assertValValid(const char* label, ShadowValue* val);
 VG_REGPARM(2) void assertTempValid(const char* label, ShadowTemp* temp);
 

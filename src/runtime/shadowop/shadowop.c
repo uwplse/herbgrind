@@ -216,7 +216,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
                 result->expr, result);
   }
   if (use_ranges){
-    updateRanges(opinfo->agg.inputs.range_records, args, opinfo->exinfo.nargs);
+    updateRanges(opinfo->agg.inputs.range_records, clientArgs, opinfo->exinfo.nargs);
   }
   if (print_semantic_ops){
     VG_(printf)("%p = ", result);

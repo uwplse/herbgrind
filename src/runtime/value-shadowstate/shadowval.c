@@ -67,9 +67,9 @@ ShadowValue* newShadowValue(FloatType type){
   }
   return result;
 }
-void updateRanges(RangeRecord* records, ShadowValue** args, int nargs){
+void updateRanges(RangeRecord* records, double* args, int nargs){
   for (int i = 0; i < nargs; ++i){
-    updateRangeRecord(records + i, getDouble(args[i]->real));
+    updateRangeRecord(records + i, args[i]);
   }
 }
 
