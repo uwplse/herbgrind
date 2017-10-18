@@ -72,6 +72,7 @@ Bool only_improvable = False;
 Bool var_swallow = True;
 Bool unsound_var_swallow = False;
 Bool follow_real_execution = False;
+Bool use_ranges = True;
 
 Bool no_exprs = False;
 Bool no_influences = False;
@@ -121,6 +122,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--no-exprs", no_exprs, True) {}
   else if VG_XACT_CLO(arg, "--no-influences", no_influences, True) {}
   else if VG_XACT_CLO(arg, "--no-reals", no_reals, True) {}
+  else if VG_XACT_CLO(arg, "--no-ranges", use_ranges, False) {}
   else if VG_BINT_CLO(arg, "--longprint-len", longprint_len, 1, 1000) {}
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else if VG_BINT_CLO(arg, "--max-expr-block-depth", max_expr_block_depth, 1, 100) {}

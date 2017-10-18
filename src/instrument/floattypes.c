@@ -313,6 +313,7 @@ FloatType argPrecision(IROp op_code){
     // Ft_Unknown for them.
   case Iop_CmpF32:
   case Iop_CmpLT32F0x4:
+  case Iop_CmpUN32F0x4:
   case Iop_RecipEst32Fx4:
   case Iop_RSqrtEst32Fx4:
   case Iop_Abs32Fx4:
@@ -381,6 +382,7 @@ FloatType argPrecision(IROp op_code){
   case Iop_CmpLT64F0x2:
   case Iop_CmpLE64F0x2:
   case Iop_CmpF64:
+  case Iop_CmpUN64F0x2:
   case Iop_RSqrtEst5GoodF64:
   case Iop_NegF64:
   case IEop_Neg64F0x2:
@@ -444,6 +446,7 @@ FloatType argPrecision(IROp op_code){
   case Iop_SetV128lo64:
     return Ft_Unknown;
   default:
+    ppIROp_Extended(op_code);
     tl_assert(0);
     return Ft_NonFloat;
   }

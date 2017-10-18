@@ -66,14 +66,18 @@ void changeSingleValueType(ShadowTemp* temp, FloatType type);
 
 UWord hashDouble(double val);
 ShadowValue* newShadowValue(FloatType type);
-void updateRanges(RangeRecord* records, ShadowValue** args, int nargs);
+void updateRanges(RangeRecord* records, double* args, int nargs);
 VG_REGPARM(2) void assertValValid(const char* label, ShadowValue* val);
 VG_REGPARM(2) void assertTempValid(const char* label, ShadowTemp* temp);
 
 VG_REGPARM(3) void assertValType(const char* label, ShadowValue* val, FloatType type);
+VG_REGPARM(3) void assertTempType(const char* label, ShadowTemp* temp, FloatType type);
 VG_REGPARM(3) void assertNumVals(const char* label, ShadowTemp* temp, int num_vals);
 VG_REGPARM(3) void assertNumValsNot(const char* label,
                                     ShadowTemp* temp,
                                     int num_vals);
+VG_REGPARM(3) void assertDynamicSize(const char* label,
+                                     ShadowTemp* temp,
+                                     int num_halfwords);
 
 #endif

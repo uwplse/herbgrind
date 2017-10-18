@@ -418,6 +418,7 @@ ShadowTemp* i32Uto64(ShadowTemp* t){
   tl_assert(t);
   tl_assert(t->num_vals == 1);
   tl_assert(t->values[0] != NULL);
+  tl_assert(t->values[0]->type == Ft_Single);
   ShadowTemp* result = mkShadowTemp(2);
   result->values[0] = t->values[0];
   ownShadowValue(result->values[0]);

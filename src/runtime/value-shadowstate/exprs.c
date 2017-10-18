@@ -172,7 +172,8 @@ T foldExpr_##N(T initial, SymbExpr* expr,                               \
   return foldExpr_##N##_                                                \
     (initial, expr, null_pos,                                           \
      mkVarMap(expr->type == Node_Branch ?                               \
-              groupsWithoutNonVars(expr, expr->branch.groups) :        \
+              groupsWithoutNonVars(expr, expr->branch.groups,           \
+                                   MAX_FOLD_DEPTH) :                    \
               mkXA(GroupList)()),                                       \
      0, 0, pre_f, post_f);                                              \
 }                                                                       \
@@ -235,7 +236,8 @@ T foldId_##N(T v, SymbExpr* e, NodePos p,                               \
     return foldBlock_##N##_                                             \
       (initial, expr, null_pos,                                         \
        mkVarMap(expr->type == Node_Branch ?                             \
-                groupsWithoutNonVars(expr, expr->branch.groups) :     \
+                groupsWithoutNonVars(expr, expr->branch.groups,         \
+                                     MAX_FOLD_DEPTH) :                  \
                 mkXA(GroupList)()),                                     \
        0, 0, pre_f, post_f);                                            \
   }                                                                     \
@@ -494,7 +496,7 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
 int hasRepeatedVars(SymbExpr* expr){
   tl_assert(expr->type == Node_Branch);
   GroupList trimmedGroups =
-    groupsWithoutNonVars(expr, expr->branch.groups);
+    groupsWithoutNonVars(expr, expr->branch.groups, MAX_FOLD_DEPTH);
   int result = numRepeatedVars(expr, trimmedGroups);
   freeXA(GroupList)(trimmedGroups);
   return result;
@@ -617,6 +619,8 @@ SymbExpr* varSwallow(SymbExpr* expr){
   return expr;
 }
 
+void recursivelyInitializeRanges(SymbExpr* curExpr, NodePos curPos, OSet* seenNodes,
+                                 VgHashTable* rangeTable, int max_depth);
 // This function initializes a range table for the given symbolic
 // expression. Range tables are maps from node positions to
 // RangeRecord's, which should be an up-to-date record of the inputs
@@ -689,34 +693,21 @@ void initializeProblematicRanges(SymbExpr* symbExpr){
   // too. Therefore, we would have already added it to our range table
   // in the step above.
   for (int i = 0; i < symbExpr->branch.nargs; ++i){
-    SymbExpr* childNode = symbExpr->branch.args[i];
-    // We also need to add our children themselves directly to our
-    // range table, since they aren't in their own range tables.
-
-    // We'll add them indexed by the singleton position of their child
-    // index, since they are only one level down from us.
-    NodePos childPos = rconsPos(null_pos, i);
-    // If they are equivalent to something else and we already added
-    // them, don't add them again.
-    if (!(VG_(OSetWord_Contains)(nodesInGroups, (UWord)(uintptr_t)childPos))){
-      addInitialRangeEntry(symbExpr->branch.varProblematicRanges, childPos);
-    }
-    // If our child is a branch, pull in it's range table without the
-    // actual ranges, since the ranges themselves are
-    // context-sensitive.
-    if (childNode->type == Node_Branch){
-      VgHashTable* childMap = childNode->branch.varProblematicRanges;
-      VG_(HT_ResetIter)(childMap);
-      RangeMapEntry* entry;
-      while((entry = VG_(HT_Next)(childMap)) != NULL){
-        NodePos childEntryPos = appendPos(childPos, entry->position);
-
-        // Again, only pull entries in if we DIDN'T add them in part (a).
-        if (childEntryPos->len < MAX_FOLD_DEPTH &&
-            !(VG_(OSetWord_Contains)(nodesInGroups, (UWord)(uintptr_t)childEntryPos))){
-          addInitialRangeEntry(symbExpr->branch.varProblematicRanges, childEntryPos);
-        }
-      }
+    recursivelyInitializeRanges(symbExpr->branch.args[i], rconsPos(null_pos, i),
+                                nodesInGroups, symbExpr->branch.varProblematicRanges,
+                                MAX_FOLD_DEPTH);
+  }
+  VG_(OSetWord_Destroy)(nodesInGroups);
+}
+void recursivelyInitializeRanges(SymbExpr* curExpr, NodePos curPos, OSet* nodesInGroups,
+                                 VgHashTable* rangeTable, int max_depth){
+  if (!(VG_(OSetWord_Contains)(nodesInGroups, (UWord)(uintptr_t)curPos))){
+    addInitialRangeEntry(rangeTable, curPos);
+  }
+  if (max_depth > 1 && curExpr->type == Node_Branch){
+    for(int i = 0; i < curExpr->branch.nargs; ++i){
+      recursivelyInitializeRanges(curExpr->branch.args[i], rconsPos(curPos, i),
+                                  nodesInGroups, rangeTable, max_depth - 1);
     }
   }
 }
@@ -797,12 +788,24 @@ void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
                                       sizeof(RangeRecord) * num_vars);
   int nextVarIdx = 0;
 
-  GroupList groups = expr->branch.groups;
-  (void)groups;
-  (void)nextVarIdx;
+  GroupList groups =
+    groupsWithoutNonVars(expr, expr->branch.groups,
+                         MAX_FOLD_DEPTH);
   for(int i = 0; i < groups->size; ++i){
     Group curGroup = groups->data[i];
 
+    // We will collect two node positions for this group:
+    //
+    // 1. The canonical position is the first position in the existing
+    // group, by which the range table netry for this group is
+    // indexed.
+    //
+    // 2. The sample position is the first position in the group which
+    // has a corresponding node in the current tree.
+    //
+    // Note that these two positions can be the same, and will in the
+    // absense of tree pruning.
+    NodePos canonicalPos = curGroup->item;
     // This chunk of code gets the first position in the group which
     // still exists in the tree. If every position in the group
     // doesn't exist anymore, then we skip this iteration of the for
@@ -818,14 +821,28 @@ void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
       }
       samplePos = curNode->item;
     }
+    tl_assert(samplePos->len <= MAX_FOLD_DEPTH);
 
     SymbExpr* sampleParent = symbExprPosGet(expr, rtail(samplePos));
 
     int childIndex = samplePos->data[samplePos->len - 1];
+    tl_assert(nextVarIdx < num_vars);
     (*totalRangesOut)[nextVarIdx] =
       sampleParent->branch.op->agg.inputs.range_records[childIndex];
     VgHashTable* rangeTable = expr->branch.varProblematicRanges;
-    RangeRecord* entry = lookupRangeRecord(rangeTable, samplePos);
+    RangeRecord* entry = lookupRangeRecord(rangeTable, canonicalPos);
+    if (entry == NULL){
+      VG_(printf)("Expr: ");
+      ppSymbExpr(expr);
+      VG_(printf)(" (%p)\n", expr);
+      VG_(printf)("Couldn't find range table entry for ");
+      ppNodePos(samplePos);
+      VG_(printf)("\nTable is:\n");
+      ppRangeTable(rangeTable);
+      VG_(printf)("Groups are:\n");
+      ppEquivGroups(groups);
+      tl_assert(entry != NULL);
+    }
     (*problematicRangesOut)[nextVarIdx] = *entry;
     nextVarIdx++;
 
@@ -981,7 +998,7 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
     }
   } else {
     VarMap* varMap =
-      mkVarMap(groupsWithoutNonVars(expr, expr->branch.groups));
+      mkVarMap(groupsWithoutNonVars(expr, expr->branch.groups, MAX_FOLD_DEPTH));
     const char* toplevel_func;
     if (!VG_(get_fnname)(expr->branch.op->op_addr, &toplevel_func)){
       toplevel_func = "none";
@@ -1012,9 +1029,7 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
 void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
                          const char* parent_func, Color curColor,
                          NodePos curPos, int max_depth){
-  if (max_depth == 0){
-    printBBuf(buf, " _");
-  } else if (expr->type == Node_Leaf){
+  if (max_depth == 0 || expr->type == Node_Leaf){
     if (expr->isConst){
       printBBuf(buf, " ");
       printBBufFloat(buf, expr->constVal);

@@ -86,6 +86,9 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
       i < opInfo->exinfo.numChannels; ++i){
     // According to the libvex_ir.h documentation, the non-operated
     // values should be copied from the first operand.
+    tl_assert2(args[0]->values[i] != NULL,
+               "Value %d of %p (%d vals) is NULL!\n",
+               i, args[0], args[0]->num_vals);
     result->values[i] = args[0]->values[i];
     ownNonNullShadowValue(result->values[i]);
   }
@@ -147,6 +150,11 @@ ShadowTemp* getArg(int argIdx, int numChannels, FloatType argPrecision,
     }
     return result;
   } else {
+    tl_assert2(shadowTemps[argTemp]->num_vals == numChannels,
+               "Got a temp with the wrong number of shadows for arg %d! "
+               "Expected %d shadows, got %d from temp %d",
+               argIdx, numChannels, shadowTemps[argTemp]->num_vals,
+               argTemp);
     return shadowTemps[argTemp];
   }
 }
@@ -215,7 +223,9 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
     VG_(printf)("Making new expression %p for value %p with 0 references.\n",
                 result->expr, result);
   }
-  updateRanges(opinfo->agg.inputs.range_records, args, opinfo->exinfo.nargs);
+  if (use_ranges){
+    updateRanges(opinfo->agg.inputs.range_records, clientArgs, opinfo->exinfo.nargs);
+  }
   if (print_semantic_ops){
     VG_(printf)("%p = ", result);
     ppIROp(opinfo->op_code);

@@ -137,7 +137,9 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
   } else {
     for(int i = 0; i < 2; ++i){
       int dest_addr = tsDest + i * sizeof(float);
-      tl_assert(st->values[i]->type == Ft_Single);
+      tl_assert2(st->values[i]->type == Ft_Single,
+                 "i = %d, type = %d, %d vals",
+                 i, st->values[i]->type, st->num_vals);
       ShadowValue* val = st->values[i];
       shadowThreadState[VG_(get_running_tid)()][dest_addr] = val;
       ownShadowValue(val);
@@ -293,7 +295,13 @@ VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, int size){
 }
 ShadowTemp* dynamicLoad32(UWord memSrc){
   ShadowValue* val = getMemShadow(memSrc);
-  if (val != NULL){
+  tl_assert2(val == NULL || val->type == Ft_Single || val->type == Ft_Double,
+             "Got shadow %p at %X, but it was the wrong type! It was %d\n",
+             val, memSrc, val->type);
+  // If people load two halves of a double seperately and try to put
+  // them back together, this is going to lose the shadow value. If
+  // that's a problem, think about this hard.
+  if (val != NULL && val->type == Ft_Single){
     ShadowTemp* newTemp = mkShadowTemp(1);
     newTemp->values[0] = val;
     ownShadowValue(val);
