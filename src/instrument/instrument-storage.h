@@ -42,16 +42,20 @@ void instrumentWriteConst(IRSB* sbOut, IRTemp dest,
 void instrumentITE(IRSB* sbOut, IRTemp dest,
                    IRExpr* cond,
                    IRExpr* trueExpr, IRExpr* falseExpr);
-void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data);
+void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data,
+                   int instrIdx);
 void instrumentPutI(IRSB* sbOut,
                     IRExpr* varOffset, Int constOffset,
                     Int arrayBase, Int numElems, IRType elemType,
-                    IRExpr* data);
+                    IRExpr* data,
+                    int instrIdx);
 void instrumentGet(IRSB* sbOut, IRTemp dest,
-                   Int tsSrc, IRType type);
+                   Int tsSrc, IRType type,
+                   int instrIdx);
 void instrumentGetI(IRSB* sbOut, IRTemp dest,
                     IRExpr* varOffset, Int constOffset,
-                    Int arrayBase, Int numElems, IRType elemType);
+                    Int arrayBase, Int numElems, IRType elemType,
+                    int instrIdx);
 void instrumentLoad(IRSB* sbOut, IRTemp dest,
                     IRExpr* addr, IRType type);
 void instrumentLoadG(IRSB* sbOut, IRTemp dest,
@@ -83,10 +87,14 @@ IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
 IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc);
 IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc);
 void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
-                        IRExpr* newVal, FloatType floatType);
-void addSetTSValNonFloat(IRSB* sbOut, Int tsDest);
-void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest);
-void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal);
+                        IRExpr* newVal, FloatType floatType,
+                        int instrIdx);
+void addSetTSValNonFloat(IRSB* sbOut, Int tsDest,
+                         int instrIdx);
+void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest,
+                           int instrIdx);
+void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal,
+                        int instrIdx);
 void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal);
 void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal);
 

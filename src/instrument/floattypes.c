@@ -35,26 +35,47 @@
 #include "../helper/stack.h"
 #include "../helper/ir-info.h"
 
-FloatType tempContext[MAX_TEMPS];
-FloatType tsContext[MAX_REGISTERS];
+FloatTypeEntry tempContext[MAX_TEMPS];
+TSFloatTypeEntry* tsContext[MAX_REGISTERS];
 VgHashTable* memContext = NULL;
-Stack* typeEntries = NULL;
+Stack* memTypeEntries = NULL;
+Stack* tsTypeEntries = NULL;
 
 void initTypeState(void){
   memContext = VG_(HT_construct)("mem context");
-  typeEntries = mkStack();
+  tsTypeEntries = mkStack();
 }
 void resetTypeState(void){
   VG_(memset)(tempContext, 0, sizeof tempContext);
-  VG_(memset)(tsContext, 0, sizeof tsContext);
+  for(int i = 0; i < MAX_REGISTERS; ++i){
+    while (tsContext[i] != NULL){
+      stack_push(tsTypeEntries, (StackNode*)tsContext[i]);
+      tsContext[i] = tsContext[i]->next;
+    }
+  }
   addClearMemTypes();
 }
-Bool tempIsTyped(int idx){
-  return tempContext[idx] == Ft_Single ||
-    tempContext[idx] == Ft_Double;
+Bool tempIsTyped(int idx, int instrIdx){
+  if (tempContext[idx].instrIndexSet > instrIdx){
+    return False;
+  }
+  return tempContext[idx].type == Ft_Single ||
+    tempContext[idx].type == Ft_Double;
 }
-FloatType tempType(int idx){
-  return tempContext[idx];
+FloatType tempType(int idx, int instrIdx){
+  if (tempContext[idx].instrIndexSet > instrIdx){
+    return Ft_Unknown;
+  }
+  return tempContext[idx].type;
+}
+FloatType tempEventualType(int idx){
+  return tempContext[idx].type;
+}
+void setTempType(int tempIdx, int instrIdx, FloatType type){
+  tl_assert(tempContext[tempIdx].type == Ft_Unknown);
+  tl_assert(tempContext[tempIdx].instrIndexSet == 0);
+  tempContext[tempIdx].type = type;
+  tempContext[tempIdx].instrIndexSet = instrIdx;
 }
 int valueSize(IRSB* sbOut, int idx){
   switch(typeOfIRTemp(sbOut->tyenv, idx)){
@@ -66,9 +87,9 @@ int valueSize(IRSB* sbOut, int idx){
     return sizeof(float);
   case Ity_V128:
   case Ity_V256:
-    if (tempType(idx) == Ft_Single){
+    if (tempEventualType(idx) == Ft_Single){
       return sizeof(float);
-    } else if (tempType(idx) == Ft_Double){
+    } else if (tempEventualType(idx) == Ft_Double){
       return sizeof(double);
     }
   default:
@@ -84,30 +105,47 @@ int numTempValues(IRSB* sbOut, int idx){
   case Ity_F32:
     return 1;
   case Ity_V128:
-    if (tempType(idx) == Ft_Single){
+    if (tempEventualType(idx) == Ft_Single){
       return 4;
-    } else if (tempType(idx) == Ft_Double){
+    } else if (tempEventualType(idx) == Ft_Double){
       return 2;
     }
   case Ity_V256:
-    if (tempType(idx) == Ft_Single){
+    if (tempEventualType(idx) == Ft_Single){
       return 8;
-    } else if (tempType(idx) == Ft_Double){
+    } else if (tempEventualType(idx) == Ft_Double){
       return 4;
     }
   default:
-    VG_(printf)("%d\n", tempType(idx));
+    VG_(printf)("%d\n", tempEventualType(idx));
     ppIRType(typeOfIRTemp(sbOut->tyenv, idx));
     tl_assert(0);
     return 0;
   }
 }
-Bool hasStaticShadow(IRExpr* expr){
+Bool hasStaticShadow(IRExpr* expr, int instrIdx){
   switch(expr->tag){
   case Iex_Const:
     return False;
   case Iex_RdTmp:
-    return tempIsTyped(expr->Iex.RdTmp.tmp);
+    return tempIsTyped(expr->Iex.RdTmp.tmp, instrIdx);
+  default:
+    VG_(printf)("Hey, what are you trying to pull here, man? "
+                "You can't check the shadow of a non-trivial "
+                "expression. It's got to be either a RdTmp or "
+                "a Const, not %p ", expr);
+    ppIRExpr(expr);
+    tl_assert(0);
+  }
+}
+Bool hasStaticShadowEventually(IRExpr* expr){
+  switch(expr->tag){
+  case Iex_Const:
+    return False;
+  case Iex_RdTmp:{
+      FloatType type = tempEventualType(expr->Iex.RdTmp.tmp);
+      return type == Ft_Single || type == Ft_Double;
+  }
   default:
     VG_(printf)("Hey, what are you trying to pull here, man? "
                 "You can't check the shadow of a non-trivial "
@@ -122,8 +160,8 @@ Bool canHaveShadow(IRTypeEnv* typeEnv, IRExpr* expr){
     return False;
   } else if (!isFloatType(typeOfIRExpr(typeEnv, expr))){
     return False;
-  } else if (tempContext[expr->Iex.RdTmp.tmp] == Ft_NonFloat ||
-             tempContext[expr->Iex.RdTmp.tmp] == Ft_Unshadowed) {
+  } else if (tempEventualType(expr->Iex.RdTmp.tmp) == Ft_NonFloat ||
+             tempEventualType(expr->Iex.RdTmp.tmp) == Ft_Unshadowed) {
     return False;
   } else {
     return True;
@@ -134,7 +172,7 @@ Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr){
     return False;
   } else if (expr->tag == Iex_Const){
     return True;
-  } else if (tempContext[expr->Iex.RdTmp.tmp] == Ft_NonFloat){
+  } else if (tempEventualType(expr->Iex.RdTmp.tmp) == Ft_NonFloat){
     return False;
   } else {
     return True;
@@ -145,7 +183,7 @@ Bool canStoreShadow(IRTypeEnv* typeEnv, IRExpr* expr){
     return False;
   } else if (!isFloatType(typeOfIRExpr(typeEnv, expr))){
     return False;
-  } else if (tempContext[expr->Iex.RdTmp.tmp] == Ft_NonFloat){
+  } else if (tempEventualType(expr->Iex.RdTmp.tmp) == Ft_NonFloat){
     tl_assert2(0, "Why are you even asking this?");
     return False;
   } else {
@@ -187,8 +225,8 @@ int loadConversionSize(IRLoadGOp conversion){
   }
 }
 
-Bool tsAddrCanHaveShadow(Int tsAddr){
-  switch(tsContext[tsAddr]){
+Bool tsAddrCanHaveShadow(Int tsAddr, int instrIdx){
+  switch(tsType(tsAddr, instrIdx)){
   case Ft_NonFloat:
   case Ft_Unshadowed:
     return False;
@@ -196,8 +234,8 @@ Bool tsAddrCanHaveShadow(Int tsAddr){
     return True;
   }
 }
-Bool tsHasStaticShadow(Int tsAddr){
-  switch(tsContext[tsAddr]){
+Bool tsHasStaticShadow(Int tsAddr, int instrIdx){
+  switch(tsType(tsAddr, instrIdx)){
   case Ft_Single:
   case Ft_Double:
     return True;
@@ -212,24 +250,24 @@ typedef struct _memTypeEntry {
   FloatType type;
 } MemTypeEntry;
 
-void pushEntry(void* entry);
-void pushEntry(void* entry){
-  stack_push(typeEntries, entry);
+void pushMemEntry(void* entry);
+void pushMemEntry(void* entry){
+  stack_push(memTypeEntries, entry);
 }
 
 void addClearMemTypes(void){
-  VG_(HT_destruct)(memContext, pushEntry);
+  VG_(HT_destruct)(memContext, pushMemEntry);
   memContext = VG_(HT_construct)("mem context");
 }
 void setMemType(ULong addr, FloatType type){
   MemTypeEntry* entry = VG_(HT_lookup)(memContext, (UWord)addr);
   if (entry != NULL){
     entry->type = type;
-  } else if (!stack_empty(typeEntries)){
-    if (stack_empty(typeEntries)){
+  } else {
+    if (stack_empty(memTypeEntries)){
       entry = VG_(malloc)("entry", sizeof(MemTypeEntry));
     } else {
-      entry = (void*)stack_pop(typeEntries);
+      entry = (void*)stack_pop(memTypeEntries);
     }
     entry->addr = addr;
     entry->type = type;
@@ -293,16 +331,46 @@ FloatType inferMemType(ULong addr, int size){
   return Ft_Unknown;
 }
 
-FloatType inferTSType64(Int tsAddr){
-  tl_assert2(tsContext[tsAddr + sizeof(float)] != Ft_Double,
-             "Mismatched float at TS(%d)!", tsAddr);
-  tl_assert2(tsContext[tsAddr] != Ft_Double ||
-             tsContext[tsAddr + sizeof(float)] == Ft_NonFloat,
-             "Mismatched float at TS(%d)!", tsAddr);
-  if (tsContext[tsAddr] == Ft_Unknown){
-    return tsContext[tsAddr + sizeof(float)];
+void setTSType(int idx, int instrIdx, FloatType type){
+  TSFloatTypeEntry** nextTSEntry = &(tsContext[idx]);
+  while(*nextTSEntry != NULL && (*nextTSEntry)->instrIndexSet < instrIdx){
+    tl_assert2(((*nextTSEntry)->instrIndexSet != instrIdx) ||
+               ((*nextTSEntry)->type == Ft_Unknown && type != Ft_Unknown),
+               "Type has already been set at index %d!",
+               instrIdx);
+    nextTSEntry = &((*nextTSEntry)->next);
+  }
+  TSFloatTypeEntry* newTSEntry;
+  if (stack_empty(tsTypeEntries)){
+    newTSEntry = VG_(malloc)("TSTypeEntry", sizeof(TSFloatTypeEntry));
   } else {
-    return tsContext[tsAddr];
+    newTSEntry = (void*)stack_pop(tsTypeEntries);
+  }
+  newTSEntry->type = type;
+  newTSEntry->instrIndexSet = instrIdx;
+  newTSEntry->next = *nextTSEntry;
+  *nextTSEntry = newTSEntry;
+}
+FloatType tsType(Int tsAddr, int instrIdx){
+  if (tsContext[tsAddr] == NULL || tsContext[tsAddr]->instrIndexSet > instrIdx){
+    return Ft_Unknown;
+  }
+  TSFloatTypeEntry* nextTSEntry = tsContext[tsAddr];
+  while(nextTSEntry->next != NULL && nextTSEntry->next->instrIndexSet < instrIdx){
+    nextTSEntry = nextTSEntry->next;
+  }
+  return tsContext[tsAddr]->type;
+}
+FloatType inferTSType64(Int tsAddr, int instrIdx){
+  tl_assert2(tsType(tsAddr + sizeof(float), instrIdx) != Ft_Double,
+             "Mismatched float at TS(%d)!", tsAddr);
+  tl_assert2(tsType(tsAddr, instrIdx) != Ft_Double ||
+             tsType(tsAddr + sizeof(float), instrIdx) == Ft_NonFloat,
+             "Mismatched float at TS(%d)!", tsAddr);
+  if (tsType(tsAddr, instrIdx) == Ft_Unknown){
+    return tsType(tsAddr + sizeof(float), instrIdx);
+  } else {
+    return tsType(tsAddr, instrIdx);
   }
 }
 
@@ -621,4 +689,351 @@ void ppFloatType(FloatType type){
     VG_(printf)("Ft_Double");
     break;
   }
+}
+// This function does type inference for the super block. The new type
+// inference system infers both forwards and backwards.
+void inferTypes(IRSB* sbIn){
+  // To calculate a fixpoint on forward and backwards type inference,
+  // we'll use this dirty flag. It is set to zero at the beginning of
+  // every iteration, and only set to one if something
+  // changes. Therefore, the while loop will terminate when an
+  // iteration has completed which doesn't change anything.
+  int dirty = 1;
+  while(dirty){
+    dirty = 0;
+    // We make forward passes through the instructions, building type
+    // information.
+    //
+    // Temporary type information is simple: every temporary has
+    // exactly one type throughout the lifetime of the
+    // superblock. It's made a little more complicated by the fact
+    // that we might at some point want the shadowops to be able to
+    // figure out statically when they need to generate a new
+    // argument. So for that, we'll also store the instruction index
+    // which first actually populates the shadow value. But for the
+    // majority of concerns, we just need to worry about each temp
+    // having a single type, and we can use the "eventual" functions
+    // to check that type.
+    //
+    // Thread state type information is slightly more complicated,
+    // because thread state locations don't always have a single type
+    // throughout the lifetime of the superblock. A particular
+    // location could have integers in it at one point, and floating
+    // point numbers in it at another. So instead of storing a single
+    // type for each thread state locations, we're going to store a
+    // time-series of types. This is represented as a linked list of
+    // entries where the type changes, due to an assignment. All the
+    // thread state type accessing and setting functions will
+    // therefore take the instruction index, and will use it to update
+    // this data structure.
+    for(int instrIdx = 0; instrIdx < sbIn->stmts_used; ++instrIdx){
+      IRStmt* stmt = sbIn->stmts[instrIdx];
+      switch(stmt->tag){
+        // These statements don't really do much, so we can ignore
+        // them for type inference, although we're keeping the cases
+        // here to be exhaustive.
+      case Ist_NoOp:
+      case Ist_IMark:
+      case Ist_MBE:
+      case Ist_Exit:
+      case Ist_AbiHint:
+        break;
+        // The first non-trivial instruction for inference. PUTs break
+        // down into two major cases: either they are putting a
+        // constant into thread state, or they are moving between a
+        // temporary and thread state.
+      case Ist_Put:
+        {
+          IRExpr* sourceData = stmt->Ist.Put.data;
+          int destLocation = stmt->Ist.Put.offset;
+          switch(sourceData->tag){
+            // In the constant case, we just want to make sure the
+            // thread state is initially marked as "unshadowed". This
+            // means checking whether this was already done, and if
+            // not setting it, and setting the dirty bit, so that we
+            // know that we'll need to do more inference that might
+            // depend on this result.
+          case Iex_Const:
+            if (tsType(destLocation, instrIdx) == Ft_Unknown){
+              dirty = 1;
+              setTSType(destLocation, instrIdx, Ft_Unshadowed);
+            } else {
+              tl_assert(tsType(destLocation, instrIdx) == Ft_Unshadowed);
+            }
+            break;
+            // The temporary case gets a lot more interesting. We'll
+            // want to propagate information both ways: if we know
+            // something about the temporary, but not the thread
+            // state, we'll want to propagate that information FORWARD
+            // to the thread state; if we know something about the
+            // thread state, but not the temporary, we want to
+            // propagate that information BACKWARD to the
+            // temporary. We also might not know anything useful right
+            // now, but we could figure out more later as we look at
+            // more of the block and propagate information around.
+          case Iex_RdTmp:
+            synchronizeThreadStateAndTemp(sourceData->Iex.RdTmp.tmp,
+                                            destLocation, &dirty);
+            break;
+          default:
+            tl_assert(0);
+            return;
+          }
+        }
+        break;
+      case Ist_PutI:
+        // Because we don't know where in the fixed region of the array this
+        // put will affect, we have to mark the whole array as unknown
+        // statically. Well, except we know they are making well-aligned
+        // rights because of how putI is calculated, so if we know they are
+        // writing doubles, then we know there are no new floats in the odd
+        // offsets.
+        //
+        // We'll skip backwards propagation for this one, because it's
+        // pretty uncommon, and you'd need to be pretty conservative,
+        // so it's not clear that it'd be a win.
+        {
+          IRExpr* sourceData = stmt->Ist.PutI.details->data;
+          switch(sourceData->tag){
+          case Iex_Const:
+            for(int i = 0;
+                i < stmt->Ist.PutI.details->descr->nElems *
+                  sizeofIRType(stmt->Ist.PutI.details->descr->elemTy);
+                ++i){
+              int destLocation =
+                stmt->Ist.PutI.details->descr->base + i;
+              if (tsType(destLocation, instrIdx) != Ft_Unknown &&
+                  tsType(destLocation, instrIdx) != Ft_NonFloat){
+                dirty = 1;
+                setTSType(destLocation, instrIdx, Ft_Unknown);
+              }
+            }
+            break;
+          case Iex_RdTmp:
+            for(int i = 0;
+                i < stmt->Ist.PutI.details->descr->nElems *
+                  sizeofIRType(stmt->Ist.PutI.details->descr->elemTy);
+                ++i){
+              int destLocation =
+                stmt->Ist.PutI.details->descr->base + i;
+              FloatType srcType = tempEventualType(sourceData->Iex.RdTmp.tmp);
+              FloatType destType = tsType(destLocation, instrIdx);
+              if (srcType == Ft_Double && i % 2 == 1){
+                srcType = Ft_NonFloat;
+              }
+              if (destType != Ft_Unknown &&
+                  destType != srcType){
+                dirty = 1;
+                setTSType(destLocation, instrIdx, Ft_Unknown);
+              }
+            }
+            break;
+          default:
+            tl_assert(0);
+            break;
+          }
+        }
+        break;
+      case Ist_WrTmp:
+        {
+          IRExpr* expr = stmt->Ist.WrTmp.data;
+          switch(expr->tag){
+          case Iex_Get:
+            {
+              int sourceOffset = expr->Iex.Get.offset;
+              int destLocation = stmt->Ist.WrTmp.tmp;
+              synchronizeThreadStateAndTemp(destLocation, sourceOffset, &dirty);
+            }
+            break;
+          case Iex_GetI:
+            // Ugh lets not even try to get this one right for now,
+            // these are pretty rare.
+            break;
+          case Iex_RdTmp:
+            {
+              int sourceTemp = expr->Iex.RdTmp.tmp;
+              int destTemp = stmt->Ist.WrTmp.tmp;
+              FloatType sourceType = tempEventuallyType(sourceTemp);
+              FloatType destType = tempEventuallyType(destTemp);
+              if (srcType != Ft_Unknown){
+                if (destType == Ft_Unknown){
+                  *dirty = 1;
+                  setTempType(destTemp, instrIdx, sourceType);
+                } else {
+                  tl_assert(destType == srcType);
+                }
+              } else {
+                if (destType != Ft_Unknown){
+                  *dirty = 1;
+                  setTempType(sourceTemp, instrIdx, destType);
+                } else {
+                  tl_assert(destType == srcType);
+                }
+              }
+            }
+            break;
+          case Iex_ITE:
+            {
+              IRExpr* source1 = expr->Iex.ITE.iftrue;
+              IRExpr* source2 = expr->Iex.ITE.iffalse;
+              int source1Temp, source2Temp;
+              FloatType source1Type, source2Type;
+              switch(source1->tag){
+              case Iex_Const:
+                source1Temp = -1;
+                source1Type = Ft_Unshadowed;
+                break;
+              case Iex_RdTmp:
+                source1Temp = source1->Iex.RdTmp.tmp;
+                source1Type = tempEventualType(source1Temp);
+                break;
+              default:
+                tl_assert(0);
+                return;
+              }
+              switch(source2->tag){
+              case Iex_Const:
+                source2Temp = -1;
+                source2Type = Ft_Unshadowed;
+                break;
+              case Iex_RdTmp:
+                source2Temp = source2->Iex.RdTmp.tmp;
+                source2Type = tempEventualType(source2Temp);
+                break;
+              default:
+                tl_assert(0);
+                return;
+              }
+              if (source1Type !=
+            }
+            break;
+          case Iex_Load:
+            break;
+          case Iex_Qop:
+            break;
+          case Iex_Triop:
+            break;
+          case Iex_Binop:
+            break;
+          case Iex_Unop:
+            break;
+          case Iex_Const:
+            break;
+          case Iex_CCall:
+          default:
+            tl_assert(0);
+            return;
+          }
+        }
+        break;
+      case Ist_Store:
+        break;
+      case Ist_StoreG:
+        break;
+      case Ist_LoadG:
+        break;
+      case Ist_CAS:
+        break;
+      case Ist_Dirty:
+        break;
+      case Ist_LLSC:
+      default:
+        tl_assert(0);
+        break;
+      }
+    }
+  }
+}
+
+// Synchronize the types of a thread state location and a
+// temporary. This is common code between the GET instruction and the
+// PUT instruction. Sets the "dirty" variable to true if anything gets
+// changed
+void synchronizeThreadStateAndTemp(IRTemp temp, int tsOffset, int* dirty){
+  FloatType srcType = tempEventualType(temp);
+  FloatType destType = tsType(tsOffset, instrIdx);
+  if (srcType != Ft_Unknown){
+    if (destType == Ft_Unknown){
+      *dirty = 1;
+      setTSType(tsOffset, instrIdx, srcType);
+    } else {
+      tl_assert(destType == srcType);
+    }
+  } else {
+    if (destType != Ft_Unknown){
+      *dirty = 1;
+      setTempType(temp, instrIdx, destType);
+    } else {
+      tl_assert(destType == srcType);
+    }
+  }
+}
+            }
+            break;
+          case Iex_Load:
+            break;
+          case Iex_Qop:
+            break;
+          case Iex_Triop:
+            break;
+          case Iex_Binop:
+            break;
+          case Iex_Unop:
+            break;
+          case Iex_Const:
+            break;
+          case Iex_CCall:
+          default:
+            tl_assert(0);
+            return;
+          }
+        }
+        break;
+      case Ist_Store:
+        break;
+      case Ist_StoreG:
+        break;
+      case Ist_LoadG:
+        break;
+      case Ist_CAS:
+        break;
+      case Ist_Dirty:
+        break;
+      case Ist_LLSC:
+      default:
+        tl_assert(0);
+        break;
+      }
+    }
+  }
+}
+
+// Synchronize the types of a thread state location and a
+// temporary. This is common code between the GET instruction and the
+// PUT instruction. Sets the "dirty" variable to true if anything gets
+// changed
+void synchronizeThreadStateAndTemp(IRTemp temp, int tsOffset, int* dirty){
+  FloatType srcType = tempEventualType(temp);
+  FloatType destType = tsType(tsOffset, instrIdx);
+  if (srcType != Ft_Unknown){
+    if (destType == Ft_Unknown){
+      *dirty = 1;
+      setTSType(tsOffset, instrIdx, srcType);
+    } else {
+      tl_assert(destType == srcType);
+    }
+  } else {
+    if (destType != Ft_Unknown){
+      *dirty = 1;
+      setTempType(temp, instrIdx, destType);
+    } else {
+      tl_assert(destType == srcType);
+    }
+  }
+}
+
+ValueType typeJoin(ValueType type1, ValueType type2){
+
+}
+ValueType typeMeet(ValueType type1, ValueType type2){
 }

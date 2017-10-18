@@ -53,6 +53,7 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
                      const VexArchInfo* archinfo_host,
                      IRType gWordTy, IRType hWordTy) {
   IRSB* sbOut = deepCopyIRSBExceptStmts(sbIn);
+  inferTypes(sbIn);
 
   if (PRINT_IN_BLOCKS){
     VG_(printf)("Instrumenting block at %p:\n", (void*)closure->readdr);
@@ -76,7 +77,7 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
     }
     addStmtToIRSB(sbOut, stmt);
     if (curAddr)
-      instrumentStatement(sbOut, stmt, curAddr, closure->readdr);
+      instrumentStatement(sbOut, stmt, curAddr, closure->readdr, i);
   }
   finishInstrumentingBlock(sbOut);
   if (PRINT_BLOCK_BOUNDRIES){
@@ -106,7 +107,8 @@ void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){
 }
 
 void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
-                         Addr stAddr, Addr blockAddr){
+                         Addr stAddr, Addr blockAddr,
+                         int stIdx){
   switch(stmt->tag){
   case Ist_NoOp:
   case Ist_IMark:
@@ -115,7 +117,8 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
   case Ist_AbiHint:
     break;
   case Ist_Put:
-    instrumentPut(sbOut, stmt->Ist.Put.offset, stmt->Ist.Put.data);
+    instrumentPut(sbOut, stmt->Ist.Put.offset, stmt->Ist.Put.data,
+                  stIdx);
     break;
   case Ist_PutI:
     instrumentPutI(sbOut,
@@ -124,7 +127,8 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
                    stmt->Ist.PutI.details->descr->base,
                    stmt->Ist.PutI.details->descr->nElems,
                    stmt->Ist.PutI.details->descr->elemTy,
-                   stmt->Ist.PutI.details->data);
+                   stmt->Ist.PutI.details->data,
+                   stIdx);
     break;
   case Ist_WrTmp:
     {
@@ -134,7 +138,8 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
         instrumentGet(sbOut,
                       stmt->Ist.WrTmp.tmp,
                       expr->Iex.Get.offset,
-                      expr->Iex.Get.ty);
+                      expr->Iex.Get.ty,
+                      stIdx);
         break;
       case Iex_GetI:
         instrumentGetI(sbOut,
@@ -143,7 +148,8 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
                        expr->Iex.GetI.bias,
                        expr->Iex.GetI.descr->base,
                        expr->Iex.GetI.descr->nElems,
-                       expr->Iex.GetI.descr->elemTy);
+                       expr->Iex.GetI.descr->elemTy,
+                       stIdx);
         break;
       case Iex_RdTmp:
         instrumentRdTmp(sbOut,
@@ -170,7 +176,8 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
         instrumentOp(sbOut,
                      stmt->Ist.WrTmp.tmp,
                      expr,
-                     stAddr, blockAddr);
+                     stAddr, blockAddr,
+                     stIdx);
         break;
       case Iex_Const:
         instrumentWriteConst(sbOut,

@@ -49,7 +49,8 @@
 #include "../options.h"
 
 void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
-                  Addr curAddr, Addr blockAddr){
+                  Addr curAddr, Addr blockAddr,
+                  int instrIdx){
   // Get the IROp value, the number of args, and the argument
   // expressions out of the structure based on whether it's a Unop, a
   // Binop, or a Triop.
@@ -112,19 +113,20 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
     }
   } else if (isFloatOp(op_code)){
     if (isConversionOp(op_code)){
-      instrumentConversion(sbOut, op_code, argExprs, dest);
+      instrumentConversion(sbOut, op_code, argExprs, dest,
+                           instrIdx);
     } else {
       instrumentSemanticOp(sbOut, op_code, nargs, argExprs,
                            curAddr, blockAddr, dest);
     }
   } else {
     for(int i = 0; i < nargs; ++i){
-      if (hasStaticShadow(argExprs[i])){
+      if (hasStaticShadowEventually(argExprs[i])){
         ppIROp(op_code);
         VG_(printf)(" on ");
         ppIRExpr(argExprs[i]);
         VG_(printf)("\n");
-        tl_assert(!hasStaticShadow(argExprs[i]));
+        tl_assert(!hasStaticShadowEventually(argExprs[i]));
       }
     }
     addStoreTempNonFloat(sbOut, dest);

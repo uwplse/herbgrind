@@ -49,7 +49,7 @@ typedef enum {
 } Booly;
 
 void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
-                          IRTemp dest){
+                          IRTemp dest, int instrIdx){
   IRExpr* shadowInputs[2];
   IRExpr* inputPreexisting;
   Booly inputsPreexistingStatic[2] = {Uncertain, Uncertain};
@@ -83,7 +83,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     } else {
       shadowInputs[0] =
         runLoadTemp(sbOut, argExprs[inputIndex]->Iex.RdTmp.tmp);
-      if (hasStaticShadow(argExprs[inputIndex])){
+      if (hasStaticShadow(argExprs[inputIndex], instrIdx)){
         // To make sure we don't accidentally use this in any guarded
         // calls when this happens, because it means we statically know
         // whether it preexists or not.
@@ -111,13 +111,13 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
         addStoreTempNonFloat(sbOut, dest);
       }
       return;
-    } else if (hasStaticShadow(argExprs[0]) ||
-               hasStaticShadow(argExprs[1])) {
+    } else if (hasStaticShadow(argExprs[0], instrIdx) ||
+               hasStaticShadow(argExprs[1], instrIdx)) {
       for (int i = 0; i < 2; ++i){
         if (canHaveShadow(sbOut->tyenv, argExprs[i])){
           shadowInputs[i] =
             runLoadTemp(sbOut, argExprs[i]->Iex.RdTmp.tmp);
-          if (!hasStaticShadow(argExprs[i])){
+          if (!hasStaticShadow(argExprs[i], instrIdx)){
             IRExpr* loadedNull =
               runZeroCheck64(sbOut, shadowInputs[i]);
             int numVals =
@@ -125,7 +125,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
             IRExpr* freshInput =
               runMakeInputG(sbOut, loadedNull,
                             argExprs[i],
-                            tempType(argExprs[1-i]->Iex.RdTmp.tmp),
+                            tempEventualType(argExprs[1-i]->Iex.RdTmp.tmp),
                             numVals);
             shadowInputs[i] = runITE(sbOut, loadedNull,
                                      freshInput,
@@ -144,7 +144,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
             inferOtherNumChannels(i, argExprs[1-i], op_code);
           shadowInputs[i] =
             runMakeInput(sbOut, argExprs[i],
-                         tempType(argExprs[1-i]->Iex.RdTmp.tmp),
+                         tempEventualType(argExprs[1-i]->Iex.RdTmp.tmp),
                          numVals);
         }
       }
@@ -506,18 +506,18 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
   }
   FloatType outputPrecision = resultPrecision(op_code);
   if (outputPrecision == Ft_Unknown){
-    if (hasStaticShadow(argExprs[0])){
-      outputPrecision = tempType(argExprs[0]->Iex.RdTmp.tmp);
+    if (hasStaticShadow(argExprs[0], instrIdx)){
+      outputPrecision = tempEventualType(argExprs[0]->Iex.RdTmp.tmp);
     } else if (numConversionInputs(op_code) == 2 &&
-               hasStaticShadow(argExprs[1])){
-      outputPrecision = tempType(argExprs[1]->Iex.RdTmp.tmp);
+               hasStaticShadow(argExprs[1], instrIdx)){
+      outputPrecision = tempEventualType(argExprs[1]->Iex.RdTmp.tmp);
     }
   }
   if ((numConversionInputs(op_code) == 1 &&
-       hasStaticShadow(argExprs[conversionInputArgIndex(op_code)])) ||
+       hasStaticShadow(argExprs[conversionInputArgIndex(op_code)], instrIdx)) ||
       (numConversionInputs(op_code) == 2 &&
-       (hasStaticShadow(argExprs[0]) ||
-        hasStaticShadow(argExprs[1])))){
+       (hasStaticShadow(argExprs[0], instrIdx) ||
+        hasStaticShadow(argExprs[1], instrIdx)))){
     if (print_temp_moves){
       addPrintOp(op_code);
       addPrint3(": Putting converted temp %p in %d\n",

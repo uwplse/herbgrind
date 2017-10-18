@@ -34,7 +34,8 @@
 #include "../runtime/value-shadowstate/shadowval.h"
 
 void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
-                  Addr curAddr, Addr blockAddr);
+                  Addr curAddr, Addr blockAddr,
+                  int instrIdx);
 
 Bool isSpecialOp(IROp op_code);
 void handleSpecialOp(IRSB* sbOut, IROp op_code,

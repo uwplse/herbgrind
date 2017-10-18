@@ -38,6 +38,29 @@
 #define MAX_REGISTERS 1000
 
 typedef enum {
+  Vt_Unknown,
+  Vt_NonFloat,
+  Vt_UnknownFloat,
+  Vt_Double,
+  Vt_Single,
+} ValueType;
+
+typedef enum {
+  Ss_Shadowed,
+  Ss_Unshadowed,
+} ShadowStatus;
+
+typedef struct {
+  ValueType vtype;
+  ShadowStatus shadowed;
+} TypeInfo;
+
+// Meet and join operations for the type lattice
+// Cheat sheet: join -> union, meet -> intersect
+ValueType typeJoin(ValueType type1, ValueType type2);
+ValueType typeMeet(ValueType type1, ValueType type2);
+
+typedef enum {
   Ft_Unknown,
   Ft_NonFloat,
   Ft_Unshadowed,
@@ -45,13 +68,22 @@ typedef enum {
   Ft_Double
 } FloatType;
 
-extern FloatType tempContext[MAX_TEMPS];
-extern FloatType tsContext[MAX_REGISTERS];
+typedef struct _FloatTypeEntry {
+  FloatType type;
+  int instrIndexSet;
+} FloatTypeEntry;
+typedef struct _TSFloatTypeEntry {
+  struct _TSFloatTypeEntry* next;
+  FloatType type;
+  int instrIndexSet;
+} TSFloatTypeEntry;
+
 extern VgHashTable* memContext;
 
 void initTypeState(void);
 void resetTypeState(void);
 void addClearMemTypes(void);
+void inferTypes(IRSB* sbIn);
 
 FloatType argPrecision(IROp op_code);
 FloatType resultPrecision(IROp op_code);
@@ -61,18 +93,21 @@ int isFloat(IRTypeEnv* env, IRTemp temp);
 
 void ppFloatType(FloatType type);
 
-void setTempType(int idx, FloatType type);
-Bool tempIsTyped(int idx);
-FloatType tempType(int idx);
-Bool hasStaticShadow(IRExpr* expr);
+void setTempType(int tempIdx, int instrIdx, FloatType type);
+Bool tempIsTyped(int idx, int instrIdx);
+FloatType tempType(int idx, int instrIdx);
+FloatType tempEventualType(int idx);
+Bool hasStaticShadow(IRExpr* expr, int instrIdx);
+Bool hasStaticShadowEventually(IRExpr* expr);
 Bool canHaveShadow(IRTypeEnv* tyenv, IRExpr* expr);
 Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr);
 Bool canStoreShadow(IRTypeEnv* typeEnv, IRExpr* expr);
 
-void setTSType(int idx, FloatType type);
-FloatType inferTSType64(Int tsAddr);
-Bool tsAddrCanHaveShadow(Int tsAddr);
-Bool tsHasStaticShadow(Int tsAddr);
+void setTSType(int idx, int instrIdx, FloatType type);
+FloatType tsType(Int tsAddr, int instrIdx);
+FloatType inferTSType64(Int tsAddr, int instrIdx);
+Bool tsAddrCanHaveShadow(Int tsAddr, int instrIdx);
+Bool tsHasStaticShadow(Int tsAddr, int instrIdx);
 
 FloatType inferMemType(ULong addr, int size);
 void addClearMemType(void);

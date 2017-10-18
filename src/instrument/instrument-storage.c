@@ -54,23 +54,17 @@ void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src){
              typeOfIRTemp(sbOut->tyenv, src),
              "Source of temp move doesn't match dest!");
   if (!canHaveShadow(sbOut->tyenv, IRExpr_RdTmp(src))){
-    tempContext[dest] = tempContext[src];
     return;
-  } else if (hasStaticShadow(IRExpr_RdTmp(src))){
-    tempContext[dest] = tempType(src);
-  } else {
-    tempContext[dest] = Ft_Unknown;
   }
   // Load the new temp into memory.
   IRExpr* newShadowTemp = runLoadTemp(sbOut, src);
 
   // Copy across the new temp and increment it's ref count.
   // Increment the ref count of the new temp
-  addStoreTempCopy(sbOut, newShadowTemp, dest, tempContext[src]);
+  addStoreTempCopy(sbOut, newShadowTemp, dest, tempEventualType(src));
 }
 void instrumentWriteConst(IRSB* sbOut, IRTemp dest,
                           IRConst* con){
-  tempContext[dest] = Ft_Unshadowed;
 }
 void instrumentITE(IRSB* sbOut, IRTemp dest,
                    IRExpr* cond,
@@ -93,29 +87,17 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
     falseSt = runLoadTemp(sbOut, falseExpr->Iex.RdTmp.tmp);
   }
 
+  FloatType trueType = tempEventualType(trueExpr->Iex.RdTmp.tmp);
+  FloatType falseType = tempEventualType(falseExpr->Iex.RdTmp.tmp);
   IRExpr* resultSt =
     runITE(sbOut, cond, trueSt, falseSt);
-  // Figure out the types
-  if (!canHaveShadow(sbOut->tyenv, trueExpr) && !canHaveShadow(sbOut->tyenv, falseExpr)){
-    if (!canBeFloat(sbOut->tyenv, trueExpr) && !canBeFloat(sbOut->tyenv, falseExpr)){
-      addStoreTempNonFloat(sbOut, dest);
-    } else {
-      addStoreTempUnshadowed(sbOut, dest);
-    }
-  } else if (hasStaticShadow(trueExpr) && hasStaticShadow(falseExpr)){
-    FloatType trueType = tempType(trueExpr->Iex.RdTmp.tmp);
-    FloatType falseType = tempType(falseExpr->Iex.RdTmp.tmp);
-    if (trueType == falseType){
-      addStoreTemp(sbOut, resultSt, trueType, dest);
-    } else {
-      // This is a weakness in our type system, might want to fix it.
-      addStoreTempCopy(sbOut, resultSt, dest, Ft_Unknown);
-    }
+  if (trueType == falseType){
+    addStoreTempCopy(sbOut, resultSt, dest, trueType);
   } else {
     addStoreTempCopy(sbOut, resultSt, dest, Ft_Unknown);
   }
 }
-void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
+void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
   // This procedure adds instrumentation to sbOut which shadows the
   // putting of a value from a temporary into thread state.
 
@@ -148,18 +130,18 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
     // (meaning it's been overwritten by a non-float this block), then
     // we don't need to bother trying to clear it or change it's
     // static info here
-    if (tsAddrCanHaveShadow(dest_addr)){
+    if (tsAddrCanHaveShadow(dest_addr, instrIdx)){
       if (PRINT_TYPES){
         VG_(printf)("Types: Setting up a disown for %d because it's type is ",
                     dest_addr);
-        ppFloatType(tsContext[dest_addr]);
+        ppFloatType(tsType(dest_addr, instrIdx));
         VG_(printf)("\n");
       }
       IRExpr* oldVal = runGetTSVal(sbOut, dest_addr);
       // If we don't know whether or not it's a shadowed float at
       // runtime, we'll do a runtime check to see if there is a shadow
       // value there, and disown it if there is.
-      if (tsHasStaticShadow(dest_addr)){
+      if (tsHasStaticShadow(dest_addr, instrIdx)){
         if (PRINT_VALUE_MOVES){
           addPrint3("Disowning %p "
                     "from thread state overwrite at %d (static)\n",
@@ -179,36 +161,17 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
       }
     }
   }
-  if (!canHaveShadow(sbOut->tyenv, data)){
-    for(int i = 0; i < dest_size; ++i){
-      Int dest_addr = tsDest + (i * sizeof(float));
-      if (canBeFloat(sbOut->tyenv, data)){
-        if (PRINT_TYPES){
-          VG_(printf)("Setting TS(%d) to unshadowed, "
-                      "because %d can't contain a float.\n",
-                      dest_addr, data->Iex.RdTmp.tmp);
-        }
-        addSetTSValUnshadowed(sbOut, dest_addr);
-      } else {
-        if (PRINT_TYPES){
-          VG_(printf)("Setting TS(%d) to non-float, "
-                      "because %d can't contain a float.\n",
-                      dest_addr, data->Iex.RdTmp.tmp);
-        }
-        addSetTSValNonFloat(sbOut, dest_addr);
-      }
-    }
-  } else {
+  if (canHaveShadow(sbOut->tyenv, data)){
     int idx = data->Iex.RdTmp.tmp;
     IRExpr* st = runLoadTemp(sbOut, idx);
-    if (hasStaticShadow(data)){
+    if (hasStaticShadow(data, instrIdx)){
       IRExpr* values =
         runArrow(sbOut, st, ShadowTemp, values);
       for(int i = 0; i < dest_size; ++i){
         Int dest_addr = tsDest + (i * sizeof(float));
-        if (tempType(idx) == Ft_Double){
+        if (tempEventualType(idx) == Ft_Double){
           if (i % 2 == 1){
-            addSetTSValNonFloat(sbOut, dest_addr);
+            addSetTSValNonFloat(sbOut, dest_addr, instrIdx);
             if (PRINT_TYPES){
               VG_(printf)("Types: Setting TS(%d) to non-float, "
                           "because we wrote a double "
@@ -223,13 +186,13 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
               value =
                 runIndex(sbOut, values, ShadowValue*, i / 2);
             }
-            addSetTSValNonNull(sbOut, dest_addr, value, Ft_Double);
+            addSetTSValNonNull(sbOut, dest_addr, value, Ft_Double, instrIdx);
           }
         } else {
-          tl_assert(tempType(idx) == Ft_Single);
+          tl_assert(tempEventualType(idx) == Ft_Single);
           IRExpr* value =
             runIndex(sbOut, values, ShadowValue*, i);
-          addSetTSValNonNull(sbOut, dest_addr, value, Ft_Single);
+          addSetTSValNonNull(sbOut, dest_addr, value, Ft_Single, instrIdx);
         }
       }
     } else {
@@ -247,7 +210,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
         IRExpr* value = runLoadG64(sbOut, values, stExists);
 
         addSVOwnNonNullG(sbOut, stExists, value);
-        addSetTSValUnknown(sbOut, tsDest, value);
+        addSetTSValUnknown(sbOut, tsDest, value, instrIdx);
         if (PRINT_VALUE_MOVES){
           addPrint3("Setting TS(%d) to %p\n",
                     mkU64(tsDest), value);
@@ -267,9 +230,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
           // Even if the value is null at runtime, we still need to overwrite
           // any old pointers still stuck in that thread state so they
           // don't get picked up later.
-          addSetTSValNonFloat(sbOut, dest_addr);
-
-          tsContext[dest_addr] = Ft_Unknown;
+          addSetTSValNonFloat(sbOut, dest_addr, instrIdx);
         }
         IRDirty* putDirty =
           unsafeIRDirty_0_N(2, "dynamicPut64",
@@ -299,8 +260,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
           // Even if the value is null at runtime, we still need to overwrite
           // any old pointers still stuck in that thread state so they
           // don't get picked up later.
-          addSetTSValNonFloat(sbOut, dest_addr);
-          tsContext[dest_addr] = Ft_Unknown;
+          addSetTSValNonFloat(sbOut, dest_addr, instrIdx);
         }
         IRDirty* putDirty =
           unsafeIRDirty_0_N(2, "dynamicPut128",
@@ -322,25 +282,10 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data){
 void instrumentPutI(IRSB* sbOut,
                     IRExpr* varOffset, Int constOffset,
                     Int arrayBase, Int numElems, IRType elemType,
-                    IRExpr* data){
+                    IRExpr* data,
+                    int instrIdx){
   int dest_size = exprSize(sbOut->tyenv, data);
   IRExpr* dest_addrs[4];
-  // Because we don't know where in the fixed region of the array this
-  // put will affect, we have to mark the whole array as unknown
-  // statically. Well, except we know they are making well-aligned
-  // rights because of how putI is calculated, so if we know they are
-  // writing doubles, then we know there are no new floats in the odd
-  // offsets.
-  for(int i = 0; i < (numElems * dest_size); ++i){
-    Int dest = arrayBase + i * sizeof(float);
-    if (hasStaticShadow(data) &&
-        tempType(data->Iex.RdTmp.tmp) == Ft_Double &&
-        i % 2 == 1 &&
-        tsContext[dest] == Ft_NonFloat){
-      continue;
-    }
-    tsContext[dest] = Ft_Unknown;
-  }
   for(int i = 0; i < dest_size; ++i){
     dest_addrs[i] =
       mkArrayLookupExpr(sbOut, arrayBase, varOffset,
@@ -353,11 +298,11 @@ void instrumentPutI(IRSB* sbOut,
   if (canHaveShadow(sbOut->tyenv, data)) {
     int tempIdx = data->Iex.RdTmp.tmp;
     IRExpr* st = runLoadTemp(sbOut, tempIdx);
-    if (hasStaticShadow(data)){
+    if (hasStaticShadowEventually(data)){
       IRExpr* values =
         runArrow(sbOut, st, ShadowTemp, values);
       for(int i = 0; i < dest_size; ++i){
-        if (tempType(tempIdx) == Ft_Double){
+        if (tempEventualType(tempIdx) == Ft_Double){
           if (i % 2 == 1){
             addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
           } else {
@@ -410,13 +355,14 @@ void instrumentPutI(IRSB* sbOut,
   }
 }
 void instrumentGet(IRSB* sbOut, IRTemp dest,
-                   Int tsSrc, IRType type){
+                   Int tsSrc, IRType type,
+                   int instrIdx){
   if (!canStoreShadow(sbOut->tyenv, IRExpr_RdTmp(dest))){
     return;
   }
   int src_size = typeSize(type);
   if (src_size == 1){
-    FloatType valType = tsContext[tsSrc];
+    FloatType valType = tsType(tsSrc, instrIdx);
     // Getting the first half of a double is undefined.
     tl_assert(valType != Ft_Double);
     // If it's not a float propagate that information.
@@ -462,7 +408,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       }
     }
   } else if (src_size == 2){
-    FloatType valType = inferTSType64(tsSrc);
+    FloatType valType = inferTSType64(tsSrc, instrIdx);
     if (valType == Ft_NonFloat){
       if (PRINT_TYPES){
         VG_(printf)("Marking %d as nonfloat because TS(%d) is nonfloat.\n",
@@ -475,9 +421,9 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* vals[2];
       for(int i = 0; i < 2; ++i){
         Int src_addr = tsSrc + (i * sizeof(float));
-        if (tsContext[src_addr] == Ft_Single){
+        if (tsType(src_addr, instrIdx) == Ft_Single){
           vals[i] = runGetTSVal(sbOut, src_addr);
-        } else if (tsContext[src_addr] == Ft_Unknown){
+        } else if (tsType(src_addr, instrIdx) == Ft_Unknown){
           IRExpr* loaded = runGetTSVal(sbOut, src_addr);
           IRExpr* loadedNull = runZeroCheck64(sbOut, loaded);
           IRExpr* valExpr = runF32toF64(sbOut, runGet64C(sbOut, src_addr));
@@ -525,7 +471,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       }
     }
   } else if (src_size == 4 || src_size == 8){
-    FloatType valType = inferTSType64(tsSrc);
+    FloatType valType = inferTSType64(tsSrc, instrIdx);
     if (valType == Ft_NonFloat){
       addStoreTempNonFloat(sbOut, dest);
     } else if (valType == Ft_Unshadowed){
@@ -540,9 +486,9 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* vals[MAX_TEMP_SHADOWS];
       for(int i = 0; i < src_size; ++i){
         Int src_addr = tsSrc + (i * sizeof(float));
-        if (tsContext[src_addr] == Ft_Single){
+        if (tsType(src_addr, instrIdx) == Ft_Single){
           vals[i] = runGetTSVal(sbOut, src_addr);
-        } else if (tsContext[src_addr] == Ft_Unknown){
+        } else if (tsType(src_addr, instrIdx) == Ft_Unknown){
           IRExpr* loaded = runGetTSVal(sbOut, src_addr);
           IRExpr* loadedNull = runZeroCheck64(sbOut, loaded);
           IRExpr* valExpr = runF32toF64(sbOut, runGet32C(sbOut, src_addr));
@@ -565,9 +511,9 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* vals[MAX_TEMP_SHADOWS / 2];
       for(int i = 0; i < (src_size / 2); ++i){
         Int src_addr = tsSrc + (i * sizeof(double));
-        if (tsContext[src_addr] == Ft_Double){
+        if (tsType(src_addr, instrIdx) == Ft_Double){
           vals[i] = runGetTSVal(sbOut, src_addr);
-        } else if (tsContext[src_addr] == Ft_Unknown){
+        } else if (tsType(src_addr, instrIdx) == Ft_Unknown){
           IRExpr* loaded = runGetTSVal(sbOut, src_addr);
           IRExpr* loadedNull = runZeroCheck64(sbOut, loaded);
           IRExpr* valExpr = runGet64C(sbOut, src_addr);
@@ -611,7 +557,8 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
 }
 void instrumentGetI(IRSB* sbOut, IRTemp dest,
                     IRExpr* varOffset, int constOffset,
-                    Int arrayBase, Int numElems, IRType elemType){
+                    Int arrayBase, Int numElems, IRType elemType,
+                    int instrIdx){
   if (!canStoreShadow(sbOut->tyenv, IRExpr_RdTmp(dest))){
     return;
   }
@@ -863,24 +810,25 @@ IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc){
                             tsSrc));
 }
 void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
-                        IRExpr* newVal, FloatType floatType){
+                        IRExpr* newVal, FloatType floatType,
+                        int instrIdx){
   tl_assert(floatType == Ft_Single ||
             floatType == Ft_Double);
-  tsContext[tsDest] = floatType;
+  tl_assert(tsType(tsDest, instrIdx) == floatType);
   addSVOwnNonNull(sbOut, newVal);
   addSetTSVal(sbOut, tsDest, newVal);
 }
-void addSetTSValNonFloat(IRSB* sbOut, Int tsDest){
+void addSetTSValNonFloat(IRSB* sbOut, Int tsDest, int instrIdx){
   addSetTSVal(sbOut, tsDest, mkU64(0));
-  tsContext[tsDest] = Ft_NonFloat;
+  tl_assert(tsType(tsDest, instrIdx) == Ft_NonFloat);
 }
-void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest){
+void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest, int instrIdx){
   addSetTSVal(sbOut, tsDest, mkU64(0));
-  tsContext[tsDest] = Ft_Unshadowed;
+  tl_assert(tsType(tsDest, instrIdx) == Ft_Unshadowed);
 }
-void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal){
+void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal, int instrIdx){
   addSetTSVal(sbOut, tsDest, newVal);
-  tsContext[tsDest] = Ft_Unknown;
+  tl_assert(tsType(tsDest, instrIdx) == Ft_Unknown);
 }
 void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal){
   if (PRINT_VALUE_MOVES){
@@ -919,11 +867,8 @@ void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal){
 void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
                   FloatType type,
                   int idx){
-  tl_assert2(tempContext[idx] == Ft_Unknown ||
-             tempContext[idx] == Ft_Unshadowed,
-             "Tried to set an already set temp %d!\n",
-             idx);
-  tempContext[idx] = type;
+  tl_assert(type == Ft_Unknown ||
+            type == tempEventualType(idx));
   addStoreC(sbOut, shadow_temp, &(shadowTemps[idx]));
   cleanupAtEndOfBlock(sbOut, idx);
 }
@@ -931,29 +876,26 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard,
                    IRExpr* shadow_temp,
                    FloatType type,
                    int idx){
-  tl_assert2(tempContext[idx] == Ft_Unknown ||
-             tempContext[idx] == Ft_NonFloat ||
-             tempContext[idx] == Ft_Unshadowed ||
-             tempContext[idx] == type,
+  tl_assert2(tempEventualType(idx) == Ft_Unknown ||
+             tempEventualType(idx) == type,
              "Tried to conditionally set a"
              " temp (%d) to type %d already set with a different"
-             " type temp %d!\n", idx, type, tempContext[idx]);
+             " type temp %d!\n", idx, type, tempEventualType(idx));
   addStoreGC(sbOut, guard, shadow_temp, &(shadowTemps[idx]));
-  tempContext[idx] = Ft_Unknown;
   cleanupAtEndOfBlock(sbOut, idx);
 }
 void addStoreTempNonFloat(IRSB* sbOut, int idx){
   if (PRINT_TYPES){
     VG_(printf)("Setting %d to non float.\n", idx);
   }
-  tempContext[idx] = Ft_NonFloat;
+  tl_assert(tempEventualType(idx) == Ft_NonFloat);
 }
 void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe,
                          int idx){
   addStoreTemp(sbOut, shadow_temp_maybe, Ft_Unknown, idx);
 }
 void addStoreTempUnshadowed(IRSB* sbOut, int idx){
-  tempContext[idx] = Ft_Unshadowed;
+  tl_assert(tempEventualType(idx) == Ft_Unshadowed);
   if (PRINT_TYPES){
     VG_(printf)("Setting %d to unshadowed.\n", idx);
   }
