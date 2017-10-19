@@ -56,6 +56,7 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
         correctOutput = 0x40;
       }
     }
+      break;
     case Iop_CmpLT32F0x4:
     case Iop_CmpLT64F0x2: {
       if (correctFst != correctFst ||
