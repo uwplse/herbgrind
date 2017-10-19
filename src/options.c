@@ -55,6 +55,7 @@ Bool print_errors_long = False;
 Bool print_inputs = False;
 Bool print_expr_updates = False;
 Bool print_flagged = False;
+Bool print_compares = False;
 Int longprint_len = 15;
 
 Bool dont_ignore_pure_zeroes = False;
@@ -102,6 +103,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-expr-updates", print_expr_updates, True) {}
   else if VG_XACT_CLO(arg, "--print-flagged", print_flagged, True) {}
   else if VG_XACT_CLO(arg, "--print-object-files", print_object_files, True) {}
+  else if VG_XACT_CLO(arg, "--print-compares", print_compares, True) {}
   else if VG_XACT_CLO(arg, "--output-subexpr-sources", print_subexpr_locations, True) {}
   else if VG_XACT_CLO(arg, "--dont-ignore-pure-zeroes", dont_ignore_pure_zeroes, True) {}
   else if VG_XACT_CLO(arg, "--no-sound-simplify", sound_simplify, False) {}

@@ -104,6 +104,17 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
     for(int i = 0; i < 2; ++i){
       values[i] = args[i]->values[0];
     }
+    if (print_compares){
+      if (correctOutput != computedOutput){
+        VG_(printf)("Bad comparison!\n");
+      } else {
+        VG_(printf)("Good comparison.\n");
+      }
+      ppIROp_Extended(info->op_code);
+      VG_(printf)(": ");
+      VG_(printf)("Correct output: %X; Computed output: %X\n",
+                  correctOutput, computedOutput);
+    }
     markEscapeFromFloat("Compare",
                         correctOutput != computedOutput,
                         2, values);
