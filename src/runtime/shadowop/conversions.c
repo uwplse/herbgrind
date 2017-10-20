@@ -44,7 +44,7 @@ ShadowTemp* zeroHi96ofV128(ShadowTemp* input){
                 result->values[0], result->values[0]->ref_count);
   }
   for(int i = 1; i < 4; ++i){
-    result->values[i] = mkShadowValue(Ft_Single, 0.0);
+    result->values[i] = mkShadowValue(Vt_Single, 0.0);
     if (PRINT_VALUE_MOVES){
       VG_(printf)("Making shadow value %p as part of zeroHi96ofV128.\n",
                   result->values[i]);
@@ -63,7 +63,7 @@ ShadowTemp* zeroHi64ofV128(ShadowTemp* input){
                 result->values[0],
                 result->values[0]->ref_count);
   }
-  result->values[1] = mkShadowValue(Ft_Single, 0.0);
+  result->values[1] = mkShadowValue(Vt_Single, 0.0);
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Making shadow value %p as part of zeroHi64ofV128.\n",
                 result->values[1]);
@@ -211,7 +211,7 @@ ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
       double combined;
       VG_(memcpy)(&v3, &combined, sizeof(float));
       VG_(memcpy)(&v4, (&combined) + sizeof(float), sizeof(float));
-      result->values[1] = mkShadowValue(Ft_Double, combined);
+      result->values[1] = mkShadowValue(Vt_Double, combined);
       if (PRINT_VALUE_MOVES){
         VG_(printf)("Made shadow value %p for reinterpreted bits of second half of V128\n",
                     result->values[1]);
@@ -241,8 +241,8 @@ ShadowTemp* setV128lo64(ShadowTemp* top, ShadowTemp* bottom){
       float f3, f4;
       VG_(memcpy)(&combined, &f3, sizeof(float));
       VG_(memcpy)((&combined) + sizeof(float), &f4, sizeof(float));
-      result->values[2] = mkShadowValue(Ft_Single, f3);
-      result->values[3] = mkShadowValue(Ft_Single, f4);
+      result->values[2] = mkShadowValue(Vt_Single, f3);
+      result->values[3] = mkShadowValue(Vt_Single, f4);
       return result;
     } else {
       tl_assert(0);
@@ -323,10 +323,10 @@ ShadowTemp* setV128lo64Dynamic1(ShadowTemp* bottom,
 }
 VG_REGPARM(2)
 ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* lo){
-  if (hi->values[0]->type == Ft_Double){
-    tl_assert2(hi->values[0]->type == Ft_Double,
+  if (hi->values[0]->type == Vt_Double){
+    tl_assert2(hi->values[0]->type == Vt_Double,
                "Type is instead %d", hi->values[0]->type);
-    tl_assert(lo->values[0]->type == Ft_Double);
+    tl_assert(lo->values[0]->type == Vt_Double);
     ShadowTemp* result = mkShadowTemp(2);
     result->values[0] = hi->values[0];
     ownShadowValue(result->values[0]);
@@ -340,10 +340,10 @@ ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* lo){
     }
     return result;
   } else {
-    tl_assert(hi->values[0]->type == Ft_Single);
-    tl_assert(hi->values[1]->type == Ft_Single);
-    tl_assert(lo->values[0]->type == Ft_Single);
-    tl_assert(lo->values[1]->type == Ft_Single);
+    tl_assert(hi->values[0]->type == Vt_Single);
+    tl_assert(hi->values[1]->type == Vt_Single);
+    tl_assert(lo->values[0]->type == Vt_Single);
+    tl_assert(lo->values[1]->type == Vt_Single);
     ShadowTemp* result = mkShadowTemp(4);
     result->values[0] = hi->values[0];
     ownShadowValue(result->values[0]);
@@ -385,7 +385,7 @@ ShadowTemp* i64UtoV128(ShadowTemp* t){
   ShadowTemp* result = mkShadowTemp(2);
   result->values[0] = t->values[0];
   ownShadowValue(result->values[0]);
-  result->values[1] = mkShadowValue(Ft_Double, 0.0);
+  result->values[1] = mkShadowValue(Vt_Double, 0.0);
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Making shadow value %p and owning %p (rc %lu) "
                 "as part of i64UtoV128\n",
@@ -401,7 +401,7 @@ ShadowTemp* i32UtoV128(ShadowTemp* t){
   result->values[0] = t->values[0];
   ownShadowValue(result->values[0]);
   for (int i = 1; i < 4; ++i){
-    result->values[i] = mkShadowValue(Ft_Single, 0.0);
+    result->values[i] = mkShadowValue(Vt_Single, 0.0);
   }
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Copying shadow value %p to %p, "
@@ -418,11 +418,11 @@ ShadowTemp* i32Uto64(ShadowTemp* t){
   tl_assert(t);
   tl_assert(t->num_vals == 1);
   tl_assert(t->values[0] != NULL);
-  tl_assert(t->values[0]->type == Ft_Single);
+  tl_assert(t->values[0]->type == Vt_Single);
   ShadowTemp* result = mkShadowTemp(2);
   result->values[0] = t->values[0];
   ownShadowValue(result->values[0]);
-  result->values[1] = mkShadowValue(Ft_Single, 0.0);
+  result->values[1] = mkShadowValue(Vt_Single, 0.0);
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Copying shadow value %p to %p, "
                 "and making value %p "

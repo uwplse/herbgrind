@@ -135,8 +135,8 @@ void disownShadowValue(ShadowValue* val);
 void ownShadowValue(ShadowValue* val);
 void freeShadowValue(ShadowValue* val);
 ShadowValue* copyShadowValue(ShadowValue* val);
-ShadowValue* mkShadowValueBare(FloatType type);
-ShadowValue* mkShadowValue(FloatType type, double value);
+ShadowValue* mkShadowValueBare(ValueType type);
+ShadowValue* mkShadowValue(ValueType type, double value);
 
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value);
 VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values);
@@ -144,7 +144,7 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(double value);
 VG_REGPARM(1) ShadowTemp* mkShadowTempTwoSingles(UWord values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSinglesG(UWord guard, float* values);
-ShadowTemp* mkShadowTempValues(void* bytes, int num_values, FloatType type);
+ShadowTemp* mkShadowTempValues(void* bytes, int num_values, ValueType type);
 ShadowValue* getTS(Int idx);
 VG_REGPARM(2) void printStoreValue(const char* dest_label, ShadowValue* val);
 void printStoreValueF(ShadowValue* val, const char* format, ...);
@@ -159,7 +159,7 @@ inline void disownShadowTemp_fast(ShadowTemp* temp);
 
 __attribute__((always_inline))
 inline
-ShadowValue* mkShadowValueBare_fast(FloatType type){
+ShadowValue* mkShadowValueBare_fast(ValueType type){
   ShadowValue* result;
   if (stack_empty_fast(freedVals)){
     result = newShadowValue(type);
@@ -172,7 +172,7 @@ ShadowValue* mkShadowValueBare_fast(FloatType type){
 }
 __attribute__((always_inline))
 inline
-ShadowValue* mkShadowValue_fast(FloatType type, double value){
+ShadowValue* mkShadowValue_fast(ValueType type, double value){
   ShadowValue* result = mkShadowValueBare(type);
   setReal_fast(result->real, value);
   return result;

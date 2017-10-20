@@ -75,19 +75,19 @@ IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
 IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
                                int num_values,
                                IRExpr** values);
-IRExpr* runMkShadowVal(IRSB* sbOut, FloatType type, IRExpr* valExpr);
+IRExpr* runMkShadowVal(IRSB* sbOut, ValueType type, IRExpr* valExpr);
 IRExpr* runMkShadowValG(IRSB* sbOut, IRExpr* guard,
-                        FloatType type, IRExpr* valExpr);
+                        ValueType type, IRExpr* valExpr);
 IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
                       IRExpr* argExpr,
-                      FloatType type, int num_vals);
+                      ValueType type, int num_vals);
 IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
-                     FloatType type, int num_vals);
+                     ValueType type, int num_vals);
 
 IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc);
 IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc);
 void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
-                        IRExpr* newVal, FloatType floatType,
+                        IRExpr* newVal, ValueType floatType,
                         int instrIdx);
 void addSetTSValNonFloat(IRSB* sbOut, Int tsDest,
                          int instrIdx);
@@ -100,17 +100,16 @@ void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal);
 
 IRExpr* runLoadTemp(IRSB* sbOut, int idx);
 void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
-                  FloatType type,
+                  ValueType type,
                   int idx);
 void addStoreTempG(IRSB* sbOut, IRExpr* guard,
                    IRExpr* shadow_temp,
-                   FloatType type,
+                   ValueType type,
                    int idx);
 void addStoreTempNonFloat(IRSB* sbOut, int idx);
 void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx);
-void addStoreTempUnshadowed(IRSB* sbOut, int idx);
 void addStoreTempCopy(IRSB* sbOut, IRExpr* original,
-                      IRTemp dest, FloatType type);
+                      IRTemp dest, ValueType type);
 
 IRExpr* getBucketAddr(IRSB* sbOut, IRExpr* memAddr);
 typedef struct {

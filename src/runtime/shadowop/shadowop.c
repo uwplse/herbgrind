@@ -64,7 +64,7 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
                      infoInstance->argTemps[i]);
     for (int j = 0; j < opInfo->exinfo.numChannels; ++j){
       clientArgs[j][i] =
-        opInfo->exinfo.argPrecision == Ft_Double ?
+        opInfo->exinfo.argPrecision == Vt_Double ?
         computedArgs.argValues[i][j] :
         computedArgs.argValuesF[i][j];
     }
@@ -75,7 +75,7 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
       vals[j] = args[j]->values[i];
     }
     double computedOutput =
-      (opInfo->exinfo.argPrecision == Ft_Single ?
+      (opInfo->exinfo.argPrecision == Vt_Single ?
        computedResult.f[i] : computedResult.d[i]);
     result->values[i] =
       executeChannelShadowOp(opInfo,
@@ -122,7 +122,7 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
   }
   return result;
 }
-ShadowTemp* getArg(int argIdx, int numChannels, FloatType argPrecision,
+ShadowTemp* getArg(int argIdx, int numChannels, ValueType argPrecision,
                    IRTemp argTemp){
   if (argTemp == -1 ||
       shadowTemps[argTemp] == NULL ||
@@ -139,7 +139,7 @@ ShadowTemp* getArg(int argIdx, int numChannels, FloatType argPrecision,
                   result, numChannels, argIdx);
     }
     for(int j = 0; j < numChannels; j++){
-      double value = argPrecision == Ft_Double ?
+      double value = argPrecision == Vt_Double ?
         computedArgs.argValues[argIdx][j] :
         computedArgs.argValuesF[argIdx][j];
       result->values[j] =

@@ -111,7 +111,7 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
   tl_assert(st->num_vals == 1 ||
             st->num_vals == 2);
   if (st->num_vals == 1){
-    tl_assert(st->values[0]->type == Ft_Double);
+    tl_assert(st->values[0]->type == Vt_Double);
     ShadowValue* val = st->values[0];
     if (PRINT_VALUE_MOVES){
       if (getTS(tsDest) != NULL || val != NULL){
@@ -120,7 +120,7 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
       }
       if (val != NULL){
         VG_(printf)(") (type ");
-        ppFloatType(val->type);
+        ppValueType(val->type);
       }
       VG_(printf)(")\n");
       if (getTS(tsDest + sizeof(float)) != NULL){
@@ -137,7 +137,7 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
   } else {
     for(int i = 0; i < 2; ++i){
       int dest_addr = tsDest + i * sizeof(float);
-      tl_assert2(st->values[i]->type == Ft_Single,
+      tl_assert2(st->values[i]->type == Vt_Single,
                  "i = %d, type = %d, %d vals",
                  i, st->values[i]->type, st->num_vals);
       ShadowValue* val = st->values[i];
@@ -150,7 +150,7 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
         }
         if (val != NULL){
           VG_(printf)(" (type ");
-          ppFloatType(val->type);
+          ppValueType(val->type);
           VG_(printf)(")\n");
         }
       }
@@ -160,7 +160,7 @@ VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
 VG_REGPARM(2) void dynamicPut128(Int tsDest, ShadowTemp* st){
   for(int i = 0; i < st->num_vals; ++i){
     ShadowValue* val = st->values[i];
-    int size = val->type == Ft_Single ? sizeof(float) : sizeof(double);
+    int size = val->type == Vt_Single ? sizeof(float) : sizeof(double);
     int dest_byte = tsDest + (i * size);
     shadowThreadState[VG_(get_running_tid)()][dest_byte] =
       val;
@@ -175,7 +175,7 @@ VG_REGPARM(2) void dynamicPut128(Int tsDest, ShadowTemp* st){
         }
       }
     }
-    if (val->type == Ft_Double){
+    if (val->type == Vt_Double){
       int second_byte = dest_byte + sizeof(float);
       shadowThreadState[VG_(get_running_tid)()]
         [second_byte] =
@@ -235,11 +235,11 @@ ShadowTemp* dynamicGet(Int tsSrc, void* bytes, int size){
       freeShadowTemp(result);
       return NULL;
     }
-    tl_assert(val->type == Ft_Single);
+    tl_assert(val->type == Vt_Single);
     result->values[0] = val;
     ownShadowValue(result->values[0]);
     return result;
-  } else if (size == 8 && getTS(tsSrc) != NULL && getTS(tsSrc)->type == Ft_Double){
+  } else if (size == 8 && getTS(tsSrc) != NULL && getTS(tsSrc)->type == Vt_Double){
     ShadowTemp* result = mkShadowTemp(1);
     result->values[0] = getTS(tsSrc);
     ownShadowValue(result->values[0]);
@@ -295,13 +295,13 @@ VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, int size){
 }
 ShadowTemp* dynamicLoad32(UWord memSrc){
   ShadowValue* val = getMemShadow(memSrc);
-  tl_assert2(val == NULL || val->type == Ft_Single || val->type == Ft_Double,
+  tl_assert2(val == NULL || val->type == Vt_Single || val->type == Vt_Double,
              "Got shadow %p at %X, but it was the wrong type! It was %d\n",
              val, memSrc, val->type);
   // If people load two halves of a double seperately and try to put
   // them back together, this is going to lose the shadow value. If
   // that's a problem, think about this hard.
-  if (val != NULL && val->type == Ft_Single){
+  if (val != NULL && val->type == Vt_Single){
     ShadowTemp* newTemp = mkShadowTemp(1);
     newTemp->values[0] = val;
     ownShadowValue(val);
@@ -318,11 +318,11 @@ ShadowTemp* dynamicLoad64(Addr memSrc){
   ShadowValue* firstValue = getMemShadow(memSrc);
   if (firstValue == NULL){
     ShadowValue* secondValue = getMemShadow(memSrc + sizeof(float));
-    if (secondValue == NULL || secondValue->type != Ft_Single){
+    if (secondValue == NULL || secondValue->type != Vt_Single){
       return NULL;
     }
     ShadowTemp* temp = mkShadowTemp(2);
-    firstValue = mkShadowValue(Ft_Single, *(float*)(void*)memSrc);
+    firstValue = mkShadowValue(Vt_Single, *(float*)(void*)memSrc);
     temp->values[0] = firstValue;
     temp->values[1] = secondValue;
     ownShadowValue(secondValue);
@@ -331,7 +331,7 @@ ShadowTemp* dynamicLoad64(Addr memSrc){
                   secondValue, secondValue->ref_count);
     }
     return temp;
-  } else if (firstValue->type == Ft_Double){
+  } else if (firstValue->type == Vt_Double){
     ShadowTemp* temp = mkShadowTemp(1);
     temp->values[0] = firstValue;
     ownShadowValue(firstValue);
@@ -342,12 +342,12 @@ ShadowTemp* dynamicLoad64(Addr memSrc){
     return temp;
   } else {
     ShadowValue* secondValue = getMemShadow(memSrc + sizeof(float));
-    if (secondValue == NULL || secondValue->type != Ft_Single){
-      secondValue = mkShadowValue(Ft_Single, *(float*)(void*)(memSrc + sizeof(float)));
+    if (secondValue == NULL || secondValue->type != Vt_Single){
+      secondValue = mkShadowValue(Vt_Single, *(float*)(void*)(memSrc + sizeof(float)));
     } else {
       ownShadowValue(secondValue);
     }
-    tl_assert(secondValue->type == Ft_Single);
+    tl_assert(secondValue->type == Vt_Single);
     ShadowTemp* temp = mkShadowTemp(2);
     ownShadowValue(firstValue);
     if (PRINT_VALUE_MOVES){
@@ -509,7 +509,7 @@ VG_REGPARM(3) void setMemShadowTemp(Addr64 memDest,
     UWord addr = memDest + i * sizeof(float);
     removeMemShadow(addr);
     if (st != NULL){
-      if (st->values[i/2]->type == Ft_Double){
+      if (st->values[i/2]->type == Vt_Double){
         if (i % 2 == 0){
           addMemShadow(addr, st->values[i/2]);
         }
@@ -607,7 +607,7 @@ void freeShadowValue(ShadowValue* val){
   if (value == 0.0) value = 0.0;
   if (isNaN(val->real)) value = NAN;
   TableValueEntry* entry =
-    VG_(HT_remove)(val->type == Ft_Single ? valueCacheSingle : valueCacheDouble,
+    VG_(HT_remove)(val->type == Vt_Single ? valueCacheSingle : valueCacheDouble,
                    *(UWord*)&value);
   if (entry != NULL){
     stack_push(tableEntries, (void*)entry);
@@ -631,7 +631,7 @@ ShadowValue* copyShadowValue(ShadowValue* val){
   return copy;
 }
 inline
-ShadowValue* mkShadowValueBare(FloatType type){
+ShadowValue* mkShadowValueBare(ValueType type){
   ShadowValue* result;
   if (stack_empty_fast(freedVals)){
     result = newShadowValue(type);
@@ -648,12 +648,12 @@ ShadowValue* mkShadowValueBare(FloatType type){
 VgHashTable* valueCacheSingle;
 VgHashTable* valueCacheDouble;
 inline
-ShadowValue* mkShadowValue(FloatType type, double value){
+ShadowValue* mkShadowValue(ValueType type, double value){
   if (value == 0.0) value = 0.0;
   if (value != value) value = NAN;
   UWord key = *(UWord*)&value;
-  ValueCacheEntry* existingEntry =
-    VG_(HT_lookup)(type == Ft_Single ? valueCacheSingle : valueCacheDouble, key);
+  TableValueEntry* existingEntry =
+    VG_(HT_lookup)(type == Vt_Single ? valueCacheSingle : valueCacheDouble, key);
   ShadowValue* result = NULL;
   if (existingEntry == NULL || no_reals){
     result = mkShadowValueBare(type);
@@ -666,7 +666,7 @@ ShadowValue* mkShadowValue(FloatType type, double value){
     ValueCacheEntry* newEntry = (void*)mkTableEntry();
     newEntry->val = result;
     newEntry->key = key;
-    VG_(HT_add_node)(type == Ft_Single ? valueCacheSingle : valueCacheDouble,
+    VG_(HT_add_node)(type == Vt_Single ? valueCacheSingle : valueCacheDouble,
                      newEntry);
   } else {
     result = existingEntry->val;
@@ -744,7 +744,7 @@ void ownShadowValue(ShadowValue* val){
 
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value){
   ShadowTemp* result = mkShadowTemp(1);
-  result->values[0] = mkShadowValue(Ft_Double, value);
+  result->values[0] = mkShadowValue(Vt_Double, value);
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Making value %p as one double temp %p\n",
                 result->values[0], result);
@@ -754,9 +754,9 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value){
 VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values){
   ShadowTemp* result = mkShadowTemp(2);
   result->values[0] =
-    mkShadowValue(Ft_Double, values[0]);
+    mkShadowValue(Vt_Double, values[0]);
   result->values[1] =
-    mkShadowValue(Ft_Double, values[1]);
+    mkShadowValue(Vt_Double, values[1]);
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Making values %p and %p as part of two double temp %p\n",
                 result->values[0], result->values[1], result);
@@ -765,7 +765,7 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values){
 }
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(double value){
   ShadowTemp* result = mkShadowTemp(1);
-  result->values[0] = mkShadowValue(Ft_Single, value);
+  result->values[0] = mkShadowValue(Vt_Single, value);
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Making value %p as part of one single temp %p\n",
                 result->values[0], result);
@@ -776,8 +776,8 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempTwoSingles(UWord values){
   ShadowTemp* result = mkShadowTemp(2);
   float floatValues[2];
   VG_(memcpy)(floatValues, &values, sizeof(floatValues));
-  result->values[0] = mkShadowValue(Ft_Single, floatValues[0]);
-  result->values[1] = mkShadowValue(Ft_Single, floatValues[1]);
+  result->values[0] = mkShadowValue(Vt_Single, floatValues[0]);
+  result->values[1] = mkShadowValue(Vt_Single, floatValues[1]);
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Making values %p and %p "
                 "as part of two singles temp %p\n",
@@ -789,13 +789,13 @@ inline
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values){
   ShadowTemp* result = mkShadowTemp(4);
   result->values[0] =
-    mkShadowValue(Ft_Single, values[0]);
+    mkShadowValue(Vt_Single, values[0]);
   result->values[1] =
-    mkShadowValue(Ft_Single, values[1]);
+    mkShadowValue(Vt_Single, values[1]);
   result->values[2] =
-    mkShadowValue(Ft_Single, values[2]);
+    mkShadowValue(Vt_Single, values[2]);
   result->values[3] =
-    mkShadowValue(Ft_Single, values[3]);
+    mkShadowValue(Vt_Single, values[3]);
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Making values %p, %p, %p, and %p "
                 "as part of four single temp %p\n",
@@ -805,12 +805,12 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values){
   }
   return result;
 }
-inline ShadowTemp* mkShadowTempValues(void* bytes, int num_values, FloatType type){
+inline ShadowTemp* mkShadowTempValues(void* bytes, int num_values, ValueType type){
   ShadowTemp* result = mkShadowTemp(num_values);
   for(int i = 0; i < num_values; ++i){
     result->values[i] =
       mkShadowValue(type,
-                    type == Ft_Single ? ((float*)bytes)[i] : ((double*)bytes)[i]);
+                    type == Vt_Single ? ((float*)bytes)[i] : ((double*)bytes)[i]);
   }
   return result;
 }

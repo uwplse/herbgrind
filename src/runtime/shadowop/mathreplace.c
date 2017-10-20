@@ -54,7 +54,7 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
   tl_assert2(0, "Can't wrap math ops in GMP mode!\n");
 #endif
   int nargs = getWrappedNumArgs(type);
-  FloatType op_precision = getWrappedPrecision(type);
+  ValueType op_precision = getWrappedPrecision(type);
   ShadowValue* shadowArgs[MAX_WRAPPED_ARGS];
   for(int i = 0; i < nargs; ++i){
     shadowArgs[i] = getMemShadow((UWord)&(args[i]));
@@ -144,12 +144,12 @@ int getWrappedNumArgs(OpType type){
   }
 }
 
-FloatType getWrappedPrecision(OpType type){
+ValueType getWrappedPrecision(OpType type){
   switch(type){
   case SINGLE_CASES:
-    return Ft_Single;
+    return Vt_Single;
   case DOUBLE_CASES:
-    return Ft_Double;
+    return Vt_Double;
   default:
     tl_assert(0);
     return 0;

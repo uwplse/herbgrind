@@ -39,7 +39,7 @@
 void performWrappedOp(OpType type, double* args, double* resLoc);
 ShadowOpInfo* getWrappedOpInfo(Addr callAddr, OpType opType, int nargs);
 int getWrappedNumArgs(OpType type);
-FloatType getWrappedPrecision(OpType type);
+ValueType getWrappedPrecision(OpType type);
 const char* getWrappedName(OpType type);
 ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs);
 double runEmulatedWrappedOp(OpType type, double* args);

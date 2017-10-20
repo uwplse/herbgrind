@@ -63,7 +63,7 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
     op_code == 0x0 ? 1 : numChannelsOut(op_code);
   result->exinfo.nargs = nargs;
   result->exinfo.argPrecision =
-    op_code == 0x0 ? Ft_Double : argPrecision(op_code);
+    op_code == 0x0 ? Vt_Double : argPrecision(op_code);
   initializeAggregate(&(result->agg), nargs);
   return result;
 }

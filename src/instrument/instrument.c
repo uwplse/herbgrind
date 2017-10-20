@@ -53,12 +53,12 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
                      const VexArchInfo* archinfo_host,
                      IRType gWordTy, IRType hWordTy) {
   IRSB* sbOut = deepCopyIRSBExceptStmts(sbIn);
-  inferTypes(sbIn);
 
   if (PRINT_IN_BLOCKS){
     VG_(printf)("Instrumenting block at %p:\n", (void*)closure->readdr);
     printSuperBlock(sbIn);
   }
+  inferTypes(sbIn);
   if (PRINT_RUN_BLOCKS){
     char* blockMessage = VG_(perm_malloc)(35, 1);
     VG_(snprintf)(blockMessage, 35,

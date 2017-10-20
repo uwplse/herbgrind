@@ -121,12 +121,12 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
     }
   } else {
     for(int i = 0; i < nargs; ++i){
-      if (hasStaticShadowEventually(argExprs[i])){
+      if (staticallyFloat(argExprs[i])){
         ppIROp(op_code);
         VG_(printf)(" on ");
         ppIRExpr(argExprs[i]);
         VG_(printf)("\n");
-        tl_assert(!hasStaticShadowEventually(argExprs[i]));
+        tl_assert(!staticallyFloat(argExprs[i]));
       }
     }
     addStoreTempNonFloat(sbOut, dest);
@@ -173,6 +173,7 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
                        IRExpr** argExprs, IRTemp dest,
                        Addr curAddr, Addr blockAddr){
   if (!RUNNING) return;
+  tempShadowStatus[dest] = Ss_Unshadowed;
   switch(op_code){
   case Iop_CmpF64:
   case Iop_CmpF32:
@@ -192,7 +193,7 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
       for(int i = 0; i < 2; ++i){
         addStoreC(sbOut, argExprs[i],
                   (uintptr_t)
-                  (argPrecision(op_code) == Ft_Single ?
+                  (argPrecision(op_code) == Vt_Single ?
                    ((void*)computedArgs.argValuesF[i]) :
                    ((void*)computedArgs.argValues[i])));
         if (argExprs[i]->tag == Iex_RdTmp){
@@ -279,27 +280,27 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
   case Iop_F32toI64S:
   case Iop_F32toI64U:
     {
-      FloatType argPrecision;
+      ValueType argPrecision;
       switch(op_code){
       case Iop_F64toI16S:
       case Iop_F64toI32S:
       case Iop_F64toI32U:
       case Iop_F64toI64S:
       case Iop_F64toI64U:
-        argPrecision = Ft_Double;
+        argPrecision = Vt_Double;
         break;
       case Iop_F32toI32S:
       case Iop_F32toI32U:
       case Iop_F32toI64S:
       case Iop_F32toI64U:
       default:
-        argPrecision = Ft_Single;
+        argPrecision = Vt_Single;
         break;
       }
       int argTemp;
       addStoreC(sbOut, argExprs[1],
                 (uintptr_t)
-                (argPrecision == Ft_Single ?
+                (argPrecision == Vt_Single ?
                  ((void*)computedArgs.argValuesF[0]) :
                  ((void*)computedArgs.argValues[0])));
       if (argExprs[1]->tag == Iex_RdTmp){
@@ -362,7 +363,7 @@ void handleSpecialOp(IRSB* sbOut, IROp op_code,
   case Iop_Shr64:
   case Iop_Shl64:
   case Iop_Sar64:
-    addStoreTempUnshadowed(sbOut, dest);
+    tempShadowStatus[dest] = Ss_Unknown;
     break;
   case Iop_XorV128:
     instrumentPossibleNegate(sbOut, argExprs, dest, curAddr, block_addr);

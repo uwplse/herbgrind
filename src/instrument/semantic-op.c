@@ -80,6 +80,12 @@ void instrumentSemanticOp(IRSB* sbOut, IROp op_code,
                                      nargs, argExprs,
                                      IRExpr_RdTmp(dest));
   addStoreTemp(sbOut, shadowOutput, argPrecision(op_code), dest);
+  for (int i = 0; i < nargs; ++i){
+    if (argExprs[i]->tag == Iex_RdTmp){
+      tempShadowStatus[argExprs[i]->Iex.RdTmp.tmp] = Ss_Shadowed;
+    }
+  }
+  tempShadowStatus[dest] = Ss_Shadowed;
 }
 
 IRExpr* runShadowOp(IRSB* sbOut, IRExpr* guard,
@@ -96,7 +102,7 @@ IRExpr* runShadowOp(IRSB* sbOut, IRExpr* guard,
   for(int i = 0; i < nargs; ++i){
     addStoreC(sbOut, argExprs[i],
               (uintptr_t)
-              (instance->info->exinfo.argPrecision == Ft_Single ?
+              (instance->info->exinfo.argPrecision == Vt_Single ?
                ((void*)computedArgs.argValuesF[i]) :
                ((void*)computedArgs.argValues[i])));
     if (argExprs[i]->tag == Iex_RdTmp){
@@ -146,7 +152,7 @@ void instrumentPossibleNegate(IRSB* sbOut,
                 1, argExprs + 1,
                 IRExpr_RdTmp(dest));
   addStoreTempG(sbOut, isSingleNegate, shadowSingleNegateOutput,
-                Ft_Single, dest);
+                Vt_Single, dest);
   IRExpr* isDoubleNegate =
     runAnd(sbOut,
            runBinop(sbOut, Iop_CmpEQ64,
@@ -164,7 +170,7 @@ void instrumentPossibleNegate(IRSB* sbOut,
                 1, argExprs + 1,
                 IRExpr_RdTmp(dest));
   addStoreTempG(sbOut, isDoubleNegate, shadowDoubleNegateOutput,
-                Ft_Double, dest);
+                Vt_Double, dest);
 }
 
 ShadowOpInfoInstance* getSemanticOpInfoInstance(Addr callAddr, Addr block_addr,

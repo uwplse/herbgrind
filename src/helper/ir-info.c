@@ -359,8 +359,8 @@ int inferOtherNumChannels(int inferIndex, IRExpr* arg, IROp op_code){
   switch(op_code){
   case Iop_SetV128lo64:
     tl_assert(arg->tag == Iex_RdTmp);
-    FloatType otherArgType = tempEventualType(arg->Iex.RdTmp.tmp);
-    if (otherArgType == Ft_Single){
+    ValueType otherArgType = tempType(arg->Iex.RdTmp.tmp);
+    if (otherArgType == Vt_Single){
       if (inferIndex == 0){
         return 4;
       } else {

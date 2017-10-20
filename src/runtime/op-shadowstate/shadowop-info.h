@@ -66,7 +66,7 @@ typedef struct _ExtraInfo {
   int numSIMDOperands;
   int numChannels;
   int nargs;
-  FloatType argPrecision;
+  ValueType argPrecision;
 } ExtraInfo;
 
 typedef struct _ShadowOpInfo {
@@ -89,7 +89,7 @@ typedef struct _ShadowOpInfoInstance {
 typedef struct _ShadowCmpInfo {
   Addr op_addr;
   IROp op_code;
-  FloatType precision;
+  ValueType precision;
   IRTemp argTemps[2];
 } ShadowCmpInfo;
 

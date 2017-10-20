@@ -46,7 +46,7 @@ VG_REGPARM(1) ShadowTemp* newShadowTemp(UWord num_vals){
     VG_(perm_malloc)(num_vals * sizeof(ShadowValue*), vg_alignof(ShadowValue*));
   return newShadowTemp;
 }
-void changeSingleValueType(ShadowTemp* temp, FloatType type){
+void changeSingleValueType(ShadowTemp* temp, ValueType type){
   if (temp->values[0] != NULL){
     temp->values[0]->type = type;
   }
@@ -57,7 +57,7 @@ UWord hashDouble(double val){
   return result;
 }
 inline
-ShadowValue* newShadowValue(FloatType type){
+ShadowValue* newShadowValue(ValueType type){
   ShadowValue* result =
     VG_(perm_malloc)(sizeof(ShadowValue), vg_alignof(ShadowValue));
   result->type = type;
@@ -84,12 +84,12 @@ VG_REGPARM(2) void assertTempValid(const char* label, ShadowTemp* temp){
     assertValValid(label, temp->values[i]);
   }
 }
-VG_REGPARM(3) void assertValType(const char* label, ShadowValue* val, FloatType type){
+VG_REGPARM(3) void assertValType(const char* label, ShadowValue* val, ValueType type){
   tl_assert2(val->type == type,
              "%s: Expected type %d for %p, got %d\n",
              label, type, val, val->type);
 }
-VG_REGPARM(3) void assertTempType(const char* label, ShadowTemp* temp, FloatType type){
+VG_REGPARM(3) void assertTempType(const char* label, ShadowTemp* temp, ValueType type){
   for(int i = 0; i < temp->num_vals; ++i){
     tl_assert2(temp->values[i]->type == type,
                "%s: Expected type %d for %p, got %d\n",
@@ -114,23 +114,23 @@ VG_REGPARM(3) void assertDynamicSize(const char* label,
                                      ShadowTemp* temp,
                                      int num_halfwords){
   if (temp == NULL) return;
-  if (temp->values[0]->type == Ft_Single){
+  if (temp->values[0]->type == Vt_Single){
     tl_assert2(temp->num_vals == num_halfwords,
                "%s: Expected %d vals in %p (of type Single), got %d",
                label, num_halfwords, temp, temp->num_vals);
     for(int i = 1; i < temp->num_vals; ++i){
-      tl_assert2(temp->values[i]->type == Ft_Single,
+      tl_assert2(temp->values[i]->type == Vt_Single,
                  "%s: Value %d in %p is not a Single, but value 0 is!",
                  label, i, temp);
     }
   } else {
-    tl_assert2(temp->values[0]->type == Ft_Double,
+    tl_assert2(temp->values[0]->type == Vt_Double,
                "%s: Invalid type %d!",temp->values[0]->type);
     tl_assert2(temp->num_vals == num_halfwords / 2,
                "%s: Expected %d vals in %p (of type Double), got %d",
                label, num_halfwords / 2, temp, temp->num_vals);
     for(int i = 1; i < temp->num_vals; ++i){
-      tl_assert2(temp->values[i]->type == Ft_Double,
+      tl_assert2(temp->values[i]->type == Vt_Double,
                  "%s: Value %d in %p is not a Double, but value 0 is!",
                  label, i, temp);
     }

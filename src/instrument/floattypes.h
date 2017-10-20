@@ -46,78 +46,59 @@ typedef enum {
 } ValueType;
 
 typedef enum {
+  Ss_Unknown,
   Ss_Shadowed,
   Ss_Unshadowed,
 } ShadowStatus;
 
-typedef struct {
-  ValueType vtype;
-  ShadowStatus shadowed;
-} TypeInfo;
+typedef struct _TSTypeEntry {
+  struct _TSTypeEntry* next;
+  ValueType type;
+  int instrIndexSet;
+} TSTypeEntry;
+
+extern ShadowStatus tempShadowStatus[MAX_TEMPS];
+extern ShadowStatus tsShadowStatus[MAX_TEMPS];
 
 // Meet and join operations for the type lattice
 // Cheat sheet: join -> union, meet -> intersect
 ValueType typeJoin(ValueType type1, ValueType type2);
 ValueType typeMeet(ValueType type1, ValueType type2);
+const char* typeName(ValueType type);
 
-typedef enum {
-  Ft_Unknown,
-  Ft_NonFloat,
-  Ft_Unshadowed,
-  Ft_Single,
-  Ft_Double
-} FloatType;
-
-typedef struct _FloatTypeEntry {
-  FloatType type;
-  int instrIndexSet;
-} FloatTypeEntry;
-typedef struct _TSFloatTypeEntry {
-  struct _TSFloatTypeEntry* next;
-  FloatType type;
-  int instrIndexSet;
-} TSFloatTypeEntry;
-
-extern VgHashTable* memContext;
+ValueType constType(const IRConst* constant);
 
 void initTypeState(void);
 void resetTypeState(void);
 void addClearMemTypes(void);
 void inferTypes(IRSB* sbIn);
 
-FloatType argPrecision(IROp op_code);
-FloatType resultPrecision(IROp op_code);
+ValueType argPrecision(IROp op_code);
+ValueType resultPrecision(IROp op_code);
 
 int isFloatType(IRType type);
 int isFloat(IRTypeEnv* env, IRTemp temp);
 
-void ppFloatType(FloatType type);
+void ppValueType(ValueType type);
 
-void setTempType(int tempIdx, int instrIdx, FloatType type);
+// Returns true if anything was changed, false otherwise
+Bool refineTempType(int tempIdx, ValueType type);
+
+ValueType tempType(int idx);
 Bool tempIsTyped(int idx, int instrIdx);
-FloatType tempType(int idx, int instrIdx);
-FloatType tempEventualType(int idx);
-Bool hasStaticShadow(IRExpr* expr, int instrIdx);
-Bool hasStaticShadowEventually(IRExpr* expr);
-Bool canHaveShadow(IRTypeEnv* tyenv, IRExpr* expr);
 Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr);
+Bool staticallyFloat(IRExpr* expr);
+Bool staticallyShadowed(IRExpr* expr);
 Bool canStoreShadow(IRTypeEnv* typeEnv, IRExpr* expr);
 
-void setTSType(int idx, int instrIdx, FloatType type);
-FloatType tsType(Int tsAddr, int instrIdx);
-FloatType inferTSType64(Int tsAddr, int instrIdx);
+// Returns true if anything was changed, false otherwise
+Bool setTSType(int idx, int instrIdx, ValueType type);
+Bool refineTSType(int tempIdx, int instrIdx, ValueType type);
+
+ValueType tsType(Int tsAddr, int instrIdx);
+ValueType inferTSType64(Int tsAddr, int instrIdx);
 Bool tsAddrCanHaveShadow(Int tsAddr, int instrIdx);
 Bool tsHasStaticShadow(Int tsAddr, int instrIdx);
-
-FloatType inferMemType(ULong addr, int size);
-void addClearMemType(void);
-void setMemType(ULong addr, FloatType type);
-FloatType getMemType(ULong addr);
-FloatType lookupMemType(ULong addr);
-Bool memAddrCanHaveShadow(ULong memAddr);
-Bool memAddrHasStaticShadow(ULong memAddr);
-// Keep in mind this block len is in chunks (aka 4-byte units)
-Bool memBlockCanHaveShadow(ULong blockStart, int block_len);
 
 int valueSize(IRSB* sbOut, int idx);
 int numTempValues(IRSB* sbOut, int idx);
