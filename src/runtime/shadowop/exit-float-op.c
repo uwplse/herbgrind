@@ -40,60 +40,114 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
   }
   int correctOutput;
   if (numSIMDOperands(info->op_code) == 1){
-    double correctFst = getDouble(args[0]->values[0]->real);
-    double correctSnd = getDouble(args[1]->values[0]->real);
-    switch(info->op_code){
-    case Iop_CmpF64:
-    case Iop_CmpF32:{
-      if (correctFst != correctFst ||
-          correctSnd != correctSnd){
-        correctOutput = 0x45;
-      } else if (correctFst < correctSnd){
-        correctOutput = 0x01;
-      } else if (correctFst > correctSnd){
-        correctOutput = 0x00;
-      } else {
-        correctOutput = 0x40;
+    if (double_comparisons){
+      double correctFst = getDouble(args[0]->values[0]->real);
+      double correctSnd = getDouble(args[1]->values[0]->real);
+      switch(info->op_code){
+      case Iop_CmpF64:
+      case Iop_CmpF32:{
+        if (correctFst != correctFst ||
+            correctSnd != correctSnd){
+          correctOutput = 0x45;
+        } else if (correctFst < correctSnd){
+          correctOutput = 0x01;
+        } else if (correctFst > correctSnd){
+          correctOutput = 0x00;
+        } else {
+          correctOutput = 0x40;
+        }
       }
-    }
-      break;
-    case Iop_CmpLT32F0x4:
-    case Iop_CmpLT64F0x2: {
-      if (correctFst != correctFst ||
-          correctSnd != correctSnd){
-        correctOutput = 0x0;
-      } else if (correctFst < correctSnd){
-        correctOutput = 0x01;
-      } else if (correctFst > correctSnd){
-        correctOutput = 0x00;
-      } else {
-        correctOutput = 0x00;
+        break;
+      case Iop_CmpLT32F0x4:
+      case Iop_CmpLT64F0x2: {
+        if (correctFst != correctFst ||
+            correctSnd != correctSnd){
+          correctOutput = 0x0;
+        } else if (correctFst < correctSnd){
+          correctOutput = 0x01;
+        } else if (correctFst > correctSnd){
+          correctOutput = 0x00;
+        } else {
+          correctOutput = 0x00;
+        }
       }
-    }
-      break;
-    case Iop_CmpLE64F0x2: {
-      if (correctFst != correctFst ||
-          correctSnd != correctSnd) {
-        correctOutput = 0x00;
-      } else if (correctFst <= correctSnd) {
-        correctOutput = 0x01;
-      } else {
-        correctOutput = 0x00;
+        break;
+      case Iop_CmpLE64F0x2: {
+        if (correctFst != correctFst ||
+            correctSnd != correctSnd) {
+          correctOutput = 0x00;
+        } else if (correctFst <= correctSnd) {
+          correctOutput = 0x01;
+        } else {
+          correctOutput = 0x00;
+        }
       }
-    }
-      break;
-    case Iop_CmpUN64F0x2:
-    case Iop_CmpUN32F0x4:{
-      if (correctFst == correctSnd){
-        correctOutput = 0x01;
-      } else {
-        correctOutput = 0x00;
+        break;
+      case Iop_CmpUN64F0x2:
+      case Iop_CmpUN32F0x4:{
+        if (correctFst == correctSnd){
+          correctOutput = 0x01;
+        } else {
+          correctOutput = 0x00;
+        }
       }
-    }
-      break;
-    default:
-      tl_assert(0);
-      return;
+        break;
+      default:
+        tl_assert(0);
+        return;
+      }
+    } else {
+      Real realFst = args[0]->values[0]->real;
+      Real realSnd = args[1]->values[0]->real;
+      switch(info->op_code){
+      case Iop_CmpF64:
+      case Iop_CmpF32:{
+        if (isNaN(realFst) || isNaN(realSnd)){
+          correctOutput = 0x45;
+        } else if (realCompare(realFst, realSnd) < 0){
+          correctOutput = 0x01;
+        } else if (realCompare(realFst, realSnd) > 0){
+          correctOutput = 0x00;
+        } else {
+          correctOutput = 0x40;
+        }
+      }
+      case Iop_CmpLT32F0x4:
+      case Iop_CmpLT64F0x2: {
+        if (isNaN(realFst) || isNaN(realSnd)){
+          correctOutput = 0x0;
+        } else if (realCompare(realFst, realSnd) < 0){
+          correctOutput = 0x01;
+        } else if (realCompare(realFst, realSnd) > 0){
+          correctOutput = 0x00;
+        } else {
+          correctOutput = 0x00;
+        }
+      }
+        break;
+      case Iop_CmpLE64F0x2: {
+        if (isNaN(realFst) || isNaN(realSnd)){
+          correctOutput = 0x00;
+        } else if (realCompare(realFst, realSnd) <= 0) {
+          correctOutput = 0x01;
+        } else {
+          correctOutput = 0x00;
+        }
+      }
+        break;
+      case Iop_CmpUN64F0x2:
+      case Iop_CmpUN32F0x4:{
+        if (realCompare(realFst, realSnd) == 0){
+          correctOutput = 0x01;
+        } else {
+          correctOutput = 0x00;
+        }
+      }
+        break;
+      default:
+        tl_assert(0);
+        return;
+      }
     }
   } else {
     tl_assert(0);

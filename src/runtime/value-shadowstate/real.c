@@ -72,7 +72,14 @@ int isNaN(Real real){
   #ifdef USE_MPFR
   return mpfr_nan_p(real->mpfr_val);
   #else
-  return mpf_nan_p(real->mpfr_val);
+  return mpf_nan_p(real->mpf_val);
+  #endif
+}
+int realCompare(Real real1, Real real2){
+  #ifdef USE_MPFR
+  return mpfr_cmp(real1->mpfr_val, real2->mpfr_val);
+  #else
+  return mpf_cmp(real1->mpf_val, real2->mpf_val);
   #endif
 }
 
