@@ -829,7 +829,7 @@ void inferTypes(IRSB* sbIn){
               switch(source2->tag){
               case Iex_Const:
                 source2Temp = -1;
-                source2Type = constType(source1->Iex.Const.con);
+                source2Type = constType(source2->Iex.Const.con);
                 break;
               case Iex_RdTmp:
                 source2Temp = source2->Iex.RdTmp.tmp;
