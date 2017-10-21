@@ -35,7 +35,6 @@
 void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                           IRTemp dest, int instrIdx);
 
-Bool isConversionOp(IROp op_code);
 int conversionInputArgIndex(IROp op_code);
 int numConversionInputs(IROp op_code);
 

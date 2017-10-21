@@ -554,41 +554,6 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
   }
 }
 
-Bool isConversionOp(IROp op_code){
-  switch(op_code){
-    // Unary ops
-  case Iop_32Uto64:
-  case Iop_64to32:
-  case Iop_ZeroHI96ofV128:
-  case Iop_ZeroHI64ofV128:
-  case Iop_V128to32:
-  case Iop_V128to64:
-  case Iop_V128HIto64:
-  case Iop_32UtoV128:
-  case Iop_64UtoV128:
-  case Iop_SetV128lo32:
-  case Iop_SetV128lo64:
-  case Iop_RoundF64toF32:
-  case Iop_TruncF64asF32:
-  case Iop_RoundF64toF64_NEAREST:
-  case Iop_RoundF64toF64_NegINF:
-  case Iop_RoundF64toF64_PosINF:
-  case Iop_RoundF64toF64_ZERO:
-  case Iop_F128HItoF64:
-  case Iop_F128LOtoF64:
-  case Iop_F32toF64:
-    // Binary ops
-  case Iop_RoundF64toInt:
-  case Iop_RoundF32toInt:
-  case Iop_64HLtoV128:
-  case Iop_F64HLtoF128:
-  case Iop_F64toF32:
-    return True;
-  default:
-    return False;
-  }
-}
-
 int conversionInputArgIndex(IROp op_code){
   switch(op_code){
   case Iop_32Uto64:

@@ -41,6 +41,11 @@ const char* getOpcodeSymbol(IROp op_code);
 double runEmulatedOp(IROp op_code, double* args);
 void ppIROp_Extended(int op_code);
 
+Bool isSpecialOp(IROp op_code);
+Bool isFloatOp(IROp op);
+Bool isExitFloatOp(IROp op);
+Bool isConversionOp(IROp op_code);
+
 typedef enum {
   IEop_Neg32F0x4=Iop_LAST+1,
   IEop_Neg64F0x2,
