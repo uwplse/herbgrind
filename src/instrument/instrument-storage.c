@@ -817,7 +817,9 @@ void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
                         int instrIdx){
   tl_assert(floatType == Vt_Single ||
             floatType == Vt_Double);
-  tl_assert(tsType(tsDest, instrIdx) == floatType);
+  tl_assert2(tsType(tsDest, instrIdx) == floatType,
+             "Trying to set as nonnull TS(%d), which wasn't inferred non null at %d!\n",
+             tsDest, instrIdx);
   addSVOwnNonNull(sbOut, newVal);
   addSetTSVal(sbOut, tsDest, newVal);
   tsShadowStatus[tsDest] = Ss_Shadowed;
@@ -825,7 +827,8 @@ void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
 void addSetTSValNonFloat(IRSB* sbOut, Int tsDest, int instrIdx){
   addSetTSVal(sbOut, tsDest, mkU64(0));
   tsShadowStatus[tsDest] = Ss_Unshadowed;
-  tl_assert(tsType(tsDest, instrIdx) == Vt_NonFloat);
+  tl_assert2(tsType(tsDest, instrIdx) == Vt_NonFloat,
+             "False setting TS(%d) to NonFloat.\n", tsDest);
 }
 void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest, int instrIdx){
   addSetTSVal(sbOut, tsDest, mkU64(0));
@@ -882,11 +885,6 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard,
                    IRExpr* shadow_temp,
                    ValueType type,
                    int idx){
-  tl_assert2(tempType(idx) == Vt_Unknown ||
-             tempType(idx) == type,
-             "Tried to conditionally set a"
-             " temp (%d) to type %d already set with a different"
-             " type temp %d!\n", idx, type, tempType(idx));
   addStoreGC(sbOut, guard, shadow_temp, &(shadowTemps[idx]));
   cleanupAtEndOfBlock(sbOut, idx);
 }
