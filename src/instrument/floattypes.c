@@ -169,7 +169,6 @@ Bool canStoreShadow(IRTypeEnv* typeEnv, IRExpr* expr){
   } else if (!isFloatIRType(typeOfIRExpr(typeEnv, expr))){
     return False;
   } else if (tempType(expr->Iex.RdTmp.tmp) == Vt_NonFloat){
-    tl_assert2(0, "Why are you even asking this?");
     return False;
   } else {
     return True;
