@@ -232,7 +232,7 @@ Bool tsHasStaticShadow(Int tsAddr, int instrIdx){
 // and the type given as a parameter, this will fail an assert.
 Bool setTSType(int idx, int instrIdx, ValueType type){
   TSTypeEntry** nextTSEntry = &(tsTypes[idx]);
-  while(*nextTSEntry != NULL && (*nextTSEntry)->instrIndexSet < instrIdx){
+  while(*nextTSEntry != NULL && (*nextTSEntry)->instrIndexSet <= instrIdx){
     if ((*nextTSEntry)->instrIndexSet == instrIdx){
       ValueType newType = typeMeet(type, (*nextTSEntry)->type);
       if (newType == (*nextTSEntry)->type){
