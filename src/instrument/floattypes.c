@@ -1025,10 +1025,9 @@ ValueType constType(const IRConst* constant){
     return Vt_NonFloat;
   case Ity_I32:
   case Ity_I64:
-    return Vt_Unknown;
   case Ity_V128:
   case Ity_V256:
-    return Vt_UnknownFloat;
+    return Vt_Unknown;
   case Ity_F32:
     return Vt_Single;
   case Ity_F64:
