@@ -318,6 +318,9 @@ ValueType inferTSType64(Int tsAddr, int instrIdx){
 }
 
 ValueType argPrecision(IROp op_code){
+  if (!isFloatOp(op_code)){
+    return Vt_NonFloat;
+  }
   switch((int)op_code){
     // Non-semantic ops have no need for this, since they will never
     // be constructing new shadow values, so we can just return
@@ -457,10 +460,14 @@ ValueType argPrecision(IROp op_code){
   case Iop_SetV128lo64:
     return Vt_Unknown;
   default:
+    tl_assert(0);
     return Vt_NonFloat;
   }
 }
 ValueType resultPrecision(IROp op_code){
+  if (!isFloatOp(op_code)){
+    return Vt_NonFloat;
+  }
   switch((int)op_code){
     // Non-semantic ops have no need for this, since they will never
     // be constructing new shadow values, so we can just return
