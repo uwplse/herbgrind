@@ -76,7 +76,8 @@ void inferTypes(IRSB* sbIn);
 ValueType argPrecision(IROp op_code);
 ValueType resultPrecision(IROp op_code);
 
-int isFloatType(IRType type);
+int isFloatType(ValueType type);
+int isFloatIRType(IRType type);
 int isFloat(IRTypeEnv* env, IRTemp temp);
 
 void ppValueType(ValueType type);

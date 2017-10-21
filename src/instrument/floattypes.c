@@ -131,7 +131,7 @@ Bool staticallyShadowed(IRExpr* expr){
     tempShadowStatus[expr->Iex.RdTmp.tmp] == Ss_Shadowed;
 }
 Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr){
-  if (!isFloatType(typeOfIRExpr(typeEnv, expr))){
+  if (!isFloatIRType(typeOfIRExpr(typeEnv, expr))){
     return False;
   } else if (expr->tag == Iex_Const){
     return True;
@@ -144,7 +144,7 @@ Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr){
 Bool canStoreShadow(IRTypeEnv* typeEnv, IRExpr* expr){
   if (expr->tag == Iex_Const){
     return False;
-  } else if (!isFloatType(typeOfIRExpr(typeEnv, expr))){
+  } else if (!isFloatIRType(typeOfIRExpr(typeEnv, expr))){
     return False;
   } else if (tempType(expr->Iex.RdTmp.tmp) == Vt_NonFloat){
     tl_assert2(0, "Why are you even asking this?");
@@ -551,11 +551,12 @@ ValueType resultPrecision(IROp op_code){
   case Iop_64UtoV128:
     return Vt_Unknown;
   default:
+    tl_assert(0);
     return Vt_NonFloat;
   }
 }
 
-int isFloatType(IRType type){
+int isFloatIRType(IRType type){
   return type == Ity_I32 || type == Ity_I64
     || type == Ity_F32 || type == Ity_F64
     || type == Ity_V128 || type == Ity_V256;
@@ -563,7 +564,7 @@ int isFloatType(IRType type){
 
 int isFloat(IRTypeEnv* env, IRTemp temp){
   IRType type = typeOfIRTemp(env, temp);
-  return isFloatType(type);
+  return isFloatIRType(type);
 }
 
 void ppValueType(ValueType type){
@@ -999,4 +1000,8 @@ ValueType constType(const IRConst* constant){
     tl_assert(0);
     return Vt_Unknown;
   }
+}
+
+int isFloatType(ValueType type){
+  return typeJoin(type, Vt_UnknownFloat) == Vt_UnknownFloat;
 }
