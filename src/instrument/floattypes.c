@@ -262,11 +262,20 @@ Bool setTSType(int idx, int instrIdx, ValueType type){
 }
 Bool refineTSType(int idx, int instrIdx, ValueType type){
   if (tsTypes[idx] == NULL || tsTypes[idx]->instrIndexSet > instrIdx){
-    setTSType(idx, 0, type);
     if (print_type_inference){
       VG_(printf)("Setting initial type of TS(%d) to %s\n",
                   idx, typeName(type));
     }
+    TSTypeEntry* newTSEntry;
+    if (stack_empty(tsTypeEntries)){
+      newTSEntry = VG_(malloc)("TSTypeEntry", sizeof(TSTypeEntry));
+    } else {
+      newTSEntry = (void*)stack_pop(tsTypeEntries);
+    }
+    newTSEntry->type = type;
+    newTSEntry->instrIndexSet = 0;
+    newTSEntry->next = NULL;
+    tsTypes[idx] = newTSEntry;
     return True;
   }
   TSTypeEntry* nextTSEntry = tsTypes[idx];
