@@ -72,10 +72,11 @@ ValueType exprType(IRExpr* expr){
   }
 }
 Bool refineTempType(int tempIdx, ValueType type){
-  if (tempTypes[tempIdx] == type){
+  ValueType refinedType = typeMeet(type, tempType(tempIdx));
+  if (tempTypes[tempIdx] == refinedType){
     return False;
   } else {
-    tempTypes[tempIdx] = typeMeet(type, tempTypes[tempIdx]);
+    tempTypes[tempIdx] = refinedType;
     return True;
   }
 }
@@ -130,7 +131,7 @@ Bool staticallyFloat(IRExpr* expr){
   case Iex_Const:
     return False;
   case Iex_RdTmp:
-    return typeMeet(tempType(expr->Iex.RdTmp.tmp), Vt_UnknownFloat) == Vt_UnknownFloat;
+    return typeJoin(tempType(expr->Iex.RdTmp.tmp), Vt_UnknownFloat) == Vt_UnknownFloat;
   default:
     VG_(printf)("Hey, what are you trying to pull here, man? "
                 "You can't check the shadow of a non-trivial "
@@ -257,10 +258,11 @@ Bool refineTSType(int idx, int instrIdx, ValueType type){
   while(nextTSEntry->next != NULL && nextTSEntry->next->instrIndexSet < instrIdx){
     nextTSEntry = nextTSEntry->next;
   }
-  if (nextTSEntry->type == type){
+  ValueType refinedType = typeMeet(nextTSEntry->type, type);
+  if (nextTSEntry->type == refinedType){
     return False;
   } else {
-    nextTSEntry->type = typeMeet(nextTSEntry->type, type);
+    nextTSEntry->type = refinedType;
     return True;
   }
 }
