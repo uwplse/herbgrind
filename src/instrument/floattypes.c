@@ -877,7 +877,16 @@ void inferTypes(IRSB* sbIn){
             break;
           case Iex_Binop:
             {
-              ValueType argType = argPrecision(expr->Iex.Binop.op);
+              IROp op = expr->Iex.Binop.op;
+              // Most of this code is for handling conversions, which
+              // can be tricky to infer properly because they are
+              // often polymorphic.
+              ValueType argType;
+              if (isConversionOp(op) && !isFloatType(tempType(destTemp))){
+                argType = tempType(destTemp);
+              } else {
+                argType = argPrecision(expr->Iex.Binop.op);
+              }
               IRExpr* arg1 = expr->Iex.Binop.arg1;
               IRExpr* arg2 = expr->Iex.Binop.arg2;
               if (arg1->tag == Iex_RdTmp){
@@ -886,17 +895,40 @@ void inferTypes(IRSB* sbIn){
               if (arg2->tag == Iex_RdTmp){
                 dirty |= refineTempType(arg2->Iex.RdTmp.tmp, argType);
               }
-              dirty |= refineTempType(destTemp, resultPrecision(expr->Iex.Binop.op));
+              ValueType destType;
+              if (isConversionOp(op) &&
+                  !staticallyFloat(arg1) && !staticallyFloat(arg2)){
+                destType = typeMeet(exprType(arg1), exprType(arg2));
+              } else {
+                destType = resultPrecision(op);
+              }
+              dirty |= refineTempType(destTemp, destType);
             }
             break;
           case Iex_Unop:
             {
+              // Most of this code is for handling conversions, which
+              // can be tricky to infer properly because they are
+              // often polymorphic.
               IRExpr* arg = expr->Iex.Unop.arg;
+              IROp op = expr->Iex.Unop.op;
               if (arg->tag == Iex_RdTmp){
+                ValueType srcType;
+                if (isConversionOp(op) && !isFloatType(tempType(destTemp))){
+                  srcType = tempType(destTemp);
+                } else {
+                  srcType = argPrecision(op);
+                }
                 dirty |= refineTempType(arg->Iex.RdTmp.tmp,
-                                        argPrecision(expr->Iex.Unop.op));
+                                        srcType);
               }
-              dirty |= refineTempType(destTemp, resultPrecision(expr->Iex.Unop.op));
+              ValueType destType;
+              if (isConversionOp(op) && !staticallyFloat(arg)){
+                destType = exprType(arg);
+              } else {
+                destType = resultPrecision(op);
+              }
+              dirty |= refineTempType(destTemp, destType);
             }
             break;
           case Iex_Const:
