@@ -711,7 +711,15 @@ void inferTypes(IRSB* sbIn){
           case Iex_RdTmp:
             {
               IRTemp srcTemp = sourceData->Iex.RdTmp.tmp;
-              dirty |= setTSType(destLocation, instrIdx, tempType(srcTemp));
+              for(int i = 0; i < exprSize(sbIn->tyenv, sourceData); ++i){
+                if (tempType(srcTemp) == Vt_Double && i % 2 == 1){
+                  dirty |= setTSType(destLocation + i * sizeof(float),
+                                     instrIdx, Vt_NonFloat);
+                } else {
+                  dirty |= setTSType(destLocation + i * sizeof(float),
+                                     instrIdx, tempType(srcTemp));
+                }
+              }
               dirty |= refineTempType(srcTemp, tsType(destLocation, instrIdx));
             }
             break;
@@ -777,7 +785,15 @@ void inferTypes(IRSB* sbIn){
             {
               int sourceOffset = expr->Iex.Get.offset;
               dirty |= refineTempType(destTemp, tsType(sourceOffset, instrIdx));
-              dirty |= refineTSType(sourceOffset, instrIdx, tempType(destTemp));
+              for(int i = 0; i < exprSize(sbIn->tyenv, IRExpr_RdTmp(destTemp)); ++i){
+                if (tempType(destTemp) == Vt_Double && i % 2 == 1){
+                  dirty |= refineTSType(sourceOffset + i * sizeof(float),
+                                        instrIdx, Vt_NonFloat);
+                } else {
+                  dirty |= refineTSType(sourceOffset + i * sizeof(float),
+                                        instrIdx, tempType(destTemp));
+                }
+              }
             }
             break;
           case Iex_GetI:
