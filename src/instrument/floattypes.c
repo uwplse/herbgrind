@@ -60,6 +60,17 @@ void resetTypeState(void){
 ValueType tempType(int idx){
   return tempTypes[idx];
 }
+ValueType exprType(IRExpr* expr){
+  switch(expr->tag){
+  case Iex_RdTmp:
+    return tempType(expr->Iex.RdTmp.tmp);
+  case Iex_Const:
+    return constType(expr->Iex.Const.con);
+  default:
+    tl_assert(0);
+    return Vt_Unknown;
+  }
+}
 Bool refineTempType(int tempIdx, ValueType type){
   if (tempTypes[tempIdx] == type){
     return False;

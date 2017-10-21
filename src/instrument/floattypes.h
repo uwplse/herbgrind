@@ -86,6 +86,7 @@ void ppValueType(ValueType type);
 Bool refineTempType(int tempIdx, ValueType type);
 
 ValueType tempType(int idx);
+ValueType exprType(IRExpr* expr);
 Bool tempIsTyped(int idx, int instrIdx);
 Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr);
 Bool staticallyFloat(IRExpr* expr);
