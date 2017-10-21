@@ -47,10 +47,13 @@ void initTypeState(void){
 }
 void resetTypeState(void){
   VG_(memset)(tempTypes, 0, sizeof tempTypes);
+  VG_(memset)(tempShadowStatus, 0, sizeof tempShadowStatus);
+  VG_(memset)(tsShadowStatus, 0, sizeof tsShadowStatus);
   for(int i = 0; i < MAX_REGISTERS; ++i){
     while (tsTypes[i] != NULL){
+      TSTypeEntry* nextEntry = tsTypes[i]->next;
       stack_push(tsTypeEntries, (StackNode*)tsTypes[i]);
-      tsTypes[i] = tsTypes[i]->next;
+      tsTypes[i] = nextEntry;
     }
   }
 }
