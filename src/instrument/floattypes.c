@@ -903,7 +903,10 @@ void inferTypes(IRSB* sbIn){
             dirty |= refineTempType(destTemp, constType(expr->Iex.Const.con));
             break;
           case Iex_CCall:
+            break;
           default:
+            ppIRExpr(expr);
+            VG_(printf)("\n");
             tl_assert(0);
             return;
           }
