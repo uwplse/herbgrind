@@ -34,6 +34,7 @@
 #include "pub_tool_libcprint.h"
 #include "../helper/stack.h"
 #include "../helper/ir-info.h"
+#include "../options.h"
 
 Stack* tsTypeEntries = NULL;
 
@@ -72,10 +73,16 @@ ValueType exprType(IRExpr* expr){
   }
 }
 Bool refineTempType(int tempIdx, ValueType type){
+  /* VG_(printf)("Refining type of t%d from %s with %s\n", */
+  /*             tempIdx, typeName(tempTypes[tempIdx]), typeName(type)); */
   ValueType refinedType = typeMeet(type, tempType(tempIdx));
   if (tempTypes[tempIdx] == refinedType){
     return False;
   } else {
+    if (print_type_inference){
+      VG_(printf)("Refining type of t%d from %s to %s\n",
+                  tempIdx, typeName(tempTypes[tempIdx]), typeName(refinedType));
+    }
     tempTypes[tempIdx] = refinedType;
     return True;
   }
@@ -247,11 +254,19 @@ Bool setTSType(int idx, int instrIdx, ValueType type){
   newTSEntry->instrIndexSet = instrIdx;
   newTSEntry->next = *nextTSEntry;
   *nextTSEntry = newTSEntry;
+  if (print_type_inference){
+    VG_(printf)("Setting type of TS(%d) at instr %d to %s\n",
+               idx, instrIdx, typeName(type));
+  }
   return True;
 }
 Bool refineTSType(int idx, int instrIdx, ValueType type){
   if (tsTypes[idx] == NULL || tsTypes[idx]->instrIndexSet > instrIdx){
     setTSType(idx, 0, type);
+    if (print_type_inference){
+      VG_(printf)("Setting initial type of TS(%d) to %s\n",
+                  idx, typeName(type));
+    }
     return True;
   }
   TSTypeEntry* nextTSEntry = tsTypes[idx];
@@ -262,6 +277,10 @@ Bool refineTSType(int idx, int instrIdx, ValueType type){
   if (nextTSEntry->type == refinedType){
     return False;
   } else {
+    if (print_type_inference){
+      VG_(printf)("Refining type of TS(%d) at instr %d from %s to %s\n",
+                  idx, instrIdx, typeName(nextTSEntry->type), typeName(refinedType));
+    }
     nextTSEntry->type = refinedType;
     return True;
   }
@@ -612,6 +631,11 @@ void inferTypes(IRSB* sbIn){
   // iteration has completed which doesn't change anything.
   int dirty = 1;
   while(dirty){
+    if (print_type_inference){
+      VG_(printf)("Making a type pass\n"
+                  "==================\n"
+                  "\n");
+    }
     dirty = 0;
     // We make forward passes through the instructions, building type
     // information.
@@ -633,9 +657,6 @@ void inferTypes(IRSB* sbIn){
     // this data structure.
     for(int instrIdx = 0; instrIdx < sbIn->stmts_used; ++instrIdx){
       IRStmt* stmt = sbIn->stmts[instrIdx];
-      VG_(printf)("Looking at instruction: ");
-      ppIRStmt(stmt);
-      VG_(printf)("\n");
       switch(stmt->tag){
         // These statements don't really do much, so we can ignore
         // them for type inference, although we're keeping the cases
