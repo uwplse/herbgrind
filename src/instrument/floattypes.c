@@ -41,7 +41,7 @@ Stack* tsTypeEntries = NULL;
 ValueType tempTypes[MAX_TEMPS];
 TSTypeEntry* tsTypes[MAX_REGISTERS];
 ShadowStatus tempShadowStatus[MAX_TEMPS];
-ShadowStatus tsShadowStatus[MAX_TEMPS];
+ShadowStatus tsShadowStatus[MAX_REGISTERS];
 
 void initTypeState(void){
   tsTypeEntries = mkStack();
@@ -210,16 +210,10 @@ int loadConversionSize(IRLoadGOp conversion){
 }
 
 Bool tsAddrCanHaveShadow(Int tsAddr, int instrIdx){
-  return tsType(tsAddr, instrIdx) == Vt_NonFloat;
+  return tsType(tsAddr, instrIdx) != Vt_NonFloat;
 }
 Bool tsHasStaticShadow(Int tsAddr, int instrIdx){
-  switch(tsType(tsAddr, instrIdx)){
-  case Vt_Single:
-  case Vt_Double:
-    return True;
-  default:
-    return False;
-  }
+  return tsShadowStatus[tsAddr] == Ss_Shadowed;
 }
 
 // The behavior of this function is this: if no type has been set for
