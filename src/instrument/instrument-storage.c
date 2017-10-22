@@ -242,7 +242,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
           // Even if the value is null at runtime, we still need to overwrite
           // any old pointers still stuck in that thread state so they
           // don't get picked up later.
-          addSetTSValNonFloat(sbOut, dest_addr, instrIdx);
+          addSetTSValUnshadowed(sbOut, dest_addr, instrIdx);
           tsShadowStatus[dest_addr] = Ss_Unknown;
         }
         IRDirty* putDirty =
@@ -273,7 +273,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
           // Even if the value is null at runtime, we still need to overwrite
           // any old pointers still stuck in that thread state so they
           // don't get picked up later.
-          addSetTSValNonFloat(sbOut, dest_addr, instrIdx);
+          addSetTSValUnshadowed(sbOut, dest_addr, instrIdx);
           tsShadowStatus[dest_addr] = Ss_Unknown;
         }
         IRDirty* putDirty =
