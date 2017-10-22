@@ -171,6 +171,9 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
         }
         addSVDisown(sbOut, oldVal);
       }
+      if (!canStoreShadow(sbOut->tyenv, data)){
+        addSetTSValUnshadowed(sbOut, dest_addr, instrIdx);
+      }
     }
   }
   if (canStoreShadow(sbOut->tyenv, data)){
