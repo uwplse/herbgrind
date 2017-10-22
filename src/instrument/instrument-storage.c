@@ -103,8 +103,8 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
     tempShadowStatus[dest] = Ss_Unknown;
   }
 
-  ValueType trueType = tempType(trueExpr->Iex.RdTmp.tmp);
-  ValueType falseType = tempType(falseExpr->Iex.RdTmp.tmp);
+  ValueType trueType = exprType(trueExpr);
+  ValueType falseType = exprType(falseExpr);
   IRExpr* resultSt =
     runITE(sbOut, cond, trueSt, falseSt);
   addStoreTempCopy(sbOut, resultSt, dest, typeJoin(trueType, falseType));
