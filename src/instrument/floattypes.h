@@ -107,4 +107,5 @@ int numTempValues(IRSB* sbOut, int idx);
 int exprSize(IRTypeEnv* tyenv, IRExpr* expr);
 int typeSize(IRType type);
 int loadConversionSize(IRLoadGOp conversion);
+void printTypeState(void);
 #endif

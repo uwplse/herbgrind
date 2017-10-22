@@ -970,6 +970,9 @@ void inferTypes(IRSB* sbIn){
       }
     }
   }
+  if (print_inferred_types){
+    printTypeState();
+  }
 }
 
 ValueType typeJoin(ValueType type1, ValueType type2){
@@ -1100,4 +1103,23 @@ ValueType constType(const IRConst* constant){
 
 int isFloatType(ValueType type){
   return typeJoin(type, Vt_UnknownFloat) == Vt_UnknownFloat;
+}
+
+void printTypeState(void){
+  for(int i = 0; i < MAX_TEMPS; ++i){
+    if (tempTypes[i] != Vt_Unknown){
+      VG_(printf)("t%d : %s\n", i, typeName(tempTypes[i]));
+    }
+  }
+  for(int i = 0; i < MAX_REGISTERS; ++i){
+    if (tsTypes[i] != NULL){
+      VG_(printf)("TS(%d) : ", i);
+      TSTypeEntry* curEntry = tsTypes[i];
+      while(curEntry != NULL){
+        VG_(printf)("%s@%d, ", typeName(curEntry->type), curEntry->instrIndexSet);
+        curEntry = curEntry->next;
+      }
+      VG_(printf)("\n");
+    }
+  }
 }
