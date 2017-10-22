@@ -398,9 +398,9 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       }
       addStoreTempNonFloat(sbOut, dest);
     } else if (valType == Vt_Single) {
+      IRExpr* val = runGetOrMakeTSVal(sbOut, tsSrc, Vt_Single);
       // If we know it's a non-null single, then we can load it
       // unconditionally.
-      IRExpr* val = runGetTSVal(sbOut, tsSrc);
       IRExpr* temp = runMkShadowTempValues(sbOut, 1, &val);
       if (PRINT_VALUE_MOVES){
         addPrint3("Getting val %p from TS(%d) ", val, mkU64(tsSrc));
@@ -442,22 +442,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* vals[2];
       for(int i = 0; i < 2; ++i){
         Int src_addr = tsSrc + (i * sizeof(float));
-        if (tsType(src_addr, instrIdx) == Vt_Single){
-          vals[i] = runGetTSVal(sbOut, src_addr);
-        } else if (tsType(src_addr, instrIdx) == Vt_Unknown){
-          IRExpr* loaded = runGetTSVal(sbOut, src_addr);
-          IRExpr* loadedNull = runZeroCheck64(sbOut, loaded);
-          IRExpr* valExpr = runF32toF64(sbOut, runGet64C(sbOut, src_addr));
-          IRExpr* freshSV = runMkShadowValG(sbOut, loadedNull,
-                                            Vt_Single, valExpr);
-          vals[i] = runITE(sbOut, loadedNull, freshSV, loaded);
-        } else {
-          IRExpr* valExpr =
-            runF32toF64(sbOut, runGet64C(sbOut, src_addr));
-          IRExpr* freshSV =
-            runMkShadowVal(sbOut, Vt_Single, valExpr);
-          vals[i] = freshSV;
-        }
+        vals[i] = runGetOrMakeTSVal(sbOut, src_addr, Vt_Single);
       }
       IRExpr* temp = runMkShadowTempValues(sbOut, 2, vals);
       addStoreTemp(sbOut, temp, Vt_Single, dest);
@@ -466,7 +451,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
         addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
       }
     } else if (valType == Vt_Double){
-      IRExpr* val = runGetTSVal(sbOut, tsSrc);
+      IRExpr* val = runGetOrMakeTSVal(sbOut, tsSrc, Vt_Double);
       IRExpr* temp = runMkShadowTempValues(sbOut, 1, &val);
       if (PRINT_VALUE_MOVES){
         addPrint3("Got %p from TS(%d) into ", val, mkU64(tsSrc));
@@ -505,20 +490,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* vals[MAX_TEMP_SHADOWS];
       for(int i = 0; i < src_size; ++i){
         Int src_addr = tsSrc + (i * sizeof(float));
-        if (tsType(src_addr, instrIdx) == Vt_Single){
-          vals[i] = runGetTSVal(sbOut, src_addr);
-        } else if (tsType(src_addr, instrIdx) == Vt_Unknown){
-          IRExpr* loaded = runGetTSVal(sbOut, src_addr);
-          IRExpr* loadedNull = runZeroCheck64(sbOut, loaded);
-          IRExpr* valExpr = runF32toF64(sbOut, runGet32C(sbOut, src_addr));
-          IRExpr* freshSV = runMkShadowValG(sbOut, loadedNull,
-                                            Vt_Single, valExpr);
-          vals[i] = runITE(sbOut, loadedNull, freshSV, loaded);
-        } else {
-          IRExpr* valExpr =
-            runF32toF64(sbOut, runGet32C(sbOut, src_addr));
-          vals[i] = runMkShadowVal(sbOut, Vt_Single, valExpr);
-        }
+        vals[i] = runGetOrMakeTSVal(sbOut, src_addr, Vt_Single);
       }
       IRExpr* temp = runMkShadowTempValues(sbOut, src_size, vals);
       addStoreTemp(sbOut, temp, Vt_Single, dest);
@@ -530,19 +502,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       IRExpr* vals[MAX_TEMP_SHADOWS / 2];
       for(int i = 0; i < (src_size / 2); ++i){
         Int src_addr = tsSrc + (i * sizeof(double));
-        if (tsType(src_addr, instrIdx) == Vt_Double){
-          vals[i] = runGetTSVal(sbOut, src_addr);
-        } else if (tsType(src_addr, instrIdx) == Vt_Unknown){
-          IRExpr* loaded = runGetTSVal(sbOut, src_addr);
-          IRExpr* loadedNull = runZeroCheck64(sbOut, loaded);
-          IRExpr* valExpr = runGet64C(sbOut, src_addr);
-          IRExpr* freshSV = runMkShadowValG(sbOut, loadedNull,
-                                            Vt_Double, valExpr);
-          vals[i] = runITE(sbOut, loadedNull, freshSV, loaded);
-        } else {
-          IRExpr* valExpr = runGet64C(sbOut, src_addr);
-          vals[i] = runMkShadowVal(sbOut, Vt_Double, valExpr);
-        }
+        vals[i] = runGetOrMakeTSVal(sbOut, src_addr, Vt_Double);
       }
       IRExpr* temp = runMkShadowTempValues(sbOut, (src_size / 2), vals);
       addStoreTemp(sbOut, temp, Vt_Double, dest);
@@ -811,6 +771,40 @@ IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc){
                             mkU64((uintptr_t)shadowThreadState
                                   [VG_(get_running_tid)()]),
                             tsSrc));
+}
+IRExpr* runGetOrMakeTSVal(IRSB* sbOut, int tsSrc, ValueType type){
+  tl_assert(type == Vt_Double || type == Vt_Single);
+  switch(tsShadowStatus[tsSrc]){
+  case Ss_Shadowed:
+    return runGetTSVal(sbOut, tsSrc);
+  case Ss_Unshadowed:
+    {
+      IRExpr* valExpr;
+      if (type == Vt_Double){
+        valExpr = runGet64C(sbOut, tsSrc);
+      } else {
+        valExpr = runF32toF64(sbOut, runGet32C(sbOut, tsSrc));
+      }
+      return runMkShadowVal(sbOut, type, valExpr);
+    }
+  case Ss_Unknown:
+    {
+      IRExpr* loaded = runGetTSVal(sbOut, tsSrc);
+      IRExpr* loadedNull = runZeroCheck64(sbOut, loaded);
+      IRExpr* valExpr;
+      if (type == Vt_Double){
+        valExpr = runGet64C(sbOut, tsSrc);
+      } else {
+        valExpr = runF32toF64(sbOut, runGet32C(sbOut, tsSrc));
+      }
+      IRExpr* freshSV = runMkShadowValG(sbOut, loadedNull,
+                                        type, valExpr);
+      return runITE(sbOut, loadedNull, freshSV, loaded);
+    }
+  default:
+    tl_assert(0);
+    return NULL;
+  }
 }
 void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
                         IRExpr* newVal, ValueType floatType,

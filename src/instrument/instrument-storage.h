@@ -86,6 +86,7 @@ IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
 
 IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc);
 IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc);
+IRExpr* runGetOrMakeTSVal(IRSB* sbOut, int tsSrc, ValueType type);
 void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
                         IRExpr* newVal, ValueType floatType,
                         int instrIdx);
