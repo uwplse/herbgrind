@@ -152,7 +152,7 @@ void writeOutput(void){
     }
     writeInfluences(fileD, filteredInfluences);
     if (output_sexp){
-      char endparens[] = "  )\n";
+      char endparens[] = "  )\n)";
       VG_(write)(fileD, endparens, sizeof(endparens) - 1);
     }
     char newline[] = "\n";
@@ -257,7 +257,8 @@ void writeOutput(void){
     }
     writeInfluences(fileD, filteredInfluences);
     if (output_sexp){
-      char endparens[] = "  )\n";
+      char endparens[] = "  )\n"
+        ")\n\n";
       VG_(write)(fileD, endparens, sizeof(endparens) - 1);
     }
   }
@@ -433,7 +434,6 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 / global_error.num_evals,
                 local_error.max_error,
                 global_error.num_evals);
-      printBBuf(buf, "    )\n");
     } else {
       printBBuf(buf,
                 "\n"
