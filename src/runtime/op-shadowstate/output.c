@@ -343,7 +343,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 "     (expr\n"
                 "       (FPCore %s\n",
                 varString);
-      if (fpcore_ranges){
+      if (fpcore_ranges && use_ranges){
         printBBuf(buf,
                   "         :pre (and");
         for(int i = 0; i < numVars; ++i){
