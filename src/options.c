@@ -65,6 +65,7 @@ Bool print_subexpr_locations = False;
 Bool output_mark_exprs = False;
 Bool detailed_ranges = False;
 Bool output_sexp = False;
+Bool fpcore_ranges = True;
 Bool sound_simplify = True;
 Bool shortmark_all_exprs = False;
 Bool mark_on_escape = True;
@@ -120,6 +121,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--start-off", running_depth, 0) {}
   else if VG_XACT_CLO(arg, "--always-on", always_on, True) {}
   else if VG_XACT_CLO(arg, "--output-sexp", output_sexp, True) {}
+  else if VG_XACT_CLO(arg, "--no-fpcore-ranges", fpcore_ranges, False) {}
   else if VG_XACT_CLO(arg, "--no-mark-on-escape", mark_on_escape, False) {}
   else if VG_XACT_CLO(arg, "--no-compensation-detection", compensation_detection, False)
                        {}

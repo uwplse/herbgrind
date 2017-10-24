@@ -340,9 +340,72 @@ void writeInfluences(Int fileD, InfluenceList influences){
       printBBuf(buf,
                 "\n"
                 "     (expr\n"
-                "       (FPCore %s\n"
+                "       (FPCore %s\n",
+                varString);
+      if (fpcore_ranges){
+        printBBuf(buf,
+                  "         :pre (and");
+        for(int i = 0; i < numVars; ++i){
+          if (detailed_ranges){
+            printBBuf(buf, " (or (and (< ");
+            printBBufFloat(buf, totalRanges->neg_range.min);
+            printBBuf(buf, " %s) (< %s ", getVar(i), getVar(i));
+            printBBufFloat(buf, totalRanges->neg_range.max);
+            printBBuf(buf, ")) (and (< ");
+            printBBufFloat(buf, totalRanges->pos_range.min);
+            printBBuf(buf, " %s) (< %s ", getVar(i), getVar(i));
+            printBBufFloat(buf, totalRanges->pos_range.max);
+            printBBuf(buf, ")))");
+          } else {
+            printBBuf(buf, " (and (< ");
+            printBBufFloat(buf, totalRanges->pos_range.min);
+            printBBuf(buf, " %s) (< %s ", getVar(i), getVar(i));
+            printBBufFloat(buf, totalRanges->pos_range.max);
+            printBBuf(buf, "))");
+          }
+        }
+        printBBuf(buf, ")\n");
+      }
+      printBBuf(buf,
                 "         %s))\n",
-                varString, exprString);
+                exprString);
+      if (!fpcore_ranges){
+        printBBuf(buf,
+                  "     (var-ranges");
+        for(int i = 0; i < numVars; ++i){
+          if (detailed_ranges){
+            printBBuf(buf,
+                      "\n       (%s\n",
+                      getVar(i));
+            printBBuf(buf,
+                      "         (neg-range-min ");
+            printBBufFloat(buf, totalRanges->neg_range.min);
+            printBBuf(buf,")\n");
+            printBBuf(buf,
+                      "         (neg-range-max ");
+            printBBufFloat(buf, totalRanges->neg_range.max);
+            printBBuf(buf,")\n");
+            printBBuf(buf,
+                      "         (pos-range-min ");
+            printBBufFloat(buf, totalRanges->pos_range.min);
+            printBBuf(buf,")\n");
+            printBBuf(buf,
+                      "         (pos-range-max ");
+            printBBufFloat(buf, totalRanges->pos_range.max);
+            printBBuf(buf,"))");
+          } else {
+            printBBuf(buf,
+                      "         (range-min ");
+            printBBufFloat(buf, totalRanges->pos_range.min);
+            printBBuf(buf,")\n");
+            printBBuf(buf,
+                      "         (range-max ");
+            printBBufFloat(buf, totalRanges->pos_range.max);
+            printBBuf(buf,"))");
+          }
+        }
+        printBBuf(buf, ")\n");
+      }
       printBBuf(buf,
                 "     (function \"%s\")\n"
                 "     (filename \"%s\")\n"
