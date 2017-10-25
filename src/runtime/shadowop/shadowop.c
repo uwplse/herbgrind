@@ -124,7 +124,14 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
 ShadowTemp* getArg(int argIdx, int numChannels, FloatType argPrecision,
                    IRTemp argTemp){
   if (argTemp == -1 ||
-      shadowTemps[argTemp] == NULL){
+      shadowTemps[argTemp] == NULL ||
+      shadowTemps[argTemp]->num_vals != numChannels){
+    if (argTemp != -1 && shadowTemps[argTemp] != NULL &&
+        shadowTemps[argTemp]->num_vals != numChannels){
+      /* VG_(umsg)("WARNING: hit a shadow value mismatch. Bits were treated as different types of floats at different times.\n"); */
+      disownShadowTemp(shadowTemps[argTemp]);
+      shadowTemps[argTemp] = NULL;
+    }
     ShadowTemp* result = mkShadowTemp(numChannels);
     if (PRINT_TEMP_MOVES){
       VG_(printf)("Making shadow temp %p (%d vals) for argument %d\n",
@@ -150,11 +157,11 @@ ShadowTemp* getArg(int argIdx, int numChannels, FloatType argPrecision,
     }
     return result;
   } else {
-    tl_assert2(shadowTemps[argTemp]->num_vals == numChannels,
-               "Got a temp with the wrong number of shadows for arg %d! "
-               "Expected %d shadows, got %d from temp %d",
-               argIdx, numChannels, shadowTemps[argTemp]->num_vals,
-               argTemp);
+    /* tl_assert2(shadowTemps[argTemp]->num_vals == numChannels, */
+    /*            "Got a temp with the wrong number of shadows for arg %d! " */
+    /*            "Expected %d shadows, got %d from temp %d", */
+    /*            argIdx, numChannels, shadowTemps[argTemp]->num_vals, */
+    /*            argTemp); */
     return shadowTemps[argTemp];
   }
 }

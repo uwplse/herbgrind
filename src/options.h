@@ -66,6 +66,7 @@ extern Bool print_subexpr_locations;
 extern Bool output_mark_exprs;
 extern Bool detailed_ranges;
 extern Bool output_sexp;
+extern Bool fpcore_ranges;
 extern Bool sound_simplify;
 extern Bool shortmark_all_exprs;
 extern Bool mark_on_escape;

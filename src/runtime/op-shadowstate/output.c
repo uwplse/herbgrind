@@ -152,7 +152,7 @@ void writeOutput(void){
     }
     writeInfluences(fileD, filteredInfluences);
     if (output_sexp){
-      char endparens[] = "  )\n";
+      char endparens[] = "  )\n)";
       VG_(write)(fileD, endparens, sizeof(endparens) - 1);
     }
     char newline[] = "\n";
@@ -257,7 +257,8 @@ void writeOutput(void){
     }
     writeInfluences(fileD, filteredInfluences);
     if (output_sexp){
-      char endparens[] = "  )\n";
+      char endparens[] = "  )\n"
+        ")\n\n";
       VG_(write)(fileD, endparens, sizeof(endparens) - 1);
     }
   }
@@ -340,9 +341,72 @@ void writeInfluences(Int fileD, InfluenceList influences){
       printBBuf(buf,
                 "\n"
                 "     (expr\n"
-                "       (FPCore %s\n"
+                "       (FPCore %s\n",
+                varString);
+      if (fpcore_ranges && use_ranges){
+        printBBuf(buf,
+                  "         :pre (and");
+        for(int i = 0; i < numVars; ++i){
+          if (detailed_ranges){
+            printBBuf(buf, " (or (and (< ");
+            printBBufFloat(buf, totalRanges->neg_range.min);
+            printBBuf(buf, " %s) (< %s ", getVar(i), getVar(i));
+            printBBufFloat(buf, totalRanges->neg_range.max);
+            printBBuf(buf, ")) (and (< ");
+            printBBufFloat(buf, totalRanges->pos_range.min);
+            printBBuf(buf, " %s) (< %s ", getVar(i), getVar(i));
+            printBBufFloat(buf, totalRanges->pos_range.max);
+            printBBuf(buf, ")))");
+          } else {
+            printBBuf(buf, " (and (< ");
+            printBBufFloat(buf, totalRanges->pos_range.min);
+            printBBuf(buf, " %s) (< %s ", getVar(i), getVar(i));
+            printBBufFloat(buf, totalRanges->pos_range.max);
+            printBBuf(buf, "))");
+          }
+        }
+        printBBuf(buf, ")\n");
+      }
+      printBBuf(buf,
                 "         %s))\n",
-                varString, exprString);
+                exprString);
+      if (!fpcore_ranges && use_ranges){
+        printBBuf(buf,
+                  "     (var-ranges");
+        for(int i = 0; i < numVars; ++i){
+          if (detailed_ranges){
+            printBBuf(buf,
+                      "\n       (%s\n",
+                      getVar(i));
+            printBBuf(buf,
+                      "         (neg-range-min ");
+            printBBufFloat(buf, totalRanges->neg_range.min);
+            printBBuf(buf,")\n");
+            printBBuf(buf,
+                      "         (neg-range-max ");
+            printBBufFloat(buf, totalRanges->neg_range.max);
+            printBBuf(buf,")\n");
+            printBBuf(buf,
+                      "         (pos-range-min ");
+            printBBufFloat(buf, totalRanges->pos_range.min);
+            printBBuf(buf,")\n");
+            printBBuf(buf,
+                      "         (pos-range-max ");
+            printBBufFloat(buf, totalRanges->pos_range.max);
+            printBBuf(buf,"))");
+          } else {
+            printBBuf(buf,
+                      "         (range-min ");
+            printBBufFloat(buf, totalRanges->pos_range.min);
+            printBBuf(buf,")\n");
+            printBBuf(buf,
+                      "         (range-max ");
+            printBBufFloat(buf, totalRanges->pos_range.max);
+            printBBuf(buf,"))");
+          }
+        }
+        printBBuf(buf, ")\n");
+      }
       printBBuf(buf,
                 "     (function \"%s\")\n"
                 "     (filename \"%s\")\n"
@@ -370,14 +434,39 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 / global_error.num_evals,
                 local_error.max_error,
                 global_error.num_evals);
-      printBBuf(buf, "    )\n");
     } else {
       printBBuf(buf,
                 "\n"
-                "    (FPCore %s\n"
-                "     %s)\n",
-                varString, exprString);
-      if (numVars > 0){
+                "    (FPCore %s\n",
+                varString);
+      if (fpcore_ranges && use_ranges){
+        printBBuf(buf,
+                  "      :pre (and");
+        for(int i = 0; i < numVars; ++i){
+          if (detailed_ranges){
+            printBBuf(buf, " (or (and (< ");
+            printBBufFloat(buf, totalRanges->neg_range.min);
+            printBBuf(buf, " %s) (< %s ", getVar(i), getVar(i));
+            printBBufFloat(buf, totalRanges->neg_range.max);
+            printBBuf(buf, ")) (and (< ");
+            printBBufFloat(buf, totalRanges->pos_range.min);
+            printBBuf(buf, " %s) (< %s ", getVar(i), getVar(i));
+            printBBufFloat(buf, totalRanges->pos_range.max);
+            printBBuf(buf, ")))");
+          } else {
+            printBBuf(buf, " (and (< ");
+            printBBufFloat(buf, totalRanges->pos_range.min);
+            printBBuf(buf, " %s) (< %s ", getVar(i), getVar(i));
+            printBBufFloat(buf, totalRanges->pos_range.max);
+            printBBuf(buf, "))");
+          }
+        }
+        printBBuf(buf, ")\n");
+      }
+      printBBuf(buf,
+                "         %s)\n",
+                exprString);
+      if (numVars > 0 && !fpcore_ranges && use_ranges){
         writeRanges(buf, numVars, totalRanges, problematicRanges);
         (void)problematicRanges;
         (void)totalRanges;
