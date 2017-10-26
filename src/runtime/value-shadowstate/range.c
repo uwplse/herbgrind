@@ -136,7 +136,7 @@ void printRangeAsPreconditionToBBuf(const char* varName,
       printBBuf(buf, "(< %s ", varName);
       printBBufFloat(buf, totalRanges->pos_range.max);
       printBBuf(buf, ")");
-    } else if (totalRanges->pos_range.max == -INFINITY){
+    } else if (totalRanges->pos_range.max == INFINITY){
       printBBuf(buf, "(< ", varName);
       printBBufFloat(buf, totalRanges->pos_range.min);
       printBBuf(buf, ")");
