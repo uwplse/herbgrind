@@ -30,6 +30,8 @@
 #ifndef _RANGE_H
 #define _RANGE_H
 
+#include "../../helper/bbuf.h"
+
 typedef struct _Range {
   double min;
   double max;
@@ -45,5 +47,8 @@ void initRangeRecord(RangeRecord* record);
 void initRange(Range* range);
 RangeRecord* copyRangeRecord(RangeRecord* record);
 void copyRangeRecordInPlace(RangeRecord* dest, RangeRecord* src);
+void printRangeAsPreconditionToBBuf(const char* varName,
+                                    RangeRecord* totalRanges,
+                                    BBuf* buf);
 
 #endif
