@@ -159,9 +159,13 @@ void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr,
       }
     }
     // Check nodes for variance
-    if (symbMatch->isConst &&
-        !NaNSafeEquals(symbMatch->constVal, concMatch->value)){
-      symbMatch->isConst = False;
+    if (symbMatch->isConst){
+      if (symbMatch->constVal != symbMatch->constVal){
+        symbMatch->constVal = concMatch->value;
+      } else if (!NaNSafeEquals(symbMatch->constVal, concMatch->value) &&
+                 concMatch->value == concMatch->value){
+        symbMatch->isConst = False;
+      }
     }
 
     // Recurse
