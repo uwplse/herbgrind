@@ -84,7 +84,7 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
   double bitsGlobalError =
     updateError(&(info->agg.global_error), shadowResult->real, *resLoc);
   execSymbolicOp(info, &(shadowResult->expr),
-                 shadowResult->real, shadowArgs,
+                 *resLoc, shadowArgs,
                  bitsGlobalError > error_threshold);
   if (!no_reals){
     execLocalOp(info, shadowResult->real, shadowResult, shadowArgs);

@@ -195,7 +195,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
       if (getDouble(args[0]->real) == 0 || getDouble(args[1]->real) == 0){
         ShadowValue* result =
           mkShadowValue(opinfo->exinfo.argPrecision, 0);
-        execSymbolicOp(opinfo, &(result->expr), result->real, args, False);
+        execSymbolicOp(opinfo, &(result->expr), clientResult, args, False);
         return result;
       }
     default:
@@ -224,7 +224,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   }
   double bitsGlobalError =
     updateError(&(opinfo->agg.global_error), result->real, clientResult);
-  execSymbolicOp(opinfo, &(result->expr), result->real, args,
+  execSymbolicOp(opinfo, &(result->expr), clientResult, args,
                  bitsGlobalError > error_threshold);
   if (print_expr_refs){
     VG_(printf)("Making new expression %p for value %p with 0 references.\n",

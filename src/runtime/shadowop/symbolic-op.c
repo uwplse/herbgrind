@@ -53,7 +53,8 @@ SymbExpr* symbGraftChild(SymbGraft graft){
 }
 
 void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
-                    Real real, ShadowValue** args, Bool problematic){
+                    double computedResult, ShadowValue** args,
+                    Bool problematic){
   if (no_exprs){
     return;
   }
@@ -61,7 +62,7 @@ void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
   for(int i = 0; i < opinfo->exinfo.nargs; ++i){
     exprArgs[i] = args[i]->expr;
   }
-  *result = mkBranchConcExpr(getDouble(real), opinfo,
+  *result = mkBranchConcExpr(computedResult, opinfo,
                              opinfo->exinfo.nargs, exprArgs);
   generalizeSymbolicExpr(&(opinfo->expr), *result);
   if (problematic){
