@@ -48,7 +48,7 @@ void initRange(Range* range);
 RangeRecord* copyRangeRecord(RangeRecord* record);
 void copyRangeRecordInPlace(RangeRecord* dest, RangeRecord* src);
 void printRangeAsPreconditionToBBuf(const char* varName,
-                                    RangeRecord* totalRanges,
+                                    RangeRecord* totalRange,
                                     BBuf* buf);
 
 #endif

@@ -352,7 +352,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
                     "         :pre");
         }
         for(int i = 0; i < numVars; ++i){
-          printRangeAsPreconditionToBBuf(getVar(i), totalRanges, buf);
+          printRangeAsPreconditionToBBuf(getVar(i), &(totalRanges[i]), buf);
         }
         if (numVars > 1){
           printBBuf(buf, ")\n");
