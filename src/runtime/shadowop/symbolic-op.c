@@ -153,8 +153,7 @@ void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr,
       if (concMatch->type == Node_Leaf ||
           concMatch->branch.op != symbMatch->branch.op){
         curSymbGraft.parent->branch.args[curSymbGraft.childIndex] =
-          mkFreshSymbolicLeaf(symbMatch->isConst &&
-                              symbMatch->constVal == concMatch->value,
+          mkFreshSymbolicLeaf(symbMatch->isConst,
                               symbMatch->constVal);
         symbMatch = symbGraftChild(curSymbGraft);
       }
