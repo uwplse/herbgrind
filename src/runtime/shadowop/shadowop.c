@@ -192,9 +192,10 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
     case Iop_MulF128:
     case Iop_MulF32:
     case Iop_MulF64r32:
-      if (getDouble(args[0]->real) == 0 || getDouble(args[1]->real) == 0){
+      if ((getDouble(args[0]->real) == 0 && !isNaN(args[1]->real)) ||
+          (getDouble(args[1]->real) == 0 && !isNaN(args[0]->real))){
         ShadowValue* result =
-          mkShadowValue(opinfo->exinfo.argPrecision, 0);
+          mkShadowValue(opinfo->exinfo.argPrecision, clientResult);
         execSymbolicOp(opinfo, &(result->expr), clientResult, args, False);
         return result;
       }
