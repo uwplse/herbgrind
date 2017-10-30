@@ -63,6 +63,12 @@ typedef struct _tableValueEntry {
   ShadowValue* val;
 } TableValueEntry;
 
+typedef struct _valueCacheEntry {
+  struct _valueCacheEntry* next;
+  UWord key;
+  ShadowValue* val;
+} ValueCacheEntry;
+
 typedef union {
   float argValuesF[4][8];
   double argValues[4][4];
