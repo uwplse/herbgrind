@@ -120,6 +120,18 @@ void ppFloat(double val){
       i++;
     }
     VG_(printf)("%fe-%d", val, i);
+  } else if (val >= 9.9999999){
+    while (val >= 9.9999999){
+      val /= 10;
+      i++;
+    }
+    VG_(printf)("%fe%d", val, i);
+  } else if (val <= -9.9999999){
+    while (val <= -9.9999999){
+      val /= 10;
+      i++;
+    }
+    VG_(printf)("%fe%d", val, i);
   } else {
     VG_(printf)("%f", val);
   }
