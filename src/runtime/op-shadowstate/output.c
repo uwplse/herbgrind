@@ -347,7 +347,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
         if (numVars > 1){
           printBBuf(buf,
                     "         :pre (and");
-        } else {
+        } else if (numVars == 1) {
           printBBuf(buf,
                     "         :pre");
         }
@@ -356,7 +356,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
         }
         if (numVars > 1){
           printBBuf(buf, ")\n");
-        } else {
+        } else if (numVars == 1){
           printBBuf(buf, "\n");
         }
       }
