@@ -90,6 +90,7 @@ struct _SymbExpr {
     SymbExpr** args;
     GroupList groups;
     VgHashTable* varProblematicRanges;
+    VgHashTable* exampleProblematicArgs;
   } branch;
 };
 
@@ -114,13 +115,19 @@ ConcGraft* popConcGraftStack(int count);
 int hasRepeatedVars(SymbExpr* expr);
 SymbExpr* varSwallow(SymbExpr* expr);
 
-void initializeProblematicRanges(SymbExpr* symbExpr);
+void initializeProblematicRangesAndExample(SymbExpr* symbExpr);
 void addRangeEntryCopy(VgHashTable* rangeMap, NodePos position, RangeRecord* original);
 void addInitialRangeEntry(VgHashTable* rangeMap, NodePos position);
+void addExampleEntryCopy(VgHashTable* exampleTable,
+                         NodePos position, double original);
+void addInitialExampleEntry(VgHashTable* exampleMap, NodePos position);
 void updateProblematicRanges(SymbExpr* symbExpr, ConcExpr* cexpr);
 RangeRecord* lookupRangeRecord(VgHashTable* rangeMap, NodePos position);
-void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
-               SymbExpr* expr, int num_vars);
+double lookupExampleInput(VgHashTable* exampleMap, NodePos position);
+void getRangesAndExample(RangeRecord** totalRangesOut,
+                         RangeRecord** problematicRangesOut,
+                         double** exampleInputOut,
+                         SymbExpr* expr, int num_vars);
 void ppRangeTable(VgHashTable* rangeTable);
 
 void ppEquivGroup(Group group);

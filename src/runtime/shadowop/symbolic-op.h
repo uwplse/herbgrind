@@ -58,6 +58,12 @@ typedef struct _rangeMapEntry {
   NodePos position;
   RangeRecord range_rec;
 } RangeMapEntry;
+typedef struct _exampleMapEntry {
+  struct _exampleMapEntry* next;
+  UWord positionHash;
+  NodePos position;
+  double value;
+} ExampleMapEntry;
 
 void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
                     double computedResult, ShadowValue** args,
