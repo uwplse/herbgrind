@@ -344,19 +344,27 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 "       (FPCore %s\n",
                 varString);
       if (fpcore_ranges && use_ranges){
-        if (numVars > 1){
+        int numNonTrivialRanges = 0;
+        for(int i = 0; i < numVars; ++i){
+          if (nonTrivialRange(&(totalRanges[i]))){
+            numNonTrivialRanges += 1;
+          }
+        }
+        if (numNonTrivialRanges > 1){
           printBBuf(buf,
                     "         :pre (and");
-        } else if (numVars == 1) {
+        } else if (numNonTrivialRanges == 1) {
           printBBuf(buf,
                     "         :pre");
         }
         for(int i = 0; i < numVars; ++i){
-          printRangeAsPreconditionToBBuf(getVar(i), &(totalRanges[i]), buf);
+          if (nonTrivialRange(&(totalRanges[i]))){
+            printRangeAsPreconditionToBBuf(getVar(i), &(totalRanges[i]), buf);
+          }
         }
-        if (numVars > 1){
+        if (numNonTrivialRanges > 1){
           printBBuf(buf, ")\n");
-        } else if (numVars == 1){
+        } else if (numNonTrivialRanges == 1){
           printBBuf(buf, "\n");
         }
       }
@@ -433,19 +441,27 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 "    (FPCore %s\n",
                 varString);
       if (fpcore_ranges && use_ranges){
-        if (numVars > 1){
+        int numNonTrivialRanges = 0;
+        for(int i = 0; i < numVars; ++i){
+          if (nonTrivialRange(&(totalRanges[i]))){
+            numNonTrivialRanges += 1;
+          }
+        }
+        if (numNonTrivialRanges > 1){
           printBBuf(buf,
                     "      :pre (and");
-        } else {
+        } else if (numNonTrivialRanges == 1) {
           printBBuf(buf,
                     "      :pre");
         }
         for(int i = 0; i < numVars; ++i){
-          printRangeAsPreconditionToBBuf(getVar(i), totalRanges, buf);
+          if (nonTrivialRange(&(totalRanges[i]))){
+            printRangeAsPreconditionToBBuf(getVar(i), &(totalRanges[i]), buf);
+          }
         }
-        if (numVars > 1){
+        if (numNonTrivialRanges > 1){
           printBBuf(buf, ")\n");
-        } else {
+        } else if (numNonTrivialRanges == 1) {
           printBBuf(buf, "\n");
         }
       }

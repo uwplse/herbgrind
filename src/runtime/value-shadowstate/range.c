@@ -75,6 +75,11 @@ void copyRangeRecordInPlace(RangeRecord* dest, RangeRecord* src){
   dest->neg_range.max = src->neg_range.max;
 }
 
+int nonTrivialRange(RangeRecord* range){
+  if (detailed_ranges) return 0;
+  return range->pos_range.min != -INFINITY || range->pos_range.max != INFINITY;
+}
+
 void printRangeAsPreconditionToBBuf(const char* varName,
                                     RangeRecord* totalRange,
                                     BBuf* buf){
