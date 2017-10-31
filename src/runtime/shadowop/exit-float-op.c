@@ -170,7 +170,7 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
       VG_(printf)("Correct output: %X; Computed output: %X\n",
                   correctOutput, computedOutput);
     }
-    markEscapeFromFloat("Compare",
+    markEscapeFromFloat("compare",
                         correctOutput != computedOutput,
                         2, values);
     if (follow_real_execution){
@@ -192,7 +192,7 @@ VG_REGPARM(3) void checkConvert(FloatType argPrecision, IRTemp tmp,
   int correctResult = (int)getDouble(arg->values[0]->real);
   int computedValue =
     *((int*)&computedResult.f[0]);
-  markEscapeFromFloat("Convert",
+  markEscapeFromFloat("convert",
                       correctResult != computedValue,
                       1, &(arg->values[0]));
   if (tmp == -1){
