@@ -321,7 +321,9 @@ void writeInfluences(Int fileD, InfluenceList influences){
     RangeRecord* totalRanges = NULL;
     RangeRecord* problematicRanges = NULL;
     if (!no_exprs){
-      getRanges(&totalRanges, &problematicRanges, opinfo->expr, numVars);
+      double* exampleProblematicArgs;
+      getRangesAndExample(&totalRanges, &problematicRanges, &exampleProblematicArgs,
+                        opinfo->expr, numVars);
     }
 
     if (!VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
@@ -347,71 +349,33 @@ void writeInfluences(Int fileD, InfluenceList influences){
                   "       (FPCore %s\n",
                   varString);
         if (fpcore_ranges && use_ranges){
-          int numNonTrivialRanges = 0;
-          for(int i = 0; i < numVars; ++i){
-            if (nonTrivialRange(&(totalRanges[i]))){
-              numNonTrivialRanges += 1;
-            }
-          }
-          if (numNonTrivialRanges > 1){
+          if (numVars > 1){
             printBBuf(buf,
                       "         :pre (and");
-          } else if (numNonTrivialRanges == 1) {
+          } else {
             printBBuf(buf,
                       "         :pre");
           }
           for(int i = 0; i < numVars; ++i){
-            if (nonTrivialRange(&(totalRanges[i]))){
-              printRangeAsPreconditionToBBuf(getVar(i), &(totalRanges[i]), buf);
-            }
+            printRangeAsPreconditionToBBuf(getVar(i), totalRanges, buf);
           }
-          if (numNonTrivialRanges > 1){
+          if (numVars > 1){
             printBBuf(buf, ")\n");
-          } else if (numNonTrivialRanges == 1){
+          } else {
             printBBuf(buf, "\n");
           }
         }
         printBBuf(buf,
                   "         %s))\n",
                   exprString);
-        if (!fpcore_ranges && use_ranges){
-          printBBuf(buf,
-                    "     (var-ranges");
-          for(int i = 0; i < numVars; ++i){
-            if (detailed_ranges){
-              printBBuf(buf,
-                        "\n       (%s\n",
-                        getVar(i));
-              printBBuf(buf,
-                        "         (neg-range-min ");
-              printBBufFloat(buf, totalRanges->neg_range.min);
-              printBBuf(buf,")\n");
-              printBBuf(buf,
-                        "         (neg-range-max ");
-              printBBufFloat(buf, totalRanges->neg_range.max);
-              printBBuf(buf,")\n");
-              printBBuf(buf,
-                        "         (pos-range-min ");
-              printBBufFloat(buf, totalRanges->pos_range.min);
-              printBBuf(buf,")\n");
-              printBBuf(buf,
-                        "         (pos-range-max ");
-              printBBufFloat(buf, totalRanges->pos_range.max);
-              printBBuf(buf,"))");
-            } else {
-              printBBuf(buf,
-                        "         (range-min ");
-              printBBufFloat(buf, totalRanges->pos_range.min);
-              printBBuf(buf,")\n");
-              printBBuf(buf,
-                        "         (range-max ");
-              printBBufFloat(buf, totalRanges->pos_range.max);
-              printBBuf(buf,"))");
-            }
+        if (use_ranges){
+          writeProblematicRanges(buf, numVars, problematicRanges);
+          if (!fpcore_ranges){
+            writeRanges(buf, numVars, totalRanges);
           }
-          printBBuf(buf, ")\n");
         }
       }
+      writeExample(buf, numVars, exampleProblematicArgs);
       printBBuf(buf,
                 "     (function \"%s\")\n"
                 "     (filename \"%s\")\n"
@@ -486,6 +450,13 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 addrString);
       VG_(free)(addrString);
       printBBuf(buf, "\n");
+      if (numVars > 0 && use_ranges){
+        if (!fpcore_ranges){
+          writeRanges(buf, numVars, totalRanges);
+        }
+        writeProblematicRanges(buf, numVars, problematicRanges);
+        writeExample(buf, numVars, exampleProblematicArgs);
+      }
       ErrorAggregate local_error = opinfo->agg.local_error;
       ErrorAggregate global_error = opinfo->agg.global_error;
       printBBuf(buf,
@@ -513,68 +484,183 @@ void writeInfluences(Int fileD, InfluenceList influences){
   }
 }
 
-void writeRanges(BBuf* buf, int numVars,
-                 RangeRecord* ranges, RangeRecord* problematicRanges){
-  if (detailed_ranges){
-    printBBuf(buf, "\n        Postive Values:\n");
-    for (int i = 0; i < numVars; ++i){
-      RangeRecord varRange = ranges[i];
-      printBBuf(buf, "        ");
-      printBBufFloat(buf, varRange.pos_range.min);
-      printBBuf(buf,           " <= %s <= ", getVar(i));
-      printBBufFloat(buf, varRange.pos_range.max);
-      printBBuf(buf, "\n");
+void writeProblematicRanges(BBuf* buf, int numVars, RangeRecord* problematicRanges){
+  if (output_sexp){
+    printBBuf(buf,
+              "     (var-problematic-ranges");
+    for(int i = 0; i < numVars; ++i){
+      if (detailed_ranges){
+        printBBuf(buf,
+                  "\n       (%s\n",
+                  getVar(i));
+        printBBuf(buf,
+                  "         (neg-range-min ");
+        printBBufFloat(buf, problematicRanges->neg_range.min);
+        printBBuf(buf,")\n");
+        printBBuf(buf,
+                  "         (neg-range-max ");
+        printBBufFloat(buf, problematicRanges->neg_range.max);
+        printBBuf(buf,")\n");
+        printBBuf(buf,
+                  "         (pos-range-min ");
+        printBBufFloat(buf, problematicRanges->pos_range.min);
+        printBBuf(buf,")\n");
+        printBBuf(buf,
+                  "         (pos-range-max ");
+        printBBufFloat(buf, problematicRanges->pos_range.max);
+        printBBuf(buf,"))");
+      } else {
+        printBBuf(buf,
+                  "\n       (%s\n",
+                  getVar(i));
+        printBBuf(buf,
+                  "         (range-min ");
+        printBBufFloat(buf, problematicRanges->pos_range.min);
+        printBBuf(buf,")\n");
+        printBBuf(buf,
+                  "         (range-max ");
+        printBBufFloat(buf, problematicRanges->pos_range.max);
+        printBBuf(buf,"))");
+      }
     }
-    printBBuf(buf, "\n        Negative Values:\n");
-    for (int i = 0; i < numVars; ++i){
-      RangeRecord varRange = ranges[i];
-      printBBuf(buf, "        ");
-      printBBufFloat(buf, varRange.neg_range.min);
-      printBBuf(buf,           " <= %s <= ", getVar(i));
-      printBBufFloat(buf, varRange.neg_range.max);
-      printBBuf(buf, "\n");
-    }
-    printBBuf(buf, "\n        Postive Problematic Values:\n");
-    for (int i = 0; i < numVars; ++i){
-      tl_assert(problematicRanges != NULL);
-      RangeRecord varRange = problematicRanges[i];
-      printBBuf(buf, "        ");
-      printBBufFloat(buf, varRange.pos_range.min);
-      printBBuf(buf,           " <= %s <= ", getVar(i));
-      printBBufFloat(buf, varRange.pos_range.max);
-      printBBuf(buf, "\n");
-    }
-    printBBuf(buf, "\n        Negative Problematic Values:\n");
-    for (int i = 0; i < numVars; ++i){
-      RangeRecord varRange = problematicRanges[i];
-      printBBuf(buf, "        ");
-      printBBufFloat(buf, varRange.neg_range.min);
-      printBBuf(buf,           " <= %s <= ", getVar(i));
-      printBBufFloat(buf, varRange.neg_range.max);
-      printBBuf(buf, "\n");
-    }
+    printBBuf(buf, ")\n");
   } else {
-    printBBuf(buf,   "      With");
-    for(int i = 0; i < numVars; ++i){
-      RangeRecord varRange = ranges[i];
-      if (i > 0){
-        printBBuf(buf, ",");
+    if (detailed_ranges){
+      printBBuf(buf, "   Positive Problematic Values:\n");
+      for (int i = 0; i < numVars; ++i){
+        tl_assert(problematicRanges != NULL);
+        RangeRecord varRange = problematicRanges[i];
+        printBBuf(buf, "        ");
+        printBBufFloat(buf, varRange.pos_range.min);
+        printBBuf(buf,           " <= %s <= ", getVar(i));
+        printBBufFloat(buf, varRange.pos_range.max);
+        printBBuf(buf, "\n");
       }
-      printBBuf(buf, " ");
-      printBBufFloat(buf, varRange.pos_range.min);
-      printBBuf(buf, " <= %s <= ", getVar(i));
-      printBBufFloat(buf, varRange.pos_range.max);
+      printBBuf(buf, "   Negative Problematic Values:\n");
+      for (int i = 0; i < numVars; ++i){
+        RangeRecord varRange = problematicRanges[i];
+        printBBuf(buf, "        ");
+        printBBufFloat(buf, varRange.neg_range.min);
+        printBBuf(buf,           " <= %s <= ", getVar(i));
+        printBBufFloat(buf, varRange.neg_range.max);
+        printBBuf(buf, "\n");
+      }
+    } else {
+      printBBuf(buf, "   Problematic inputs:");
+      for(int i = 0; i < numVars; ++i){
+        RangeRecord varRange = problematicRanges[i];
+        if (i > 0){
+          printBBuf(buf, ",");
+        }
+        printBBuf(buf, " ");
+        printBBufFloat(buf, varRange.pos_range.min);
+        printBBuf(buf, " <= %s <= ", getVar(i));
+        printBBufFloat(buf, varRange.pos_range.max);
+      }
+      printBBuf(buf, "\n");
     }
-    printBBuf(buf, "\n      Problematic inputs:");
+  }
+}
+
+void writeExample(BBuf* buf, int numVars, double* exampleProblematicInput){
+  if (output_sexp){
+    printBBuf(buf,
+              "     (example problematic input (");
     for(int i = 0; i < numVars; ++i){
-      RangeRecord varRange = problematicRanges[i];
-      if (i > 0){
-        printBBuf(buf, ",");
+      double inputVal = exampleProblematicInput[i];
+      printBBufFloat(buf, inputVal);
+      if (i != numVars - 1){
+        printBBuf(buf, ", ");
       }
-      printBBuf(buf, " ");
-      printBBufFloat(buf, varRange.pos_range.min);
-      printBBuf(buf, " <= %s <= ", getVar(i));
-      printBBufFloat(buf, varRange.pos_range.max);
+    }
+    printBBuf(buf, ")\n");
+  } else {
+    printBBuf(buf, "   Example problematic input: (");
+    for(int i = 0; i < numVars; ++i){
+      double inputVal = exampleProblematicInput[i];
+      printBBufFloat(buf, inputVal);
+      if (i != numVars - 1){
+        printBBuf(buf, ", ");
+      }
+    }
+    printBBuf(buf, ")\n");
+  }
+}
+
+void writeRanges(BBuf* buf, int numVars, RangeRecord* ranges){
+  VG_(printf)("Crash!\n");
+  if (output_sexp){
+    printBBuf(buf,
+              "     (var-ranges");
+    for(int i = 0; i < numVars; ++i){
+      if (detailed_ranges){
+        printBBuf(buf,
+                  "\n       (%s\n",
+                  getVar(i));
+        printBBuf(buf,
+                  "         (neg-range-min ");
+        printBBufFloat(buf, ranges->neg_range.min);
+        printBBuf(buf,")\n");
+        printBBuf(buf,
+                  "         (neg-range-max ");
+        printBBufFloat(buf, ranges->neg_range.max);
+        printBBuf(buf,")\n");
+        printBBuf(buf,
+                  "         (pos-range-min ");
+        printBBufFloat(buf, ranges->pos_range.min);
+        printBBuf(buf,")\n");
+        printBBuf(buf,
+                  "         (pos-range-max ");
+        printBBufFloat(buf, ranges->pos_range.max);
+        printBBuf(buf,"))");
+      } else {
+        printBBuf(buf,
+                  "\n       (%s\n",
+                  getVar(i));
+        printBBuf(buf,
+                  "         (range-min ");
+        printBBufFloat(buf, ranges->pos_range.min);
+        printBBuf(buf,")\n");
+        printBBuf(buf,
+                  "         (range-max ");
+        printBBufFloat(buf, ranges->pos_range.max);
+        printBBuf(buf,"))");
+      }
+    }
+    printBBuf(buf, ")\n");
+  } else {
+    if (detailed_ranges){
+      printBBuf(buf, "\n        Postive Values:\n");
+      for (int i = 0; i < numVars; ++i){
+        RangeRecord varRange = ranges[i];
+        printBBuf(buf, "        ");
+        printBBufFloat(buf, varRange.pos_range.min);
+        printBBuf(buf,           " <= %s <= ", getVar(i));
+        printBBufFloat(buf, varRange.pos_range.max);
+        printBBuf(buf, "\n");
+      }
+      printBBuf(buf, "\n        Negative Values:\n");
+      for (int i = 0; i < numVars; ++i){
+        RangeRecord varRange = ranges[i];
+        printBBuf(buf, "        ");
+        printBBufFloat(buf, varRange.neg_range.min);
+        printBBuf(buf,           " <= %s <= ", getVar(i));
+        printBBufFloat(buf, varRange.neg_range.max);
+        printBBuf(buf, "\n");
+      }
+    } else {
+      printBBuf(buf,   "      With");
+      for(int i = 0; i < numVars; ++i){
+        RangeRecord varRange = ranges[i];
+        if (i > 0){
+          printBBuf(buf, ",");
+        }
+        printBBuf(buf, " ");
+        printBBufFloat(buf, varRange.pos_range.min);
+        printBBuf(buf, " <= %s <= ", getVar(i));
+        printBBufFloat(buf, varRange.pos_range.max);
+      }
+      printBBuf(buf, "\n");
     }
   }
 }

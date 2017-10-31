@@ -201,6 +201,10 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
                               canonicalPos);
           addRangeEntryCopy(symbExpr->branch.varProblematicRanges,
                             curGroup->item, existingRange);
+          addExampleEntryCopy(symbExpr->branch.exampleProblematicArgs,
+                              curGroup->item,
+                              lookupExampleInput(symbExpr->branch.exampleProblematicArgs,
+                                                 canonicalPos));
           canonicalPos = curGroup->item;
         }
         continue;
@@ -227,6 +231,10 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
             addRangeEntryCopy(symbExpr->branch.varProblematicRanges,
                               groupMemberPos,
                               existingRange);
+          addExampleEntryCopy(symbExpr->branch.exampleProblematicArgs,
+                              groupMemberPos,
+                              lookupExampleInput(symbExpr->branch.exampleProblematicArgs,
+                                                 canonicalPos));
           } else {
             lpush(Group)(&(newGroups->data[splitGroup]), groupMemberPos);
           }
