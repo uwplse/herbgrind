@@ -869,6 +869,11 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
       if (!childExpr->isConst &&
           !(VG_(OSetWord_Contains)(seenNodes, (UWord)(uintptr_t)childPos))){
         totalRanges[*nextVarIdx] = curExpr->branch.op->agg.inputs.range_records[i];
+        tl_assert2(totalRanges[*nextVarIdx].pos_range.min !=
+                   totalRanges[*nextVarIdx].pos_range.max,
+                   "Expr %p (child %d of %p, opinfo %p), "
+                   "is non-const, but has a range with only one value!\n",
+                   childExpr, i, curExpr, curExpr->branch.op);
         RangeRecord* result = lookupRangeRecord(rangeTable, childPos);
         if (result == NULL){
           VG_(printf)("Couldn't find range table entry for ");

@@ -320,7 +320,9 @@ void writeInfluences(Int fileD, InfluenceList influences){
 
     RangeRecord* totalRanges = NULL;
     RangeRecord* problematicRanges = NULL;
-    getRanges(&totalRanges, &problematicRanges, opinfo->expr, numVars);
+    if (!no_exprs){
+      getRanges(&totalRanges, &problematicRanges, opinfo->expr, numVars);
+    }
 
     if (!VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
                                    NULL, &src_line)){
@@ -338,67 +340,77 @@ void writeInfluences(Int fileD, InfluenceList influences){
     if (output_sexp){
       printBBuf(buf,
                 "    (");
-      printBBuf(buf,
-                "\n"
-                "     (expr\n"
-                "       (FPCore %s\n",
-                varString);
-      if (fpcore_ranges && use_ranges){
-        if (numVars > 1){
-          printBBuf(buf,
-                    "         :pre (and");
-        } else {
-          printBBuf(buf,
-                    "         :pre");
-        }
-        for(int i = 0; i < numVars; ++i){
-          printRangeAsPreconditionToBBuf(getVar(i), totalRanges, buf);
-        }
-        if (numVars > 1){
-          printBBuf(buf, ")\n");
-        } else {
-          printBBuf(buf, "\n");
-        }
-      }
-      printBBuf(buf,
-                "         %s))\n",
-                exprString);
-      if (!fpcore_ranges && use_ranges){
+      if (!no_exprs){
         printBBuf(buf,
-                  "     (var-ranges");
-        for(int i = 0; i < numVars; ++i){
-          if (detailed_ranges){
+                  "\n"
+                  "     (expr\n"
+                  "       (FPCore %s\n",
+                  varString);
+        if (fpcore_ranges && use_ranges){
+          int numNonTrivialRanges = 0;
+          for(int i = 0; i < numVars; ++i){
+            if (nonTrivialRange(&(totalRanges[i]))){
+              numNonTrivialRanges += 1;
+            }
+          }
+          if (numNonTrivialRanges > 1){
             printBBuf(buf,
-                      "\n       (%s\n",
-                      getVar(i));
+                      "         :pre (and");
+          } else if (numNonTrivialRanges == 1) {
             printBBuf(buf,
-                      "         (neg-range-min ");
-            printBBufFloat(buf, totalRanges->neg_range.min);
-            printBBuf(buf,")\n");
-            printBBuf(buf,
-                      "         (neg-range-max ");
-            printBBufFloat(buf, totalRanges->neg_range.max);
-            printBBuf(buf,")\n");
-            printBBuf(buf,
-                      "         (pos-range-min ");
-            printBBufFloat(buf, totalRanges->pos_range.min);
-            printBBuf(buf,")\n");
-            printBBuf(buf,
-                      "         (pos-range-max ");
-            printBBufFloat(buf, totalRanges->pos_range.max);
-            printBBuf(buf,"))");
-          } else {
-            printBBuf(buf,
-                      "         (range-min ");
-            printBBufFloat(buf, totalRanges->pos_range.min);
-            printBBuf(buf,")\n");
-            printBBuf(buf,
-                      "         (range-max ");
-            printBBufFloat(buf, totalRanges->pos_range.max);
-            printBBuf(buf,"))");
+                      "         :pre");
+          }
+          for(int i = 0; i < numVars; ++i){
+            if (nonTrivialRange(&(totalRanges[i]))){
+              printRangeAsPreconditionToBBuf(getVar(i), &(totalRanges[i]), buf);
+            }
+          }
+          if (numNonTrivialRanges > 1){
+            printBBuf(buf, ")\n");
+          } else if (numNonTrivialRanges == 1){
+            printBBuf(buf, "\n");
           }
         }
-        printBBuf(buf, ")\n");
+        printBBuf(buf,
+                  "         %s))\n",
+                  exprString);
+        if (!fpcore_ranges && use_ranges){
+          printBBuf(buf,
+                    "     (var-ranges");
+          for(int i = 0; i < numVars; ++i){
+            if (detailed_ranges){
+              printBBuf(buf,
+                        "\n       (%s\n",
+                        getVar(i));
+              printBBuf(buf,
+                        "         (neg-range-min ");
+              printBBufFloat(buf, totalRanges->neg_range.min);
+              printBBuf(buf,")\n");
+              printBBuf(buf,
+                        "         (neg-range-max ");
+              printBBufFloat(buf, totalRanges->neg_range.max);
+              printBBuf(buf,")\n");
+              printBBuf(buf,
+                        "         (pos-range-min ");
+              printBBufFloat(buf, totalRanges->pos_range.min);
+              printBBuf(buf,")\n");
+              printBBuf(buf,
+                        "         (pos-range-max ");
+              printBBufFloat(buf, totalRanges->pos_range.max);
+              printBBuf(buf,"))");
+            } else {
+              printBBuf(buf,
+                        "         (range-min ");
+              printBBufFloat(buf, totalRanges->pos_range.min);
+              printBBuf(buf,")\n");
+              printBBuf(buf,
+                        "         (range-max ");
+              printBBufFloat(buf, totalRanges->pos_range.max);
+              printBBuf(buf,"))");
+            }
+          }
+          printBBuf(buf, ")\n");
+        }
       }
       printBBuf(buf,
                 "     (function \"%s\")\n"
@@ -428,35 +440,45 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 local_error.max_error,
                 global_error.num_evals);
     } else {
-      printBBuf(buf,
-                "\n"
-                "    (FPCore %s\n",
-                varString);
-      if (fpcore_ranges && use_ranges){
-        if (numVars > 1){
-          printBBuf(buf,
-                    "      :pre (and");
-        } else {
-          printBBuf(buf,
-                    "      :pre");
+      if (!no_exprs){
+        printBBuf(buf,
+                  "\n"
+                  "    (FPCore %s\n",
+                  varString);
+        if (fpcore_ranges && use_ranges){
+          int numNonTrivialRanges = 0;
+          for(int i = 0; i < numVars; ++i){
+            if (nonTrivialRange(&(totalRanges[i]))){
+              numNonTrivialRanges += 1;
+            }
+          }
+          if (numNonTrivialRanges > 1){
+            printBBuf(buf,
+                      "      :pre (and");
+          } else if (numNonTrivialRanges == 1) {
+            printBBuf(buf,
+                      "      :pre");
+          }
+          for(int i = 0; i < numVars; ++i){
+            if (nonTrivialRange(&(totalRanges[i]))){
+              printRangeAsPreconditionToBBuf(getVar(i), &(totalRanges[i]), buf);
+            }
+          }
+          if (numNonTrivialRanges > 1){
+            printBBuf(buf, ")\n");
+          } else if (numNonTrivialRanges == 1) {
+            printBBuf(buf, "\n");
+          }
         }
-        for(int i = 0; i < numVars; ++i){
-          printRangeAsPreconditionToBBuf(getVar(i), totalRanges, buf);
-        }
-        if (numVars > 1){
-          printBBuf(buf, ")\n");
-        } else {
+        printBBuf(buf,
+                  "         %s)\n",
+                  exprString);
+        if (numVars > 0 && !fpcore_ranges && use_ranges){
+          writeRanges(buf, numVars, totalRanges, problematicRanges);
+          (void)problematicRanges;
+          (void)totalRanges;
           printBBuf(buf, "\n");
         }
-      }
-      printBBuf(buf,
-                "         %s)\n",
-                exprString);
-      if (numVars > 0 && !fpcore_ranges && use_ranges){
-        writeRanges(buf, numVars, totalRanges, problematicRanges);
-        (void)problematicRanges;
-        (void)totalRanges;
-        printBBuf(buf, "\n");
       }
       char* addrString = getAddrString(opinfo->op_addr);
       printBBuf(buf,

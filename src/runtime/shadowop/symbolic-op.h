@@ -60,7 +60,8 @@ typedef struct _rangeMapEntry {
 } RangeMapEntry;
 
 void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
-                    Real real, ShadowValue** args, Bool problematic);
+                    double computedResult, ShadowValue** args,
+                    Bool problematic);
 void generalizeSymbolicExpr(SymbExpr** symexpr, ConcExpr* cexpr);
 
 void generalizeStructure(SymbExpr* symbexpr, ConcExpr* concExpr,

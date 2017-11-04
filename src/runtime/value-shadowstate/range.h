@@ -47,8 +47,9 @@ void initRangeRecord(RangeRecord* record);
 void initRange(Range* range);
 RangeRecord* copyRangeRecord(RangeRecord* record);
 void copyRangeRecordInPlace(RangeRecord* dest, RangeRecord* src);
+int nonTrivialRange(RangeRecord* range);
 void printRangeAsPreconditionToBBuf(const char* varName,
-                                    RangeRecord* totalRanges,
+                                    RangeRecord* totalRange,
                                     BBuf* buf);
 
 #endif

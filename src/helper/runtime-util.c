@@ -63,7 +63,7 @@ Addr getCallAddr(void){
 void printBBufFloat(BBuf* buf, double val){
   int i = 0;
   if (val != val){
-    printBBuf(buf, "*****");
+    printBBuf(buf, "NaN");
   } else if (val == INFINITY){
     printBBuf(buf, "+Inf");
   } else if (val == -INFINITY){
@@ -103,7 +103,7 @@ void printBBufFloat(BBuf* buf, double val){
 void ppFloat(double val){
   int i = 0;
   if (val != val){
-    VG_(printf)("*****");
+    VG_(printf)("NaN");
   } else if (val == INFINITY){
     VG_(printf)("+Inf");
   } else if (val == -INFINITY){
@@ -120,6 +120,18 @@ void ppFloat(double val){
       i++;
     }
     VG_(printf)("%fe-%d", val, i);
+  } else if (val >= 9.9999999){
+    while (val >= 9.9999999){
+      val /= 10;
+      i++;
+    }
+    VG_(printf)("%fe%d", val, i);
+  } else if (val <= -9.9999999){
+    while (val <= -9.9999999){
+      val /= 10;
+      i++;
+    }
+    VG_(printf)("%fe%d", val, i);
   } else {
     VG_(printf)("%f", val);
   }

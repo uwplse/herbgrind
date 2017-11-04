@@ -632,9 +632,9 @@ inline
 ShadowValue* mkShadowValue(FloatType type, double value){
   if (value == 0.0) value = 0.0;
   if (value != value) value = NAN;
-  TableValueEntry* existingEntry =
-    VG_(HT_lookup)(type == Ft_Single ? valueCacheSingle : valueCacheDouble,
-                   *(UWord*)&value);
+  UWord key = *(UWord*)&value;
+  ValueCacheEntry* existingEntry =
+    VG_(HT_lookup)(type == Ft_Single ? valueCacheSingle : valueCacheDouble, key);
   ShadowValue* result = NULL;
   if (existingEntry == NULL || no_reals){
     result = mkShadowValueBare(type);
@@ -644,9 +644,9 @@ ShadowValue* mkShadowValue(FloatType type, double value){
     if (!no_exprs){
       result->expr = mkLeafConcExpr(value);
     }
-    TableValueEntry* newEntry = mkTableEntry();
+    ValueCacheEntry* newEntry = (void*)mkTableEntry();
     newEntry->val = result;
-    newEntry->addr = *(UWord*)&value;
+    newEntry->key = key;
     VG_(HT_add_node)(type == Ft_Single ? valueCacheSingle : valueCacheDouble,
                      newEntry);
   } else {
