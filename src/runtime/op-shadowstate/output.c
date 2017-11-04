@@ -320,8 +320,8 @@ void writeInfluences(Int fileD, InfluenceList influences){
 
     RangeRecord* totalRanges = NULL;
     RangeRecord* problematicRanges = NULL;
+    double* exampleProblematicArgs = NULL;
     if (!no_exprs){
-      double* exampleProblematicArgs;
       getRangesAndExample(&totalRanges, &problematicRanges, &exampleProblematicArgs,
                         opinfo->expr, numVars);
     }
@@ -437,10 +437,11 @@ void writeInfluences(Int fileD, InfluenceList influences){
         printBBuf(buf,
                   "         %s)\n",
                   exprString);
-        if (numVars > 0 && !fpcore_ranges && use_ranges){
-          writeRanges(buf, numVars, totalRanges, problematicRanges);
-          (void)problematicRanges;
-          (void)totalRanges;
+        if (numVars > 0 && use_ranges){
+          writeProblematicRanges(buf, numVars, problematicRanges);
+          if (!fpcore_ranges){
+            writeRanges(buf, numVars, totalRanges);
+          }
           printBBuf(buf, "\n");
         }
       }
