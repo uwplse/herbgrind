@@ -76,6 +76,7 @@ Bool unsound_var_swallow = False;
 Bool follow_real_execution = False;
 Bool double_comparisons = False;
 Bool use_ranges = True;
+Bool flip_ranges = False;
 
 Bool no_exprs = False;
 Bool no_influences = False;
@@ -113,6 +114,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--unsound-var-swallow", unsound_var_swallow, True) {}
   else if VG_XACT_CLO(arg, "--follow-real-execution", follow_real_execution, False) {}
   else if VG_XACT_CLO(arg, "--double-comparisons", double_comparisons, True) {}
+  else if VG_XACT_CLO(arg, "--flip-ranges", flip_ranges, True) {}
   else if VG_XACT_CLO(arg, "--expr-colors", expr_colors, True) {}
   else if VG_XACT_CLO(arg, "--output-mark-exprs", output_mark_exprs, True) {}
   else if VG_XACT_CLO(arg, "--detailed-ranges", detailed_ranges, True) {}

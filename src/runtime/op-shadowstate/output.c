@@ -349,9 +349,10 @@ void writeInfluences(Int fileD, InfluenceList influences){
                   "       (FPCore %s\n",
                   varString);
         if (fpcore_ranges && use_ranges){
+          RangeRecord* preconditionRanges = flip_ranges ? problematicRanges : totalRanges;
           int numNonTrivialRanges = 0;
           for(int i = 0; i < numVars; ++i){
-            if (nonTrivialRange(&(totalRanges[i]))){
+            if (nonTrivialRange(&(preconditionRanges[i]))){
               numNonTrivialRanges += 1;
             }
           }
@@ -363,8 +364,8 @@ void writeInfluences(Int fileD, InfluenceList influences){
                       "      :pre");
           }
           for(int i = 0; i < numVars; ++i){
-            if (nonTrivialRange(&(totalRanges[i]))){
-              printRangeAsPreconditionToBBuf(getVar(i), &(totalRanges[i]), buf);
+            if (nonTrivialRange(&(preconditionRanges[i]))){
+              printRangeAsPreconditionToBBuf(getVar(i), &(preconditionRanges[i]), buf);
             }
           }
           if (numNonTrivialRanges > 1){
@@ -377,8 +378,10 @@ void writeInfluences(Int fileD, InfluenceList influences){
                   "         %s))\n",
                   exprString);
         if (use_ranges){
-          writeProblematicRanges(buf, numVars, problematicRanges);
-          if (!fpcore_ranges){
+          if (!fpcore_ranges || !flip_ranges){
+            writeProblematicRanges(buf, numVars, problematicRanges);
+          }
+          if (!fpcore_ranges || flip_ranges){
             writeRanges(buf, numVars, totalRanges);
           }
         }
@@ -418,9 +421,10 @@ void writeInfluences(Int fileD, InfluenceList influences){
                   "    (FPCore %s\n",
                   varString);
         if (fpcore_ranges && use_ranges){
+          RangeRecord* preconditionRanges = flip_ranges ? problematicRanges : totalRanges;
           int numNonTrivialRanges = 0;
           for(int i = 0; i < numVars; ++i){
-            if (nonTrivialRange(&(totalRanges[i]))){
+            if (nonTrivialRange(&(preconditionRanges[i]))){
               numNonTrivialRanges += 1;
             }
           }
@@ -432,8 +436,8 @@ void writeInfluences(Int fileD, InfluenceList influences){
                       "      :pre");
           }
           for(int i = 0; i < numVars; ++i){
-            if (nonTrivialRange(&(totalRanges[i]))){
-              printRangeAsPreconditionToBBuf(getVar(i), &(totalRanges[i]), buf);
+            if (nonTrivialRange(&(preconditionRanges[i]))){
+              printRangeAsPreconditionToBBuf(getVar(i), &(preconditionRanges[i]), buf);
             }
           }
           if (numNonTrivialRanges > 1){
@@ -445,13 +449,6 @@ void writeInfluences(Int fileD, InfluenceList influences){
         printBBuf(buf,
                   "         %s)\n",
                   exprString);
-        if (numVars > 0 && use_ranges){
-          writeProblematicRanges(buf, numVars, problematicRanges);
-          if (!fpcore_ranges){
-            writeRanges(buf, numVars, totalRanges);
-          }
-          printBBuf(buf, "\n");
-        }
       }
       char* addrString = getAddrString(opinfo->op_addr);
       printBBuf(buf,
@@ -459,11 +456,13 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 addrString);
       VG_(free)(addrString);
       printBBuf(buf, "\n");
-      if (numVars > 0 && use_ranges){
-        if (!fpcore_ranges){
+      if (numVars > 0 && use_ranges && !no_exprs){
+        if (!fpcore_ranges || flip_ranges){
           writeRanges(buf, numVars, totalRanges);
         }
-        writeProblematicRanges(buf, numVars, problematicRanges);
+        if (!fpcore_ranges || !flip_ranges){
+          writeProblematicRanges(buf, numVars, problematicRanges);
+        }
         writeExample(buf, numVars, exampleProblematicArgs);
       }
       ErrorAggregate local_error = opinfo->agg.local_error;
@@ -495,8 +494,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
 
 void writeProblematicRanges(BBuf* buf, int numVars, RangeRecord* problematicRanges){
   if (output_sexp){
-    printBBuf(buf,
-              "     (var-problematic-ranges");
+    printBBuf(buf, "     (var-problematic-ranges");
     for(int i = 0; i < numVars; ++i){
       if (detailed_ranges){
         printBBuf(buf,
