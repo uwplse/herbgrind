@@ -315,15 +315,16 @@ void writeInfluences(Int fileD, InfluenceList influences){
       opinfo->expr = varSwallow(opinfo->expr);
     }
     int numVars;
-    char* exprString = symbExprToString(opinfo->expr, &numVars);
-    char* varString = symbExprVarString(numVars);
-
+    char* exprString = NULL;
+    char* varString = NULL;
     RangeRecord* totalRanges = NULL;
     RangeRecord* problematicRanges = NULL;
     double* exampleProblematicArgs = NULL;
     if (!no_exprs){
       getRangesAndExample(&totalRanges, &problematicRanges, &exampleProblematicArgs,
                         opinfo->expr, numVars);
+      exprString = symbExprVarString(numVars);
+      varString = symbExprToString(opinfo->expr, &numVars);
     }
 
     if (!VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
@@ -385,8 +386,8 @@ void writeInfluences(Int fileD, InfluenceList influences){
             writeRanges(buf, numVars, totalRanges);
           }
         }
+        writeExample(buf, numVars, exampleProblematicArgs);
       }
-      writeExample(buf, numVars, exampleProblematicArgs);
       printBBuf(buf,
                 "     (function \"%s\")\n"
                 "     (filename \"%s\")\n"
@@ -449,6 +450,16 @@ void writeInfluences(Int fileD, InfluenceList influences){
         printBBuf(buf,
                   "         %s)\n",
                   exprString);
+        if (numVars > 0 && use_ranges && !no_exprs){
+          if (!fpcore_ranges || flip_ranges){
+            writeRanges(buf, numVars, totalRanges);
+          }
+          if (!fpcore_ranges || !flip_ranges){
+            writeProblematicRanges(buf, numVars, problematicRanges);
+          }
+          writeExample(buf, numVars, exampleProblematicArgs);
+          printBBuf(buf, "\n");
+        }
       }
       char* addrString = getAddrString(opinfo->op_addr);
       printBBuf(buf,
@@ -456,15 +467,6 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 addrString);
       VG_(free)(addrString);
       printBBuf(buf, "\n");
-      if (numVars > 0 && use_ranges && !no_exprs){
-        if (!fpcore_ranges || flip_ranges){
-          writeRanges(buf, numVars, totalRanges);
-        }
-        if (!fpcore_ranges || !flip_ranges){
-          writeProblematicRanges(buf, numVars, problematicRanges);
-        }
-        writeExample(buf, numVars, exampleProblematicArgs);
-      }
       ErrorAggregate local_error = opinfo->agg.local_error;
       ErrorAggregate global_error = opinfo->agg.global_error;
       printBBuf(buf,
