@@ -1155,7 +1155,8 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
           }
           if ((arg0->isConst && arg0->constVal == 0.0) ||
               (arg1->isConst && arg1->constVal == 0.0)){
-            printBBuf(buf, "%f", 0.0);
+            printBBuf(buf, " ");
+            printBBufFloat(buf, 0.0);
             return;
           }
           break;
