@@ -321,10 +321,10 @@ void writeInfluences(Int fileD, InfluenceList influences){
       if (var_swallow){
         opinfo->expr = varSwallow(opinfo->expr);
       }
+      exprString = symbExprToString(opinfo->expr, &numVars);
       getRangesAndExample(&totalRanges, &problematicRanges, &exampleProblematicArgs,
-                        opinfo->expr, numVars);
-      exprString = symbExprVarString(numVars);
-      varString = symbExprToString(opinfo->expr, &numVars);
+                          opinfo->expr, numVars);
+      varString = symbExprVarString(numVars);
     }
 
     if (!VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
