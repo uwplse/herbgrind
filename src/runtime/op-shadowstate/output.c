@@ -311,9 +311,6 @@ void writeInfluences(Int fileD, InfluenceList influences){
       curNode != NULL; curNode = curNode->next){
     ShadowOpInfo* opinfo = curNode->item;
 
-    if (var_swallow){
-      opinfo->expr = varSwallow(opinfo->expr);
-    }
     int numVars;
     char* exprString = NULL;
     char* varString = NULL;
@@ -321,6 +318,9 @@ void writeInfluences(Int fileD, InfluenceList influences){
     RangeRecord* problematicRanges = NULL;
     double* exampleProblematicArgs = NULL;
     if (!no_exprs){
+      if (var_swallow){
+        opinfo->expr = varSwallow(opinfo->expr);
+      }
       getRangesAndExample(&totalRanges, &problematicRanges, &exampleProblematicArgs,
                         opinfo->expr, numVars);
       exprString = symbExprVarString(numVars);
