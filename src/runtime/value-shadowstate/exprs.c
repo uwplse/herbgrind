@@ -847,7 +847,7 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
                                double* exampleInput,
                                SymbExpr* curExpr, int* nextVarIdx, NodePos curPos,
                                OSet* seenNodes, VgHashTable* rangeTable,
-                               VgHashTable* exampleTable, int max_depth);
+                               VgHashTable* exampleTable, int max_depth, int num_vars);
 void getRangesAndExample(RangeRecord** totalRangesOut,
                          RangeRecord** problematicRangesOut,
                          double** exampleInputOut,
@@ -931,7 +931,7 @@ void getRangesAndExample(RangeRecord** totalRangesOut,
                             *exampleInputOut, expr, &nextVarIdx, null_pos,
                             seenNodes, expr->branch.varProblematicRanges,
                             expr->branch.exampleProblematicArgs,
-                            MAX_FOLD_DEPTH);
+                            MAX_FOLD_DEPTH, num_vars);
   VG_(OSetWord_Destroy)(seenNodes);
 }
 
@@ -939,14 +939,108 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
                                double* exampleInput,
                                SymbExpr* curExpr, int* nextVarIdx, NodePos curPos,
                                OSet* seenNodes, VgHashTable* rangeTable,
-                               VgHashTable* exampleTable, int max_depth){
+                               VgHashTable* exampleTable, int max_depth,
+                               int num_vars){
   tl_assert(curExpr->type == Node_Branch);
+  if (sound_simplify){
+    switch((int)curExpr->branch.op->op_code){
+      case Iop_Mul32F0x4:
+      case Iop_Mul64F0x2:
+      case Iop_Mul32Fx8:
+      case Iop_Mul64Fx4:
+      case Iop_Mul32Fx4:
+      case Iop_Mul64Fx2:
+      case Iop_MulF64:
+      case Iop_MulF128:
+      case Iop_MulF32:
+      case Iop_MulF64r32:
+        {
+          SymbExpr* arg0 = curExpr->branch.args[0];
+          SymbExpr* arg1 = curExpr->branch.args[1];
+          if (arg0->isConst && arg0->constVal == 1.0){
+            recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                      arg1, nextVarIdx, rconsPos(curPos, 1),
+                                      seenNodes, rangeTable, exampleTable,
+                                      max_depth - 1, num_vars);
+            return;
+          }
+          if (arg1->isConst && arg1->constVal == 1.0){
+            recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                      arg0, nextVarIdx, rconsPos(curPos, 0),
+                                      seenNodes, rangeTable, exampleTable,
+                                      max_depth - 1, num_vars);
+            return;
+          }
+          if ((arg0->isConst && arg0->constVal == 0.0) ||
+              (arg1->isConst && arg1->constVal == 0.0)){
+            return;
+          }
+          break;
+        }
+      case Iop_Add32Fx2:
+      case Iop_Add32F0x4:
+      case Iop_Add64F0x2:
+      case Iop_Add32Fx8:
+      case Iop_Add64Fx4:
+      case Iop_Add32Fx4:
+      case Iop_Add64Fx2:
+      case Iop_AddF128:
+      case Iop_AddF64:
+      case Iop_AddF32:
+      case Iop_AddF64r32:
+        {
+          SymbExpr* arg0 = curExpr->branch.args[0];
+          SymbExpr* arg1 = curExpr->branch.args[1];
+          if (arg0->isConst && arg0->constVal == 0.0){
+            recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                      arg1, nextVarIdx, rconsPos(curPos, 1),
+                                      seenNodes, rangeTable, exampleTable,
+                                      max_depth - 1, num_vars);
+            return;
+          }
+          if (arg1->isConst && arg1->constVal == 0.0){
+            recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                      arg0, nextVarIdx, rconsPos(curPos, 0),
+                                      seenNodes, rangeTable, exampleTable,
+                                      max_depth - 1, num_vars);
+            return;
+          }
+          break;
+        }
+      case Iop_Sub32Fx2:
+      case Iop_Sub32F0x4:
+      case Iop_Sub64F0x2:
+      case Iop_Sub32Fx8:
+      case Iop_Sub64Fx4:
+      case Iop_Sub32Fx4:
+      case Iop_Sub64Fx2:
+      case Iop_SubF128:
+      case Iop_SubF64:
+      case Iop_SubF32:
+      case Iop_SubF64r32:
+        {
+          SymbExpr* arg0 = curExpr->branch.args[0];
+          SymbExpr* arg1 = curExpr->branch.args[1];
+          if (arg1->isConst && arg1->constVal == 0.0){
+            recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                      arg0, nextVarIdx, rconsPos(curPos, 0),
+                                      seenNodes, rangeTable, exampleTable,
+                                      max_depth - 1, num_vars);
+            return;
+          }
+        }
+        break;
+    default:
+      break;
+    }
+  }
   for(int i = 0; i < curExpr->branch.nargs; ++i){
     SymbExpr* childExpr = curExpr->branch.args[i];
     NodePos childPos = rconsPos(curPos, i);
     if (childExpr->type == Node_Leaf || max_depth == 1){
       if (!childExpr->isConst &&
           !(VG_(OSetWord_Contains)(seenNodes, (UWord)(uintptr_t)childPos))){
+        tl_assert2(*nextVarIdx < num_vars, "That's too much, man!");
         totalRanges[*nextVarIdx] = curExpr->branch.op->agg.inputs.range_records[i];
         tl_assert2(totalRanges[*nextVarIdx].pos_range.min !=
                    totalRanges[*nextVarIdx].pos_range.max,
@@ -970,7 +1064,7 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
                                 exampleInput,
                                 childExpr, nextVarIdx, childPos,
                                 seenNodes, rangeTable, exampleTable,
-                                max_depth - 1);
+                                max_depth - 1, num_vars);
     }
   }
 }
