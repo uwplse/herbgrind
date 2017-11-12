@@ -1164,7 +1164,7 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
     if (expr->isConst){
       char* _buf = VG_(malloc)("buffer data", MAX_EXPR_LEN);
       BBuf* bbuf = mkBBuf(MAX_EXPR_LEN, _buf);
-      printBBuf(bbuf, "%f", expr->constVal);
+      printBBufFloat(bbuf, expr->constVal);
       VG_(realloc_shrink)(_buf, MAX_EXPR_LEN - bbuf->bound + 10);
       VG_(free)(bbuf);
       return _buf;
