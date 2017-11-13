@@ -49,6 +49,15 @@ void trackOpAsInfluence(ShadowOpInfo* info, ShadowValue* value){
   dedupAddInfluenceToList(&(value->influences), info);
 }
 
+void forceTrack(Addr varAddr){
+  ShadowValue* val = getMemShadow(varAddr);
+  ShadowOpInfo* info = val->expr->branch.op;
+  VG_(printf)("Tracking %p\n", val);
+  trackOpAsInfluence(info, val);
+}
+void forceTrackF(Addr varAddr){
+}
+
 void dedupAddInfluenceToList(InfluenceList* influences,
                              ShadowOpInfo* influence){
   for(InfluenceList curNode = *influences; curNode != NULL;

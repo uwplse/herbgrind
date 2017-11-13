@@ -33,6 +33,7 @@
 #include "options.h"
 #include "instrument/instrument.h"
 #include "runtime/shadowop/mathreplace.h"
+#include "runtime/shadowop/influence-op.h"
 #include "runtime/op-shadowstate/marks.h"
 #include "runtime/op-shadowstate/output.h"
 
@@ -63,6 +64,9 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
     break;
   case VG_USERREQ__MAYBE_MARK_IMPORTANT:
     maybeMarkImportant((Addr)arg[1]);
+    break;
+  case VG_USERREQ__FORCE_TRACK:
+    forceTrack((Addr)arg[1]);
     break;
   default:
     return False;

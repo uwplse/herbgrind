@@ -33,6 +33,8 @@
 #include "../value-shadowstate/shadowval.h"
 
 void trackOpAsInfluence(ShadowOpInfo* info, ShadowValue* value);
+void forceTrack(Addr varAddr);
+void forceTrackF(Addr varAddr);
 void execInfluencesOp(ShadowOpInfo* info,
                       InfluenceList* res, ShadowValue** args);
 void dedupAddInfluenceToList(InfluenceList* influences,
