@@ -29,6 +29,8 @@
 
 #include "influence-op.h"
 #include "pub_tool_libcprint.h"
+#include "../value-shadowstate/value-shadowstate.h"
+#include "../value-shadowstate/exprs.h"
 
 List_Impl(ShadowOpInfo*, InfluenceList);
 
