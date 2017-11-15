@@ -311,19 +311,20 @@ void writeInfluences(Int fileD, InfluenceList influences){
       curNode != NULL; curNode = curNode->next){
     ShadowOpInfo* opinfo = curNode->item;
 
-    if (var_swallow){
-      opinfo->expr = varSwallow(opinfo->expr);
-    }
     int numVars;
-    char* exprString = symbExprToString(opinfo->expr, &numVars);
-    char* varString = symbExprVarString(numVars);
-
+    char* exprString = NULL;
+    char* varString = NULL;
     RangeRecord* totalRanges = NULL;
     RangeRecord* problematicRanges = NULL;
     double* exampleProblematicArgs = NULL;
     if (!no_exprs){
+      if (var_swallow){
+        opinfo->expr = varSwallow(opinfo->expr);
+      }
+      exprString = symbExprToString(opinfo->expr, &numVars);
       getRangesAndExample(&totalRanges, &problematicRanges, &exampleProblematicArgs,
-                        opinfo->expr, numVars);
+                          opinfo->expr, numVars);
+      varString = symbExprVarString(numVars);
     }
 
     if (!VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
@@ -385,8 +386,8 @@ void writeInfluences(Int fileD, InfluenceList influences){
             writeRanges(buf, numVars, totalRanges);
           }
         }
+        writeExample(buf, numVars, exampleProblematicArgs);
       }
-      writeExample(buf, numVars, exampleProblematicArgs);
       printBBuf(buf,
                 "     (function \"%s\")\n"
                 "     (filename \"%s\")\n"

@@ -156,6 +156,9 @@ void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr,
           mkFreshSymbolicLeaf(symbMatch->isConst,
                               symbMatch->constVal);
         symbMatch = symbGraftChild(curSymbGraft);
+        if (!generalize_to_constant){
+          symbMatch->isConst = False;
+        }
       }
     }
     // Check nodes for variance
