@@ -958,17 +958,21 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
           SymbExpr* arg0 = curExpr->branch.args[0];
           SymbExpr* arg1 = curExpr->branch.args[1];
           if (arg0->isConst && arg0->constVal == 1.0){
-            recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
-                                      arg1, nextVarIdx, rconsPos(curPos, 1),
-                                      seenNodes, rangeTable, exampleTable,
-                                      max_depth - 1, num_vars);
+            if (arg1->type == Node_Branch && max_depth > 1){
+              recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                        arg1, nextVarIdx, rconsPos(curPos, 1),
+                                        seenNodes, rangeTable, exampleTable,
+                                        max_depth - 1, num_vars);
+            }
             return;
           }
           if (arg1->isConst && arg1->constVal == 1.0){
-            recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
-                                      arg0, nextVarIdx, rconsPos(curPos, 0),
-                                      seenNodes, rangeTable, exampleTable,
-                                      max_depth - 1, num_vars);
+            if (arg0->type == Node_Branch && max_depth > 1){
+              recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                        arg0, nextVarIdx, rconsPos(curPos, 0),
+                                        seenNodes, rangeTable, exampleTable,
+                                        max_depth - 1, num_vars);
+            }
             return;
           }
           if ((arg0->isConst && arg0->constVal == 0.0) ||
@@ -992,17 +996,21 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
           SymbExpr* arg0 = curExpr->branch.args[0];
           SymbExpr* arg1 = curExpr->branch.args[1];
           if (arg0->isConst && arg0->constVal == 0.0){
-            recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
-                                      arg1, nextVarIdx, rconsPos(curPos, 1),
-                                      seenNodes, rangeTable, exampleTable,
-                                      max_depth - 1, num_vars);
+            if (arg1->type == Node_Branch && max_depth > 1){
+              recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                        arg1, nextVarIdx, rconsPos(curPos, 1),
+                                        seenNodes, rangeTable, exampleTable,
+                                        max_depth - 1, num_vars);
+            }
             return;
           }
           if (arg1->isConst && arg1->constVal == 0.0){
-            recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
-                                      arg0, nextVarIdx, rconsPos(curPos, 0),
-                                      seenNodes, rangeTable, exampleTable,
-                                      max_depth - 1, num_vars);
+            if (arg0->type == Node_Branch && max_depth > 1){
+              recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                        arg0, nextVarIdx, rconsPos(curPos, 0),
+                                        seenNodes, rangeTable, exampleTable,
+                                        max_depth - 1, num_vars);
+            }
             return;
           }
           break;
@@ -1022,10 +1030,12 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
           SymbExpr* arg0 = curExpr->branch.args[0];
           SymbExpr* arg1 = curExpr->branch.args[1];
           if (arg1->isConst && arg1->constVal == 0.0){
-            recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
-                                      arg0, nextVarIdx, rconsPos(curPos, 0),
-                                      seenNodes, rangeTable, exampleTable,
-                                      max_depth - 1, num_vars);
+            if (arg0->type == Node_Branch && max_depth > 1){
+              recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                        arg0, nextVarIdx, rconsPos(curPos, 0),
+                                        seenNodes, rangeTable, exampleTable,
+                                        max_depth - 1, num_vars);
+            }
             return;
           }
         }
