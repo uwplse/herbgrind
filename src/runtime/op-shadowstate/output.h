@@ -39,6 +39,11 @@ void writeOutput(void);
 const char* getOutputFilename(void);
 int haveErroneousIntMarks(void);
 void writeInfluences(Int fileD, InfluenceList influences);
-void writeRanges(BBuf* buf, int numVars,
-                 RangeRecord* ranges, RangeRecord* problematicRanges);
+void writeRangesAndExample(BBuf* buf, int numVars,
+                           RangeRecord* ranges,
+                           RangeRecord* problematicRanges,
+                           double* exampleProblematicInput);
+void writeProblematicRanges(BBuf* buf, int numVars, RangeRecord* problematicRanges);
+void writeExample(BBuf* buf, int numVars, double* exampleProblematicInput);
+void writeRanges(BBuf* buf, int numVars, RangeRecord* ranges);
 #endif

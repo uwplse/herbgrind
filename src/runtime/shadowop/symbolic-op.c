@@ -156,6 +156,9 @@ void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr,
           mkFreshSymbolicLeaf(symbMatch->isConst,
                               symbMatch->constVal);
         symbMatch = symbGraftChild(curSymbGraft);
+        if (!generalize_to_constant){
+          symbMatch->isConst = False;
+        }
       }
     }
     // Check nodes for variance
@@ -201,6 +204,10 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
                               canonicalPos);
           addRangeEntryCopy(symbExpr->branch.varProblematicRanges,
                             curGroup->item, existingRange);
+          addExampleEntryCopy(symbExpr->branch.exampleProblematicArgs,
+                              curGroup->item,
+                              lookupExampleInput(symbExpr->branch.exampleProblematicArgs,
+                                                 canonicalPos));
           canonicalPos = curGroup->item;
         }
         continue;
@@ -227,6 +234,10 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
             addRangeEntryCopy(symbExpr->branch.varProblematicRanges,
                               groupMemberPos,
                               existingRange);
+          addExampleEntryCopy(symbExpr->branch.exampleProblematicArgs,
+                              groupMemberPos,
+                              lookupExampleInput(symbExpr->branch.exampleProblematicArgs,
+                                                 canonicalPos));
           } else {
             lpush(Group)(&(newGroups->data[splitGroup]), groupMemberPos);
           }

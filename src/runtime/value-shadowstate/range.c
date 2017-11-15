@@ -33,6 +33,7 @@
 #include "../../helper/runtime-util.h"
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_libcassert.h"
+#include "pub_tool_libcprint.h"
 
 void initRangeRecord(RangeRecord* record){
   initRange(&(record->pos_range));
@@ -76,7 +77,7 @@ void copyRangeRecordInPlace(RangeRecord* dest, RangeRecord* src){
 }
 
 int nonTrivialRange(RangeRecord* range){
-  if (detailed_ranges) return 0;
+  if (detailed_ranges) return 1;
   return range->pos_range.min != -INFINITY || range->pos_range.max != INFINITY;
 }
 
@@ -137,7 +138,8 @@ void printRangeAsPreconditionToBBuf(const char* varName,
   } else {
     if (totalRange->pos_range.min == -INFINITY &&
         totalRange->pos_range.max == INFINITY){
-      return;
+      VG_(printf)("What?\n");
+      tl_assert2(0, "hey! What? Why is this a non-trivial range?");
     } else if (totalRange->pos_range.min == -INFINITY){
       printBBuf(buf, " (<= %s ", varName);
       printBBufFloat(buf, totalRange->pos_range.max);

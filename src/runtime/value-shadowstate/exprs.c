@@ -488,7 +488,7 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
       result->grafts[i].childIndex = cexpr->grafts[i].childIndex;
     }
     result->branch.groups = getExprsEquivGroups(cexpr, result);
-    initializeProblematicRanges(result);
+    initializeProblematicRangesAndExample(result);
   }
   return result;
 }
@@ -619,8 +619,11 @@ SymbExpr* varSwallow(SymbExpr* expr){
   return expr;
 }
 
-void recursivelyInitializeRanges(SymbExpr* curExpr, NodePos curPos, OSet* seenNodes,
-                                 VgHashTable* rangeTable, int max_depth);
+void recursivelyInitializeRangesAndExample(SymbExpr* curExpr, NodePos curPos,
+                                           OSet* seenNodes,
+                                           VgHashTable* rangeTable,
+                                           VgHashTable* exampleTable,
+                                           int max_depth);
 // This function initializes a range table for the given symbolic
 // expression. Range tables are maps from node positions to
 // RangeRecord's, which should be an up-to-date record of the inputs
@@ -634,7 +637,7 @@ void recursivelyInitializeRanges(SymbExpr* curExpr, NodePos curPos, OSet* seenNo
 // first node in the group will act as a stand-in for all nodes in the
 // group. Keep in mind this means that when groups are split, new
 // entries must be added to the range table.
-void initializeProblematicRanges(SymbExpr* symbExpr){
+void initializeProblematicRangesAndExample(SymbExpr* symbExpr){
   // This should be called after all other initialization of the
   // symbolic expression has been done, and only on symbolic
   // expressions which represent branch nodes. Leaf node expressions
@@ -651,6 +654,8 @@ void initializeProblematicRanges(SymbExpr* symbExpr){
   // Initialize the range table.
   symbExpr->branch.varProblematicRanges =
     VG_(HT_construct)("Variable problematic ranges table");
+  symbExpr->branch.exampleProblematicArgs =
+    VG_(HT_construct)("example problematic inputs array");
 
   // Part (a)
 
@@ -662,8 +667,9 @@ void initializeProblematicRanges(SymbExpr* symbExpr){
     // because we don't know if the current inputs are problematic,
     // and if they are we'll update the ranges later in the symbolic
     // op with that info.
-    addInitialRangeEntry(symbExpr->branch.varProblematicRanges,
-                         symbExpr->branch.groups->data[i]->item);
+    NodePos curPos = symbExpr->branch.groups->data[i]->item;
+    addInitialRangeEntry(symbExpr->branch.varProblematicRanges, curPos);
+    addInitialExampleEntry(symbExpr->branch.exampleProblematicArgs, curPos);
 
     // Add every node in this group to the set of nodes in groups, so
     // that we don't add them again.
@@ -693,21 +699,29 @@ void initializeProblematicRanges(SymbExpr* symbExpr){
   // too. Therefore, we would have already added it to our range table
   // in the step above.
   for (int i = 0; i < symbExpr->branch.nargs; ++i){
-    recursivelyInitializeRanges(symbExpr->branch.args[i], rconsPos(null_pos, i),
-                                nodesInGroups, symbExpr->branch.varProblematicRanges,
-                                MAX_FOLD_DEPTH);
+    recursivelyInitializeRangesAndExample(symbExpr->branch.args[i],
+                                          rconsPos(null_pos, i),
+                                          nodesInGroups,
+                                          symbExpr->branch.varProblematicRanges,
+                                          symbExpr->branch.exampleProblematicArgs,
+                                          MAX_FOLD_DEPTH);
   }
   VG_(OSetWord_Destroy)(nodesInGroups);
 }
-void recursivelyInitializeRanges(SymbExpr* curExpr, NodePos curPos, OSet* nodesInGroups,
-                                 VgHashTable* rangeTable, int max_depth){
+void recursivelyInitializeRangesAndExample(SymbExpr* curExpr, NodePos curPos,
+                                           OSet* nodesInGroups,
+                                           VgHashTable* rangeTable,
+                                           VgHashTable* exampleTable,
+                                           int max_depth){
   if (!(VG_(OSetWord_Contains)(nodesInGroups, (UWord)(uintptr_t)curPos))){
     addInitialRangeEntry(rangeTable, curPos);
+    addInitialExampleEntry(exampleTable, curPos);
   }
   if (max_depth > 1 && curExpr->type == Node_Branch){
     for(int i = 0; i < curExpr->branch.nargs; ++i){
-      recursivelyInitializeRanges(curExpr->branch.args[i], rconsPos(curPos, i),
-                                  nodesInGroups, rangeTable, max_depth - 1);
+      recursivelyInitializeRangesAndExample(curExpr->branch.args[i], rconsPos(curPos, i),
+                                            nodesInGroups, rangeTable, exampleTable,
+                                            max_depth - 1);
     }
   }
 }
@@ -730,38 +744,85 @@ void addInitialRangeEntry(VgHashTable* rangeMap, NodePos position){
   newEntry->position = position;
   VG_(HT_add_node)(rangeMap, newEntry);
 }
+void addExampleEntryCopy(VgHashTable* exampleTable,
+                         NodePos position, double original){
+  ExampleMapEntry* newEntry =
+    VG_(malloc)("variable range map entry", sizeof(RangeMapEntry));
+  newEntry->value = original;
+
+  newEntry->positionHash = hashPosition(position);
+  newEntry->position = position;
+  VG_(HT_add_node)(exampleTable, newEntry);
+}
+void addInitialExampleEntry(VgHashTable* exampleTable, NodePos position){
+  ExampleMapEntry* newEntry =
+    VG_(malloc)("variable range map entry", sizeof(ExampleMapEntry));
+  newEntry->value = NAN;
+
+  newEntry->positionHash = hashPosition(position);
+  newEntry->position = position;
+  VG_(HT_add_node)(exampleTable, newEntry);
+}
 
 List_H(RangeMapEntry*, RangeEntryList);
 List_Impl(RangeMapEntry*, RangeEntryList);
 
 void updateProblematicRanges(SymbExpr* symbExpr, ConcExpr* cexpr){
   VgHashTable* rangeTable = symbExpr->branch.varProblematicRanges;
+  VgHashTable* exampleTable = symbExpr->branch.exampleProblematicArgs;
   RangeEntryList expiredEntries = NULL;
 
-  VG_(HT_ResetIter)(rangeTable);
-  RangeMapEntry* entry;
-  while((entry = VG_(HT_Next)(rangeTable)) != NULL){
-    ConcExpr* sampleConcNode = concExprPosGet(cexpr, entry->position);
-    // The node mentioned by this table entry might not exist in the
-    // concrete expression we're generalizing with, in which case it
-    // won't exist anymore in the symbolic expression either. If
-    // that's the case, we'll remove it from the range table so that
-    // we don't bother trying to maintain it later.
-    if (sampleConcNode == NULL){
-      // Unfortunately, we can't remove the node directly from the
-      // table since that would violate the iterator invariants, so
-      // we'll just add it to a stack to be removed at the end of the
-      // update.
-      lpush(RangeEntryList)(&expiredEntries, entry);
-    } else {
-      // If the node DOES exist, we should update the range table entry.
-      updateRangeRecord(&(entry->range_rec), sampleConcNode->value);
+  {
+    VG_(HT_ResetIter)(rangeTable);
+    RangeMapEntry* entry;
+    while((entry = VG_(HT_Next)(rangeTable)) != NULL){
+      ConcExpr* sampleConcNode = concExprPosGet(cexpr, entry->position);
+      // The node mentioned by this table entry might not exist in the
+      // concrete expression we're generalizing with, in which case it
+      // won't exist anymore in the symbolic expression either. If
+      // that's the case, we'll remove it from the range table so that
+      // we don't bother trying to maintain it later.
+      if (sampleConcNode == NULL){
+        // Unfortunately, we can't remove the node directly from the
+        // table since that would violate the iterator invariants, so
+        // we'll just add it to a stack to be removed at the end of the
+        // update.
+        lpush(RangeEntryList)(&expiredEntries, entry);
+      } else {
+        // If the node DOES exist, we should update the range table entry.
+        updateRangeRecord(&(entry->range_rec), sampleConcNode->value);
+      }
     }
   }
   // Remove all the expired entries.
   while(length(RangeEntryList)(&expiredEntries) > 0){
     RangeMapEntry* expiredEntry = lpop(RangeEntryList)(&expiredEntries);
     VG_(HT_gen_remove)(rangeTable, expiredEntry, cmp_position);
+    // This should work? Since gen_remove should only need to look at
+    // the position and positionHash of the entry, and those two
+    // things are the same across both RangeMapEntry and
+    // ExampleMapEntry.
+    VG_(HT_gen_remove)(exampleTable, expiredEntry, cmp_position);
+  }
+  // Now let's do the example problematic inputs
+  int exampleFullyInitialized = 1;
+  {
+    VG_(HT_ResetIter)(exampleTable);
+    ExampleMapEntry* entry;
+    while((entry = VG_(HT_Next)(exampleTable)) != NULL){
+      if (entry->value != entry->value){
+        exampleFullyInitialized = 0;
+        break;
+      }
+    }
+    if (!exampleFullyInitialized){
+      VG_(HT_ResetIter)(exampleTable);
+      while((entry = VG_(HT_Next)(exampleTable)) != NULL){
+        ConcExpr* sampleConcNode = concExprPosGet(cexpr, entry->position);
+        tl_assert(sampleConcNode != NULL);
+        entry->value = sampleConcNode->value;
+      }
+    }
   }
 }
 
@@ -773,12 +834,24 @@ RangeRecord* lookupRangeRecord(VgHashTable* rangeMap, NodePos position){
   if (entry == NULL) return NULL;
   return &(entry->range_rec);
 }
+double lookupExampleInput(VgHashTable* exampleMap, NodePos position){
+  ExampleMapEntry key = {.position = position,
+                         .positionHash = hashPosition(position)};
+  ExampleMapEntry* entry =
+    VG_(HT_gen_lookup)(exampleMap, &key, cmp_position);
+  tl_assert(entry != NULL);
+  return entry->value;
+}
 
 void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problematicRanges,
+                               double* exampleInput,
                                SymbExpr* curExpr, int* nextVarIdx, NodePos curPos,
-                               OSet* seenNodes, VgHashTable* rangeTable, int max_depth);
-void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
-               SymbExpr* expr, int num_vars){
+                               OSet* seenNodes, VgHashTable* rangeTable,
+                               VgHashTable* exampleTable, int max_depth, int num_vars);
+void getRangesAndExample(RangeRecord** totalRangesOut,
+                         RangeRecord** problematicRangesOut,
+                         double** exampleInputOut,
+                         SymbExpr* expr, int num_vars){
   tl_assert(expr->type == Node_Branch);
   OSet* seenNodes = VG_(OSetWord_Create)(VG_(malloc), "Seen Nodes",
                                          VG_(free));
@@ -786,6 +859,7 @@ void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
   *totalRangesOut = VG_(malloc)("expr ranges", sizeof(RangeRecord) * num_vars);
   *problematicRangesOut = VG_(malloc)("problematic ranges",
                                       sizeof(RangeRecord) * num_vars);
+  *exampleInputOut = VG_(malloc)("example problematic input", sizeof(double) * num_vars);
   int nextVarIdx = 0;
 
   GroupList groups =
@@ -844,6 +918,8 @@ void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
       tl_assert(entry != NULL);
     }
     (*problematicRangesOut)[nextVarIdx] = *entry;
+    VgHashTable* exampleTable = expr->branch.exampleProblematicArgs;
+    (*exampleInputOut)[nextVarIdx] = lookupExampleInput(exampleTable, canonicalPos);
     nextVarIdx++;
 
     for(Group curNode = curGroup; curNode != NULL; curNode = curNode->next){
@@ -852,22 +928,129 @@ void getRanges(RangeRecord** totalRangesOut, RangeRecord** problematicRangesOut,
   }
 
   recursivelyPopulateRanges(*totalRangesOut, *problematicRangesOut,
-                            expr, &nextVarIdx, null_pos,
+                            *exampleInputOut, expr, &nextVarIdx, null_pos,
                             seenNodes, expr->branch.varProblematicRanges,
-                            MAX_FOLD_DEPTH);
+                            expr->branch.exampleProblematicArgs,
+                            MAX_FOLD_DEPTH, num_vars);
   VG_(OSetWord_Destroy)(seenNodes);
 }
 
 void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problematicRanges,
+                               double* exampleInput,
                                SymbExpr* curExpr, int* nextVarIdx, NodePos curPos,
-                               OSet* seenNodes, VgHashTable* rangeTable, int max_depth){
+                               OSet* seenNodes, VgHashTable* rangeTable,
+                               VgHashTable* exampleTable, int max_depth,
+                               int num_vars){
   tl_assert(curExpr->type == Node_Branch);
+  if (sound_simplify){
+    switch((int)curExpr->branch.op->op_code){
+      case Iop_Mul32F0x4:
+      case Iop_Mul64F0x2:
+      case Iop_Mul32Fx8:
+      case Iop_Mul64Fx4:
+      case Iop_Mul32Fx4:
+      case Iop_Mul64Fx2:
+      case Iop_MulF64:
+      case Iop_MulF128:
+      case Iop_MulF32:
+      case Iop_MulF64r32:
+        {
+          SymbExpr* arg0 = curExpr->branch.args[0];
+          SymbExpr* arg1 = curExpr->branch.args[1];
+          if (arg0->isConst && arg0->constVal == 1.0){
+            if (arg1->type == Node_Branch && max_depth > 1){
+              recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                        arg1, nextVarIdx, rconsPos(curPos, 1),
+                                        seenNodes, rangeTable, exampleTable,
+                                        max_depth - 1, num_vars);
+            }
+            return;
+          }
+          if (arg1->isConst && arg1->constVal == 1.0){
+            if (arg0->type == Node_Branch && max_depth > 1){
+              recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                        arg0, nextVarIdx, rconsPos(curPos, 0),
+                                        seenNodes, rangeTable, exampleTable,
+                                        max_depth - 1, num_vars);
+            }
+            return;
+          }
+          if ((arg0->isConst && arg0->constVal == 0.0) ||
+              (arg1->isConst && arg1->constVal == 0.0)){
+            return;
+          }
+          break;
+        }
+      case Iop_Add32Fx2:
+      case Iop_Add32F0x4:
+      case Iop_Add64F0x2:
+      case Iop_Add32Fx8:
+      case Iop_Add64Fx4:
+      case Iop_Add32Fx4:
+      case Iop_Add64Fx2:
+      case Iop_AddF128:
+      case Iop_AddF64:
+      case Iop_AddF32:
+      case Iop_AddF64r32:
+        {
+          SymbExpr* arg0 = curExpr->branch.args[0];
+          SymbExpr* arg1 = curExpr->branch.args[1];
+          if (arg0->isConst && arg0->constVal == 0.0){
+            if (arg1->type == Node_Branch && max_depth > 1){
+              recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                        arg1, nextVarIdx, rconsPos(curPos, 1),
+                                        seenNodes, rangeTable, exampleTable,
+                                        max_depth - 1, num_vars);
+            }
+            return;
+          }
+          if (arg1->isConst && arg1->constVal == 0.0){
+            if (arg0->type == Node_Branch && max_depth > 1){
+              recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                        arg0, nextVarIdx, rconsPos(curPos, 0),
+                                        seenNodes, rangeTable, exampleTable,
+                                        max_depth - 1, num_vars);
+            }
+            return;
+          }
+          break;
+        }
+      case Iop_Sub32Fx2:
+      case Iop_Sub32F0x4:
+      case Iop_Sub64F0x2:
+      case Iop_Sub32Fx8:
+      case Iop_Sub64Fx4:
+      case Iop_Sub32Fx4:
+      case Iop_Sub64Fx2:
+      case Iop_SubF128:
+      case Iop_SubF64:
+      case Iop_SubF32:
+      case Iop_SubF64r32:
+        {
+          SymbExpr* arg0 = curExpr->branch.args[0];
+          SymbExpr* arg1 = curExpr->branch.args[1];
+          if (arg1->isConst && arg1->constVal == 0.0){
+            if (arg0->type == Node_Branch && max_depth > 1){
+              recursivelyPopulateRanges(totalRanges, problematicRanges, exampleInput,
+                                        arg0, nextVarIdx, rconsPos(curPos, 0),
+                                        seenNodes, rangeTable, exampleTable,
+                                        max_depth - 1, num_vars);
+            }
+            return;
+          }
+        }
+        break;
+    default:
+      break;
+    }
+  }
   for(int i = 0; i < curExpr->branch.nargs; ++i){
     SymbExpr* childExpr = curExpr->branch.args[i];
     NodePos childPos = rconsPos(curPos, i);
     if (childExpr->type == Node_Leaf || max_depth == 1){
       if (!childExpr->isConst &&
           !(VG_(OSetWord_Contains)(seenNodes, (UWord)(uintptr_t)childPos))){
+        tl_assert2(*nextVarIdx < num_vars, "That's too much, man!");
         totalRanges[*nextVarIdx] = curExpr->branch.op->agg.inputs.range_records[i];
         tl_assert2(totalRanges[*nextVarIdx].pos_range.min !=
                    totalRanges[*nextVarIdx].pos_range.max,
@@ -883,12 +1066,15 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
           tl_assert(result != NULL);
         }
         problematicRanges[*nextVarIdx] = *result;
+        exampleInput[*nextVarIdx] = lookupExampleInput(exampleTable, childPos);
         (*nextVarIdx)++;
       }
     } else {
       recursivelyPopulateRanges(totalRanges, problematicRanges,
+                                exampleInput,
                                 childExpr, nextVarIdx, childPos,
-                                seenNodes, rangeTable, max_depth - 1);
+                                seenNodes, rangeTable, exampleTable,
+                                max_depth - 1, num_vars);
     }
   }
 }
@@ -988,7 +1174,7 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
     if (expr->isConst){
       char* _buf = VG_(malloc)("buffer data", MAX_EXPR_LEN);
       BBuf* bbuf = mkBBuf(MAX_EXPR_LEN, _buf);
-      printBBuf(bbuf, "%f", expr->constVal);
+      printBBufFloat(bbuf, expr->constVal);
       VG_(realloc_shrink)(_buf, MAX_EXPR_LEN - bbuf->bound + 10);
       VG_(free)(bbuf);
       return _buf;
@@ -1073,7 +1259,8 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
           }
           if ((arg0->isConst && arg0->constVal == 0.0) ||
               (arg1->isConst && arg1->constVal == 0.0)){
-            printBBuf(buf, "%f", 0.0);
+            printBBuf(buf, " ");
+            printBBufFloat(buf, 0.0);
             return;
           }
           break;
