@@ -388,10 +388,10 @@ ShadowTemp* dynamicLoad128(UWord memSrc){
     }
     switch(firstHalf->num_vals){
     case 1:
-      secondHalf = mkShadowTempOneDouble(*(double*)(void*)memSrc);
+      secondHalf = mkShadowTempOneDouble(*(double*)(void*)(memSrc + sizeof(double)));
       break;
     case 2: {
-      secondHalf = mkShadowTempTwoSingles(*(UWord*)(void*)memSrc);
+      secondHalf = mkShadowTempTwoSingles(*(UWord*)(void*)(memSrc + sizeof(double)));
     }
     default:
       tl_assert(0);
@@ -424,10 +424,10 @@ ShadowTemp* dynamicLoad256(UWord memSrc){
   } else if (firstHalf == NULL){
     switch(secondHalf->num_vals){
     case 2:
-      firstHalf = mkShadowTempOneDouble(*(double*)(void*)memSrc);
+      firstHalf = mkShadowTempTwoDoubles((double*)(void*)memSrc);
       break;
     case 4:
-      firstHalf = mkShadowTempTwoSingles(*(UWord*)(void*)memSrc);
+      firstHalf = mkShadowTempFourSingles((float*)(void*)memSrc);
       break;
     default:
       tl_assert(0);
@@ -440,10 +440,10 @@ ShadowTemp* dynamicLoad256(UWord memSrc){
     }
     switch(firstHalf->num_vals){
     case 2:
-      secondHalf = mkShadowTempOneDouble(*(double*)(void*)memSrc);
+      secondHalf = mkShadowTempTwoDoubles((double*)(void*)(memSrc + sizeof(double) * 2));
       break;
     case 4:
-      secondHalf = mkShadowTempTwoSingles(*(UWord*)(void*)memSrc);
+      secondHalf = mkShadowTempFourSingles((float*)(void*)(memSrc + sizeof(double) * 2));
     default:
       tl_assert(0);
       return NULL;
@@ -457,13 +457,13 @@ ShadowTemp* dynamicLoad256(UWord memSrc){
     result->values[2] = secondHalf->values[0];
     result->values[3] = secondHalf->values[1];
   } else {
-    tl_assert(firstHalf->num_vals == 4 &&
-              secondHalf->num_vals == 4,
-              "Tried to load a 256-bit word from address %X, "
-              "but we found %d shadow values in the first half, "
-              "and %d shadow values in the second half. "
-              "Can't construct a coherent shadow location out of that!\n",
-              memSrc, firstHalf->num_vals, secondHalf->num_vals);
+    tl_assert2(firstHalf->num_vals == 4 &&
+               secondHalf->num_vals == 4,
+               "Tried to load a 256-bit word from address 0x%X, "
+               "but we found %d shadow values in the first half, "
+               "and %d shadow values in the second half. "
+               "Can't construct a coherent shadow location out of that!\n",
+               memSrc, firstHalf->num_vals, secondHalf->num_vals);
     result = mkShadowTemp(8);
     result->values[0] = firstHalf->values[0];
     result->values[1] = firstHalf->values[1];
