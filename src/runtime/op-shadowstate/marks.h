@@ -52,8 +52,8 @@ typedef struct _intMarkInfo {
   Addr addr;
   const char* markType;
   InfluenceList influences;
-  int num_hits;
-  int num_mismatches;
+  long int num_hits;
+  long int num_mismatches;
   int nargs;
   SymbExpr** exprs;
 } IntMarkInfo;
