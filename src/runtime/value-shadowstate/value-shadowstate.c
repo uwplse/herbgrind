@@ -458,7 +458,12 @@ ShadowTemp* dynamicLoad256(UWord memSrc){
     result->values[3] = secondHalf->values[1];
   } else {
     tl_assert(firstHalf->num_vals == 4 &&
-              secondHalf->num_vals == 4);
+              secondHalf->num_vals == 4,
+              "Tried to load a 256-bit word from address %X, "
+              "but we found %d shadow values in the first half, "
+              "and %d shadow values in the second half. "
+              "Can't construct a coherent shadow location out of that!\n",
+              memSrc, firstHalf->num_vals, secondHalf->num_vals);
     result = mkShadowTemp(8);
     result->values[0] = firstHalf->values[0];
     result->values[1] = firstHalf->values[1];
