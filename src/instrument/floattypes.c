@@ -429,9 +429,6 @@ ValueType argPrecision(IROp op_code){
   case Iop_DivF64:
   case Iop_MAddF64:
   case Iop_MSubF64:
-  case Iop_ZeroHI64ofV128:
-  case Iop_V128to64:
-  case Iop_V128HIto64:
   case Iop_RoundF64toF32:
   case Iop_TruncF64asF32:
   case Iop_RoundF64toF64_NEAREST:
@@ -451,6 +448,10 @@ ValueType argPrecision(IROp op_code){
   case Iop_64to32:
     return Vt_Double;
   case Iop_SetV128lo64:
+  case Iop_64UtoV128:
+  case Iop_V128to64:
+  case Iop_V128HIto64:
+  case Iop_ZeroHI64ofV128:
     return Vt_Unknown;
   default:
     tl_assert(0);
