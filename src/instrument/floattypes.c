@@ -454,7 +454,10 @@ ValueType argPrecision(IROp op_code){
   case Iop_ZeroHI64ofV128:
     return Vt_Unknown;
   default:
-    tl_assert(0);
+    ppIROp_Extended(op_code);
+    tl_assert2(0,
+               "Op %d doesn't have an arg precision entry, "
+               "but it's considered a float op.\n",op_code);
     return Vt_NonFloat;
   }
 }
