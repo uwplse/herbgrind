@@ -74,6 +74,7 @@ void addClearMemTypes(void);
 void inferTypes(IRSB* sbIn);
 
 ValueType argPrecision(IROp op_code);
+ValueType conversionArgPrecision(IROp op_code, int argIndex);
 ValueType resultPrecision(IROp op_code);
 
 int isFloatType(ValueType type);

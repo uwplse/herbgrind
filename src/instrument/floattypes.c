@@ -306,11 +306,25 @@ ValueType inferTSBlockType(int tsAddr, int instrIdx, int size){
   return result;
 }
 
+ValueType conversionArgPrecision(IROp op_code, int argIndex){
+  tl_assert(isConversionOp(op_code));
+  switch(op_code){
+  case Iop_F64toF32:
+    switch(argIndex){
+    case 0:
+      return Vt_NonFloat;
+    case 1:
+      return Vt_Double;
+    default:
+      tl_assert(0);
+    }
+  default:
+    return argPrecision(op_code);
   }
 }
 
 ValueType argPrecision(IROp op_code){
-  if (!isFloatOp(op_code)){
+  if (!isFloatOp(op_code) && !isExitFloatOp(op_code)){
     return Vt_NonFloat;
   }
   switch((int)op_code){
@@ -896,19 +910,28 @@ void inferTypes(IRSB* sbIn){
               // Most of this code is for handling conversions, which
               // can be tricky to infer properly because they are
               // often polymorphic.
-              ValueType argType;
-              if (isConversionOp(op) && !isFloatType(tempType(destTemp))){
-                argType = tempType(destTemp);
+              ValueType arg1Type;
+              ValueType arg2Type;
+              if (isConversionOp(op)){
+                arg1Type = conversionArgPrecision(op, 0);
+                arg2Type = conversionArgPrecision(op, 1);
+                if (arg1Type == Vt_Unknown && tempType(destTemp) == Vt_NonFloat){
+                  arg1Type = Vt_NonFloat;
+                }
+                if (arg2Type == Vt_Unknown && tempType(destTemp) == Vt_NonFloat){
+                  arg2Type = Vt_NonFloat;
+                }
               } else {
-                argType = argPrecision(expr->Iex.Binop.op);
+                arg1Type = argPrecision(op);
+                arg2Type = argPrecision(op);
               }
               IRExpr* arg1 = expr->Iex.Binop.arg1;
               IRExpr* arg2 = expr->Iex.Binop.arg2;
               if (arg1->tag == Iex_RdTmp){
-                dirty |= refineTempType(arg1->Iex.RdTmp.tmp, argType);
+                dirty |= refineTempType(arg1->Iex.RdTmp.tmp, arg1Type);
               }
               if (arg2->tag == Iex_RdTmp){
-                dirty |= refineTempType(arg2->Iex.RdTmp.tmp, argType);
+                dirty |= refineTempType(arg2->Iex.RdTmp.tmp, arg2Type);
               }
               ValueType destType;
               if (isConversionOp(op) &&
