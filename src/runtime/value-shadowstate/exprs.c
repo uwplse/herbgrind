@@ -941,6 +941,11 @@ void getRangesAndExample(RangeRecord** totalRangesOut,
   VG_(OSetWord_Destroy)(seenNodes);
 }
 
+void registerPotentialVar(SymbExpr* node, SymbExpr* parent, int childIndex,
+                          RangeRecord* totalRanges, RangeRecord* problematicRanges,
+                          double* exampleInput, int* nextVarIdx, OSet* seenNodes,
+                          VgHashTable* rangeTable, VgHashTable* exampleTable,
+                          NodePos childPos, int num_vars);
 void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problematicRanges,
                                double* exampleInput,
                                SymbExpr* curExpr, int* nextVarIdx, NodePos curPos,
@@ -969,6 +974,11 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
                                         arg1, nextVarIdx, rconsPos(curPos, 1),
                                         seenNodes, rangeTable, exampleTable,
                                         max_depth - 1, num_vars);
+            } else {
+              registerPotentialVar(arg1, curExpr, 1,
+                                   totalRanges, problematicRanges, exampleInput,
+                                   nextVarIdx, seenNodes, rangeTable, exampleTable,
+                                   rconsPos(curPos, 1), num_vars);
             }
             return;
           }
@@ -978,6 +988,11 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
                                         arg0, nextVarIdx, rconsPos(curPos, 0),
                                         seenNodes, rangeTable, exampleTable,
                                         max_depth - 1, num_vars);
+            } else {
+              registerPotentialVar(arg0, curExpr, 0,
+                                   totalRanges, problematicRanges, exampleInput,
+                                   nextVarIdx, seenNodes, rangeTable, exampleTable,
+                                   rconsPos(curPos, 0), num_vars);
             }
             return;
           }
@@ -1007,6 +1022,11 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
                                         arg1, nextVarIdx, rconsPos(curPos, 1),
                                         seenNodes, rangeTable, exampleTable,
                                         max_depth - 1, num_vars);
+            } else {
+              registerPotentialVar(arg1, curExpr, 1,
+                                   totalRanges, problematicRanges, exampleInput,
+                                   nextVarIdx, seenNodes, rangeTable, exampleTable,
+                                   rconsPos(curPos, 1), num_vars);
             }
             return;
           }
@@ -1016,6 +1036,11 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
                                         arg0, nextVarIdx, rconsPos(curPos, 0),
                                         seenNodes, rangeTable, exampleTable,
                                         max_depth - 1, num_vars);
+            } else {
+              registerPotentialVar(arg0, curExpr, 0,
+                                   totalRanges, problematicRanges, exampleInput,
+                                   nextVarIdx, seenNodes, rangeTable, exampleTable,
+                                   rconsPos(curPos, 0), num_vars);
             }
             return;
           }
@@ -1041,6 +1066,11 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
                                         arg0, nextVarIdx, rconsPos(curPos, 0),
                                         seenNodes, rangeTable, exampleTable,
                                         max_depth - 1, num_vars);
+            } else {
+              registerPotentialVar(arg0, curExpr, 0,
+                                   totalRanges, problematicRanges, exampleInput,
+                                   nextVarIdx, seenNodes, rangeTable, exampleTable,
+                                   rconsPos(curPos, 0), num_vars);
             }
             return;
           }
@@ -1054,27 +1084,10 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
     SymbExpr* childExpr = curExpr->branch.args[i];
     NodePos childPos = rconsPos(curPos, i);
     if (childExpr->type == Node_Leaf || max_depth == 1){
-      if (!childExpr->isConst &&
-          !(VG_(OSetWord_Contains)(seenNodes, (UWord)(uintptr_t)childPos))){
-        tl_assert2(*nextVarIdx < num_vars, "That's too much, man!");
-        totalRanges[*nextVarIdx] = curExpr->branch.op->agg.inputs.range_records[i];
-        tl_assert2(totalRanges[*nextVarIdx].pos_range.min !=
-                   totalRanges[*nextVarIdx].pos_range.max,
-                   "Expr %p (child %d of %p, opinfo %p), "
-                   "is non-const, but has a range with only one value!\n",
-                   childExpr, i, curExpr, curExpr->branch.op);
-        RangeRecord* result = lookupRangeRecord(rangeTable, childPos);
-        if (result == NULL){
-          VG_(printf)("Couldn't find range table entry for ");
-          ppNodePos(childPos);
-          VG_(printf)("\nTable is:\n");
-          ppRangeTable(rangeTable);
-          tl_assert(result != NULL);
-        }
-        problematicRanges[*nextVarIdx] = *result;
-        exampleInput[*nextVarIdx] = lookupExampleInput(exampleTable, childPos);
-        (*nextVarIdx)++;
-      }
+      registerPotentialVar(childExpr, curExpr, i,
+                           totalRanges, problematicRanges, exampleInput,
+                           nextVarIdx, seenNodes, rangeTable, exampleTable,
+                           childPos, num_vars);
     } else {
       recursivelyPopulateRanges(totalRanges, problematicRanges,
                                 exampleInput,
@@ -1082,6 +1095,34 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
                                 seenNodes, rangeTable, exampleTable,
                                 max_depth - 1, num_vars);
     }
+  }
+}
+
+void registerPotentialVar(SymbExpr* node, SymbExpr* parent, int childIndex,
+                          RangeRecord* totalRanges, RangeRecord* problematicRanges,
+                          double* exampleInput, int* nextVarIdx, OSet* seenNodes,
+                          VgHashTable* rangeTable, VgHashTable* exampleTable,
+                          NodePos childPos, int num_vars){
+  if (!node->isConst &&
+      !(VG_(OSetWord_Contains)(seenNodes, (UWord)(uintptr_t)childPos))){
+    tl_assert2(*nextVarIdx < num_vars, "That's too much, man!");
+    totalRanges[*nextVarIdx] = parent->branch.op->agg.inputs.range_records[childIndex];
+    tl_assert2(totalRanges[*nextVarIdx].pos_range.min !=
+               totalRanges[*nextVarIdx].pos_range.max,
+               "Expr %p (child %d of %p, opinfo %p), "
+               "is non-const, but has a range with only one value!\n",
+               node, childIndex, parent, parent->branch.op);
+    RangeRecord* result = lookupRangeRecord(rangeTable, childPos);
+    if (result == NULL){
+      VG_(printf)("Couldn't find range table entry for ");
+      ppNodePos(childPos);
+      VG_(printf)("\nTable is:\n");
+      ppRangeTable(rangeTable);
+      tl_assert(result != NULL);
+    }
+    problematicRanges[*nextVarIdx] = *result;
+    exampleInput[*nextVarIdx] = lookupExampleInput(exampleTable, childPos);
+    (*nextVarIdx)++;
   }
 }
 
