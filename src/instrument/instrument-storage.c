@@ -886,7 +886,6 @@ void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest, int instrIdx){
 void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal, int instrIdx){
   addSetTSVal(sbOut, tsDest, newVal);
   tsShadowStatus[tsDest] = Ss_Unknown;
-  tl_assert(tsType(tsDest, instrIdx) == Vt_Unknown);
 }
 void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal){
   if (PRINT_VALUE_MOVES){
