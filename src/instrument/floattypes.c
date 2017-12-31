@@ -797,7 +797,25 @@ void inferTypes(IRSB* sbIn){
           case Iex_Get:
             {
               int sourceOffset = expr->Iex.Get.offset;
-              dirty |= refineTempType(destTemp, tsType(sourceOffset, instrIdx));
+              IRType getType;
+              switch(expr->Iex.Get.ty){
+              case Ity_F32:
+                getType = Vt_Single;
+                break;
+              case Ity_F64:
+                getType = Vt_Double;
+                break;
+              case Ity_I32:
+              case Ity_I64:
+              case Ity_V128:
+              case Ity_V256:
+                getType = tsType(sourceOffset, instrIdx);
+                break;
+              default:
+                getType = Vt_NonFloat;
+                break;
+              }
+              dirty |= refineTempType(destTemp, getType);
               for(int i = 0; i < exprSize(sbIn->tyenv, IRExpr_RdTmp(destTemp)); ++i){
                 if (tempType(destTemp) == Vt_Double && i % 2 == 1){
                   dirty |= refineTSType(sourceOffset + i * sizeof(float),
