@@ -374,6 +374,8 @@ void instrumentPutI(IRSB* sbOut,
     }
   }
 }
+
+// Someday I'll document this properly...
 void instrumentGet(IRSB* sbOut, IRTemp dest,
                    Int tsSrc, IRType type,
                    int instrIdx){
@@ -381,159 +383,199 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
     return;
   }
   int src_size = typeSize(type);
-  for(int i = 0; i < src_size; ++i){
-    if (tsShadowStatus[tsSrc + i] == Ss_Shadowed){
-      tempShadowStatus[dest] = Ss_Shadowed;
-    } else if (tsShadowStatus[tsSrc + i] == Ss_Unknown &&
-               tempShadowStatus[dest] == Ss_Unshadowed){
-      tempShadowStatus[dest] = Ss_Unshadowed;
-    }
-  }
-  if (src_size == 1){
-    ValueType valType = tsType(tsSrc, instrIdx);
-    // Getting the first half of a double is undefined.
-    tl_assert(valType != Vt_Double);
-    // If it's not a float propagate that information.
-    if (valType == Vt_NonFloat){
-      if (PRINT_TYPES){
-        VG_(printf)("Marking %d as nonfloat because TS(%d) is nonfloat.\n",
-                    dest, tsSrc);
-      }
-      addStoreTempNonFloat(sbOut, dest);
-    } else if (valType == Vt_Single) {
-      IRExpr* val = runGetOrMakeTSVal(sbOut, tsSrc, Vt_Single);
-      // If we know it's a non-null single, then we can load it
-      // unconditionally.
+  // Under these two conditions we know we have a single shadow value
+  // to move, which makes things simple.
+  if (src_size == 1 ||
+      (src_size == 2 && tsType(tsSrc, instrIdx) == Vt_Double)){
+    tempShadowStatus[dest] = tsShadowStatus[tsSrc];
+    switch(tsShadowStatus[tsSrc]){
+    case Ss_Shadowed:{
+      IRExpr* val = runGetTSVal(sbOut, tsSrc);
       IRExpr* temp = runMkShadowTempValues(sbOut, 1, &val);
-      if (PRINT_VALUE_MOVES){
-        addPrint3("Getting val %p from TS(%d) ", val, mkU64(tsSrc));
-        addPrint3("into t%d (%p)\n", mkU64(dest), temp);
-      }
-      addStoreTemp(sbOut, temp, Vt_Single, dest);
-      if (print_temp_moves){
-        addPrint3("1. Making %p in %d ", temp, mkU64(dest));
-        addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
-      }
-    } else if (valType == Vt_Unknown){
+      addStoreTemp(sbOut, temp, tsType(tsSrc, instrIdx), dest);
+    }
+      break;
+    case Ss_Unknown:{
       IRExpr* loadedVal = runGetTSVal(sbOut, tsSrc);
       IRExpr* loadedValNonNull = runNonZeroCheck64(sbOut, loadedVal);
-      IRExpr* temp = runMkShadowTempValuesG(sbOut, loadedValNonNull, 1,
-                                            &loadedVal);
-      if (PRINT_VALUE_MOVES){
-        addPrintG3(loadedValNonNull, "Getting val %p from TS(%d) ", loadedVal, mkU64(tsSrc));
-        addPrintG3(loadedValNonNull, "into t%d (%p)\n", mkU64(dest), temp);
-      }
+      IRExpr* temp = runMkShadowTempValuesG(sbOut, loadedValNonNull, 1, &loadedVal);
       addStoreTempUnknown(sbOut, temp, dest);
-      if (print_temp_moves){
-        IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, temp);
-        addPrintG3(loadedNonNull,
-                   "2. Making %p in %d ",
-                   temp, mkU64(dest));
-        addPrintG2(loadedNonNull, "for value from TS(%d)\n",
-                  mkU64(tsSrc));
-      }
     }
-  } else if (src_size == 2){
-    ValueType valType = inferTSType64(tsSrc, instrIdx);
-    if (valType == Vt_NonFloat){
-      if (PRINT_TYPES){
-        VG_(printf)("Marking %d as nonfloat because TS(%d) is nonfloat.\n",
-                    dest, tsSrc);
-      }
-      addStoreTempNonFloat(sbOut, dest);
-    } else if (valType == Vt_Single){
-      IRExpr* vals[2];
-      for(int i = 0; i < 2; ++i){
-        Int src_addr = tsSrc + (i * sizeof(float));
-        vals[i] = runGetOrMakeTSVal(sbOut, src_addr, Vt_Single);
-      }
-      IRExpr* temp = runMkShadowTempValues(sbOut, 2, vals);
-      addStoreTemp(sbOut, temp, Vt_Single, dest);
-      if (print_temp_moves){
-        addPrint3("3. Making %p in %d ", temp, mkU64(dest));
-        addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
-      }
-    } else if (valType == Vt_Double){
-      IRExpr* val = runGetOrMakeTSVal(sbOut, tsSrc, Vt_Double);
-      IRExpr* temp = runMkShadowTempValues(sbOut, 1, &val);
-      if (PRINT_VALUE_MOVES){
-        addPrint3("Got %p from TS(%d) into ", val, mkU64(tsSrc));
-        addPrint2("temp %p\n", temp);
-      }
-      addStoreTemp(sbOut, temp, Vt_Double, dest);
+      break;
+    case Ss_Unshadowed:
+      return;
+    default:
+      tl_assert(0);
+    }
+  } else {
+    // In this case, we know we have multiple shadow values, and some
+    // of them might be shadowed, and others not.
 
-      if (print_temp_moves){
-        addPrint3("4. Making %p in %d ", temp, mkU64(dest));
-        addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
-      }
-    } else if (valType == Vt_Unknown){
-      IRExpr* temp = runPureCCall64_2(sbOut, dynamicGet64,
-                                      mkU64(tsSrc),
-                                      runGet64C(sbOut, tsSrc));
-      addStoreTempUnknown(sbOut, temp, dest);
-      if (print_temp_moves){
-        IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, temp);
-        addPrintG3(loadedNonNull,
-                   "5. Making %p in %d ",
-                   temp, mkU64(dest));
-        addPrintG2(loadedNonNull, "for value from TS(%d)\n", mkU64(tsSrc));
+
+    // The desired status the destination. We want the following
+    // behaviour: a shadow GET will always either return NULL, or a
+    // shadow temp with all of it's shadow values
+    // initialized/created. If at least one location in the source has a
+    // shadow, it does the latter, otherwise the former.
+    //
+    // Therefore, targetStatus will be Vt_Shadowed if any source
+    // location is Vt_Shadowed, Vt_Unknown if no source location is
+    // Vt_Shadowed, but some are Vt_Unknown, and Vt_Unshadowed if all
+    // source locations are Vt_Unshadowed.
+    ShadowStatus targetStatus = Ss_Unshadowed;
+    for(int i = 0; i < src_size; ++i){
+      if (tsShadowStatus[tsSrc + i] == Ss_Shadowed){
+        targetStatus = Ss_Shadowed;
+      } else if (tsShadowStatus[tsSrc + i] == Ss_Unknown &&
+                 targetStatus != Ss_Shadowed){
+        targetStatus = Ss_Unknown;
       }
     }
-  } else if (src_size == 4 || src_size == 8){
-    ValueType valType = inferTSType64(tsSrc, instrIdx);
-    if (valType == Vt_NonFloat){
-      addStoreTempNonFloat(sbOut, dest);
-    } else
-    // For mismatched V128's, we're going to assume that the program
-    // is only going to use the bottom half, so that's all we'll
-    // load. This might not be sound, say if the user stores the
-    // result back to memory/threadstate with the values copied as
-    // part of the operation, so keep an eye out for this.
-    if (valType == Vt_Single){
-      IRExpr* vals[MAX_TEMP_SHADOWS];
-      for(int i = 0; i < src_size; ++i){
-        Int src_addr = tsSrc + (i * sizeof(float));
-        vals[i] = runGetOrMakeTSVal(sbOut, src_addr, Vt_Single);
+    tempShadowStatus[dest] = targetStatus;
+    if (targetStatus == Ss_Unshadowed){
+      return;
+    }
+
+    // The inferred type of the values in the GET.
+    ValueType valType = inferTSBlockType(tsSrc, instrIdx, src_size);
+
+    switch(valType){
+    case Vt_Unknown:
+    case Vt_UnknownFloat:{
+      IRExpr* temp;
+      switch(src_size){
+      case 2:{
+        temp = runPureCCall64_2(sbOut, dynamicGet64,
+                                mkU64(tsSrc),
+                                runGet64C(sbOut, tsSrc));
       }
-      IRExpr* temp = runMkShadowTempValues(sbOut, src_size, vals);
-      addStoreTemp(sbOut, temp, Vt_Single, dest);
-      if (print_temp_moves){
-        addPrint3("6. Making %p in %d ", temp, mkU64(dest));
-        addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
+        break;
+      case 4:{
+        temp = runPureCCall64_3(sbOut, dynamicGet128,
+                                mkU64(tsSrc),
+                                runGet64C(sbOut, tsSrc),
+                                runGet64C(sbOut, tsSrc + sizeof(double)));
       }
-    } else if (valType == Vt_Double){
-      IRExpr* vals[MAX_TEMP_SHADOWS / 2];
-      for(int i = 0; i < (src_size / 2); ++i){
-        Int src_addr = tsSrc + (i * sizeof(double));
-        vals[i] = runGetOrMakeTSVal(sbOut, src_addr, Vt_Double);
-      }
-      IRExpr* temp = runMkShadowTempValues(sbOut, (src_size / 2), vals);
-      addStoreTemp(sbOut, temp, Vt_Double, dest);
-      if (print_temp_moves){
-        addPrint3("7. Making %p in %d ", temp, mkU64(dest));
-        addPrint2("for value from TS(%d)\n", mkU64(tsSrc));
-      }
-    } else if (valType == Vt_Unknown) {
-      IRExpr* loaded;
-      if (src_size == 4){
-        loaded = runPureCCall64_3(sbOut, dynamicGet128,
-                                  mkU64(tsSrc),
-                                  runGet64C(sbOut, tsSrc),
-                                  runGet64C(sbOut, tsSrc + sizeof(double)));
-      } else {
-        tl_assert(src_size == 8);
+        break;
+      case 8:{
         addStoreC(sbOut, runGet256C(sbOut, tsSrc), &getBytes);
-        loaded = runPureCCall64_2(sbOut, dynamicGet256, mkU64(tsSrc),
-                                  mkU64((uintptr_t)&getBytes));
+        temp = runPureCCall64_2(sbOut, dynamicGet256, mkU64(tsSrc),
+                                mkU64((uintptr_t)&getBytes));
       }
-      addStoreTempUnknown(sbOut, loaded, dest);
-      if (print_temp_moves){
-        IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, loaded);
-        addPrintG3(loadedNonNull,
-                   "8. Making %p in %d ",
-                   loaded, mkU64(dest));
-        addPrintG2(loadedNonNull, "for value from TS(%d)\n", mkU64(tsSrc));
+        break;
+      default:
+        tl_assert(0);
+        return;
       }
+      addStoreTemp(sbOut, temp, valType, dest);
+    }
+      break;
+    case Vt_Single:
+    case Vt_Double:{
+
+    switch(targetStatus){
+    case Ss_Shadowed:{
+      IRExpr* loadedVals[MAX_TEMP_SHADOWS];
+      for(int i = 0; i < src_size; ++i){
+        if (valType == Vt_Double && i % 2 == 1){
+          continue;
+        }
+        int valIdx = valType == Vt_Double ? i / 2 : i;
+        int tsAddr = tsSrc + i * sizeof(float);
+        switch(tsShadowStatus[tsAddr]){
+        case Ss_Shadowed:{
+          loadedVals[valIdx] = runGetTSVal(sbOut, tsAddr);
+        }
+          break;
+        case Ss_Unshadowed:{
+          IRExpr* clientVal =
+            valType == Vt_Double ?
+            runGet64C(sbOut, tsAddr) :
+            runF32toF64(sbOut, runGet32C(sbOut, tsAddr));
+          loadedVals[valIdx] = runMkShadowVal(sbOut, valType, clientVal);
+        }
+          break;
+        case Ss_Unknown:{
+          IRExpr* loaded = runGetTSVal(sbOut, tsSrc);
+          IRExpr* valDoesntExist = runZeroCheck64(sbOut, loaded);
+          IRExpr* clientVal =
+            valType == Vt_Double ?
+            runGet64C(sbOut, tsAddr) :
+            runF32toF64(sbOut, runGet32C(sbOut, tsAddr));
+          IRExpr* createdVal =
+            runMkShadowValG(sbOut, valDoesntExist, valType, clientVal);
+          loadedVals[valIdx] = runITE(sbOut, valDoesntExist,
+                                      createdVal, loaded);
+        }
+          break;
+        default:
+          tl_assert(0);
+          return;
+        }
+      }
+      IRExpr* temp = runMkShadowTempValues(sbOut,
+                                           valType == Vt_Double ?
+                                           src_size / 2
+                                           : src_size,
+                                           loadedVals);
+      addStoreTemp(sbOut, temp, valType, dest);
+    }
+      break;
+    case Ss_Unknown:{
+      IRExpr* someValNonNull = IRExpr_Const(IRConst_U1(False));
+      IRExpr* loadedVals[MAX_TEMP_SHADOWS];
+      for(int i = 0; i < src_size; ++i){
+        if (valType == Vt_Double && i % 2 == 1){
+          continue;
+        }
+        int valIdx = valType == Vt_Double ? i / 2 : i;
+        int tsAddr = tsSrc + i * sizeof(float);
+        if (tsShadowStatus[tsAddr] == Ss_Unshadowed){
+          continue;
+        }
+        loadedVals[valIdx] = runGetTSVal(sbOut, tsAddr);
+        someValNonNull = runOr(sbOut, someValNonNull,
+                               runNonZeroCheck64(sbOut, loadedVals[valIdx]));
+      }
+      for(int i = 0; i < src_size; ++i){
+        if (valType == Vt_Double && i % 2 == 1){
+          continue;
+        }
+        int valIdx = valType == Vt_Double ? i / 2 : i;
+        int tsAddr = tsSrc + i * sizeof(float);
+        IRExpr* clientVal =
+          valType == Vt_Double ?
+          runGet64C(sbOut, tsAddr) :
+          runF32toF64(sbOut, runGet32C(sbOut, tsAddr));
+        if (tsShadowStatus[tsAddr] == Ss_Unshadowed){
+          loadedVals[valIdx] = runMkShadowVal(sbOut, valType, clientVal);
+        } else {
+          IRExpr* valDoesntExist = runZeroCheck64(sbOut, loadedVals[valIdx]);
+          IRExpr* shouldCreateNewVal = runAnd(sbOut, valDoesntExist, someValNonNull);
+          IRExpr* createdVal = runMkShadowValG(sbOut, shouldCreateNewVal,
+                                               valType, clientVal);
+          loadedVals[valIdx] = runITE(sbOut, valDoesntExist,
+                                      createdVal, loadedVals[valIdx]);
+        }
+      }
+      IRExpr* temp = runMkShadowTempValuesG(sbOut, someValNonNull,
+                                            valType == Vt_Double ?
+                                            src_size / 2
+                                            : src_size,
+                                            loadedVals);
+      addStoreTemp(sbOut, temp, valType, dest);
+    }
+      break;
+    case Ss_Unshadowed:
+    default:
+      tl_assert(0);
+      return;
+    }
+    }
+      break;
+    default:
+      tl_assert(0);
+      return;
     }
   }
 }

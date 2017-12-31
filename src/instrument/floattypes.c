@@ -297,16 +297,15 @@ ValueType tsType(Int tsAddr, int instrIdx){
   }
   return nextTSEntry->type;
 }
-ValueType inferTSType64(Int tsAddr, int instrIdx){
-  tl_assert2(tsType(tsAddr + sizeof(float), instrIdx) != Vt_Double,
-             "Mismatched float at TS(%d) at instr %d!", tsAddr, instrIdx);
-  tl_assert2(tsType(tsAddr, instrIdx) != Vt_Double ||
-             tsType(tsAddr + sizeof(float), instrIdx) == Vt_NonFloat,
-             "Mismatched float at TS(%d) at instr %d!", tsAddr, instrIdx);
-  if (tsType(tsAddr, instrIdx) == Vt_Unknown){
-    return tsType(tsAddr + sizeof(float), instrIdx);
-  } else {
-    return tsType(tsAddr, instrIdx);
+ValueType inferTSBlockType(int tsAddr, int instrIdx, int size){
+  ValueType result = Vt_Unknown;
+  for(int i = 0; i < size; ++i){
+    if (result == Vt_Double && i % 2 == 1) continue;
+    result = typeMeet(result, tsType(tsAddr + sizeof(float) * i, instrIdx));
+  }
+  return result;
+}
+
   }
 }
 

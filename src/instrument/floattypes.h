@@ -98,7 +98,7 @@ Bool setTSType(int idx, int instrIdx, ValueType type);
 Bool refineTSType(int tempIdx, int instrIdx, ValueType type);
 
 ValueType tsType(Int tsAddr, int instrIdx);
-ValueType inferTSType64(Int tsAddr, int instrIdx);
+ValueType inferTSBlockType(int tsAddr, int instrIdx, int size);
 Bool tsAddrCanHaveShadow(Int tsAddr, int instrIdx);
 Bool tsHasStaticShadow(Int tsAddr, int instrIdx);
 
