@@ -658,6 +658,9 @@ IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
     addStoreIndexG(sbOut, guard, tempValues, ShadowValue*, i, values[i]);
   }
   IRExpr* result = runITE(sbOut, guard, temp, mkU64(0));
+  if (PRINT_TEMP_MOVES){
+    addPrintG2(guard, "making new temp %p -> ", temp);
+  }
   return result;
 }
 IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
@@ -673,6 +676,9 @@ IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
   for(int i = 0; i < num_values; ++i){
     addSVOwnNonNull(sbOut, values[i]);
     addStoreIndex(sbOut, tempValues, ShadowValue*, i, values[i]);
+  }
+  if (PRINT_TEMP_MOVES){
+    addPrint2("making new temp %p -> ", temp);
   }
   return temp;
 }
@@ -764,8 +770,12 @@ IRExpr* runLoadTemp(IRSB* sbOut, int idx){
   return runLoad64C(sbOut, &(shadowTemps[idx]));
 }
 IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc){
-  return runLoad64C(sbOut,
-                    &(shadowThreadState[VG_(get_running_tid)()][tsSrc]));
+  IRExpr* val = runLoad64C(sbOut,
+                           &(shadowThreadState[VG_(get_running_tid)()][tsSrc]));
+  if (PRINT_VALUE_MOVES){
+    addPrint3("Getting val %p from TS(%d) -> ", val, mkU64(tsSrc));
+  }
+  return val;
 }
 IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc){
   return runLoad64(sbOut,
@@ -873,6 +883,9 @@ void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal){
 void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
                   ValueType type,
                   int idx){
+  if (PRINT_VALUE_MOVES || PRINT_TEMP_MOVES){
+    addPrint2("storing in t%d\n", mkU64(idx));
+  }
   tl_assert(type == Vt_Unknown ||
             type == tempType(idx));
   addStoreC(sbOut, shadow_temp, &(shadowTemps[idx]));
@@ -889,7 +902,9 @@ void addStoreTempNonFloat(IRSB* sbOut, int idx){
   if (PRINT_TYPES){
     VG_(printf)("Setting %d to non float.\n", idx);
   }
-  tl_assert(tempType(idx) == Vt_NonFloat);
+  tl_assert2(tempType(idx) == Vt_NonFloat,
+             "Tried to set t%d to a nonfloat, but we believe it to be %s!\n",
+             idx, typeName(tempType(idx)));
   tempShadowStatus[idx] = Ss_Unshadowed;
 }
 void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe,

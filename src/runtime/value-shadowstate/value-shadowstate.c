@@ -658,6 +658,11 @@ ShadowValue* mkShadowValue(ValueType type, double value){
   if (existingEntry == NULL || no_reals){
     result = mkShadowValueBare(type);
     if (!no_reals){
+      if (PRINT_VALUE_MOVES){
+        VG_(printf)("Setting shadow value to initial value of ");
+        ppFloat(value);
+        VG_(printf)("\n");
+      }
       setReal(result->real, value);
     }
     if (!no_exprs){

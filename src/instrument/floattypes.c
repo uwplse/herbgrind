@@ -643,11 +643,14 @@ void inferTypes(IRSB* sbIn){
   // changes. Therefore, the while loop will terminate when an
   // iteration has completed which doesn't change anything.
   int dirty = 1;
+  int pass_num = 0;
   while(dirty){
+    pass_num++;
     if (print_type_inference){
-      VG_(printf)("Making a type pass\n"
+      VG_(printf)("Making type pass %d\n"
                   "==================\n"
-                  "\n");
+                  "\n",
+                  pass_num);
     }
     dirty = 0;
     // We make forward passes through the instructions, building type
