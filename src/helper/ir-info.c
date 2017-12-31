@@ -804,7 +804,7 @@ Bool isSpecialOp(IROp op_code){
 }
 
 Bool isFloatOp(IROp op_code){
-  switch(op_code){
+  switch((int)op_code){
   case Iop_32Uto64:
   case Iop_64to32:
   case Iop_32UtoV128:
@@ -839,6 +839,8 @@ Bool isFloatOp(IROp op_code){
   case Iop_F128HItoF64:
   case Iop_F128LOtoF64:
   case Iop_F32toF64:
+  case IEop_Neg32F0x4:
+  case IEop_Neg64F0x2:
   case Iop_NegF32:
   case Iop_AbsF32:
   case Iop_NegF64:

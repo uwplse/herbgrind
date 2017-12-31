@@ -399,6 +399,10 @@ ValueType argPrecision(IROp op_code){
   case Iop_SetV128lo32:
   case Iop_32Uto64:
   case Iop_32UtoV128:
+  case Iop_F32toI32S:
+  case Iop_F32toI64S:
+  case Iop_F32toI32U:
+  case Iop_F32toI64U:
     return Vt_Single;
   case Iop_CmpLT64F0x2:
   case Iop_CmpLE64F0x2:
@@ -459,6 +463,10 @@ ValueType argPrecision(IROp op_code){
   case Iop_Min64F0x2:
   case Iop_Min64Fx2:
   case Iop_64to32:
+  case Iop_F64toI32S:
+  case Iop_F64toI64S:
+  case Iop_F64toI32U:
+  case Iop_F64toI64U:
     return Vt_Double;
   case Iop_SetV128lo64:
   case Iop_64UtoV128:
