@@ -203,7 +203,7 @@ void hg_print_debug_usage(void){
               "returns to Valgrind.\n"
               " --print-block-boundries "
               "Prints +++++ between each executed block.\n"
-              " --print-run-blocks"
+              " --print-run-blocks "
               "Prints the addresses of each run block.\n"
               " --print-temp-moves "
               "Prints each shadow temp movement.\n"
