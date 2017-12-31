@@ -85,7 +85,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     } else {
       return;
     }
-    shadowInputs[1-inputIndex] = 0;
+    shadowInputs[1] = 0;
   } else {
     if (!canStoreShadow(sbOut->tyenv, argExprs[0]) &&
         !canStoreShadow(sbOut->tyenv, argExprs[1])){
