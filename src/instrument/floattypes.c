@@ -398,6 +398,7 @@ ValueType argPrecision(IROp op_code){
   case Iop_RoundF32toInt:
   case Iop_SetV128lo32:
   case Iop_32Uto64:
+  case Iop_32UtoV128:
     return Vt_Single;
   case Iop_CmpLT64F0x2:
   case Iop_CmpLE64F0x2:
@@ -452,7 +453,6 @@ ValueType argPrecision(IROp op_code){
   case Iop_F128LOtoF64:
   case Iop_RoundF64toInt:
   case Iop_F64toF32:
-  case Iop_64HLtoV128:
   case Iop_F64HLtoF128:
   case Iop_Max64F0x2:
   case Iop_Max64Fx2:
@@ -465,6 +465,7 @@ ValueType argPrecision(IROp op_code){
   case Iop_V128to64:
   case Iop_V128HIto64:
   case Iop_ZeroHI64ofV128:
+  case Iop_64HLtoV128:
     return Vt_Unknown;
   default:
     ppIROp_Extended(op_code);
@@ -475,7 +476,7 @@ ValueType argPrecision(IROp op_code){
   }
 }
 ValueType resultPrecision(IROp op_code){
-  if (!isFloatOp(op_code)){
+  if (!isFloatOp(op_code) && !isSpecialOp(op_code)){
     return Vt_NonFloat;
   }
   switch((int)op_code){
@@ -607,9 +608,18 @@ ValueType resultPrecision(IROp op_code){
   case Iop_64HLtoV128:
   case Iop_F64HLtoF128:
   case Iop_F32toF64:
+  case Iop_I32StoF64:
+  case Iop_I64StoF64:
     return Vt_Double;
   case Iop_SetV128lo64:
   case Iop_64UtoV128:
+  case Iop_XorV128:
+  case Iop_AndV128:
+  case Iop_OrV128:
+  case Iop_NotV128:
+  case Iop_Shr64:
+  case Iop_Shl64:
+  case Iop_Sar64:
     return Vt_Unknown;
   default:
     tl_assert(0);
