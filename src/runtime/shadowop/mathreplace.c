@@ -70,6 +70,15 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
       disownShadowValue(shadowArgs[i]);
     }
   }
+  if (print_inputs){
+    for(int i = 0; i < nargs; ++i){
+      VG_(printf)("Arg %d is computed as ", i + 1);
+      ppFloat(args[i]);
+      VG_(printf)(", and is shadowed as ");
+      ppFloat(getDouble(shadowArgs[i]->real));
+      VG_(printf)("\n");
+    }
+  }
   ShadowValue* shadowResult = runWrappedShadowOp(type, shadowArgs);
   *resLoc = runEmulatedWrappedOp(type, args);
   removeMemShadow((UWord)(uintptr_t)resLoc);
