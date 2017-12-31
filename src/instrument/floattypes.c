@@ -292,7 +292,7 @@ ValueType tsType(Int tsAddr, int instrIdx){
     return Vt_Unknown;
   }
   TSTypeEntry* nextTSEntry = tsTypes[tsAddr];
-  while(nextTSEntry->next != NULL && nextTSEntry->next->instrIndexSet < instrIdx){
+  while(nextTSEntry->next != NULL && nextTSEntry->next->instrIndexSet <= instrIdx){
     nextTSEntry = nextTSEntry->next;
   }
   return nextTSEntry->type;
