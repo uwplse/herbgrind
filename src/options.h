@@ -59,6 +59,7 @@ extern Bool print_flagged;
 extern Bool print_compares;
 extern Bool print_type_inference;
 extern Bool print_inferred_types;
+extern Bool print_statement_numbers;
 extern Int longprint_len;
 
 extern Bool dont_ignore_pure_zeroes;

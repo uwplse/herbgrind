@@ -232,6 +232,9 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
 void printSuperBlock(IRSB* superblock){
   for(int i = 0; i < superblock->stmts_used; i++){
     IRStmt* st = superblock->stmts[i];
+    if (print_statement_numbers){
+      VG_(printf)("%d: ", i);
+    }
     ppIRStmt(st);
     VG_(printf)("\n");
   }
