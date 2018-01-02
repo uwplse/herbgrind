@@ -110,6 +110,9 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
   addStoreTempCopy(sbOut, resultSt, dest, typeJoin(trueType, falseType));
 }
 void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
+  if (!canBeShadowed(sbOut->tyenv, data)){
+    return;
+  }
   // This procedure adds instrumentation to sbOut which shadows the
   // putting of a value from a temporary into thread state.
 
@@ -650,6 +653,9 @@ void instrumentLoadG(IRSB* sbOut, IRTemp dest,
 }
 void instrumentStore(IRSB* sbOut, IRExpr* addr,
                      IRExpr* data){
+  if (!canBeShadowed(sbOut->tyenv, data)){
+    return;
+  }
   int dest_size = exprSize(sbOut->tyenv, data);
   if (data->tag == Iex_RdTmp){
     int idx = data->Iex.RdTmp.tmp;
@@ -763,6 +769,7 @@ IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
   if (canStoreShadow(sbOut->tyenv, argExpr)){
     addStoreTemp(sbOut, result, valType,
                  argExpr->Iex.RdTmp.tmp);
+    tempShadowStatus[argExpr->Iex.RdTmp.tmp] = Ss_Shadowed;
   }
   return result;
 }
@@ -805,6 +812,7 @@ IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
   if (canStoreShadow(sbOut->tyenv, argExpr)){
     addStoreTempG(sbOut, guard, result, valType,
                   argExpr->Iex.RdTmp.tmp);
+    tempShadowStatus[argExpr->Iex.RdTmp.tmp] = Ss_Unknown;
   }
   return result;
 }
