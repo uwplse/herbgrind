@@ -70,6 +70,7 @@ ValueType constType(const IRConst* constant);
 
 void initTypeState(void);
 void resetTypeState(void);
+void cleanupTypeState(void);
 void addClearMemTypes(void);
 void inferTypes(IRSB* sbIn);
 

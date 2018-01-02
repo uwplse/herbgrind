@@ -58,6 +58,8 @@ void resetTypeState(void){
     }
   }
 }
+void cleanupTypeState(void){
+}
 ValueType tempType(int idx){
   return tempTypes[idx];
 }

@@ -95,6 +95,7 @@ void init_instrumentation(void){
 }
 
 void finish_instrumentation(void){
+  cleanupTypeState();
 }
 void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){
   switch(stmt->tag){
