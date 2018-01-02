@@ -450,7 +450,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       case 2:{
         temp = runPureCCall64_2(sbOut, dynamicGet64,
                                 mkU64(tsSrc),
-                                runGet64C(sbOut, tsSrc));
+                                IRExpr_RdTmp(dest));
       }
         break;
       case 4:{
