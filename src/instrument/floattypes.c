@@ -680,6 +680,7 @@ void inferTypes(IRSB* sbIn){
   // iteration has completed which doesn't change anything.
   int dirty = 1;
   int pass_num = 0;
+  int direction = 1;
   while(dirty){
     pass_num++;
     if (print_type_inference){
@@ -707,7 +708,9 @@ void inferTypes(IRSB* sbIn){
     // thread state type accessing and setting functions will
     // therefore take the instruction index, and will use it to update
     // this data structure.
-    for(int instrIdx = 0; instrIdx < sbIn->stmts_used; ++instrIdx){
+    for(int instrIdx = direction == 1 ? 0 : sbIn->stmts_used - 1;
+        direction == 1 ? instrIdx < sbIn->stmts_used : instrIdx >= 0;
+        instrIdx += direction){
       IRStmt* stmt = sbIn->stmts[instrIdx];
       switch(stmt->tag){
         // These statements don't really do much, so we can ignore
@@ -1039,6 +1042,7 @@ void inferTypes(IRSB* sbIn){
         break;
       }
     }
+    direction = -direction;
   }
   if (print_inferred_types){
     printTypeState();
