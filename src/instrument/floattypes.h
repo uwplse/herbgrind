@@ -93,6 +93,7 @@ Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr);
 Bool staticallyFloat(IRExpr* expr);
 Bool staticallyShadowed(IRExpr* expr);
 Bool canStoreShadow(IRTypeEnv* typeEnv, IRExpr* expr);
+Bool canBeShadowed(IRTypeEnv* typeEnv, IRExpr* expr);
 
 // Returns true if anything was changed, false otherwise
 Bool setTSType(int idx, int instrIdx, ValueType type);

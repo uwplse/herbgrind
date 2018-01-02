@@ -175,6 +175,11 @@ Bool canStoreShadow(IRTypeEnv* typeEnv, IRExpr* expr){
   }
 }
 
+Bool canBeShadowed(IRTypeEnv* typeEnv, IRExpr* expr){
+  return canStoreShadow(typeEnv, expr) &&
+    tempShadowStatus[expr->Iex.RdTmp.tmp] != Ss_Unshadowed;
+}
+
 int exprSize(IRTypeEnv* tyenv, IRExpr* expr){
   return typeSize(typeOfIRExpr(tyenv, expr));
 }

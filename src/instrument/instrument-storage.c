@@ -53,7 +53,7 @@ void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src){
   tl_assert2(typeOfIRTemp(sbOut->tyenv, dest) ==
              typeOfIRTemp(sbOut->tyenv, src),
              "Source of temp move doesn't match dest!");
-  if (!canStoreShadow(sbOut->tyenv, IRExpr_RdTmp(src))){
+  if (!canBeShadowed(sbOut->tyenv, IRExpr_RdTmp(src))){
     return;
   }
   // Propagate the shadow status
@@ -79,7 +79,7 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
   IRExpr* trueSt;
   IRExpr* falseSt;
   ShadowStatus trueShadowed, falseShadowed;
-  if (!canStoreShadow(sbOut->tyenv, trueExpr)){
+  if (!canBeShadowed(sbOut->tyenv, trueExpr)){
     trueSt = mkU64(0);
     trueShadowed = Ss_Unshadowed;
   } else {
@@ -87,7 +87,7 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
     trueSt = runLoadTemp(sbOut, trueExpr->Iex.RdTmp.tmp);
     trueShadowed = tempShadowStatus[trueExpr->Iex.RdTmp.tmp];
   }
-  if (!canStoreShadow(sbOut->tyenv, falseExpr)){
+  if (!canBeShadowed(sbOut->tyenv, falseExpr)){
     falseSt = mkU64(0);
     falseShadowed = Ss_Unshadowed;
   } else {
@@ -171,12 +171,12 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
         }
         addSVDisown(sbOut, oldVal);
       }
-      if (!canStoreShadow(sbOut->tyenv, data)){
+      if (!canBeShadowed(sbOut->tyenv, data)){
         addSetTSValUnshadowed(sbOut, dest_addr, instrIdx);
       }
     }
   }
-  if (canStoreShadow(sbOut->tyenv, data)){
+  if (canBeShadowed(sbOut->tyenv, data)){
     int idx = data->Iex.RdTmp.tmp;
     IRExpr* st = runLoadTemp(sbOut, idx);
     if (staticallyShadowed(data)){
@@ -315,7 +315,7 @@ void instrumentPutI(IRSB* sbOut,
     addSVDisown(sbOut, oldVal);
     addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
   }
-  if (canStoreShadow(sbOut->tyenv, data)) {
+  if (canBeShadowed(sbOut->tyenv, data)) {
     int tempIdx = data->Iex.RdTmp.tmp;
     IRExpr* st = runLoadTemp(sbOut, tempIdx);
     if (staticallyShadowed(data)){
@@ -379,7 +379,7 @@ void instrumentPutI(IRSB* sbOut,
 void instrumentGet(IRSB* sbOut, IRTemp dest,
                    Int tsSrc, IRType type,
                    int instrIdx){
-  if (!canStoreShadow(sbOut->tyenv, IRExpr_RdTmp(dest))){
+  if (!canBeShadowed(sbOut->tyenv, IRExpr_RdTmp(dest))){
     return;
   }
   int src_size = typeSize(type);
@@ -583,7 +583,7 @@ void instrumentGetI(IRSB* sbOut, IRTemp dest,
                     IRExpr* varOffset, int constOffset,
                     Int arrayBase, Int numElems, IRType elemType,
                     int instrIdx){
-  if (!canStoreShadow(sbOut->tyenv, IRExpr_RdTmp(dest))){
+  if (!canBeShadowed(sbOut->tyenv, IRExpr_RdTmp(dest))){
     return;
   }
   tempShadowStatus[dest] = Ss_Unknown;

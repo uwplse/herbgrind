@@ -71,7 +71,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     if (argExprs[inputIndex]->tag == Iex_RdTmp){
       tempShadowStatus[dest] = tempShadowStatus[argExprs[inputIndex]->Iex.RdTmp.tmp];
     }
-    if (canStoreShadow(sbOut->tyenv, argExprs[inputIndex])){
+    if (canBeShadowed(sbOut->tyenv, argExprs[inputIndex])){
       shadowInputs[0] =
         runLoadTemp(sbOut, argExprs[inputIndex]->Iex.RdTmp.tmp);
       if (staticallyShadowed(argExprs[inputIndex])){
@@ -87,15 +87,15 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     }
     shadowInputs[1] = 0;
   } else {
-    if (!canStoreShadow(sbOut->tyenv, argExprs[0]) &&
-        !canStoreShadow(sbOut->tyenv, argExprs[1])){
+    if (!canBeShadowed(sbOut->tyenv, argExprs[0]) &&
+        !canBeShadowed(sbOut->tyenv, argExprs[1])){
       tempShadowStatus[dest] = Ss_Unshadowed;
       return;
     } else if (staticallyShadowed(argExprs[0]) ||
                staticallyShadowed(argExprs[1])) {
       tempShadowStatus[dest] = Ss_Shadowed;
       for (int i = 0; i < 2; ++i){
-        if (canStoreShadow(sbOut->tyenv, argExprs[i])){
+        if (canBeShadowed(sbOut->tyenv, argExprs[i])){
           shadowInputs[i] =
             runLoadTemp(sbOut, argExprs[i]->Iex.RdTmp.tmp);
           if (!staticallyShadowed(argExprs[i])){
@@ -133,7 +133,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       // calls when this happens, because it means we statically know
       // whether it preexists or not.
       inputPreexisting = NULL;
-    } else if (!canStoreShadow(sbOut->tyenv, argExprs[0])) {
+    } else if (!canBeShadowed(sbOut->tyenv, argExprs[0])) {
       shadowInputs[1] =
         runLoadTemp(sbOut, argExprs[1]->Iex.RdTmp.tmp);
       inputPreexisting =
@@ -154,7 +154,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       inputsPreexistingStatic[1] = Uncertain;
       inputsPreexistingDynamic[0] = NULL;
       inputsPreexistingDynamic[1] = inputPreexisting;
-    } else if (!canStoreShadow(sbOut->tyenv, argExprs[1])) {
+    } else if (!canBeShadowed(sbOut->tyenv, argExprs[1])) {
       tempShadowStatus[dest] = Ss_Unknown;
       shadowInputs[0] =
         runLoadTemp(sbOut, argExprs[0]->Iex.RdTmp.tmp);
@@ -526,7 +526,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
   if (numConversionInputs(op_code) == 2){
     if (inputPreexisting == NULL){
       for (int i = 0; i < 2; ++i){
-        if (!canStoreShadow(sbOut->tyenv, argExprs[i])){
+        if (!canBeShadowed(sbOut->tyenv, argExprs[i])){
           if (argPrecision(op_code) == Vt_Unknown){
             addDynamicDisownNonNullDetached(sbOut, shadowInputs[i]);
           } else {
@@ -538,7 +538,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       }
     } else {
       for (int i = 0; i < 2; ++i){
-        if (!canStoreShadow(sbOut->tyenv, argExprs[i])){
+        if (!canBeShadowed(sbOut->tyenv, argExprs[i])){
           if (argPrecision(op_code) == Vt_Unknown){
             addDynamicDisown(sbOut, i);
           } else {
