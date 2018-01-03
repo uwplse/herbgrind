@@ -824,7 +824,8 @@ IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc){
   IRExpr* val = runLoad64C(sbOut,
                            &(shadowThreadState[VG_(get_running_tid)()][tsSrc]));
   if (PRINT_VALUE_MOVES){
-    addPrint3("Getting val %p from TS(%d) -> ", val, mkU64(tsSrc));
+    IRExpr* valExists = runNonZeroCheck64(sbOut, val);
+    addPrintG3(valExists, "Getting val %p from TS(%d) -> ", val, mkU64(tsSrc));
   }
   return val;
 }
@@ -934,7 +935,9 @@ void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
                   ValueType type,
                   int idx){
   if (PRINT_VALUE_MOVES || PRINT_TEMP_MOVES){
-    addPrint2("storing in t%d\n", mkU64(idx));
+    IRExpr* tempNonNull = runNonZeroCheck64(sbOut, shadow_temp);
+    addPrintG2(tempNonNull, "storing in t%d\n", mkU64(idx));
+    /* addPrint2("storing in t%d\n", mkU64(idx)); */
   }
   tl_assert(type == Vt_Unknown ||
             type == tempType(idx));
@@ -945,6 +948,11 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard,
                    IRExpr* shadow_temp,
                    ValueType type,
                    int idx){
+  if (PRINT_VALUE_MOVES || PRINT_TEMP_MOVES){
+    IRExpr* tempNonNull = runNonZeroCheck64(sbOut, shadow_temp);
+    IRExpr* shouldPrint = runAnd(sbOut, tempNonNull, guard);
+    addPrintG2(shouldPrint, "storing in t%d\n", mkU64(idx));
+  }
   addStoreGC(sbOut, guard, shadow_temp, &(shadowTemps[idx]));
   cleanupAtEndOfBlock(sbOut, idx);
 }

@@ -1147,7 +1147,7 @@ const char* opSym(ShadowOpInfo* op){
 
 void ppConcExpr(ConcExpr* expr){
   if (expr->type == Node_Leaf){
-    VG_(printf)("%f", expr->value);
+    ppFloat(expr->value);
   } else {
     VG_(printf)("(%s", opSym(expr->branch.op));
     for (int i = 0; i < expr->branch.nargs; ++i){

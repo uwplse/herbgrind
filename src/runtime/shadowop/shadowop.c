@@ -110,9 +110,9 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
         VG_(printf)("%p (new rc %lu), ",
                     result->values[i], result->values[i]->ref_count);
       }
-      VG_(printf)("from %p to %p\n", args[0], result);
+      VG_(printf)("from %p to %p -> ", args[0], result);
     } else {
-      VG_(printf)("\n");
+      VG_(printf)(" -> ");
     }
   }
   for(int i = 0; i < opInfo->exinfo.nargs; ++i){

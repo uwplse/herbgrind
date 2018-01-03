@@ -191,11 +191,11 @@ VG_REGPARM(2) void dynamicPut128(Int tsDest, ShadowTemp* st){
 VG_REGPARM(2) ShadowTemp* dynamicGet64(Int tsSrc, UWord tsBytes){
   ShadowTemp* result = dynamicGet(tsSrc, &tsBytes, 8);
   if (result != NULL && (PRINT_VALUE_MOVES || PRINT_TEMP_MOVES)){
-    VG_(printf)("[dynamicGet64] Making %p for value(s) ", result);
+    VG_(printf)("[dynamicGet64] Making temp %p for value(s) ", result);
     for(int i = 0; i < result->num_vals; ++i){
       VG_(printf)("%p ", result->values[i]);
     }
-    VG_(printf)(" from TS(%d)\n", tsSrc);
+    VG_(printf)(" from TS(%d) -> ", tsSrc);
   }
   return result;
 }
@@ -210,7 +210,7 @@ VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc,
     for(int i = 0; i < result->num_vals; ++i){
       VG_(printf)("%p ", result->values[i]);
     }
-    VG_(printf)(" from TS(%d)\n", tsSrc);
+    VG_(printf)(" from TS(%d) -> ", tsSrc);
   }
   return result;
 }
@@ -223,7 +223,7 @@ VG_REGPARM(2) ShadowTemp* dynamicGet256(Int tsSrc,
     for(int i = 0; i < result->num_vals; ++i){
       VG_(printf)("%p, ", result->values[i]);
     }
-    VG_(printf)("from TS(%d)\n", tsSrc);
+    VG_(printf)("from TS(%d) -> ", tsSrc);
   }
   return result;
 }
@@ -306,8 +306,7 @@ ShadowTemp* dynamicLoad32(UWord memSrc){
     newTemp->values[0] = val;
     ownShadowValue(val);
     if (PRINT_VALUE_MOVES){
-      VG_(printf)("Owning shadow value %p (new rc %lu) as part of dynamic load 32.\n",
-                  val, val->ref_count);
+      VG_(printf)("[dynamicLoad32] Making temp %p for value %p ->", newTemp, val);
     }
     return newTemp;
   } else {
@@ -327,8 +326,8 @@ ShadowTemp* dynamicLoad64(Addr memSrc){
     temp->values[1] = secondValue;
     ownShadowValue(secondValue);
     if (PRINT_VALUE_MOVES){
-      VG_(printf)("Owning shadow value %p (new rc %lu) as part of dynamic load 64.\n",
-                  secondValue, secondValue->ref_count);
+      VG_(printf)("[dynamicLoad64] Making temp %p for values %p and %p -> ",
+                  temp, firstValue, secondValue);
     }
     return temp;
   } else if (firstValue->type == Vt_Double){
@@ -336,8 +335,8 @@ ShadowTemp* dynamicLoad64(Addr memSrc){
     temp->values[0] = firstValue;
     ownShadowValue(firstValue);
     if (PRINT_VALUE_MOVES){
-      VG_(printf)("Owning shadow value %p (new rc %lu) as part of dynamic load 64.\n",
-                  firstValue, firstValue->ref_count);
+      VG_(printf)("[dynamicLoad64] Making temp %p for value %p -> ",
+                  temp, firstValue);
     }
     return temp;
   } else {
@@ -351,13 +350,8 @@ ShadowTemp* dynamicLoad64(Addr memSrc){
     ShadowTemp* temp = mkShadowTemp(2);
     ownShadowValue(firstValue);
     if (PRINT_VALUE_MOVES){
-      VG_(printf)("Owning shadow value(s) %p (new rc %lu)",
-                  firstValue, firstValue->ref_count);
-      if (secondValue != NULL){
-        VG_(printf)(" and %p (new rc %lu)",
-                    secondValue, secondValue->ref_count);
-      }
-      VG_(printf)(" as part of dynamic load 64.\n");
+      VG_(printf)("[dynamicLoad64] Making temp %p for values %p and %p -> ",
+                  temp, firstValue, secondValue);
     }
     temp->values[0] = firstValue;
     temp->values[1] = secondValue;
@@ -663,7 +657,7 @@ ShadowValue* mkShadowValue(ValueType type, double value){
     result = mkShadowValueBare(type);
     if (!no_reals){
       if (PRINT_VALUE_MOVES){
-        VG_(printf)("Setting shadow value to initial value of ");
+        VG_(printf)("Setting shadow value %p to initial value of ", result);
         ppFloat(value);
         VG_(printf)("\n");
       }

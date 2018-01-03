@@ -80,9 +80,9 @@ void generalizeSymbolicExpr(SymbExpr** symbexpr, ConcExpr* cexpr){
     }
   } else {
     if (print_expr_updates){
-      VG_(printf)("Merging %p ", *symbexpr);
+      VG_(printf)("Merging %p (op %p) ", *symbexpr, (*symbexpr)->branch.op);
       ppSymbExpr(*symbexpr);
-      VG_(printf)(" with %p ", cexpr);
+      VG_(printf)(" with %p (op %p) ", cexpr, cexpr->branch.op);
       ppConcExpr(cexpr);
       VG_(printf)("\n");
     }
