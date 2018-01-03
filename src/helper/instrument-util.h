@@ -34,6 +34,7 @@
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
 #include "pub_tool_machine.h"
+#include "runtime-util.h"
 
 #ifdef VG_LITTLEENDIAN
 #define ENDIAN Iend_LE
@@ -132,6 +133,11 @@ IRExpr* runAndto64(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2);
   addStmtToIRSB(sbOut, mkDirty_0_1(ppFloatType, mkU64(floattype)))
 #define addPrintFtG(guard, floattype)                                    \
   addStmtToIRSB(sbOut, mkDirtyG_0_1(ppFloatType, mkU64(floattype), guard))
+
+#define addPrintFloat(float_expr) \
+  addStmtToIRSB(sbOut, mkDirty_0_1(ppFloat_wrapper, float_expr))
+#define addPrintFloatG(guard, float_expr)                        \
+  addStmtToIRSB(sbOut, mkDirtyG_0_1(ppFloat_wrapper, float_expr, guard))
 
 #define addPrint(string) \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "print", VG_(fnptr_to_fnentry)(VG_(printf)), mkIRExprVec_1(mkU64((uintptr_t)string)))))
