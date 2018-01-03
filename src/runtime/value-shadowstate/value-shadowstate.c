@@ -645,6 +645,10 @@ ShadowValue* mkShadowValueBare(ValueType type){
   result->ref_count = 1;
   return result;
 }
+
+VG_REGPARM(2) ShadowValue* mkShadowValue_wrapper(ValueType type, UWord value){
+  return mkShadowValue(type, *(double*)(void*)&value);
+}
 VgHashTable* valueCacheSingle;
 VgHashTable* valueCacheDouble;
 inline

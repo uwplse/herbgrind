@@ -137,6 +137,7 @@ void freeShadowValue(ShadowValue* val);
 ShadowValue* copyShadowValue(ShadowValue* val);
 ShadowValue* mkShadowValueBare(ValueType type);
 ShadowValue* mkShadowValue(ValueType type, double value);
+VG_REGPARM(2) ShadowValue* mkShadowValue_wrapper(ValueType type, UWord value);
 
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value);
 VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values);

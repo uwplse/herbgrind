@@ -731,11 +731,12 @@ IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
   return temp;
 }
 IRExpr* runMkShadowVal(IRSB* sbOut, ValueType type, IRExpr* valExpr){
-  return runPureCCall64_2(sbOut, mkShadowValue, mkU64(type), valExpr);
+  return runPureCCall64_2(sbOut, mkShadowValue_wrapper, mkU64(type), valExpr);
 }
 IRExpr* runMkShadowValG(IRSB* sbOut, IRExpr* guard,
                         ValueType type, IRExpr* valExpr){
-  return runDirtyG_1_2(sbOut, guard, mkShadowValue,
+
+  return runDirtyG_1_2(sbOut, guard, mkShadowValue_wrapper,
                        mkU64(type), valExpr);
 }
 IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
