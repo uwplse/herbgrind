@@ -403,6 +403,9 @@ ShadowTemp* dynamicLoad128(UWord memSrc){
     result = mkShadowTemp(2);
     result->values[0] = firstHalf->values[0];
     result->values[1] = secondHalf->values[0];
+    for(int i = 0; i < 2; ++i){
+      ownShadowValue(result->values[i]);
+    }
   } else {
     tl_assert(firstHalf->num_vals == 2 &&
               secondHalf->num_vals == 2);
@@ -411,6 +414,9 @@ ShadowTemp* dynamicLoad128(UWord memSrc){
     result->values[1] = firstHalf->values[1];
     result->values[2] = secondHalf->values[0];
     result->values[3] = secondHalf->values[1];
+    for(int i = 0; i < 4; ++i){
+      ownShadowValue(result->values[i]);
+    }
   }
   freeShadowTemp(firstHalf);
   freeShadowTemp(secondHalf);
@@ -456,6 +462,9 @@ ShadowTemp* dynamicLoad256(UWord memSrc){
     result->values[1] = firstHalf->values[1];
     result->values[2] = secondHalf->values[0];
     result->values[3] = secondHalf->values[1];
+    for(int i = 0; i < 4; ++i){
+      ownShadowValue(result->values[i]);
+    }
   } else {
     tl_assert2(firstHalf->num_vals == 4 &&
                secondHalf->num_vals == 4,
@@ -473,6 +482,9 @@ ShadowTemp* dynamicLoad256(UWord memSrc){
     result->values[5] = secondHalf->values[1];
     result->values[6] = secondHalf->values[2];
     result->values[7] = secondHalf->values[3];
+    for(int i = 0; i < 8; ++i){
+      ownShadowValue(result->values[i]);
+    }
   }
   freeShadowTemp(firstHalf);
   freeShadowTemp(secondHalf);
