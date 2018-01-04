@@ -331,6 +331,9 @@ ConcExpr* mkLeafConcExpr(double value){
     result = (void*)stack_pop(leafCExprs);
   }
   result->ref_count = 1;
+  if (print_expr_refs){
+    VG_(printf)("Making new expression %p with 1 reference\n", result);
+  }
   result->value = value;
 
   // Grafts
