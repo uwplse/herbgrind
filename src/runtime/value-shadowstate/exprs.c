@@ -614,11 +614,18 @@ SymbExpr* varSwallow(SymbExpr* expr){
     if (length(Group)(&curGroup) > 1 &&
         (num_nontrivial_group_members < 1 || unsound_var_swallow)){
       for(Group curNode = curGroup; curNode != NULL; curNode = curNode->next){
-        SymbExpr** target = symbExprPosGetRef(&expr, curNode->item);
+        NodePos curPos = curNode->item;
+        SymbExpr** target = symbExprPosGetRef(&expr, curPos);
+        SymbExpr* parent = symbExprPosGet(expr, rtail(curPos));
         if (target == NULL) continue;
         if ((*target)->type == Node_Leaf) continue;
+        RangeRecord range =
+          parent->branch.op->agg.inputs.range_records[rhead(curPos)];
         *target =
-          mkFreshSymbolicLeaf((*target)->isConst, (*target)->constVal);
+          mkFreshSymbolicLeaf((*target)->isConst ||
+                              (range.pos_range.min == range.pos_range.max &&
+                               range.neg_range.min == range.neg_range.max),
+                              (*target)->constVal);
       }
     }
   }
