@@ -743,7 +743,15 @@ void inferTypes(IRSB* sbIn){
           case Iex_Const:
             {
               ValueType srcType = constType(sourceData->Iex.Const.con);
-              dirty |= setTSType(destLocation, instrIdx, srcType);
+              for(int i = 0; i < exprSize(sbIn->tyenv, sourceData); ++i){
+                if (srcType == Vt_Double && i % 2 == 1){
+                  dirty |= setTSType(destLocation + i * sizeof(float),
+                                     instrIdx, Vt_NonFloat);
+                } else {
+                  dirty |= setTSType(destLocation + i * sizeof(float),
+                                     instrIdx, srcType);
+                }
+              }
             }
             break;
             // The temporary case gets a lot more interesting. We'll
