@@ -331,7 +331,7 @@ ValueType conversionArgPrecision(IROp op_code, int argIndex){
 }
 
 ValueType argPrecision(IROp op_code){
-  if (!isFloatOp(op_code) && !isExitFloatOp(op_code)){
+  if (!isFloatOp(op_code) && !isExitFloatOp(op_code) && !isSpecialOp(op_code)){
     return Vt_NonFloat;
   }
   switch((int)op_code){
@@ -481,6 +481,13 @@ ValueType argPrecision(IROp op_code){
   case Iop_V128HIto64:
   case Iop_ZeroHI64ofV128:
   case Iop_64HLtoV128:
+  case Iop_XorV128:
+  case Iop_AndV128:
+  case Iop_OrV128:
+  case Iop_NotV128:
+  case Iop_Shr64:
+  case Iop_Shl64:
+  case Iop_Sar64:
     return Vt_Unknown;
   default:
     ppIROp_Extended(op_code);
