@@ -134,6 +134,7 @@ void ppEquivGroup(Group group);
 void ppEquivGroups(GroupList groups);
 
 const char* opSym(ShadowOpInfo* op);
+void ppConcExprBounded(ConcExpr* expr, int max_depth);
 void ppConcExpr(ConcExpr* expr);
 void ppConcExprNoGrafts(ConcExpr* expr);
 void ppSymbExpr(SymbExpr* expr);

@@ -1145,6 +1145,23 @@ const char* opSym(ShadowOpInfo* op){
   }
 }
 
+void ppConcExprBounded(ConcExpr* expr, int max_depth){
+  if (expr->type == Node_Leaf){
+    ppFloat(expr->value);
+  } else {
+    VG_(printf)("(%s", opSym(expr->branch.op));
+    for(int i = 0 ; i < expr->branch.nargs; ++i){
+      VG_(printf)(" ");
+      if (max_depth > 1){
+        ppConcExprBounded(expr, max_depth - 1);
+      } else {
+        VG_(printf)("_");
+      }
+      VG_(printf)(")");
+    }
+  }
+}
+
 void ppConcExpr(ConcExpr* expr){
   if (expr->type == Node_Leaf){
     ppFloat(expr->value);
