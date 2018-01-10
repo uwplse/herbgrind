@@ -322,6 +322,28 @@ ShadowTemp* setV128lo64Dynamic1(ShadowTemp* bottom,
   return result;
 }
 VG_REGPARM(2)
+ShadowTemp* i64HLtoV128NoFirstShadow(UWord hi, ShadowTemp* lo){
+  ShadowTemp* hiShadow;
+  if (lo->num_vals == 2){
+    hiShadow = mkShadowTempTwoSingles(hi);
+  } else {
+    hiShadow = mkShadowTempOneDouble(*(double*)&hi);
+  }
+  ShadowTemp* result = i64HLtoV128(hiShadow, lo);
+  return result;
+}
+VG_REGPARM(2)
+ShadowTemp* i64HLtoV128NoSecondShadow(ShadowTemp* hi, UWord lo){
+  ShadowTemp* loShadow;
+  if (hi->num_vals == 2){
+    loShadow = mkShadowTempTwoSingles(lo);
+  } else {
+    loShadow = mkShadowTempOneDouble(*(double*)&lo);
+  }
+  ShadowTemp* result = i64HLtoV128(hi, loShadow);
+  return result;
+}
+VG_REGPARM(2)
 ShadowTemp* i64HLtoV128(ShadowTemp* hi, ShadowTemp* lo){
   if (hi->values[0]->type == Vt_Double){
     tl_assert2(hi->values[0]->type == Vt_Double,
