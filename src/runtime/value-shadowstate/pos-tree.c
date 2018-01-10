@@ -65,6 +65,9 @@ NodePos rconsPos(NodePos parent, unsigned char childIndex){
 NodePos rtail(NodePos child){
   return child->parent;
 }
+unsigned char rhead(NodePos pos){
+  return pos->data[pos->len - 1];
+}
 NodePos appendPos(NodePos prefix, NodePos suffix){
   NodePos curPos = prefix;
   for(int i = 0; i < suffix->len; ++i){

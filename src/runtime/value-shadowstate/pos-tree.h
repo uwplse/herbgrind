@@ -48,6 +48,7 @@ void initializePositionTree(void);
 
 NodePos rconsPos(NodePos parent, unsigned char childIndex);
 NodePos rtail(NodePos parent);
+unsigned char rhead(NodePos parent);
 NodePos appendPos(NodePos prefix, NodePos suffix);
 
 UWord hashPosition(NodePos node);
