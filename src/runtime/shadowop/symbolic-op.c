@@ -94,6 +94,14 @@ void generalizeSymbolicExpr(SymbExpr** symbexpr, ConcExpr* cexpr){
                             (*symbexpr)->constVal == cexpr->value,
                             (*symbexpr)->constVal);
     } else {
+      if ((*symbexpr)->isConst){
+        if ((*symbexpr)->constVal != (*symbexpr)->constVal){
+          (*symbexpr)->constVal = cexpr->value;
+        } else if (!NaNSafeEquals((*symbexpr)->constVal, cexpr->value) &&
+                   cexpr->value == cexpr->value){
+          (*symbexpr)->isConst = False;
+        }
+      }
       generalizeStructure(*symbexpr, cexpr, GENERALIZE_DEPTH);
       if ((*symbexpr)->type == Node_Branch){
         intersectEqualities(*symbexpr, cexpr);
