@@ -197,6 +197,10 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
           (getDouble(args[1]->real) == 0 && !isNaN(args[0]->real))){
         ShadowValue* result =
           mkShadowValue(opinfo->exinfo.argPrecision, clientResult);
+        if (use_ranges){
+          updateRanges(opinfo->agg.inputs.range_records, clientArgs,
+                       opinfo->exinfo.nargs);
+        }
         execSymbolicOp(opinfo, &(result->expr), clientResult, args, False);
         return result;
       }
@@ -216,6 +220,9 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   }
   ShadowValue* result = mkShadowValueBare(opinfo->exinfo.argPrecision);
   execRealOp(opinfo->op_code, &(result->real), args);
+  if (use_ranges){
+    updateRanges(opinfo->agg.inputs.range_records, clientArgs, opinfo->exinfo.nargs);
+  }
 
   if (print_errors_long || print_errors){
     printOpInfo(opinfo);
@@ -235,9 +242,6 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   if (print_expr_refs){
     VG_(printf)("Making new expression %p for value %p with 0 references.\n",
                 result->expr, result);
-  }
-  if (use_ranges){
-    updateRanges(opinfo->agg.inputs.range_records, clientArgs, opinfo->exinfo.nargs);
   }
   if (print_semantic_ops){
     VG_(printf)("%p = ", result);
