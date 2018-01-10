@@ -852,10 +852,17 @@ void inferTypes(IRSB* sbIn){
               case Ity_I64:
               case Ity_V128:
               case Ity_V256:
-                getType = tsType(sourceOffset, instrIdx);
+                getType =
+                  inferTSBlockType(sourceOffset, instrIdx, typeSize(expr->Iex.Get.ty));
+                break;
+              case Ity_I1:
+              case Ity_I8:
+              case Ity_I16:
+                getType = Vt_NonFloat;
                 break;
               default:
                 getType = Vt_NonFloat;
+                tl_assert(0);
                 break;
               }
               dirty |= refineTempType(destTemp, getType);
