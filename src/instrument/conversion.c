@@ -453,34 +453,44 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       }
     }
     break;
-  case Iop_SetV128lo32:
   case Iop_64HLtoV128:
-    {
-      ShadowTemp* (*combineFunc)(ShadowTemp* in1, ShadowTemp* in2);
-      switch(op_code){
-      case Iop_SetV128lo32:
-        combineFunc = setV128lo32;
-        break;
-      case Iop_64HLtoV128:
-        combineFunc = i64HLtoV128;
-        break;
-      default:
-        tl_assert(0);
-        return;
-      }
-      if (inputPreexisting == NULL){
-        shadowOutput =
-          runPureCCall(sbOut,
-                       mkIRCallee(2, "setV128lo32",
-                                  VG_(fnptr_to_fnentry)(combineFunc)),
-                       Ity_I64,
-                       mkIRExprVec_2(shadowInputs[0], shadowInputs[1]));
-      } else {
-        shadowOutput = runDirtyG_1_2(sbOut, inputPreexisting,
-                                     combineFunc,
+    if (inputPreexisting == NULL){
+      shadowOutput =
+        runPureCCall(sbOut,
+                     mkIRCallee(2, "i64HLtoV128",
+                                VG_(fnptr_to_fnentry)(i64HLtoV128)),
+                     Ity_I64,
+                     mkIRExprVec_2(shadowInputs[0], shadowInputs[1]));
+    } else if (shadowInputs[0] == NULL){
+      shadowOutput = runDirtyG_1_2(sbOut, inputPreexisting,
+                                   i64HLtoV128NoFirstShadow,
+                                   argExprs[0],
+                                   shadowInputs[1]);
+    } else if (shadowInputs[1] == NULL){
+      shadowOutput = runDirtyG_1_2(sbOut, inputPreexisting,
+                                     i64HLtoV128NoFirstShadow,
                                      shadowInputs[0],
-                                     shadowInputs[1]);
-      }
+                                     argExprs[1]);
+    } else {
+      shadowOutput = runDirtyG_1_2(sbOut, inputPreexisting,
+                                   i64HLtoV128,
+                                   shadowInputs[0],
+                                   shadowInputs[1]);
+    }
+    break;
+  case Iop_SetV128lo32:
+    if (inputPreexisting == NULL){
+      shadowOutput =
+        runPureCCall(sbOut,
+                     mkIRCallee(2, "setV128lo32",
+                                VG_(fnptr_to_fnentry)(setV128lo32)),
+                     Ity_I64,
+                     mkIRExprVec_2(shadowInputs[0], shadowInputs[1]));
+    } else {
+      shadowOutput = runDirtyG_1_2(sbOut, inputPreexisting,
+                                   setV128lo32,
+                                   shadowInputs[0],
+                                   shadowInputs[1]);
     }
     break;
   default:
