@@ -186,6 +186,8 @@ void hg_print_usage(void){
               "    --no-compensation-detection    "
               "Don't attempt to detect compensating terms and prune "
               "influences accordingly.\n"
+              "    --follow-real-exeuction    "
+              "Use high-precision values when converting to integers and booleans.\n"
               );
 }
 void hg_print_debug_usage(void){
