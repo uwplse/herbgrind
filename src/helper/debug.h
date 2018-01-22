@@ -111,6 +111,11 @@ void assertTempValsOwned(char* message, ShadowTemp* temp){
   addStmtToIRSB(sbOut,                                                  \
                 mkDirtyG_0_2(assertTempValsOwned,                       \
                              mkU64((uintptr_t)message), val, guard))
+#define addPrintFloat(float_expr) \
+  addStmtToIRSB(sbOut, mkDirty_0_1(ppFloat_wrapper, float_expr))
+#define addPrintFloatG(guard, float_expr)                        \
+  addStmtToIRSB(sbOut, mkDirtyG_0_1(ppFloat_wrapper, float_expr, guard))
+
 
 static inline
 void fail(void){
