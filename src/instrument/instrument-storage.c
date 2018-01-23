@@ -610,7 +610,7 @@ void instrumentLoad(IRSB* sbOut, IRTemp dest,
   tempShadowStatus[dest] = Ss_Unknown;
   int dest_size = typeSize(type);
   IRExpr* st = runGetMemUnknown(sbOut, dest_size, addr);
-  addStoreTempUnknown(sbOut, st, dest);
+  addStoreTemp(sbOut, st, tempType(dest), dest);
 }
 void instrumentLoadG(IRSB* sbOut, IRTemp dest,
                      IRExpr* altValue, IRExpr* guard,
@@ -634,11 +634,8 @@ void instrumentLoadG(IRSB* sbOut, IRTemp dest,
 }
 void instrumentStore(IRSB* sbOut, IRExpr* addr,
                      IRExpr* data){
-  if (!canBeShadowed(sbOut->tyenv, data)){
-    return;
-  }
   int dest_size = exprSize(sbOut->tyenv, data);
-  if (data->tag == Iex_RdTmp){
+  if (data->tag == Iex_RdTmp && canBeShadowed(sbOut->tyenv, data)){
     int idx = data->Iex.RdTmp.tmp;
     IRExpr* st = runLoadTemp(sbOut, idx);
     addSetMemUnknown(sbOut, dest_size, addr, st);
