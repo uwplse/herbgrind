@@ -685,7 +685,11 @@ IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
   }
   IRExpr* result = runITE(sbOut, guard, temp, mkU64(0));
   if (PRINT_TEMP_MOVES){
-    addPrintG2(guard, "making new temp %p -> ", temp);
+    addPrintG2(guard, "making new temp %p w/ vals ", temp);
+    for(int i = 0; i < num_values; ++i){
+      addPrintG2(guard, "%p, ", values[i]);
+    }
+    addPrintG(guard, "-> ");
   }
   return result;
 }
@@ -922,8 +926,11 @@ void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
     addPrintG2(tempNonNull, "storing in t%d\n", mkU64(idx));
     /* addPrint2("storing in t%d\n", mkU64(idx)); */
   }
-  tl_assert(type == Vt_Unknown ||
-            type == tempType(idx));
+  tl_assert2(type == Vt_Unknown ||
+             type == tempType(idx),
+             "Tried to store a temp at t%d with a different type than inferred! "
+             "Inferred %s, storing %s",
+             idx, typeName(tempType(idx)), typeName(type));
   addStoreC(sbOut, shadow_temp, &(shadowTemps[idx]));
   cleanupAtEndOfBlock(sbOut, idx);
 }
