@@ -110,9 +110,6 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
   addStoreTempCopy(sbOut, resultSt, dest, typeJoin(trueType, falseType));
 }
 void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
-  if (!canBeShadowed(sbOut->tyenv, data)){
-    return;
-  }
   // This procedure adds instrumentation to sbOut which shadows the
   // putting of a value from a temporary into thread state.
 
@@ -179,123 +176,107 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
       }
     }
   }
-  if (canBeShadowed(sbOut->tyenv, data)){
-    int idx = data->Iex.RdTmp.tmp;
-    IRExpr* st = runLoadTemp(sbOut, idx);
-    if (staticallyShadowed(data)){
-      IRExpr* values =
-        runArrow(sbOut, st, ShadowTemp, values);
-      for(int i = 0; i < dest_size; ++i){
-        Int dest_addr = tsDest + (i * sizeof(float));
-        if (tempType(idx) == Vt_Double){
-          if (i % 2 == 1){
+  if (!canBeShadowed(sbOut->tyenv, data)){
+    return;
+  }
+  int idx = data->Iex.RdTmp.tmp;
+  tl_assert(tempShadowStatus[idx] != Ss_Unshadowed);
+  if (dest_size == 1 ||
+      (dest_size == 2 && tempType(idx) == Vt_Double)){
+    tsShadowStatus[tsDest] = tempShadowStatus[idx];
+    switch(tempShadowStatus[idx]){
+    case Ss_Shadowed:{
+      IRExpr* temp = runLoadTemp(sbOut, idx);
+      IRExpr* val = runIndex(sbOut, runArrow(sbOut, temp, ShadowTemp, values),
+                             ShadowValue*, 0);
+      addSetTSValNonNull(sbOut, tsDest, val, tempType(idx), instrIdx);
+    }
+      break;
+    case Ss_Unknown:{
+      IRExpr* loadedTemp = runLoadTemp(sbOut, idx);
+      IRExpr* loadedTempNonNull = runNonZeroCheck64(sbOut, loadedTemp);
+      IRExpr* loadedVal = runIndexG(sbOut, loadedTempNonNull,
+                                    runArrowG(sbOut, loadedTempNonNull,
+                                              loadedTemp, ShadowTemp, values),
+                                    ShadowValue*, 0);
+      addSVOwn(sbOut, loadedVal);
+      addSetTSValUnknown(sbOut, tsDest, loadedVal, instrIdx);
+    }
+      break;
+    case Ss_Unshadowed:
+      return;
+    default:
+      tl_assert(0);
+    }
+  } else {
+    ValueType valType = tempType(idx);
+    IRExpr* loadedTemp = runLoadTemp(sbOut, idx);
+    switch(valType){
+    case Vt_Unknown:
+    case Vt_UnknownFloat:
+      switch(tempShadowStatus[idx]){
+      case Ss_Shadowed:{
+        addStmtToIRSB(sbOut, mkDirty_0_2(dynamicPut, mkU64(tsDest), loadedTemp));
+      }
+        break;
+      case Ss_Unknown:{
+        IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, loadedTemp);
+        addStmtToIRSB(sbOut, mkDirtyG_0_2(dynamicPut, mkU64(tsDest),
+                                          loadedTemp, loadedNonNull));
+        for(int i = 0; i < dest_size; ++i){
+          addSetTSValG(sbOut, runZeroCheck64(sbOut, loadedTemp),
+                       tsDest + i * sizeof(float), mkU64(0));
+        }
+      }
+        break;
+      case Ss_Unshadowed:
+        break;
+      default:
+        tl_assert(0);
+      }
+      break;
+    case Vt_Single:
+    case Vt_Double:
+      switch(tempShadowStatus[idx]){
+      case Ss_Shadowed:{
+        IRExpr* vals = runArrow(sbOut, loadedTemp, ShadowTemp, values);
+        for(int i = 0; i < dest_size; ++i){
+          Int dest_addr = tsDest + (i * sizeof(float));
+          if (valType == Vt_Double && i % 2 == 1){
             addSetTSValNonFloat(sbOut, dest_addr, instrIdx);
-            if (PRINT_TYPES){
-              VG_(printf)("Types: Setting TS(%d) to non-float, "
-                          "because we wrote a double "
-                          "to the position before.\n",
-                          dest_addr);
-            }
-          } else {
-            IRExpr* value;
-            if (i == 0){
-              value = runLoad64(sbOut, values);
-            } else {
-              value =
-                runIndex(sbOut, values, ShadowValue*, i / 2);
-            }
-            addSetTSValNonNull(sbOut, dest_addr, value, Vt_Double, instrIdx);
+            continue;
           }
-        } else {
-          tl_assert(tempType(idx) == Vt_Single);
-          IRExpr* value =
-            runIndex(sbOut, values, ShadowValue*, i);
-          addSetTSValNonNull(sbOut, dest_addr, value, Vt_Single, instrIdx);
+          int valIdx = valType == Vt_Double ? i / 2 : i;
+          IRExpr* val = runIndex(sbOut, vals, ShadowValue*, valIdx);
+          addSetTSValNonNull(sbOut, dest_addr, val, valType, instrIdx);
         }
       }
-    } else {
-      // Otherwise, we don't know whether or not there is a shadow
-      // temp to be stored.
-      IRExpr* stExists = runNonZeroCheck64(sbOut, st);
-      // If the size of the value is 32-bits, then we know what type
-      // of thing it is statically, so we can just pull out the values
-      // much like above, except conditional on the whole thing not
-      // being null.
-      if (dest_size == 1) {
-        IRExpr* values =
-          runArrowG(sbOut, stExists, st, ShadowTemp, values);
-        /* IRExpr* value = runIndexG(sbOut, stExists, values, ShadowValue*, 0); */
-        IRExpr* value = runLoadG64(sbOut, values, stExists);
-
-        addSVOwnNonNullG(sbOut, stExists, value);
-        addSetTSValUnknown(sbOut, tsDest, value, instrIdx);
-        if (PRINT_VALUE_MOVES){
-          addPrint3("Setting TS(%d) to %p\n",
-                    mkU64(tsDest), value);
-        }
-      } else if (dest_size == 2) {
-        // If it's 64-bits, and we don't have static info about it,
-        // then it could either be one double or two singles, so
-        // we're going to have to delay figuring out how to pull out
-        // the individual values until runtime. Hopefully this case
-        // should be pretty rare.
-        for(int i = 0; i < 2; ++i){
-          Addr dest_addr = tsDest + (i * sizeof(float));
-          if (PRINT_TYPES){
-            VG_(printf)("1. Types (i-time): Setting %lu to unknown\n",
-                        dest_addr);
+        break;
+      case Ss_Unknown:{
+        IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, loadedTemp);
+        IRExpr* vals = runArrowG(sbOut, loadedNonNull, loadedTemp, ShadowTemp, values);
+        for(int i = 0; i < dest_size; ++i){
+          Int dest_addr = tsDest + (i * sizeof(float));
+          if (valType == Vt_Double && i % 2 == 1){
+            addSetTSValNonFloat(sbOut, dest_addr, instrIdx);
+            continue;
           }
-          // Even if the value is null at runtime, we still need to overwrite
-          // any old pointers still stuck in that thread state so they
-          // don't get picked up later.
-          addSetTSValUnshadowed(sbOut, dest_addr, instrIdx);
-          tsShadowStatus[dest_addr] = Ss_Unknown;
+          int valIdx = valType == Vt_Double ? i / 2 : i;
+          IRExpr* val = runIndexG(sbOut, loadedNonNull, vals, ShadowValue*, valIdx);
+          addSVOwn(sbOut, val);
+          addSetTSValUnknown(sbOut, dest_addr, val, instrIdx);
         }
-        IRDirty* putDirty =
-          unsafeIRDirty_0_N(2, "dynamicPut64",
-                            VG_(fnptr_to_fnentry)(dynamicPut64),
-                            mkIRExprVec_2(mkU64(tsDest), st));
-        // We don't have to bother going into C if the value is null
-        // at runtime.
-        putDirty->guard = stExists;
-        putDirty->mFx = Ifx_Modify;
-        putDirty->mAddr = mkU64((uintptr_t)&(shadowThreadState
-                                             [VG_(get_running_tid)()]
-                                             [tsDest]));
-        putDirty->mSize = sizeof(ShadowValue*) * 2;
-        addStmtToIRSB(sbOut, IRStmt_Dirty(putDirty));
-      } else {
-        // If it's 128-bits, and we don't have static info about it,
-        // then it could either be two doubles or four singles, so
-        // we're going to have to delay figuring out how to pull out
-        // the individual values until runtime. Hopefully this case
-        // should be pretty rare.
-        for(int i = 0; i < 4; ++i){
-          Addr dest_addr = tsDest + (i * sizeof(float));
-          if (PRINT_TYPES){
-            VG_(printf)("2. Types (i-time): Setting %lu to unknown\n",
-                        dest_addr);
-          }
-          // Even if the value is null at runtime, we still need to overwrite
-          // any old pointers still stuck in that thread state so they
-          // don't get picked up later.
-          addSetTSValUnshadowed(sbOut, dest_addr, instrIdx);
-          tsShadowStatus[dest_addr] = Ss_Unknown;
-        }
-        IRDirty* putDirty =
-          unsafeIRDirty_0_N(2, "dynamicPut128",
-                            VG_(fnptr_to_fnentry)(dynamicPut128),
-                            mkIRExprVec_2(mkU64(tsDest), st));
-        // We don't have to bother going into C if the value is null
-        // at runtime.
-        putDirty->guard = stExists;
-        putDirty->mFx = Ifx_Modify;
-        putDirty->mAddr = mkU64((uintptr_t)&(shadowThreadState
-                                             [VG_(get_running_tid)()]
-                                             [tsDest]));
-        putDirty->mSize = sizeof(ShadowValue*) * 4;
-        addStmtToIRSB(sbOut, IRStmt_Dirty(putDirty));
       }
+        break;
+      case Ss_Unshadowed:
+      default:
+        tl_assert(0);
+        return;
+      }
+      break;
+    case Vt_NonFloat:
+      tl_assert(0);
+      break;
     }
   }
 }
@@ -349,8 +330,8 @@ void instrumentPutI(IRSB* sbOut,
         addSetTSValDynamic(sbOut, dest_addrs[0], value);
       } else if (dest_size == 2) {
         IRDirty* putDirty =
-          unsafeIRDirty_0_N(2, "dynamicPut64",
-                            VG_(fnptr_to_fnentry)(dynamicPut64),
+          unsafeIRDirty_0_N(2, "dynamicPut",
+                            VG_(fnptr_to_fnentry)(dynamicPut),
                             mkIRExprVec_2(dest_addrs[0], st));
         putDirty->guard = stExists;
         putDirty->mFx = Ifx_Modify;
@@ -362,8 +343,8 @@ void instrumentPutI(IRSB* sbOut,
         addStmtToIRSB(sbOut, IRStmt_Dirty(putDirty));
       } else {
         IRDirty* putDirty =
-          unsafeIRDirty_0_N(2, "dynamicPut128",
-                            VG_(fnptr_to_fnentry)(dynamicPut128),
+          unsafeIRDirty_0_N(2, "dynamicPut",
+                            VG_(fnptr_to_fnentry)(dynamicPut),
                             mkIRExprVec_2(dest_addrs[0], st));
         putDirty->guard = stExists;
         putDirty->mFx = Ifx_Modify;
@@ -896,6 +877,11 @@ void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest, int instrIdx){
 void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal, int instrIdx){
   addSetTSVal(sbOut, tsDest, newVal);
   tsShadowStatus[tsDest] = Ss_Unknown;
+}
+void addSetTSValG(IRSB* sbOut, IRExpr* guard, Int tsDest, IRExpr* newVal){
+  addStoreGC(sbOut, guard,
+             newVal,
+             &(shadowThreadState[VG_(get_running_tid)()][tsDest]));
 }
 void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal){
   if (PRINT_VALUE_MOVES){

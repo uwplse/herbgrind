@@ -96,6 +96,7 @@ void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest,
                            int instrIdx);
 void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal,
                         int instrIdx);
+void addSetTSValG(IRSB* sbOut, IRExpr* guard, Int tsDest, IRExpr* newVal);
 void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal);
 void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal);
 
