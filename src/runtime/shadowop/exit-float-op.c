@@ -92,6 +92,15 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
         }
       }
         break;
+      case Iop_CmpEQ32F0x4:
+      case Iop_CmpEQ64F0x2:{
+        if (correctFst == correctSnd){
+          correctOutput = 0x00;
+        } else {
+          correctOutput = 0x01;
+        }
+      }
+        break;
       default:
         tl_assert(0);
         return;
@@ -142,6 +151,15 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
           correctOutput = 0x01;
         } else {
           correctOutput = 0x00;
+        }
+      }
+        break;
+      case Iop_CmpEQ32F0x4:
+      case Iop_CmpEQ64F0x2:{
+        if (realCompare(realFst, realSnd) == 0){
+          correctOutput = 0x00;
+        } else {
+          correctOutput = 0x01;
         }
       }
         break;

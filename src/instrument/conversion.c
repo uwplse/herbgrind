@@ -222,6 +222,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
   case Iop_RoundF64toF64_ZERO:
   case Iop_RoundF64toInt:
   case Iop_RoundF32toInt:
+  case Iop_ReinterpF64asI64:
     {
       if (inputPreexisting == NULL){
         tl_assert(shadowInputs[0]);
@@ -584,6 +585,7 @@ int conversionInputArgIndex(IROp op_code){
   case Iop_F128HItoF64:
   case Iop_F128LOtoF64:
   case Iop_F32toF64:
+  case Iop_ReinterpF64asI64:
     return 0;
   case Iop_RoundF64toInt:
   case Iop_RoundF32toInt:
@@ -619,6 +621,7 @@ int numConversionInputs(IROp op_code){
   case Iop_RoundF64toInt:
   case Iop_RoundF32toInt:
   case Iop_F64toF32:
+  case Iop_ReinterpF64asI64:
     return 1;
   case Iop_SetV128lo32:
   case Iop_SetV128lo64:

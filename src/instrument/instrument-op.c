@@ -145,6 +145,8 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
   case Iop_CmpLE64F0x2:
   case Iop_CmpUN64F0x2:
   case Iop_CmpUN32F0x4:
+  case Iop_CmpEQ64F0x2:
+  case Iop_CmpEQ32F0x4:
     {
       ShadowCmpInfo* info =
         VG_(perm_malloc)(sizeof(ShadowCmpInfo),
@@ -194,7 +196,6 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
   case Iop_CmpLE32Fx4:
   case Iop_CmpUN32Fx4:
   case Iop_CmpLT32Fx4:
-  case Iop_CmpEQ32F0x4:
   case Iop_CmpLE32F0x4:
     addPrintOp(op_code);
     addPrint3("\nArgs are {%f, %f} ",
@@ -216,18 +217,20 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
   case Iop_CmpEQ64Fx2:
   case Iop_CmpLE64Fx2:
   case Iop_CmpUN64Fx2:
-  case Iop_CmpEQ64F0x2:
     addPrintOp(op_code);
-    addPrint3("\nArgs are {%f, %f} ",
-              runUnop(sbOut, Iop_V128HIto64,
-                      argExprs[0]),
-              runUnop(sbOut, Iop_V128to64,
-                      argExprs[0]));
-    addPrint3("and {%f, %f} ",
-              runUnop(sbOut, Iop_V128HIto64,
-                      argExprs[1]),
-              runUnop(sbOut, Iop_V128to64,
-                      argExprs[1]));
+    addPrint("\nArgs are {");
+    addPrintFloat(runUnop(sbOut, Iop_V128HIto64,
+                          argExprs[0]));
+    addPrint(", ");
+    addPrintFloat(runUnop(sbOut, Iop_V128to64,
+                          argExprs[0]));
+    addPrint("} and {");
+    addPrintFloat(runUnop(sbOut, Iop_V128HIto64,
+                          argExprs[1]));
+    addPrint(", ");
+    addPrintFloat(runUnop(sbOut, Iop_V128to64,
+                          argExprs[1]));
+    addPrint("} ");
     addPrint3("Result is {%lX, %lX}\n",
               runUnop(sbOut, Iop_V128HIto64, IRExpr_RdTmp(dest)),
               runUnop(sbOut, Iop_V128to64, IRExpr_RdTmp(dest)));

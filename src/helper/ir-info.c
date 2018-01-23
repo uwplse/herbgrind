@@ -92,6 +92,7 @@ int numChannelsIn(IROp op_code){
   case Iop_64UtoV128:
   case Iop_RoundF64toF32:
   case Iop_TruncF64asF32:
+  case Iop_ReinterpF64asI64:
     return 1;
     // Binary Ops
   case Iop_RecipStep32Fx4:
@@ -107,6 +108,7 @@ int numChannelsIn(IROp op_code){
   case Iop_SetV128lo32:
   case Iop_CmpLT32F0x4:
   case Iop_CmpUN32F0x4:
+  case Iop_CmpEQ32F0x4:
     return 4;
   case Iop_Add32Fx2:
   case Iop_Sub32Fx2:
@@ -125,6 +127,7 @@ int numChannelsIn(IROp op_code){
   case Iop_CmpLT64F0x2:
   case Iop_CmpLE64F0x2:
   case Iop_CmpUN64F0x2:
+  case Iop_CmpEQ64F0x2:
     return 2;
   case Iop_RecpExpF64:
   case Iop_RecpExpF32:
@@ -245,6 +248,7 @@ int numSIMDOperands(IROp op_code){
   case Iop_SetV128lo64:
   case Iop_RoundF64toF32:
   case Iop_TruncF64asF32:
+  case Iop_ReinterpF64asI64:
     return 1;
     // Binary Ops
   case Iop_RecipStep32Fx4:
@@ -299,6 +303,8 @@ int numSIMDOperands(IROp op_code){
   case Iop_CmpLE64F0x2:
   case Iop_CmpUN64F0x2:
   case Iop_CmpUN32F0x4:
+  case Iop_CmpEQ64F0x2:
+  case Iop_CmpEQ32F0x4:
     return 1;
     // Ternary Ops
   case Iop_Add32Fx8:
@@ -742,6 +748,7 @@ Bool isConversionOp(IROp op_code){
   case Iop_64HLtoV128:
   case Iop_F64HLtoF128:
   case Iop_F64toF32:
+  case Iop_ReinterpF64asI64:
     return True;
   default:
     return False;
@@ -846,6 +853,7 @@ Bool isFloatOp(IROp op_code){
   case Iop_NegF64:
   case Iop_AbsF64:
   case Iop_Sqrt64F0x2:
+  case Iop_ReinterpF64asI64:
     // Binary Ops
   case Iop_RecipStep32Fx4:
   case Iop_RSqrtStep32Fx4:

@@ -339,7 +339,16 @@ ValueType argPrecision(IROp op_code){
     // be constructing new shadow values, so we can just return
     // Vt_Unknown for them.
   case Iop_CmpF32:
+  case Iop_CmpEQ32Fx2:
+  case Iop_CmpGT32Fx2:
+  case Iop_CmpGE32Fx2:
+  case Iop_CmpEQ32Fx4:
+  case Iop_CmpLT32Fx4:
+  case Iop_CmpLE32Fx4:
+  case Iop_CmpUN32Fx4:
+  case Iop_CmpEQ32F0x4:
   case Iop_CmpLT32F0x4:
+  case Iop_CmpLE32F0x4:
   case Iop_CmpUN32F0x4:
   case Iop_RecipEst32Fx4:
   case Iop_RSqrtEst32Fx4:
@@ -411,9 +420,14 @@ ValueType argPrecision(IROp op_code){
   case Iop_F32toI32U:
   case Iop_F32toI64U:
     return Vt_Single;
+  case Iop_CmpF64:
+  case Iop_CmpEQ64Fx2:
+  case Iop_CmpLT64Fx2:
+  case Iop_CmpLE64Fx2:
+  case Iop_CmpUN64Fx2:
+  case Iop_CmpEQ64F0x2:
   case Iop_CmpLT64F0x2:
   case Iop_CmpLE64F0x2:
-  case Iop_CmpF64:
   case Iop_CmpUN64F0x2:
   case Iop_RSqrtEst5GoodF64:
   case Iop_NegF64:
@@ -474,6 +488,7 @@ ValueType argPrecision(IROp op_code){
   case Iop_F64toI64S:
   case Iop_F64toI32U:
   case Iop_F64toI64U:
+  case Iop_ReinterpF64asI64:
     return Vt_Double;
   case Iop_SetV128lo64:
   case Iop_64UtoV128:
@@ -489,6 +504,9 @@ ValueType argPrecision(IROp op_code){
   case Iop_Shl64:
   case Iop_Sar64:
     return Vt_Unknown;
+  case Iop_I64StoF64:
+  case Iop_I32StoF64:
+    return Vt_NonFloat;
   default:
     ppIROp_Extended(op_code);
     tl_assert2(0,
@@ -632,6 +650,7 @@ ValueType resultPrecision(IROp op_code){
   case Iop_F32toF64:
   case Iop_I32StoF64:
   case Iop_I64StoF64:
+  case Iop_ReinterpF64asI64:
     return Vt_Double;
   case Iop_SetV128lo64:
   case Iop_64UtoV128:
