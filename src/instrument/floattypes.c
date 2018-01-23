@@ -822,7 +822,7 @@ void inferTypes(IRSB* sbIn){
             for(int i = 0;
                 i < stmt->Ist.PutI.details->descr->nElems *
                   sizeofIRType(stmt->Ist.PutI.details->descr->elemTy);
-                ++i){
+                i+=sizeof(float)){
               int destLocation =
                 stmt->Ist.PutI.details->descr->base + i;
               dirty |= setTSType(destLocation, instrIdx,
@@ -834,7 +834,7 @@ void inferTypes(IRSB* sbIn){
             for(int i = 0;
                 i < stmt->Ist.PutI.details->descr->nElems *
                   sizeofIRType(stmt->Ist.PutI.details->descr->elemTy);
-                ++i){
+                i+=sizeof(float)){
               int destLocation =
                 stmt->Ist.PutI.details->descr->base + i;
               ValueType srcType = tempType(sourceData->Iex.RdTmp.tmp);
