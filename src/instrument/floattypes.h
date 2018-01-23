@@ -58,7 +58,7 @@ typedef struct _TSTypeEntry {
 } TSTypeEntry;
 
 extern ShadowStatus tempShadowStatus[MAX_TEMPS];
-extern ShadowStatus tsShadowStatus[MAX_TEMPS];
+extern ShadowStatus tsShadowStatus[MAX_REGISTERS];
 
 // Meet and join operations for the type lattice
 // Cheat sheet: join -> union, meet -> intersect
