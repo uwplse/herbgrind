@@ -102,8 +102,7 @@ extern Word256 getBytes;
 
 void initValueShadowState(void);
 VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries);
-VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st);
-VG_REGPARM(2) void dynamicPut128(Int tsDest, ShadowTemp* st);
+VG_REGPARM(2) void dynamicPut(Int tsDest, ShadowTemp* st);
 VG_REGPARM(2) ShadowTemp* dynamicGet64(Int tsSrc,
                                        UWord tsBytes);
 VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc, UWord bytes1, UWord bytes2);

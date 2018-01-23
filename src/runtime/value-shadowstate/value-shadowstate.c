@@ -105,59 +105,13 @@ VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
 }
 inline
 ShadowValue* getTS(Int idx){
-  return shadowThreadState[VG_(get_running_tid)()][idx];
+  ShadowValue* result = shadowThreadState[VG_(get_running_tid)()][idx];
+  tl_assert2(result == NULL || result->ref_count > 0,
+             "Freed value %p left over at TS(%d)",
+             result, idx);
+  return result;
 }
-VG_REGPARM(2) void dynamicPut64(Int tsDest, ShadowTemp* st){
-  tl_assert(st->num_vals == 1 ||
-            st->num_vals == 2);
-  if (st->num_vals == 1){
-    tl_assert(st->values[0]->type == Vt_Double);
-    ShadowValue* val = st->values[0];
-    if (PRINT_VALUE_MOVES){
-      if (getTS(tsDest) != NULL || val != NULL){
-        VG_(printf)("dynamicPut64: Setting thread state %d to %p (old ref count %lu",
-                    tsDest, val, val->ref_count);
-      }
-      if (val != NULL){
-        VG_(printf)(") (type ");
-        ppValueType(val->type);
-      }
-      VG_(printf)(")\n");
-      if (getTS(tsDest + sizeof(float)) != NULL){
-        VG_(printf)("dynamicPut64: Overwriting TS(%lu) with NULL, "
-                    "due to double write at TS(%d)\n",
-                    tsDest + sizeof(float),
-                    tsDest);
-      }
-    }
-    shadowThreadState[VG_(get_running_tid)()][tsDest] = val;
-    shadowThreadState[VG_(get_running_tid)()][tsDest + sizeof(float)] =
-      NULL;
-    ownShadowValue(val);
-  } else {
-    for(int i = 0; i < 2; ++i){
-      int dest_addr = tsDest + i * sizeof(float);
-      tl_assert2(st->values[i]->type == Vt_Single,
-                 "i = %d, type = %d, %d vals",
-                 i, st->values[i]->type, st->num_vals);
-      ShadowValue* val = st->values[i];
-      shadowThreadState[VG_(get_running_tid)()][dest_addr] = val;
-      ownShadowValue(val);
-      if (PRINT_VALUE_MOVES){
-        if (getTS(tsDest) != NULL || val != NULL){
-          VG_(printf)("dynamicPut64: Setting thread state %d to %p (new ref count %lu)\n",
-                      tsDest, val, val->ref_count);
-        }
-        if (val != NULL){
-          VG_(printf)(" (type ");
-          ppValueType(val->type);
-          VG_(printf)(")\n");
-        }
-      }
-    }
-  }
-}
-VG_REGPARM(2) void dynamicPut128(Int tsDest, ShadowTemp* st){
+VG_REGPARM(2) void dynamicPut(Int tsDest, ShadowTemp* st){
   for(int i = 0; i < st->num_vals; ++i){
     ShadowValue* val = st->values[i];
     int size = val->type == Vt_Single ? sizeof(float) : sizeof(double);
