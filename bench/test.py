@@ -98,7 +98,7 @@ def checkFile(name, ignoreProps):
                                 success = False
 
 def test(prog, ignoreProps):
-    command = "./valgrind/herbgrind-install/bin/valgrind --tool=herbgrind {} {}".format(EXTRA_ARGS, prog)
+    command = "./valgrind/herbgrind-install/bin/valgrind --tool=herbgrind {} {}".format(" ".join(EXTRA_ARGS), prog)
     print("Calling `{}`".format(command))
     hgproc = subprocess.run(
         ["./valgrind/herbgrind-install/bin/valgrind", "--tool=herbgrind"] + EXTRA_ARGS + [prog],
@@ -106,7 +106,7 @@ def test(prog, ignoreProps):
     if hgproc.returncode:
         print("Command failed (status {}).".format(hgproc.returncode))
         success = False
-    checkFile("bench/{}-errors.gh".format(prog), ignoreProps)
+    checkFile("{}-errors.gh".format(prog), ignoreProps)
     return success
 
 if __name__ == "__main__":

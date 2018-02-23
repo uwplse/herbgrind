@@ -243,6 +243,7 @@ bench/%.out: bench/%.c
 
 # The .out version is the binary; TESTS stores the expected output files
 test: compile $(TESTS) $(TESTS:.out-errors.gh.expected=.out)
+	python3 --version
 	python3 bench/test.py $(TESTS:.out-errors.gh.expected=.out)
 
 backup-logs:
