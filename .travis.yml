@@ -1,8 +1,8 @@
 language: c
 dist: trusty
 install:
-- sudo add-apt-repository ppa:jonathonf/automake
-- sudo apt-get -qq update
+- sudo add-apt-repository ppa:jonathonf/automake -y
+- sudo apt-get -q update
 - sudo apt-get -y install automake-1.15
 - make setup
 script:
