@@ -1,10 +1,11 @@
 language: c
 install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y build-essential
-  - make setup
+- sudo apt-get -qq update
+- sudo apt-get install -y build-essential
+- make setup
 script:
-  - make compile
-  - make test
+- make compile
+- make test
 notifications:
-   slack: uw-cse:e7egqJduptjbd5LOn3DygfCf
+  slack:
+    secure: MtMfMgq/4NaRpmFh/0XFmtRXVLBdg2RA2hrGYh7uqb7IemBE0FBeeawgg7gLUGEpJ3mP9FoytG4h4IHkQMgLnn9x3yDP+gEGptQ8vTHffWvmqDRPjY4VcNAFq9ducFmHUkqjAPrOnfDD1nG2Oercf8I/82h3oSDLuFZj4LSdq4YPmPtXXWa/hW0MS9SiP1u7Co8UeTFlEnAG1mR0V9QrkciJmvoEwbfjvhcdpQGljuNcmAZM/YTx13R/FenboWq06yDrc8h3Qi9P/Exwuec7M1Nay0u7D74lkUNoq76VpIH3DMA9uburoblgFOfIG17UkmgYZUttGlhb9JIs4QV8Gz4K3oMDtd0fS/AVdUQonoGi9i/w/RZkzVQNSZCcds9WfIjn5UIgcTG7EJxbu31VUPGhGYhSPHMI2UNhfu51MY8MHp0spjcueFSGohXnR/TY3wCCZ1Cm5Pcu3NXe30hxTq/nTdMepQ5uGM83xiXpgcH4nqcXQxEJmXsu6Elyudl51IkXWEDd5ghAP9/6xmtiVBmvFHrM8pk92RPB/iWua3EYr35bGXkHzBQEKI5rv7xZyYW0vA+mU8MEduYifeUs43uNLXztfh1z9kpzAtxJPsJWFdpDrslQigSfPSRK3Dx5YVNRBerAjR1BIxjkdjg8O9fdHYLM4ETDc6WQ8YQFIJM=
