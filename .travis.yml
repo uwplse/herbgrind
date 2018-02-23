@@ -4,9 +4,9 @@ install:
 - sudo add-apt-repository ppa:jonathonf/automake -y
 - sudo apt-get -q update
 - sudo apt-get -y install automake-1.15
-- make setup
+- make V=0 setup
 script:
-- make compile
+- make V=0 compile
 - make test
 notifications:
   slack:
