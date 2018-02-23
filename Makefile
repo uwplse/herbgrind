@@ -241,6 +241,7 @@ TESTS=$(wildcard bench/*.out-errors.gh.expected)
 bench/%.out: bench/%.c
 	$(MAKE) -C bench $*.out
 
+# The .out version is the binary; TESTS stores the expected output files
 test: compile $(TESTS) $(TESTS:.out-errors.gh.expected=.out)
 	python bench/test.py $(TESTS:.out-errors.gh.expected=.out)
 
