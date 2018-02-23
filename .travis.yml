@@ -6,4 +6,5 @@ install:
 script:
   - make compile
   - make test
-
+notifications:
+   slack: uw-cse:e7egqJduptjbd5LOn3DygfCf
