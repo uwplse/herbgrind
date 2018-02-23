@@ -14,6 +14,8 @@ success = True;
 # machine generated s-expressions which you're pretty sure are
 # correct.
 def parseSexp(sexpString):
+    if sexpString.startswith("No marks found!"): return []
+    if not sexpString: return []
     listStack = list()
     curToken = ""
     for c in sexpString:
@@ -24,17 +26,19 @@ def parseSexp(sexpString):
             if (curToken != ""):
                 finishedList.append(curToken)
             if (len(listStack) == 0):
-                return finishedList
+                yield finishedList
+                continue
             curToken = ""
             listStack[len(listStack) - 1].append(finishedList)
-        elif (c == ' '):
+        elif c.isspace():
             if (curToken != ""):
                 listStack[len(listStack) - 1].append(curToken)
             curToken = ""
         else:
             curToken += c
-    print("Trouble parsing! Unclosed paren. Exiting...")
-    sys.exit(1)
+    if listStack:
+        print("Trouble parsing! Unclosed paren. Exiting...")
+        sys.exit(1)
 
 def isFloat(floatString):
     if list.__instancecheck__(floatString):
@@ -75,31 +79,29 @@ def checkMatch(expected, actual):
 
 def checkFile(name, name_expected, ignoreProps):
     global success
-    with open(name) as actual:
-        with open(name_expected) as expected:
-            for (actualLine, expectedLine) in zip(actual, expected):
-                actualResults = parseSexp(actualLine)
-                expectedResults = parseSexp(expectedLine)
-                for entry in expectedResults:
-                    fieldName = entry[0]
-                    if not (fieldName in ignoreProps):
-                        expectedResult = entry[1]
-                        actualResult = lookupField(actualResults, fieldName)
-                        # If the string starts with a digit...
-                        if isFloat(expectedResult):
-                            # Treat it as a float, and check to make sure
-                            # the actual and expected values "almost" match.
-                            if abs(float(expectedResult) - float(actualResult)) > EPSILON:
-                                print("{} mismatch (number): expected {}, got {}".format(fieldName, expectedResult, actualResult))
-                                success = False
-                        else:
-                            if actualResult != expectedResult:
-                                print("{} mismatch: expected {}, got {}".format(fieldName, expectedResult, actualResult))
-                                success = False
+    with open(name) as actual, open(name_expected) as expected:
+        actualResults = list(parseSexp(actual.read()))
+        expectedResults = list(parseSexp(expected.read()))
+        for entry in expectedResults:
+            fieldName = entry[0]
+            if not (fieldName in ignoreProps):
+                expectedResult = entry[1]
+                actualResult = lookupField(actualResults, fieldName)
+                # If the string starts with a digit...
+                if isFloat(expectedResult):
+                    # Treat it as a float, and check to make sure
+                    # the actual and expected values "almost" match.
+                    if abs(float(expectedResult) - float(actualResult)) > EPSILON:
+                        print("{} mismatch (number): expected {}, got {}".format(fieldName, expectedResult, actualResult))
+                        success = False
+                else:
+                    if actualResult != expectedResult:
+                        print("{} mismatch: expected {}, got {}".format(fieldName, expectedResult, actualResult))
+                        success = False
 
 def test(prog, ignoreProps):
     global success
-    command = ["./valgrind/herbgrind-install/bin/valgrind", "--tool=herbgrind"] + EXTRA_ARGS + [prog]
+    command = ["./valgrind/herbgrind-install/bin/valgrind", "--tool=herbgrind", "--output-sexp"] + EXTRA_ARGS + [prog]
     print("Calling `{}`".format(" ".join(command)))
     status = subprocess.call(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if status:

@@ -1,1 +1,56 @@
-((bench (FPCore ()  :type binary64  (- (sqrt (+ 1.000000 10000000000000000.000000)) (sqrt 10000000000000000.000000)))) (plain-name "subtraction") (function "main") (filename "diff-roots-simple.c") (line-num 10) (instr-addr 4009AF) (avg-error 61.959049) (max-error 61.959049) (num-calls 1))
+(output
+  (function "main")
+  (filename "diff-roots-simple.c")
+  (line-num 11)
+  (instr-addr 400976)
+  (avg-error 61.959049)
+  (max-error 61.959049)
+  (num-calls 1)
+  (influences
+    (
+    (
+     (expr
+       (FPCore ()
+          (- (sqrt (+ 1.000000 1.000000e16)) (sqrt 1.000000e16))))
+     (var-problematic-ranges)
+     (example problematic input ())
+     (function "main")
+     (filename "diff-roots-simple.c")
+     (line-num 10)
+     (instr-addr 40090C)
+     (avg-error 61.959049)
+     (max-error 61.959049)
+     (avg-local-error 61.959049)
+     (max-local-error 61.959049)
+     (num-calls 1))
+    )
+  )
+)
+(output
+  (function "main")
+  (filename "diff-roots-simple.c")
+  (line-num 13)
+  (instr-addr 400A03)
+  (avg-error 61.959049)
+  (max-error 61.959049)
+  (num-calls 1)
+  (influences
+    (
+    (
+     (expr
+       (FPCore ()
+          (- (sqrt (+ 1.000000 1.000000e16)) (sqrt 1.000000e16))))
+     (var-problematic-ranges)
+     (example problematic input ())
+     (function "main")
+     (filename "diff-roots-simple.c")
+     (line-num 10)
+     (instr-addr 40090C)
+     (avg-error 61.959049)
+     (max-error 61.959049)
+     (avg-local-error 61.959049)
+     (max-local-error 61.959049)
+     (num-calls 1))
+    )
+  )
+)
