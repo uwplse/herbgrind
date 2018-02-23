@@ -1,8 +1,5 @@
 language: c
 dist: trusty
-cache:
-  directories:
-  - deps
 install:
 - sudo add-apt-repository ppa:jonathonf/automake -y
 - sudo apt-get -q update
