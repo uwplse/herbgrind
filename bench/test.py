@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
+import subprocess
 import sys
-import os
 import string
 
 EPSILON = .1
-EXTRA_ARGS = ""
+EXTRA_ARGS = []
 success = True;
 
 # Parse an s-expression from a string.
@@ -73,9 +73,10 @@ def checkMatch(expected, actual):
             success = False
     
 
-def checkFile(name, ignoreProps):
+def checkFile(name, name_expected, ignoreProps):
+    global success
     with open(name) as actual:
-        with open(name + ".expected") as expected:
+        with open(name_expected) as expected:
             for (actualLine, expectedLine) in zip(actual, expected):
                 actualResults = parseSexp(actualLine)
                 expectedResults = parseSexp(expectedLine)
@@ -97,13 +98,14 @@ def checkFile(name, ignoreProps):
                                 success = False
 
 def test(prog, ignoreProps):
-    command = "./valgrind/herbgrind-install/bin/valgrind --tool=herbgrind {} {}".format(EXTRA_ARGS, prog)
-    print("Calling `{}`".format(command))
-    status = os.system(command + "> /dev/null >& /dev/null")
-    if (status != 0):
+    global success
+    command = ["./valgrind/herbgrind-install/bin/valgrind", "--tool=herbgrind"] + EXTRA_ARGS + [prog]
+    print("Calling `{}`".format(" ".join(command)))
+    status = subprocess.call(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if status:
         print("Command failed (status {}).".format(status))
         success = False
-    checkFile("{}-errors.gh".format(prog), ignoreProps)
+    checkFile("{}.gh".format(prog), "{}-errors.gh.expected".format(prog), ignoreProps)
     return success
 
 if __name__ == "__main__":
