@@ -163,6 +163,13 @@ ShadowValue* mkShadowValueBare_fast(FloatType type){
   return result;
 }
 
+ShadowValue* mkShadowValue_fast(FloatType type, double value);
+void freeShadowValue_fast(ShadowValue* val);
+void freeShadowTemp_fast(ShadowTemp* temp);
+void disownNonNullShadowValue(ShadowValue* val);
+void ownNonNullShadowValue(ShadowValue* val);
+void disownShadowTemp_fast(ShadowTemp* temp);
+
 __attribute__((always_inline))
 inline
 ShadowValue* mkShadowValue_fast(FloatType type, double value){
