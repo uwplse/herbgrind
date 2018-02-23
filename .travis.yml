@@ -1,8 +1,6 @@
 language: c
+dist: trusty
 install:
-- sudo apt-get -qq update
-- sudo add-apt-repository ppa:ondrej/autotools -y # automake 1.15
-- sudo apt-get -y install automake-1.15 pkg-config m4 autoconf libtool
 - make setup
 script:
 - make compile
