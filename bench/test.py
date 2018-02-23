@@ -97,7 +97,7 @@ def checkFile(name, ignoreProps):
                                 success = False
 
 def test(prog, ignoreProps):
-    command = "./valgrind/herbgrind-install/bin/valgrind --tool=herbgrind {} ./bench/{}".format(EXTRA_ARGS, prog)
+    command = "./valgrind/herbgrind-install/bin/valgrind --tool=herbgrind {} {}".format(EXTRA_ARGS, prog)
     print("Calling {}.".format(command))
     status = os.system(command + "> /dev/null >& /dev/null")
     if (status != 0):
