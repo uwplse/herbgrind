@@ -11,11 +11,11 @@ CC ?= gcc
 all: $(COUT)
 
 %.out: %.c
-	$(CC) $(FLAGS) -o $@ $<
+	$(CC) -o $@ $< $(FLAGS)
 	chmod u+x $@
 
 %.sout: %.s
-	$(CC) $(FLAGS) -o $@ $<
+	$(CC) -o $@ $< $(FLAGS)
 	chmod u+x $@
 
 %.s: %.c
