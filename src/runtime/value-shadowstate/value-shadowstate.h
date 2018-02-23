@@ -149,13 +149,13 @@ ShadowValue* getTS(Int idx);
 VG_REGPARM(2) void printStoreValue(const char* dest_label, ShadowValue* val);
 void printStoreValueF(ShadowValue* val, const char* format, ...);
 
-ShadowValue* mkShadowValueBare_fast(FloatType type);
-ShadowValue* mkShadowValue_fast(FloatType type, double value);
-void freeShadowValue_fast(ShadowValue* val);
-void freeShadowTemp_fast(ShadowTemp* temp);
-void disownNonNullShadowValue(ShadowValue* val);
-void ownNonNullShadowValue(ShadowValue* val);
-void disownShadowTemp_fast(ShadowTemp* temp);
+inline ShadowValue* mkShadowValueBare_fast(FloatType type);
+inline ShadowValue* mkShadowValue_fast(FloatType type, double value);
+inline void freeShadowValue_fast(ShadowValue* val);
+inline void freeShadowTemp_fast(ShadowTemp* temp);
+inline void disownNonNullShadowValue(ShadowValue* val);
+inline void ownNonNullShadowValue(ShadowValue* val);
+inline void disownShadowTemp_fast(ShadowTemp* temp);
 
 __attribute__((always_inline))
 inline

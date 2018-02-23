@@ -59,7 +59,7 @@ void freeReal(Real real);
 void copyReal(Real src, Real dest);
 void printReal(Real real);
 
-void setReal_fast(Real r, double bytes);
+inline void setReal_fast(Real r, double bytes);
 
 __attribute__((always_inline))
 inline
