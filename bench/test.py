@@ -3,10 +3,9 @@
 import sys
 import os
 import string
-import subprocess
 
 EPSILON = .1
-EXTRA_ARGS = []
+EXTRA_ARGS = ""
 success = True;
 
 # Parse an s-expression from a string.
@@ -98,13 +97,11 @@ def checkFile(name, ignoreProps):
                                 success = False
 
 def test(prog, ignoreProps):
-    command = "./valgrind/herbgrind-install/bin/valgrind --tool=herbgrind {} {}".format(" ".join(EXTRA_ARGS), prog)
+    command = "./valgrind/herbgrind-install/bin/valgrind --tool=herbgrind {} {}".format(EXTRA_ARGS, prog)
     print("Calling `{}`".format(command))
-    hgproc = subprocess.run(
-        ["./valgrind/herbgrind-install/bin/valgrind", "--tool=herbgrind"] + EXTRA_ARGS + [prog],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    if hgproc.returncode:
-        print("Command failed (status {}).".format(hgproc.returncode))
+    status = os.system(command + "> /dev/null >& /dev/null")
+    if (status != 0):
+        print("Command failed (status {}).".format(status))
         success = False
     checkFile("{}-errors.gh".format(prog), ignoreProps)
     return success
