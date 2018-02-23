@@ -236,8 +236,13 @@ clear-preload:
 
 .PHONY: test backup-logs
 
-test: compile
-	python bench/test.py
+TESTS=$(wildcard bench/*.out-errors.gh.expected)
+
+bench/%.out: bench/%.c
+	$(MAKE) -C bench $*.out
+
+test: compile $(TESTS) $(TESTS:.out-errors.gh.expected=.out)
+	python bench/test.py $(TESTS:.out-errors.gh.expected=.out)
 
 backup-logs:
 	tar czf logs.tar.gz logs

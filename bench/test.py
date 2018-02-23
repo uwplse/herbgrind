@@ -97,21 +97,19 @@ def checkFile(name, ignoreProps):
                                 success = False
 
 def test(prog, ignoreProps):
-    command = "./valgrind/herbgrind-install/bin/valgrind --machine --tool=herbgrind {} ./bench/{}".format(EXTRA_ARGS, prog)
+    command = "./valgrind/herbgrind-install/bin/valgrind --tool=herbgrind {} ./bench/{}".format(EXTRA_ARGS, prog)
     print("Calling {}.".format(command))
     status = os.system(command + "> /dev/null >& /dev/null")
     if (status != 0):
         print("Command failed (status {}).".format(status))
         success = False
     checkFile("bench/{}-errors.gh".format(prog), ignoreProps)
+    return success
 
-ignoreProps = ["instr-addr"]
+if __name__ == "__main__":
+    ignoreProps = ["instr-addr"]
 
-test("diff-roots.out", ignoreProps)
-test("diff-roots-simple.out", ignoreProps)
-test("mini.out", ignoreProps)
-test("small.out", ignoreProps)
-test("tiny.out", ignoreProps)
-
-if not success:
-    sys.exit(success)
+    for arg in sys.argv[1:]:
+        success = test(arg, ignoreProps)
+        if not success:
+            sys.exit(success)
