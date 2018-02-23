@@ -1,7 +1,7 @@
 language: c
 install:
 - sudo apt-get -qq update
-- sudo apt-get install -y build-essential
+- sudo apt-get -y install automake autoconf libtool
 - make setup
 script:
 - make compile
