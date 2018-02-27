@@ -4,8 +4,9 @@
 #include "herbgrind.h"
 
 int main(int argc, char** argv){
-  HERBGRIND_BEGIN();
-  for (int i = 0; i < 2; ++i)
-    sqrt(i);
-  HERBGRIND_END();
+  volatile double x = 0.0;
+  for (int i = 0; i < 2; ++i) {
+    x += sqrt(i);
+  }
+  printf("%e\n", x);
 }

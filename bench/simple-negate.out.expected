@@ -1,0 +1,28 @@
+(output
+  (function "main")
+  (filename "simple-negate.c")
+  (line-num 11)
+  (instr-addr 400844)
+  (avg-error 61.901585)
+  (max-error 61.901585)
+  (num-calls 1)
+  (influences
+    (
+    (
+     (expr
+       (FPCore ()
+          (- (+ 5.000000 -10.000000e-21) 5.000000)))
+     (var-problematic-ranges)
+     (example problematic input ())
+     (function "main")
+     (filename "simple-negate.c")
+     (line-num 10)
+     (instr-addr 400828)
+     (avg-error 61.901585)
+     (max-error 61.901585)
+     (avg-local-error 61.901585)
+     (max-local-error 61.901585)
+     (num-calls 1))
+    )
+  )
+)

@@ -4,11 +4,9 @@
 #include "herbgrind.h"
 
 int main(int argc, char** argv){
-  HERBGRIND_BEGIN();
-  volatile float x = 3.0;
+  volatile float x = 1e-20;
   volatile float y = (- x);
   volatile float z = 5.0;
-  float w = y + z;
-  HERBGRIND_END();
-  printf("Result: %e\n", w);
+  float w = (y + z) - z;
+  printf("%e\n", w);
 }

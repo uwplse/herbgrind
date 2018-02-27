@@ -1,0 +1,28 @@
+(output
+  (function "main")
+  (filename "small.c")
+  (line-num 12)
+  (instr-addr 4008A0)
+  (avg-error 32.617943)
+  (max-error 32.617943)
+  (num-calls 1)
+  (influences
+    (
+    (
+     (expr
+       (FPCore ()
+          (- (sqrt 1.000000e10) (sqrt 1.000000e10))))
+     (var-problematic-ranges)
+     (example problematic input ())
+     (function "calcY")
+     (filename "small.c")
+     (line-num 17)
+     (instr-addr 4008EB)
+     (avg-error 32.617943)
+     (max-error 32.617943)
+     (avg-local-error 32.617943)
+     (max-local-error 32.617943)
+     (num-calls 2))
+    )
+  )
+)

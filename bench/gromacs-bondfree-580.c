@@ -22,7 +22,7 @@ float rand_legit_positive_float() {
   float result;
   do {
     result = rand_double();
-  } while (result != result || result * result == INFINITY || result <= 0);
+  } while (! isfinite(result * result) || result <= 0);
   return result;
 }
  

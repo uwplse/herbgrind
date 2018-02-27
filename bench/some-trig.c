@@ -4,10 +4,8 @@
 
 int main(int argc, char** argv){
   double x, y;
-  HERBGRIND_BEGIN();
-  x = 5;
+  x = atan(1.0) * (40002);
   y = tan(x) - (sin(x)/cos(x));
-  HERBGRIND_END();
   printf("%e\n", y);
   return 0;
 }
