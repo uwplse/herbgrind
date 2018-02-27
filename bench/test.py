@@ -53,8 +53,8 @@ def lookupField(alst, fieldName):
     for entry in alst:
         if entry[0] == fieldName:
             return entry[1]
-    print("Couldn't find field {}! Exiting...".format(fieldName))
-    sys.exit(1)
+    else:
+        raise KeyError("Couldn't find field {}! Exiting...".format(fieldName))
 
 def checkMatch(expected, actual):
     if list.__instancecheck__(expected):
@@ -80,13 +80,23 @@ def checkMatch(expected, actual):
 def checkFile(name, name_expected, ignoreProps):
     global success
     with open(name) as actual, open(name_expected) as expected:
-        actualResults = list(parseSexp(actual.read()))
-        expectedResults = list(parseSexp(expected.read()))
+        actualText = actual.read()
+        expectedText = expected.read()
+        actualResults = list(parseSexp(actualText))
+        expectedResults = list(parseSexp(expectedText))
         for entry in expectedResults:
             fieldName = entry[0]
             if not (fieldName in ignoreProps):
                 expectedResult = entry[1]
-                actualResult = lookupField(actualResults, fieldName)
+                try:
+                    actualResult = lookupField(actualResults, fieldName)
+                except KeyError as e:
+                    print(str(e))
+                    print("\nActual ::")
+                    print(actualText)
+                    print("\nExpected ::")
+                    print(expectedText)
+                    sys.exit(1)
                 # If the string starts with a digit...
                 if isFloat(expectedResult):
                     # Treat it as a float, and check to make sure
