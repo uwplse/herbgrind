@@ -236,15 +236,14 @@ clear-preload:
 
 .PHONY: test backup-logs
 
-TESTS=$(wildcard bench/*.out-errors.gh.expected)
+TESTS=$(wildcard bench/*.out.expected)
 
 bench/%.out: bench/%.c
 	$(MAKE) -C bench $*.out
 
 # The .out version is the binary; TESTS stores the expected output files
-test: compile $(TESTS) $(TESTS:.out-errors.gh.expected=.out)
-	python3 --version
-	python3 bench/test.py $(TESTS:.out-errors.gh.expected=.out)
+test: compile $(TESTS) $(TESTS:.out.expected=.out)
+	python3 bench/test.py $(TESTS:.out.expected=.out)
 
 backup-logs:
 	tar czf logs.tar.gz logs

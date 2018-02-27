@@ -107,7 +107,7 @@ def test(prog, ignoreProps):
     if status:
         print("Command failed (status {}).".format(status))
         success = False
-    checkFile("{}.gh".format(prog), "{}-errors.gh.expected".format(prog), ignoreProps)
+    checkFile("{}.gh".format(prog), "{}.expected".format(prog), ignoreProps)
     return success
 
 if __name__ == "__main__":
