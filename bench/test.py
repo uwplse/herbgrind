@@ -134,4 +134,4 @@ if __name__ == "__main__":
     for arg in sys.argv[1:]:
         success = test(arg, ignoreProps)
         if not success:
-            sys.exit(success)
+            sys.exit(1)
