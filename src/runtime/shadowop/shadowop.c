@@ -38,6 +38,7 @@
 #include "local-op.h"
 #include "influence-op.h"
 #include "../../helper/ir-info.h"
+#include "../../helper/runtime-util.h"
 
 VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
   ShadowOpInfo* opInfo = infoInstance->info;
@@ -205,8 +206,11 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   }
   if (print_inputs){
     for(int i = 0; i < opinfo->exinfo.nargs; ++i){
-      VG_(printf)("Arg %d is computed as %f, and is shadowed as %f\n",
-                  i + 1, clientArgs[i], getDouble(args[i]->real));
+      VG_(printf)("Arg %d is computed as ", i + 1);
+      ppFloat(clientArgs[i]);
+      VG_(printf)(", and is shadowed as ");
+      ppFloat(getDouble(args[i]->real));
+      VG_(printf)("\n");
     }
   }
   ShadowValue* result = mkShadowValueBare(opinfo->exinfo.argPrecision);
@@ -221,7 +225,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   }
   execLocalOp(opinfo, result->real, result, args);
   if (print_errors_long || print_errors){
-    VG_(printf)("Global:");
+    VG_(printf)("Global:\n");
   }
   double bitsGlobalError =
     updateError(&(opinfo->agg.global_error), result->real, clientResult);

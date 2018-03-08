@@ -29,6 +29,7 @@
 
 #include "error.h"
 #include "../value-shadowstate/shadowval.h"
+#include "../../helper/runtime-util.h"
 
 #include "mpfr.h"
 #include "pub_tool_libcprint.h"
@@ -58,14 +59,16 @@ double updateError(ErrorAggregate* eagg,
       if (shadowRounded != shadowRounded){
         VG_(printf)("The rounded shadow value is NaN");
       } else {
-        VG_(printf)("The rounded shadow value is %f", shadowRounded);
+        VG_(printf)("The rounded shadow value is ");
+        ppFloat(shadowRounded);
       }
     }
     if (computedVal != computedVal){
       VG_(printf)(", but NaN was computed.\n");
     } else {
-      VG_(printf)(", but %f was computed.\n",
-                  computedVal);
+      VG_(printf)(", but ");
+      ppFloat(computedVal);
+      VG_(printf)(" was computed.\n");
     }
     VG_(printf)("%f bits error (%llu ulps)\n",
                 bitsError, ulpsError);
