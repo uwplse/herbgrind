@@ -84,6 +84,9 @@ def checkFile(name, name_expected, ignoreProps):
         expectedText = expected.read()
         actualResults = list(parseSexp(actualText))
         expectedResults = list(parseSexp(expectedText))
+        if len(actualResults) != len(expectedResults):
+            print("Expected {} results, got {}".format(len(expectedResults), len(actualResults)));
+            success = False
         for entry in expectedResults:
             fieldName = entry[0]
             if not (fieldName in ignoreProps):
@@ -118,6 +121,11 @@ def test(prog, ignoreProps):
         print("Command failed (status {}).".format(status))
         success = False
     checkFile("{}.gh".format(prog), "{}.expected".format(prog), ignoreProps)
+    if not success:
+        print("Actual::")
+        with open(prog + ".gh") as f: print(f.read())
+        print("Expected::")
+        with open(prog + ".expected") as f: print(f.read())
     return success
 
 if __name__ == "__main__":
