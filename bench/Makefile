@@ -1,6 +1,6 @@
 include ../Makefile.common
 
-FLAGS=-g -std=c11 -lm
+FLAGS=-g -static -std=c11 -lm
 
 CSRC = $(wildcard *.c)
 COUT = $(patsubst %.c,%.out,$(CSRC))
