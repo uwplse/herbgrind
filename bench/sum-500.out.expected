@@ -1,0 +1,13 @@
+(output
+  (function "main")
+  (filename "sum-500.c")
+  (line-num 6)
+  (instr-addr 1087D9)
+  (avg-error 5.977280)
+  (max-error 5.977280)
+  (num-calls 1)
+  (influences
+    (
+    )
+  )
+)

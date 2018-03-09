@@ -1,0 +1,27 @@
+(output
+  (function "main")
+  (filename "sum-50.c")
+  (line-num 6)
+  (instr-addr 1087D9)
+  (avg-error 2.000000)
+  (max-error 2.000000)
+  (num-calls 1)
+  (influences
+    (
+    )
+  )
+)
+(compare
+  (function "main")
+  (filename "sum-50.c")
+  (line-num 5)
+  (instr-addr 1087AE)
+  (percent-wrong 1)
+  (num-wrong 1)
+  (num-calls 52)
+  (influences
+    (
+    )
+  )
+)
+
