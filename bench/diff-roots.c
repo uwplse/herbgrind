@@ -1,7 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
-#include "herbgrind.h"
 
 double rand_double() {
         long long c0 = rand()&0xffff;

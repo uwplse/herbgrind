@@ -1,7 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
-#include "herbgrind.h"
 
 int main(int argc, char** argv){
   volatile float x = 1e-20;

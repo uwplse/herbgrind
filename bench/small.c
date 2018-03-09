@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <math.h>
-#include "herbgrind.h"
 
 void calcY(double* y, double x);
 

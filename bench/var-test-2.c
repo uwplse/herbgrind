@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "herbgrind.h"
 
 double addTwo(double x, double y){
   return x + y;

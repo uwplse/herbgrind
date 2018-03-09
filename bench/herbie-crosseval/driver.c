@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
-#include "herbgrind.h"
 #include "driver-macros.h"
 
 #ifndef NPTS

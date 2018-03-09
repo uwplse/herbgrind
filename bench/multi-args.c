@@ -1,6 +1,4 @@
-#include "herbgrind.h"
 #include <stdio.h>
-#include <math.h>
 
 int main(int argc, char** argv){
   double xs[2] = {1.2, 1e-12};
