@@ -200,6 +200,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
         execSymbolicOp(opinfo, &(result->expr), clientResult, args, False);
         return result;
       }
+      break;
     default:
       break;
     }
@@ -270,26 +271,15 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
           return result;
         }
       }
-      if (getDouble(args[1]->real) == 0){
-        ULong inputError = ulpd(getDouble(args[0]->real), clientArgs[0]);
-        ULong outputError = ulpd(getDouble(result->real), clientResult);
-        if (outputError <= inputError){
-          result->influences = cloneInfluences(args[0]->influences);
-          return result;
-        }
-      }
+      // Intentional overflow to the next set of cases: both adds and
+      // subtracts are considered compensating if their second
+      // argument is zero in the reals (and the error decreases), but
+      // only adds also are compensating if their first argument is
+      // zero in the reals.
     case Iop_Sub32F0x4:
     case Iop_Sub64F0x2:
     case Iop_SubF64:
     case Iop_SubF32:
-      if (getDouble(args[0]->real) == 0){
-        ULong inputError = ulpd(getDouble(args[1]->real), clientArgs[1]);
-        ULong outputError = ulpd(getDouble(result->real), clientResult);
-        if (outputError <= inputError){
-          result->influences = cloneInfluences(args[1]->influences);
-          return result;
-        }
-      }
       if (getDouble(args[1]->real) == 0){
         ULong inputError = ulpd(getDouble(args[0]->real), clientArgs[0]);
         ULong outputError = ulpd(getDouble(result->real), clientResult);
@@ -298,6 +288,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
           return result;
         }
       }
+      break;
     default:
       break;
     }

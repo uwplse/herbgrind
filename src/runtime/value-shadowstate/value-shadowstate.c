@@ -393,6 +393,7 @@ ShadowTemp* dynamicLoad128(UWord memSrc){
     case 2: {
       secondHalf = mkShadowTempTwoSingles(*(UWord*)(void*)(memSrc + sizeof(double)));
     }
+      break;
     default:
       tl_assert(0);
       return NULL;
@@ -450,6 +451,7 @@ ShadowTemp* dynamicLoad256(UWord memSrc){
       break;
     case 4:
       secondHalf = mkShadowTempFourSingles((float*)(void*)(memSrc + sizeof(double) * 2));
+      break;
     default:
       tl_assert(0);
       return NULL;
