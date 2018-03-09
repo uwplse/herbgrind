@@ -31,7 +31,7 @@
 #
 
 # Modify the valgrind makefiles to include the herbgrind directory
-gawk '/^TOOLS =/{print;print "\t\therbgrind \\";next}1' ../valgrind/Makefile.am > ../valgrind/Makefile.am.tmp
+gawk '/^TOOLS =/{print "TOOLS = herbgrind #\\";next}1' ../valgrind/Makefile.am > ../valgrind/Makefile.am.tmp
 mv ../valgrind/Makefile.am.tmp ../valgrind/Makefile.am
 gawk '/^AC_CONFIG_FILES/ && !seen {print;print "   herbgrind/Makefile";print "   herbgrind/docs/Makefile";print "   herbgrind/tests/Makefile";seen=1;next}1' ../valgrind/configure.ac > ../valgrind/configure.ac.tmp
 mv ../valgrind/configure.ac.tmp ../valgrind/configure.ac
