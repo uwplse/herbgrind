@@ -36,7 +36,7 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
   if (no_reals) return;
   ShadowTemp* args[2];
   for(int i = 0; i < 2; ++i){
-    args[i] = getArg(i, numChannelsIn(info->op_code), info->precision, info->argTemps[i]);
+    args[i] = getArg(i, numChannelsIn(info->op_code), info->argTemps[i]);
   }
   int correctOutput;
   if (numSIMDOperands(info->op_code) == 1){
@@ -207,7 +207,7 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
 }
 VG_REGPARM(3) void checkConvert(ValueType argPrecision, IRTemp tmp,
                                 Addr curAddr){
-  ShadowTemp* arg = getArg(0, 1, argPrecision, tmp);
+  ShadowTemp* arg = getArg(0, 1, tmp);
   int correctResult = (int)getDouble(arg->values[0]->real);
   int computedValue =
     *((int*)&computedResult.f[0]);

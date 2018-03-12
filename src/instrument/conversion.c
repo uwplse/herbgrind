@@ -106,7 +106,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
             IRExpr* freshInput =
               runMakeInputG(sbOut, loadedNull,
                             argExprs[i],
-                            tempType(argExprs[1-i]->Iex.RdTmp.tmp),
+                            tempBlockType(argExprs[1-i]->Iex.RdTmp.tmp, 0),
                             numVals);
             shadowInputs[i] = runITE(sbOut, loadedNull,
                                      freshInput,
@@ -125,7 +125,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
             inferOtherNumChannels(i, argExprs[1-i], op_code);
           shadowInputs[i] =
             runMakeInput(sbOut, argExprs[i],
-                         tempType(argExprs[1-i]->Iex.RdTmp.tmp),
+                         tempBlockType(argExprs[1-i]->Iex.RdTmp.tmp, 0),
                          numVals);
         }
       }
@@ -138,7 +138,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
         runLoadTemp(sbOut, argExprs[1]->Iex.RdTmp.tmp);
       inputPreexisting =
         runNonZeroCheck64(sbOut, shadowInputs[1]);
-      ValueType inferredPrecision = argPrecision(op_code);
+      ValueType inferredPrecision = opArgPrecision(op_code);
       // You better make sure you handle all the cases where this
       // could be false lower down.
       if (inferredPrecision != Vt_Unknown){
@@ -162,7 +162,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
         runNonZeroCheck64(sbOut, shadowInputs[0]);
       // You better make sure you handle all the cases where this
       // could be false lower down.
-      ValueType inferredPrecision = argPrecision(op_code);
+      ValueType inferredPrecision = opArgPrecision(op_code);
       if (inferredPrecision != Vt_Unknown){
         int numChannels = inferOtherNumChannels(1, shadowInputs[0],
                                                 op_code);
@@ -193,7 +193,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                  runUnop(sbOut, Iop_Not1,
                          inputsPreexistingDynamic[i]),
                  inputsPreexistingDynamic[1-i]);
-        ValueType inferredPrecision = argPrecision(op_code);
+        ValueType inferredPrecision = opArgPrecision(op_code);
         // You better make sure you handle all the cases where this
         // could be false lower down.
         if (inferredPrecision != Vt_Unknown){
@@ -307,21 +307,17 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
         // This is the one conversion that can fail based on the FORM
         // of the shadow temp. If its not two singles, but is instead
         // one double, then taking the first half is meaningless. So
-        // we only execute the conversion if the number of values
-        // matches "2", which we check here.
-        IRExpr* numValsMatch;
+        // we only execute the conversion if the first value is a
+        // single.
         if (inputPreexisting == NULL){
-          numValsMatch = runBinop(sbOut, Iop_CmpEQ64, mkU64(2),
-                                  runArrow(sbOut, shadowInputs[0], ShadowTemp,
-                                           num_vals));
-          inputPreexisting = numValsMatch;
+          IRExpr* vals = runArrow(sbOut, shadowInputs[0], ShadowTemp, values);
+          IRExpr* firstVal = runIndex(sbOut, vals, ShadowValue*, 0);
+          addValTypeAssert(sbOut, "Iop_64to32", firstVal, Vt_Single);
         } else {
-          numValsMatch = runBinop(sbOut, Iop_CmpEQ64, mkU64(2),
-                                          runArrowG(sbOut, inputPreexisting,
-                                                    shadowInputs[0], ShadowTemp,
-                                                    num_vals));
-          inputPreexisting = runAnd(sbOut, inputPreexisting,
-                                    numValsMatch);
+          IRExpr* vals =
+            runArrowG(sbOut, inputPreexisting, shadowInputs[0], ShadowTemp, values);
+          IRExpr* firstVal = runIndex(sbOut, vals, ShadowValue*, 0);
+          addValTypeAssert(sbOut, "Iop_64to32 (2)", firstVal, Vt_Single);
         }
         convertFunc = i64to32;
       }
@@ -501,10 +497,10 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
   ValueType outputPrecision = resultPrecision(op_code);
   if (outputPrecision == Vt_Unknown){
     if (staticallyShadowed(argExprs[0])){
-      outputPrecision = tempType(argExprs[0]->Iex.RdTmp.tmp);
+      outputPrecision = tempBlockType(argExprs[0]->Iex.RdTmp.tmp, 0);
     } else if (numConversionInputs(op_code) == 2 &&
                staticallyShadowed(argExprs[1])){
-      outputPrecision = tempType(argExprs[1]->Iex.RdTmp.tmp);
+      outputPrecision = tempBlockType(argExprs[1]->Iex.RdTmp.tmp, 0);
     }
   }
   if ((numConversionInputs(op_code) == 1 &&
@@ -518,7 +514,6 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                 shadowOutput, mkU64(dest));
     }
     addStoreTemp(sbOut, shadowOutput,
-                 outputPrecision,
                  dest);
   } else {
     if (print_temp_moves){
@@ -528,7 +523,6 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     }
     tl_assert(inputPreexisting != NULL);
     addStoreTempG(sbOut, inputPreexisting, shadowOutput,
-                  outputPrecision,
                   dest);
   }
 
@@ -538,7 +532,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     if (inputPreexisting == NULL){
       for (int i = 0; i < 2; ++i){
         if (!canBeShadowed(sbOut->tyenv, argExprs[i])){
-          if (argPrecision(op_code) == Vt_Unknown){
+          if (opArgPrecision(op_code) == Vt_Unknown){
             addDynamicDisownNonNullDetached(sbOut, shadowInputs[i]);
           } else {
             addDisownNonNull(sbOut, shadowInputs[i],
@@ -550,7 +544,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
     } else {
       for (int i = 0; i < 2; ++i){
         if (!canBeShadowed(sbOut->tyenv, argExprs[i])){
-          if (argPrecision(op_code) == Vt_Unknown){
+          if (opArgPrecision(op_code) == Vt_Unknown){
             addDynamicDisown(sbOut, i);
           } else {
             int num_vals =

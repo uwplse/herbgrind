@@ -87,8 +87,6 @@ extern ShadowTemp* shadowTemps[MAX_TEMPS];
 extern ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
 extern TableValueEntry* shadowMemTable[LARGE_PRIME];
 
-#define MAX_TEMP_SHADOWS 8
-
 extern Stack* freedTemps[MAX_TEMP_SHADOWS];
 extern Stack* freedVals;
 extern Stack* tableEntries;
@@ -108,11 +106,7 @@ VG_REGPARM(2) ShadowTemp* dynamicGet64(Int tsSrc,
 VG_REGPARM(3) ShadowTemp* dynamicGet128(Int tsSrc, UWord bytes1, UWord bytes2);
 VG_REGPARM(2) ShadowTemp* dynamicGet256(Int tsSrc, Word256* bytes);
 ShadowTemp* dynamicGet(Int tsSrc, void* bytes, int size);
-VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, int size);
-ShadowTemp* dynamicLoad32(UWord memSrc);
-ShadowTemp* dynamicLoad64(UWord memSrc);
-ShadowTemp* dynamicLoad128(UWord memSrc);
-ShadowTemp* dynamicLoad256(UWord memSrc);
+VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, FloatBlocks size);
 VG_REGPARM(0) TableValueEntry* newTableValueEntry(void);
 VG_REGPARM(3) void setMemShadowTemp(Addr64 memDest, UWord size,
                                     ShadowTemp* st);
@@ -125,7 +119,7 @@ VG_REGPARM(1) void disownShadowTemp(ShadowTemp* temp);
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp);
 VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp);
 
-ShadowTemp* mkShadowTemp(UWord num_vals);
+ShadowTemp* mkShadowTemp(FloatBlocks num_blocks);
 void freeShadowTemp(ShadowTemp* temp);
 void disownShadowTemp(ShadowTemp* temp);
 VG_REGPARM(1) void disownShadowTempNonNullDynamic(IRTemp idx);
@@ -144,7 +138,6 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(double value);
 VG_REGPARM(1) ShadowTemp* mkShadowTempTwoSingles(UWord values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSinglesG(UWord guard, float* values);
-ShadowTemp* mkShadowTempValues(void* bytes, int num_values, ValueType type);
 ShadowValue* getTS(Int idx);
 VG_REGPARM(2) void printStoreValue(const char* dest_label, ShadowValue* val);
 void printStoreValueF(ShadowValue* val, const char* format, ...);
@@ -185,7 +178,7 @@ void freeShadowValue_fast(ShadowValue* val){
 __attribute__((always_inline))
 inline
 void freeShadowTemp_fast(ShadowTemp* temp){
-  stack_push_fast(freedTemps[temp->num_vals - 1], (void*)temp);
+  stack_push_fast(freedTemps[INT(temp->num_blocks)- 1], (void*)temp);
 }
 __attribute__((always_inline))
 inline
@@ -203,7 +196,8 @@ void ownNonNullShadowValue(ShadowValue* val){
 __attribute__((always_inline))
 inline
 void disownShadowTemp_fast(ShadowTemp* temp){
-  for(int i = 0; i < temp->num_vals; ++i){
+  for(int i = 0; i < INT(temp->num_blocks);
+      i+=temp->values[i]->type == Vt_Double ? 2 : 1){
     disownNonNullShadowValue(temp->values[i]);
   }
   freeShadowTemp_fast(temp);

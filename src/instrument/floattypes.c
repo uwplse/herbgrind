@@ -60,13 +60,38 @@ void resetTypeState(void){
 }
 void cleanupTypeState(void){
 }
-ValueType tempType(int idx){
+ValueType* tempTypeArray(int idx){
   return tempTypes[idx];
 }
-ValueType exprType(IRExpr* expr){
+ValueType tempBlockType(int idx, int blockIdx){
+  return tempTypes[idx][blockIdx];
+}
+ValueType* exprTypeArray(IRExpr* expr){
+  static ValueType typeArrays[5][8] = {
+    {Vt_Unknown, Vt_Unknown, Vt_Unknown, Vt_Unknown,
+     Vt_Unknown, Vt_Unknown, Vt_Unknown, Vt_Unknown},
+    {Vt_NonFloat, Vt_NonFloat, Vt_NonFloat, Vt_NonFloat,
+     Vt_NonFloat, Vt_NonFloat, Vt_NonFloat, Vt_NonFloat},
+    {Vt_UnknownFloat, Vt_UnknownFloat, Vt_UnknownFloat, Vt_UnknownFloat,
+     Vt_UnknownFloat, Vt_UnknownFloat, Vt_UnknownFloat, Vt_UnknownFloat},
+    {Vt_Double, Vt_Double, Vt_Double, Vt_Double,
+     Vt_Double, Vt_Double, Vt_Double, Vt_Double},
+    {Vt_Single, Vt_Single, Vt_Single, Vt_Single,
+     Vt_Single, Vt_Single, Vt_Single, Vt_Single}};
   switch(expr->tag){
   case Iex_RdTmp:
-    return tempType(expr->Iex.RdTmp.tmp);
+    return tempTypeArray(expr->Iex.RdTmp.tmp);
+  case Iex_Const:
+    return typeArrays[constType(expr->Iex.Const.con)];
+  default:
+    tl_assert(0);
+    return Vt_Unknown;
+  }
+}
+ValueType exprBlockType(IRExpr* expr, int blockIdx){
+  switch(expr->tag){
+  case Iex_RdTmp:
+    return tempBlockType(expr->Iex.RdTmp.tmp, blockIdx);
   case Iex_Const:
     return constType(expr->Iex.Const.con);
   default:
@@ -74,73 +99,45 @@ ValueType exprType(IRExpr* expr){
     return Vt_Unknown;
   }
 }
-Bool refineTempType(int tempIdx, ValueType type){
+Bool refineTempBlockType(int tempIdx, int blockIdx, ValueType type){
   /* VG_(printf)("Refining type of t%d from %s with %s\n", */
   /*             tempIdx, typeName(tempTypes[tempIdx]), typeName(type)); */
-  ValueType refinedType = typeMeet(type, tempType(tempIdx));
-  if (tempTypes[tempIdx] == refinedType){
+  ValueType refinedType = typeMeet(type, tempBlockType(tempIdx, blockIdx));
+  if (tempTypes[tempIdx][blockIdx] == refinedType){
     return False;
   } else {
     if (print_type_inference){
       VG_(printf)("Refining type of t%d from %s to %s\n",
-                  tempIdx, typeName(tempTypes[tempIdx]), typeName(refinedType));
+                  tempIdx, typeName(tempTypes[tempIdx][blockIdx]), typeName(refinedType));
     }
-    tempTypes[tempIdx] = refinedType;
+    tempTypes[tempIdx][blockIdx] = refinedType;
     return True;
   }
 }
-int valueSize(IRSB* sbOut, int idx){
-  switch(typeOfIRTemp(sbOut->tyenv, idx)){
-  case Ity_I64:
-  case Ity_F64:
-    return sizeof(double);
-  case Ity_F32:
-  case Ity_I32:
-    return sizeof(float);
-  case Ity_V128:
-  case Ity_V256:
-    if (tempType(idx) == Vt_Single){
-      return sizeof(float);
-    } else if (tempType(idx) == Vt_Double){
-      return sizeof(double);
-    }
-  default:
-    tl_assert(0);
-    return 0;
+Bool refineExprBlockType(IRExpr* expr, int blockIdx, ValueType type){
+  if (expr->tag == Iex_RdTmp){
+    return refineTempBlockType(expr->Iex.RdTmp.tmp, blockIdx, type);
+  } else {
+    return False;
   }
 }
-int numTempValues(IRSB* sbOut, int idx){
-  switch(typeOfIRTemp(sbOut->tyenv, idx)){
-  case Ity_I64:
-  case Ity_F64:
-  case Ity_I32:
-  case Ity_F32:
-    return 1;
-  case Ity_V128:
-    if (tempType(idx) == Vt_Single){
-      return 4;
-    } else if (tempType(idx) == Vt_Double){
-      return 2;
+Bool someStaticallyFloat(IRTypeEnv* tyenv, IRExpr* expr){
+  for(int i = 0; i < INT(exprSize(tyenv, expr)); ++i){
+    if (staticallyFloat(expr, i)){
+      return True;
     }
-  case Ity_V256:
-    if (tempType(idx) == Vt_Single){
-      return 8;
-    } else if (tempType(idx) == Vt_Double){
-      return 4;
-    }
-  default:
-    VG_(printf)("%d\n", tempType(idx));
-    ppIRType(typeOfIRTemp(sbOut->tyenv, idx));
-    tl_assert(0);
-    return 0;
   }
+  return False;
 }
-Bool staticallyFloat(IRExpr* expr){
+Bool staticallyFloatType(ValueType type){
+  return typeJoin(type, Vt_UnknownFloat) == Vt_UnknownFloat;
+}
+Bool staticallyFloat(IRExpr* expr, int blockIdx){
   switch(expr->tag){
   case Iex_Const:
     return False;
   case Iex_RdTmp:
-    return typeJoin(tempType(expr->Iex.RdTmp.tmp), Vt_UnknownFloat) == Vt_UnknownFloat;
+    return staticallyFloatType(tempBlockType(expr->Iex.RdTmp.tmp, blockIdx));
   default:
     VG_(printf)("Hey, what are you trying to pull here, man? "
                 "You can't check the shadow of a non-trivial "
@@ -151,15 +148,23 @@ Bool staticallyFloat(IRExpr* expr){
   }
 }
 Bool staticallyShadowed(IRExpr* expr){
-  return staticallyFloat(expr) &&
+  return expr->tag == Iex_RdTmp &&
     tempShadowStatus[expr->Iex.RdTmp.tmp] == Ss_Shadowed;
 }
-Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr){
+Bool someCanBeFloat(IRTypeEnv* typeEnv, IRExpr* expr){
+  for(int i = 0; i < INT(exprSize(typeEnv, expr)); ++i){
+    if (canBeFloat(typeEnv, expr, i)){
+      return True;
+    }
+  }
+  return False;
+}
+Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr, int blockIdx){
   if (!isFloatIRType(typeOfIRExpr(typeEnv, expr))){
     return False;
   } else if (expr->tag == Iex_Const){
     return True;
-  } else if (tempType(expr->Iex.RdTmp.tmp) == Vt_NonFloat){
+  } else if (tempBlockType(expr->Iex.RdTmp.tmp, blockIdx) == Vt_NonFloat){
     return False;
   } else {
     return True;
@@ -170,10 +175,8 @@ Bool canStoreShadow(IRTypeEnv* typeEnv, IRExpr* expr){
     return False;
   } else if (!isFloatIRType(typeOfIRExpr(typeEnv, expr))){
     return False;
-  } else if (tempType(expr->Iex.RdTmp.tmp) == Vt_NonFloat){
-    return False;
   } else {
-    return True;
+    return someCanBeFloat(typeEnv, expr);
   }
 }
 
@@ -182,37 +185,49 @@ Bool canBeShadowed(IRTypeEnv* typeEnv, IRExpr* expr){
     tempShadowStatus[expr->Iex.RdTmp.tmp] != Ss_Unshadowed;
 }
 
-int exprSize(IRTypeEnv* tyenv, IRExpr* expr){
+FloatBlocks tempSize(IRTypeEnv* tyenv, IRTemp tmp){
+  return typeSize(typeOfIRTemp(tyenv, tmp));
+}
+
+FloatBlocks exprSize(IRTypeEnv* tyenv, IRExpr* expr){
   return typeSize(typeOfIRExpr(tyenv, expr));
 }
 
-int typeSize(IRType type){
+FloatBlocks typeSize(IRType type){
   switch (type){
   case Ity_I32:
   case Ity_F32:
-    return 1;
+    return FB(1);
   case Ity_I64:
   case Ity_F64:
-    return 2;
+    return FB(2);
   case Ity_V128:
-    return 4;
+    return FB(4);
   case Ity_V256:
-    return 8;
+    return FB(8);
+    // We're also going to include things that are too small to be
+    // floats as size 1, so that we can set their single type slot to
+    // be non-float easily.
+  case Ity_I1:
+  case Ity_I8:
+    return FB(1);
   default:
-    return 1;
+    ppIRType(type);
+    tl_assert(0);
+    return FB(0);
   }
 }
-int loadConversionSize(IRLoadGOp conversion){
+FloatBlocks loadConversionSize(IRLoadGOp conversion){
   switch(conversion){
   case ILGop_IdentV128:
-    return 4;
+    return FB(4);
   case ILGop_Ident64:
-    return 2;
+    return FB(2);
   case ILGop_Ident32:
-    return 1;
+    return FB(1);
   default:
     tl_assert(0);
-    return 0;
+    return FB(0);
   }
 }
 
@@ -304,11 +319,12 @@ ValueType tsType(Int tsAddr, int instrIdx){
   }
   return nextTSEntry->type;
 }
-ValueType inferTSBlockType(int tsAddr, int instrIdx, int size){
+ValueType inferTSBlockType(int tsAddr, int instrIdx, FloatBlocks size){
   ValueType result = Vt_Unknown;
-  for(int i = 0; i < size; ++i){
+  for(int i = 0; i < INT(size); ++i){
     if (result == Vt_Double && i % 2 == 1) continue;
-    result = typeMeet(result, tsType(tsAddr + sizeof(float) * i, instrIdx));
+    ValueType floatSizeType = tsType(tsAddr + sizeof(float) * i, instrIdx);
+    result = typeMeet(result, floatSizeType);
   }
   return result;
 }
@@ -326,11 +342,29 @@ ValueType conversionArgPrecision(IROp op_code, int argIndex){
       tl_assert(0);
     }
   default:
-    return argPrecision(op_code);
+    return opArgPrecision(op_code);
   }
 }
 
-ValueType argPrecision(IROp op_code){
+ValueType opBlockArgPrecision(IROp op_code, int blockIdx){
+  if (opArgPrecision(op_code) == Vt_Double){
+    if (blockIdx / 2 >= numSIMDOperands(op_code)){
+      return Vt_Unknown;
+    }
+    if (blockIdx % 2 == 1){
+      return Vt_NonFloat;
+    }
+    return Vt_Double;
+  } else if (opArgPrecision(op_code) == Vt_Single) {
+    if (blockIdx >= numSIMDOperands(op_code)){
+      return Vt_Unknown;
+    }
+    return Vt_Single;
+  } else {
+    return Vt_Unknown;
+  }
+}
+ValueType opArgPrecision(IROp op_code){
   if (!isFloatOp(op_code) && !isExitFloatOp(op_code) && !isSpecialOp(op_code)){
     return Vt_NonFloat;
   }
@@ -513,6 +547,24 @@ ValueType argPrecision(IROp op_code){
                "Op %d doesn't have an arg precision entry, "
                "but it's considered a float op.\n",op_code);
     return Vt_NonFloat;
+  }
+}
+ValueType resultBlockPrecision(IROp op_code, int blockIdx){
+  if (resultPrecision(op_code) == Vt_Double){
+    if (blockIdx / 2 >= numSIMDOperands(op_code)){
+      return Vt_Unknown;
+    }
+    if (blockIdx % 2 == 1){
+      return Vt_NonFloat;
+    }
+    return Vt_Double;
+  } else if (resultPrecision(op_code) == Vt_Single) {
+    if (blockIdx >= numSIMDOperands(op_code)){
+      return Vt_Unknown;
+    }
+    return Vt_Single;
+  } else {
+    return Vt_Unknown;
   }
 }
 ValueType resultPrecision(IROp op_code){
@@ -762,7 +814,8 @@ void inferTypes(IRSB* sbIn){
           case Iex_Const:
             {
               ValueType srcType = constType(sourceData->Iex.Const.con);
-              for(int i = 0; i < exprSize(sbIn->tyenv, sourceData); ++i){
+              FloatBlocks numBlocks = exprSize(sbIn->tyenv, sourceData);
+              for(int i = 0; i < INT(numBlocks); ++i){
                 if (srcType == Vt_Double && i % 2 == 1){
                   dirty |= setTSType(destLocation + i * sizeof(float),
                                      instrIdx, Vt_NonFloat);
@@ -785,17 +838,13 @@ void inferTypes(IRSB* sbIn){
             // more of the block and propagate information around.
           case Iex_RdTmp:
             {
+              FloatBlocks numBlocks = exprSize(sbIn->tyenv, sourceData);
               IRTemp srcTemp = sourceData->Iex.RdTmp.tmp;
-              for(int i = 0; i < exprSize(sbIn->tyenv, sourceData); ++i){
-                if (tempType(srcTemp) == Vt_Double && i % 2 == 1){
-                  dirty |= setTSType(destLocation + i * sizeof(float),
-                                     instrIdx, Vt_NonFloat);
-                } else {
-                  dirty |= setTSType(destLocation + i * sizeof(float),
-                                     instrIdx, tempType(srcTemp));
-                }
+              for(int i = 0; i < INT(numBlocks); ++i){
+                int tsDest = destLocation + i * sizeof(float);
+                dirty |= setTSType(tsDest, instrIdx, tempBlockType(srcTemp, i));
+                dirty |= refineTempBlockType(srcTemp, i, tsType(tsDest, instrIdx));
               }
-              dirty |= refineTempType(srcTemp, tsType(destLocation, instrIdx));
             }
             break;
           default:
@@ -837,10 +886,8 @@ void inferTypes(IRSB* sbIn){
                 i+=sizeof(float)){
               int destLocation =
                 stmt->Ist.PutI.details->descr->base + i;
-              ValueType srcType = tempType(sourceData->Iex.RdTmp.tmp);
-              if (srcType == Vt_Double && i % 2 == 1){
-                srcType = Vt_NonFloat;
-              }
+              ValueType srcType = tempBlockType(sourceData->Iex.RdTmp.tmp,
+                                                i / sizeof(float));
               dirty |= setTSType(destLocation, instrIdx,
                                  typeJoin(srcType, tsType(destLocation, instrIdx)));
             }
@@ -859,40 +906,39 @@ void inferTypes(IRSB* sbIn){
           case Iex_Get:
             {
               int sourceOffset = expr->Iex.Get.offset;
-              IRType getType;
               switch(expr->Iex.Get.ty){
               case Ity_F32:
-                getType = Vt_Single;
+                tl_assert(INT(tempSize(sbIn->tyenv, destTemp)) == 1);
+                dirty |= refineTSType(sourceOffset, instrIdx, Vt_Single);
+                dirty |= refineTempBlockType(destTemp, 0, Vt_Single);
                 break;
               case Ity_F64:
-                getType = Vt_Double;
+                tl_assert(INT(tempSize(sbIn->tyenv, destTemp)) == 2);
+                dirty |= refineTSType(sourceOffset, instrIdx, Vt_Double);
+                dirty |= refineTSType(sourceOffset + sizeof(float),
+                                      instrIdx, Vt_NonFloat);
+                dirty |= refineTempBlockType(destTemp, 0, Vt_Double);
+                dirty |= refineTempBlockType(destTemp, 1, Vt_NonFloat);
                 break;
               case Ity_I32:
               case Ity_I64:
               case Ity_V128:
               case Ity_V256:
-                getType =
-                  inferTSBlockType(sourceOffset, instrIdx, typeSize(expr->Iex.Get.ty));
+                for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
+                  int tsSrc = sourceOffset + i * sizeof(float);
+                  dirty |= refineTSType(tsSrc, instrIdx, tempBlockType(destTemp, i));
+                  dirty |= refineTempBlockType(destTemp, i, tsType(tsSrc, instrIdx));
+                }
                 break;
               case Ity_I1:
               case Ity_I8:
               case Ity_I16:
-                getType = Vt_NonFloat;
+                dirty |= refineTSType(sourceOffset, instrIdx, Vt_NonFloat);
+                dirty |= refineTempBlockType(destTemp, 0, Vt_NonFloat);
                 break;
               default:
-                getType = Vt_NonFloat;
                 tl_assert(0);
                 break;
-              }
-              dirty |= refineTempType(destTemp, getType);
-              for(int i = 0; i < exprSize(sbIn->tyenv, IRExpr_RdTmp(destTemp)); ++i){
-                if (tempType(destTemp) == Vt_Double && i % 2 == 1){
-                  dirty |= refineTSType(sourceOffset + i * sizeof(float),
-                                        instrIdx, Vt_NonFloat);
-                } else {
-                  dirty |= refineTSType(sourceOffset + i * sizeof(float),
-                                        instrIdx, tempType(destTemp));
-                }
               }
             }
             break;
@@ -903,8 +949,12 @@ void inferTypes(IRSB* sbIn){
           case Iex_RdTmp:
             {
               int sourceTemp = expr->Iex.RdTmp.tmp;
-              dirty |= refineTempType(destTemp, tempType(sourceTemp));
-              dirty |= refineTempType(sourceTemp, tempType(destTemp));
+              tl_assert(INT(tempSize(sbIn->tyenv, destTemp)) ==
+                        INT(tempSize(sbIn->tyenv, sourceTemp)));
+              for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
+                dirty |= refineTempBlockType(sourceTemp, i, tempBlockType(destTemp, i));
+                dirty |= refineTempBlockType(destTemp, i, tempBlockType(sourceTemp, i));
+              }
             }
             break;
           case Iex_ITE:
@@ -912,15 +962,12 @@ void inferTypes(IRSB* sbIn){
               IRExpr* source1 = expr->Iex.ITE.iftrue;
               IRExpr* source2 = expr->Iex.ITE.iffalse;
               int source1Temp, source2Temp;
-              ValueType source1Type, source2Type;
               switch(source1->tag){
               case Iex_Const:
                 source1Temp = -1;
-                source1Type = constType(source1->Iex.Const.con);
                 break;
               case Iex_RdTmp:
                 source1Temp = source1->Iex.RdTmp.tmp;
-                source1Type = tempType(source1Temp);
                 break;
               default:
                 tl_assert(0);
@@ -929,26 +976,21 @@ void inferTypes(IRSB* sbIn){
               switch(source2->tag){
               case Iex_Const:
                 source2Temp = -1;
-                source2Type = constType(source2->Iex.Const.con);
                 break;
               case Iex_RdTmp:
                 source2Temp = source2->Iex.RdTmp.tmp;
-                source2Type = tempType(source2Temp);
                 break;
               default:
                 tl_assert(0);
                 return;
               }
-              dirty |= refineTempType(destTemp, typeJoin(source1Type, source2Type));
-              // These two branches take care of the case where we
-              // already know something more specific about the output
-              // temp than we know about either input. In this case
-              // the above statement will be a noop.
-              if (source1Temp != -1){
-                dirty |= refineTempType(source1Temp, tempType(destTemp));
-              }
-              if (source2Temp != -1){
-                dirty |= refineTempType(source2Temp, tempType(destTemp));
+              ValueType resultTypes[4];
+              typeJoins(exprTypeArray(source1), exprTypeArray(source2),
+                        tempSize(sbIn->tyenv, destTemp), resultTypes);
+              for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
+                dirty |= refineTempBlockType(destTemp, i, resultTypes[i]);
+                dirty |= refineTempBlockType(source1Temp, i, tempBlockType(destTemp, i));
+                dirty |= refineTempBlockType(source2Temp, i, tempBlockType(destTemp, i));
               }
             }
             break;
@@ -959,36 +1001,28 @@ void inferTypes(IRSB* sbIn){
           case Iex_Qop:
             {
               IRQop* details = expr->Iex.Qop.details;
-              ValueType argType = argPrecision(details->op);
-              if (details->arg1->tag == Iex_RdTmp){
-                dirty |= refineTempType(details->arg1->Iex.RdTmp.tmp, argType);
+              for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
+                ValueType argType = opBlockArgPrecision(details->op, i);
+                dirty |= refineExprBlockType(details->arg1, i, argType);
+                dirty |= refineExprBlockType(details->arg2, i, argType);
+                dirty |= refineExprBlockType(details->arg3, i, argType);
+                dirty |= refineExprBlockType(details->arg4, i, argType);
+                dirty |= refineTempBlockType(destTemp, i,
+                                             resultBlockPrecision(details->op, i));
               }
-              if (details->arg2->tag == Iex_RdTmp){
-                dirty |= refineTempType(details->arg2->Iex.RdTmp.tmp, argType);
-              }
-              if (details->arg3->tag == Iex_RdTmp){
-                dirty |= refineTempType(details->arg3->Iex.RdTmp.tmp, argType);
-              }
-              if (details->arg4->tag == Iex_RdTmp){
-                dirty |= refineTempType(details->arg4->Iex.RdTmp.tmp, argType);
-              }
-              dirty |= refineTempType(destTemp, resultPrecision(details->op));
             }
             break;
           case Iex_Triop:
             {
               IRTriop* details = expr->Iex.Triop.details;
-              ValueType argType = argPrecision(details->op);
-              if (details->arg1->tag == Iex_RdTmp){
-                dirty |= refineTempType(details->arg1->Iex.RdTmp.tmp, argType);
+              for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
+                ValueType argType = opBlockArgPrecision(details->op, i);
+                dirty |= refineExprBlockType(details->arg1, i, argType);
+                dirty |= refineExprBlockType(details->arg2, i, argType);
+                dirty |= refineExprBlockType(details->arg3, i, argType);
+                dirty |= refineTempBlockType(destTemp, i,
+                                             resultBlockPrecision(details->op, i));
               }
-              if (details->arg2->tag == Iex_RdTmp){
-                dirty |= refineTempType(details->arg2->Iex.RdTmp.tmp, argType);
-              }
-              if (details->arg3->tag == Iex_RdTmp){
-                dirty |= refineTempType(details->arg3->Iex.RdTmp.tmp, argType);
-              }
-              dirty |= refineTempType(destTemp, resultPrecision(details->op));
             }
             break;
           case Iex_Binop:
@@ -997,37 +1031,39 @@ void inferTypes(IRSB* sbIn){
               // Most of this code is for handling conversions, which
               // can be tricky to infer properly because they are
               // often polymorphic.
-              ValueType arg1Type;
-              ValueType arg2Type;
               if (isConversionOp(op)){
-                arg1Type = conversionArgPrecision(op, 0);
-                arg2Type = conversionArgPrecision(op, 1);
-                if (arg1Type == Vt_Unknown && tempType(destTemp) == Vt_NonFloat){
+                ValueType arg1Type = conversionArgPrecision(op, 0);
+                if (arg1Type == Vt_Unknown && tempBlockType(destTemp, 0) == Vt_NonFloat){
                   arg1Type = Vt_NonFloat;
                 }
-                if (arg2Type == Vt_Unknown && tempType(destTemp) == Vt_NonFloat){
+
+                ValueType arg2Type = conversionArgPrecision(op, 1);
+                if (arg2Type == Vt_Unknown && tempBlockType(destTemp, 0) == Vt_NonFloat){
                   arg2Type = Vt_NonFloat;
                 }
+
+                for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
+                  dirty |= refineExprBlockType(expr->Iex.Binop.arg1, i, arg1Type);
+                  dirty |= refineExprBlockType(expr->Iex.Binop.arg2, i, arg2Type);
+                }
+                if (!staticallyFloatType(arg1Type) &&
+                    !staticallyFloatType(arg2Type)){
+                  for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
+                    refineTempBlockType(destTemp, i, typeMeet(arg1Type, arg2Type));
+                  }
+                } else {
+                  for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
+                    refineTempBlockType(destTemp, i, resultPrecision(op));
+                  }
+                }
               } else {
-                arg1Type = argPrecision(op);
-                arg2Type = argPrecision(op);
+                for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
+                  ValueType argType = opBlockArgPrecision(op, i);
+                  dirty |= refineExprBlockType(expr->Iex.Binop.arg1, i, argType);
+                  dirty |= refineExprBlockType(expr->Iex.Binop.arg2, i, argType);
+                  dirty |= refineTempBlockType(destTemp, i, resultBlockPrecision(op, i));
+                }
               }
-              IRExpr* arg1 = expr->Iex.Binop.arg1;
-              IRExpr* arg2 = expr->Iex.Binop.arg2;
-              if (arg1->tag == Iex_RdTmp){
-                dirty |= refineTempType(arg1->Iex.RdTmp.tmp, arg1Type);
-              }
-              if (arg2->tag == Iex_RdTmp){
-                dirty |= refineTempType(arg2->Iex.RdTmp.tmp, arg2Type);
-              }
-              ValueType destType;
-              if (isConversionOp(op) &&
-                  !staticallyFloat(arg1) && !staticallyFloat(arg2)){
-                destType = typeMeet(exprType(arg1), exprType(arg2));
-              } else {
-                destType = resultPrecision(op);
-              }
-              dirty |= refineTempType(destTemp, destType);
             }
             break;
           case Iex_Unop:
@@ -1037,27 +1073,34 @@ void inferTypes(IRSB* sbIn){
               // often polymorphic.
               IRExpr* arg = expr->Iex.Unop.arg;
               IROp op = expr->Iex.Unop.op;
-              if (arg->tag == Iex_RdTmp){
-                ValueType srcType;
-                if (isConversionOp(op) && !isFloatType(tempType(destTemp))){
-                  srcType = tempType(destTemp);
-                } else {
-                  srcType = argPrecision(op);
+              if (isConversionOp(op)){
+                ValueType srcType = conversionArgPrecision(op, 0);
+                if (srcType == Vt_Unknown && tempBlockType(destTemp, 0) == Vt_NonFloat){
+                  srcType = Vt_NonFloat;
                 }
-                dirty |= refineTempType(arg->Iex.RdTmp.tmp,
-                                        srcType);
-              }
-              ValueType destType;
-              if (isConversionOp(op) && !staticallyFloat(arg)){
-                destType = exprType(arg);
+                for(int i = 0; i < INT(exprSize(sbIn->tyenv, arg)); ++i){
+                  dirty |= refineExprBlockType(arg, i, srcType);
+                }
+                for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
+                  if (!staticallyFloat(arg, i)){
+                    refineTempBlockType(destTemp, i, exprBlockType(arg, i));
+                  } else {
+                    refineTempBlockType(destTemp, i, resultPrecision(op));
+                  }
+                }
               } else {
-                destType = resultPrecision(op);
+                for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
+                  ValueType argType = opBlockArgPrecision(op, i);
+                  dirty |= refineExprBlockType(arg, i, argType);
+                  dirty |= refineTempBlockType(destTemp, i, resultBlockPrecision(op, i));
+                }
               }
-              dirty |= refineTempType(destTemp, destType);
             }
             break;
           case Iex_Const:
-            dirty |= refineTempType(destTemp, constType(expr->Iex.Const.con));
+            for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
+              dirty |= refineTempBlockType(destTemp, i, constType(expr->Iex.Const.con));
+            }
             break;
           case Iex_CCall:
             break;
@@ -1088,7 +1131,13 @@ void inferTypes(IRSB* sbIn){
     direction = -direction;
   }
   if (print_inferred_types){
-    printTypeState();
+    printTypeState(sbIn->tyenv);
+  }
+}
+
+void typeJoins(ValueType* types1, ValueType* types2, FloatBlocks numTypes, ValueType* out){
+  for(int i = 0; i < INT(numTypes); ++i){
+    out[i] = typeJoin(types1[i], types2[i]);
   }
 }
 
@@ -1222,10 +1271,24 @@ int isFloatType(ValueType type){
   return typeJoin(type, Vt_UnknownFloat) == Vt_UnknownFloat;
 }
 
-void printTypeState(void){
-  for(int i = 0; i < MAX_TEMPS; ++i){
-    if (tempTypes[i] != Vt_Unknown){
-      VG_(printf)("t%d : %s\n", i, typeName(tempTypes[i]));
+void printTypeState(IRTypeEnv* tyenv){
+  for(int i = 0; i < tyenv->types_used; ++i){
+    VG_(printf)("Printing state for t%d...\n", i);
+    int hasKnown = 0;
+    for(int j = 0; j < INT(tempSize(tyenv, i)); ++j){
+      if (tempTypes[i][j] != Vt_Unknown){
+        hasKnown = 1;
+        break;
+      }
+    }
+    if (hasKnown){
+      VG_(printf)("t%d :", i);
+      for(int j = 0; j < INT(tempSize(tyenv, i)); ++j){
+        if (tempTypes[i][j] != Vt_Unknown){
+          VG_(printf)(" %s", typeName(tempTypes[i][j]));
+        }
+      }
+      VG_(printf)("\n");
     }
   }
   for(int i = 0; i < MAX_REGISTERS; ++i){

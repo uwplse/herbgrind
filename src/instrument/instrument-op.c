@@ -121,12 +121,12 @@ void instrumentOp(IRSB* sbOut, IRTemp dest, IRExpr* expr,
     }
   } else {
     for(int i = 0; i < nargs; ++i){
-      if (staticallyFloat(argExprs[i])){
+      if (someStaticallyFloat(sbOut->tyenv, argExprs[i])){
         ppIROp(op_code);
         VG_(printf)(" on ");
         ppIRExpr(argExprs[i]);
         VG_(printf)("\n");
-        tl_assert(!staticallyFloat(argExprs[i]));
+        tl_assert(!someStaticallyFloat(sbOut->tyenv, argExprs[i]));
       }
     }
     addStoreTempNonFloat(sbOut, dest);
@@ -153,12 +153,11 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
                          vg_alignof(ShadowCmpInfo));
       info->op_addr = curAddr;
       info->op_code = op_code;
-      info->precision = argPrecision(op_code);
 
       for(int i = 0; i < 2; ++i){
         addStoreC(sbOut, argExprs[i],
                   (uintptr_t)
-                  (argPrecision(op_code) == Vt_Single ?
+                  (opArgPrecision(op_code) == Vt_Single ?
                    ((void*)computedArgs.argValuesF[i]) :
                    ((void*)computedArgs.argValues[i])));
         if (argExprs[i]->tag == Iex_RdTmp){

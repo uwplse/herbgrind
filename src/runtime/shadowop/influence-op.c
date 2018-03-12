@@ -39,7 +39,7 @@ void execInfluencesOp(ShadowOpInfo* info,
   if (no_influences){
     return;
   }
-  for(int i = 0; i < info->exinfo.nargs; ++i){
+  for(int i = 0; i < numArgs(info->op_code); ++i){
     for(InfluenceList curNode = args[i]->influences;
         curNode != NULL; curNode = curNode->next){
       dedupAddInfluenceToList(res, curNode->item);

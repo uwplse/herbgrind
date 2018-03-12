@@ -62,13 +62,6 @@ typedef struct _Aggregate {
   InputsRecord inputs;
 } Aggregate;
 
-typedef struct _ExtraInfo {
-  int numSIMDOperands;
-  int numChannels;
-  int nargs;
-  ValueType argPrecision;
-} ExtraInfo;
-
 typedef struct _ShadowOpInfo {
   // These two are mutually exclusive.
   IROp_Extended op_code;
@@ -78,7 +71,6 @@ typedef struct _ShadowOpInfo {
   Addr block_addr;
   Aggregate agg;
   SymbExpr* expr;
-  ExtraInfo exinfo;
 } ShadowOpInfo;
 
 typedef struct _ShadowOpInfoInstance {
@@ -89,7 +81,6 @@ typedef struct _ShadowOpInfoInstance {
 typedef struct _ShadowCmpInfo {
   Addr op_addr;
   IROp op_code;
-  ValueType precision;
   IRTemp argTemps[2];
 } ShadowCmpInfo;
 

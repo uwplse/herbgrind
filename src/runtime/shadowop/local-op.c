@@ -36,9 +36,9 @@
 #include "pub_tool_libcprint.h"
 
 double execLocalOp(ShadowOpInfo* info, Real realVal,
-                 ShadowValue* res, ShadowValue** args){
+                   ShadowValue* res, ShadowValue** args){
   if (no_reals) return 0;
-  int nargs = info->exinfo.nargs;
+  int nargs = numArgs(info->op_code);
   double exactRoundedArgs[4];
   for(int i = 0; i < nargs; ++i){
     exactRoundedArgs[i] = getDouble(args[i]->real);

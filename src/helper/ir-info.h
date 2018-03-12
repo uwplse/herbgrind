@@ -33,9 +33,16 @@
 #include "pub_tool_basics.h"
 #include "pub_tool_tooliface.h"
 
+typedef enum {
+  IEop_Neg32F0x4=Iop_LAST+1,
+  IEop_Neg64F0x2,
+  IEop_REALLY_LAST_FOR_REAL_GUYS,
+} IROp_Extended;
+
 int numChannelsIn(IROp op_code);
 int numChannelsOut(IROp op_code);
 int numSIMDOperands(IROp op_code);
+int numArgs(IROp_Extended op_code);
 int inferOtherNumChannels(int inferIndex, IRExpr* arg, IROp op_code);
 const char* getOpcodeSymbol(IROp op_code);
 double runEmulatedOp(IROp op_code, double* args);
@@ -46,11 +53,7 @@ Bool isFloatOp(IROp op);
 Bool isExitFloatOp(IROp op);
 Bool isConversionOp(IROp op_code);
 
-typedef enum {
-  IEop_Neg32F0x4=Iop_LAST+1,
-  IEop_Neg64F0x2,
-  IEop_REALLY_LAST_FOR_REAL_GUYS,
-} IROp_Extended;
+#define MAX_TEMP_SHADOWS 8
 
 #define IEop_INVALID (IROp_Extended)(Iop_INVALID)
 

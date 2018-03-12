@@ -57,11 +57,19 @@ typedef struct _TSTypeEntry {
   int instrIndexSet;
 } TSTypeEntry;
 
+typedef struct {
+  int blocks;
+} FloatBlocks;
+#define INT(x) x.blocks
+#define FB(x) (FloatBlocks){x}
+
 extern ShadowStatus tempShadowStatus[MAX_TEMPS];
 extern ShadowStatus tsShadowStatus[MAX_REGISTERS];
 
 // Meet and join operations for the type lattice
 // Cheat sheet: join -> union, meet -> intersect
+void typeJoins(ValueType* types1, ValueType* types2,
+               FloatBlocks numTypes, ValueType* out);
 ValueType typeJoin(ValueType type1, ValueType type2);
 ValueType typeMeet(ValueType type1, ValueType type2);
 const char* typeName(ValueType type);
@@ -74,9 +82,11 @@ void cleanupTypeState(void);
 void addClearMemTypes(void);
 void inferTypes(IRSB* sbIn);
 
-ValueType argPrecision(IROp op_code);
+ValueType opArgPrecision(IROp op_code);
+ValueType opBlockArgPrecision(IROp op_code, int blockIdx);
 ValueType conversionArgPrecision(IROp op_code, int argIndex);
 ValueType resultPrecision(IROp op_code);
+ValueType resultBlockPrecision(IROp op_code, int blockIndex);
 
 int isFloatType(ValueType type);
 int isFloatIRType(IRType type);
@@ -85,13 +95,19 @@ int isFloat(IRTypeEnv* env, IRTemp temp);
 void ppValueType(ValueType type);
 
 // Returns true if anything was changed, false otherwise
-Bool refineTempType(int tempIdx, ValueType type);
+/* Bool refineTempType(int tempIdx, ValueType type); */
+Bool refineTempBlockType(int tempIdx, int valIdx, ValueType type);
+Bool refineExprBlockType(IRExpr* expr, int valIdx, ValueType type);
 
-ValueType tempType(int idx);
-ValueType exprType(IRExpr* expr);
-Bool tempIsTyped(int idx, int instrIdx);
-Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr);
-Bool staticallyFloat(IRExpr* expr);
+ValueType* tempTypeArray(int idx);
+ValueType tempBlockType(int idx, int valIdx);
+ValueType* exprTypeArray(IRExpr* expr);
+ValueType exprBlockType(IRExpr* expr, int idx);
+Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr, int valIdx);
+Bool someCanBeFloat(IRTypeEnv* typeEnv, IRExpr* expr);
+Bool staticallyFloatType(ValueType type);
+Bool staticallyFloat(IRExpr* expr, int valIdx);
+Bool someStaticallyFloat(IRTypeEnv* env, IRExpr* expr);
 Bool staticallyShadowed(IRExpr* expr);
 Bool canStoreShadow(IRTypeEnv* typeEnv, IRExpr* expr);
 Bool canBeShadowed(IRTypeEnv* typeEnv, IRExpr* expr);
@@ -101,14 +117,14 @@ Bool setTSType(int idx, int instrIdx, ValueType type);
 Bool refineTSType(int tempIdx, int instrIdx, ValueType type);
 
 ValueType tsType(Int tsAddr, int instrIdx);
-ValueType inferTSBlockType(int tsAddr, int instrIdx, int size);
+ValueType inferTSBlockType(int tsAddr, int instrIdx, FloatBlocks size);
 Bool tsAddrCanHaveShadow(Int tsAddr, int instrIdx);
 Bool tsHasStaticShadow(Int tsAddr, int instrIdx);
 
-int valueSize(IRSB* sbOut, int idx);
 int numTempValues(IRSB* sbOut, int idx);
-int exprSize(IRTypeEnv* tyenv, IRExpr* expr);
-int typeSize(IRType type);
-int loadConversionSize(IRLoadGOp conversion);
-void printTypeState(void);
+FloatBlocks tempSize(IRTypeEnv* tyenv, IRTemp tmp);
+FloatBlocks exprSize(IRTypeEnv* tyenv, IRExpr* expr);
+FloatBlocks typeSize(IRType type);
+FloatBlocks loadConversionSize(IRLoadGOp conversion);
+void printTypeState(IRTypeEnv* tyenv);
 #endif

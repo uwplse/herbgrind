@@ -63,7 +63,7 @@ void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src){
 
   // Copy across the new temp and increment it's ref count.
   // Increment the ref count of the new temp
-  addStoreTempCopy(sbOut, newShadowTemp, dest, tempType(src));
+  addStoreTempCopy(sbOut, newShadowTemp, dest, tempTypeArray(src));
 }
 void instrumentWriteConst(IRSB* sbOut, IRTemp dest,
                           IRConst* con){
@@ -103,11 +103,13 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
     tempShadowStatus[dest] = Ss_Unknown;
   }
 
-  ValueType trueType = exprType(trueExpr);
-  ValueType falseType = exprType(falseExpr);
+  ValueType* trueType = exprTypeArray(trueExpr);
+  ValueType* falseType = exprTypeArray(falseExpr);
   IRExpr* resultSt =
     runITE(sbOut, cond, trueSt, falseSt);
-  addStoreTempCopy(sbOut, resultSt, dest, typeJoin(trueType, falseType));
+  ValueType joinedTypes[MAX_TEMP_SHADOWS];
+  typeJoins(trueType, falseType, tempSize(sbOut->tyenv, dest), joinedTypes);
+  addStoreTempCopy(sbOut, resultSt, dest, joinedTypes);
 }
 void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
   // This procedure adds instrumentation to sbOut which shadows the
@@ -134,9 +136,9 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
   // and are always aligned to 4-byte boundries in thread state, we
   // can assume that all shadow values are 4-byte aligned in thread
   // state, and not touch the non-aligned bytes for anything.
-  int dest_size = exprSize(sbOut->tyenv, data);
+  FloatBlocks dest_size = exprSize(sbOut->tyenv, data);
   // Now, we'll overwrite those bytes.
-  for(int i = 0; i < dest_size; ++i){
+  for(int i = 0; i < INT(dest_size); ++i){
     Int dest_addr = tsDest + (i * sizeof(float));
     // If we know statically that the thread state cannot be a float
     // (meaning it's been overwritten by a non-float this block), then
@@ -171,113 +173,53 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
         }
         addSVDisown(sbOut, oldVal);
       }
-      if (!canBeShadowed(sbOut->tyenv, data)){
-        addSetTSValUnshadowed(sbOut, dest_addr, instrIdx);
-      }
     }
   }
-  if (!canBeShadowed(sbOut->tyenv, data)){
+  if (data->tag == Iex_Const){
+    for(int i = 0; i < INT(dest_size); ++i){
+      int dest_addr = tsDest + i * sizeof(float);
+      tsShadowStatus[dest_addr] = Ss_Unshadowed;
+      addSetTSValUnshadowed(sbOut, dest_addr, instrIdx);
+    }
     return;
   }
+  tl_assert(data->tag == Iex_RdTmp);
   int idx = data->Iex.RdTmp.tmp;
-  tl_assert(tempShadowStatus[idx] != Ss_Unshadowed);
-  if (dest_size == 1 ||
-      (dest_size == 2 && tempType(idx) == Vt_Double)){
-    tsShadowStatus[tsDest] = tempShadowStatus[idx];
-    switch(tempShadowStatus[idx]){
-    case Ss_Shadowed:{
-      IRExpr* temp = runLoadTemp(sbOut, idx);
-      IRExpr* val = runIndex(sbOut, runArrow(sbOut, temp, ShadowTemp, values),
-                             ShadowValue*, 0);
-      addSetTSValNonNull(sbOut, tsDest, val, tempType(idx), instrIdx);
+  switch(tempShadowStatus[idx]){
+  case Ss_Shadowed:{
+    IRExpr* temp = runLoadTemp(sbOut, idx);
+    IRExpr* values = runArrow(sbOut, temp, ShadowTemp, values);
+    for(int i = 0; i < INT(dest_size); ++i){
+      int dest_addr = tsDest + i * sizeof(float);
+      IRExpr* val = runIndex(sbOut, values, ShadowValue*, i);
+      addSetTSValNonNull(sbOut, dest_addr, val, instrIdx);
+      tsShadowStatus[dest_addr] = Ss_Shadowed;
     }
-      break;
-    case Ss_Unknown:{
-      IRExpr* loadedTemp = runLoadTemp(sbOut, idx);
-      IRExpr* loadedTempNonNull = runNonZeroCheck64(sbOut, loadedTemp);
-      IRExpr* loadedVal = runIndexG(sbOut, loadedTempNonNull,
-                                    runArrowG(sbOut, loadedTempNonNull,
-                                              loadedTemp, ShadowTemp, values),
-                                    ShadowValue*, 0);
-      addSVOwn(sbOut, loadedVal);
-      addSetTSValUnknown(sbOut, tsDest, loadedVal, instrIdx);
-    }
-      break;
-    case Ss_Unshadowed:
-      return;
-    default:
-      tl_assert(0);
-    }
-  } else {
-    ValueType valType = tempType(idx);
+  }
+    break;
+  case Ss_Unknown:{
     IRExpr* loadedTemp = runLoadTemp(sbOut, idx);
-    switch(valType){
-    case Vt_Unknown:
-    case Vt_UnknownFloat:
-      switch(tempShadowStatus[idx]){
-      case Ss_Shadowed:{
-        addStmtToIRSB(sbOut, mkDirty_0_2(dynamicPut, mkU64(tsDest), loadedTemp));
-      }
-        break;
-      case Ss_Unknown:{
-        IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, loadedTemp);
-        addStmtToIRSB(sbOut, mkDirtyG_0_2(dynamicPut, mkU64(tsDest),
-                                          loadedTemp, loadedNonNull));
-        for(int i = 0; i < dest_size; ++i){
-          addSetTSValG(sbOut, runZeroCheck64(sbOut, loadedTemp),
-                       tsDest + i * sizeof(float), mkU64(0));
-        }
-      }
-        break;
-      case Ss_Unshadowed:
-        break;
-      default:
-        tl_assert(0);
-      }
-      break;
-    case Vt_Single:
-    case Vt_Double:
-      switch(tempShadowStatus[idx]){
-      case Ss_Shadowed:{
-        IRExpr* vals = runArrow(sbOut, loadedTemp, ShadowTemp, values);
-        for(int i = 0; i < dest_size; ++i){
-          Int dest_addr = tsDest + (i * sizeof(float));
-          if (valType == Vt_Double && i % 2 == 1){
-            addSetTSValNonFloat(sbOut, dest_addr, instrIdx);
-            continue;
-          }
-          int valIdx = valType == Vt_Double ? i / 2 : i;
-          IRExpr* val = runIndex(sbOut, vals, ShadowValue*, valIdx);
-          addSetTSValNonNull(sbOut, dest_addr, val, valType, instrIdx);
-        }
-      }
-        break;
-      case Ss_Unknown:{
-        IRExpr* loadedNonNull = runNonZeroCheck64(sbOut, loadedTemp);
-        IRExpr* vals = runArrowG(sbOut, loadedNonNull, loadedTemp, ShadowTemp, values);
-        for(int i = 0; i < dest_size; ++i){
-          Int dest_addr = tsDest + (i * sizeof(float));
-          if (valType == Vt_Double && i % 2 == 1){
-            addSetTSValNonFloat(sbOut, dest_addr, instrIdx);
-            continue;
-          }
-          int valIdx = valType == Vt_Double ? i / 2 : i;
-          IRExpr* val = runIndexG(sbOut, loadedNonNull, vals, ShadowValue*, valIdx);
-          addSVOwn(sbOut, val);
-          addSetTSValUnknown(sbOut, dest_addr, val, instrIdx);
-        }
-      }
-        break;
-      case Ss_Unshadowed:
-      default:
-        tl_assert(0);
-        return;
-      }
-      break;
-    case Vt_NonFloat:
-      tl_assert(0);
-      break;
+    IRExpr* loadedTempNonNull = runNonZeroCheck64(sbOut, loadedTemp);
+    IRExpr* loadedVals =
+      runArrowG(sbOut, loadedTempNonNull, loadedTemp, ShadowTemp, values);
+    for(int i = 0; i < INT(dest_size); ++i){
+      int dest_addr = tsDest + i * sizeof(float);
+      IRExpr* val = runIndexG(sbOut, loadedTempNonNull, loadedVals, ShadowValue*, i);
+      addSVOwn(sbOut, val);
+      addSetTSValUnknown(sbOut, dest_addr, val, instrIdx);
+      tsShadowStatus[dest_addr] = Ss_Unknown;
     }
+  }
+    break;
+  case Ss_Unshadowed:
+    for(int i = 0; i < INT(dest_size); ++i){
+      int dest_addr = tsDest + i * sizeof(float);
+      tsShadowStatus[dest_addr] = Ss_Unshadowed;
+      addSetTSValUnshadowed(sbOut, dest_addr, instrIdx);
+    }
+    break;
+  default:
+    tl_assert(0);
   }
 }
 void instrumentPutI(IRSB* sbOut,
@@ -285,77 +227,60 @@ void instrumentPutI(IRSB* sbOut,
                     Int arrayBase, Int numElems, IRType elemType,
                     IRExpr* data,
                     int instrIdx){
-  int dest_size = exprSize(sbOut->tyenv, data);
+  FloatBlocks dest_size = exprSize(sbOut->tyenv, data);
   IRExpr* dest_addrs[4];
   for(int i = arrayBase; i < numElems * sizeofIRType(elemType); i ++){
     tsShadowStatus[i] = Ss_Unknown;
   }
-  for(int i = 0; i < dest_size; ++i){
+  for(int i = 0; i < INT(dest_size); ++i){
     dest_addrs[i] =
       mkArrayLookupExpr(sbOut, arrayBase, varOffset,
-                        (constOffset * dest_size) + i,
+                        (constOffset * INT(dest_size)) + i,
                         numElems, Ity_F32);
     IRExpr* oldVal = runGetTSValDynamic(sbOut, dest_addrs[i]);
     addSVDisown(sbOut, oldVal);
     addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
   }
-  if (canBeShadowed(sbOut->tyenv, data)) {
-    int tempIdx = data->Iex.RdTmp.tmp;
-    IRExpr* st = runLoadTemp(sbOut, tempIdx);
-    if (staticallyShadowed(data)){
-      IRExpr* values =
-        runArrow(sbOut, st, ShadowTemp, values);
-      for(int i = 0; i < dest_size; ++i){
-        if (tempType(tempIdx) == Vt_Double){
-          if (i % 2 == 1){
-            addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
-          } else {
-            IRExpr* value =
-              runIndex(sbOut, values, ShadowValue*, i / 2);
-            addSetTSValDynamic(sbOut, dest_addrs[i], value);
-          }
-        } else {
-          IRExpr* value =
-            runIndex(sbOut, values, ShadowValue*, i);
-          addSetTSValDynamic(sbOut, dest_addrs[i], value);
-        }
-      }
-    } else {
-      IRExpr* stExists = runNonZeroCheck64(sbOut, st);
-      if (dest_size == 1) {
-        IRExpr* values =
-          runArrowG(sbOut, stExists, st, ShadowTemp, values);
-        IRExpr* value = runLoadG64(sbOut, values, stExists);
-        addSVOwnNonNullG(sbOut, stExists, value);
-        addSetTSValDynamic(sbOut, dest_addrs[0], value);
-      } else if (dest_size == 2) {
-        IRDirty* putDirty =
-          unsafeIRDirty_0_N(2, "dynamicPut",
-                            VG_(fnptr_to_fnentry)(dynamicPut),
-                            mkIRExprVec_2(dest_addrs[0], st));
-        putDirty->guard = stExists;
-        putDirty->mFx = Ifx_Modify;
-        putDirty->mAddr = mkU64((uintptr_t)&(shadowThreadState
-                                             [VG_(get_running_tid)()]
-                                             [arrayBase]));
-        putDirty->mSize =
-          sizeof(ShadowValue*) * numElems * sizeofIRType(elemType);
-        addStmtToIRSB(sbOut, IRStmt_Dirty(putDirty));
-      } else {
-        IRDirty* putDirty =
-          unsafeIRDirty_0_N(2, "dynamicPut",
-                            VG_(fnptr_to_fnentry)(dynamicPut),
-                            mkIRExprVec_2(dest_addrs[0], st));
-        putDirty->guard = stExists;
-        putDirty->mFx = Ifx_Modify;
-        putDirty->mAddr = mkU64((uintptr_t)&(shadowThreadState
-                                             [VG_(get_running_tid)()]
-                                             [arrayBase]));
-        putDirty->mSize =
-          sizeof(ShadowValue*) * numElems * sizeofIRType(elemType);
-        addStmtToIRSB(sbOut, IRStmt_Dirty(putDirty));
-      }
+  if (data->tag == Iex_Const){
+    for(int i = 0; i < INT(dest_size); ++i){
+      addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
     }
+    return;
+  }
+  tl_assert(data->tag == Iex_RdTmp);
+  int idx = data->Iex.RdTmp.tmp;
+  switch(tempShadowStatus[idx]){
+  case Ss_Shadowed:{
+    IRExpr* temp = runLoadTemp(sbOut, idx);
+    IRExpr* values = runArrow(sbOut, temp, ShadowTemp, values);
+    for(int i = 0; i < INT(dest_size); ++i){
+      IRExpr* val = runIndex(sbOut, values, ShadowValue*, i);
+      addSVOwnNonNull(sbOut, val);
+      addSetTSValDynamic(sbOut, dest_addrs[i], val);
+    }
+  }
+    break;
+  case Ss_Unknown:{
+    IRExpr* loadedTemp = runLoadTemp(sbOut, idx);
+    IRExpr* loadedTempNonNull = runNonZeroCheck64(sbOut, loadedTemp);
+    IRExpr* loadedVals =
+      runArrowG(sbOut, loadedTempNonNull, loadedTemp, ShadowTemp, values);
+    for(int i = 0; i < INT(dest_size); ++i){
+      IRExpr* val = runIndexG(sbOut, loadedTempNonNull, loadedVals, ShadowValue*, i);
+      addSVOwnNonNullG(sbOut, loadedTempNonNull, val);
+      addSetTSValDynamic(sbOut, dest_addrs[i], val);
+    }
+  }
+    break;
+  case Ss_Unshadowed:{
+    for(int i = 0; i < INT(dest_size); ++i){
+      addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
+    }
+  }
+    break;
+  default:
+    tl_assert(0);
+    return;
   }
 }
 
@@ -366,201 +291,51 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
   if (!canBeShadowed(sbOut->tyenv, IRExpr_RdTmp(dest))){
     return;
   }
-  int src_size = typeSize(type);
-  // Under these two conditions we know we have a single shadow value
-  // to move, which makes things simple.
-  if (src_size == 1 ||
-      (src_size == 2 && tsType(tsSrc, instrIdx) == Vt_Double)){
-    tempShadowStatus[dest] = tsShadowStatus[tsSrc];
-    switch(tsShadowStatus[tsSrc]){
-    case Ss_Shadowed:{
-      IRExpr* val = runGetTSVal(sbOut, tsSrc);
-      IRExpr* temp = runMkShadowTempValues(sbOut, 1, &val);
-      addStoreTemp(sbOut, temp, tsType(tsSrc, instrIdx), dest);
-    }
-      break;
-    case Ss_Unknown:{
-      IRExpr* loadedVal = runGetTSVal(sbOut, tsSrc);
-      IRExpr* loadedValNonNull = runNonZeroCheck64(sbOut, loadedVal);
-      IRExpr* temp = runMkShadowTempValuesG(sbOut, loadedValNonNull, 1, &loadedVal);
-      addStoreTempUnknown(sbOut, temp, dest);
-    }
-      break;
-    case Ss_Unshadowed:
-      return;
-    default:
-      tl_assert(0);
-    }
-  } else {
-    // In this case, we know we have multiple shadow values, and some
-    // of them might be shadowed, and others not.
+  FloatBlocks src_size = typeSize(type);
 
-
-    // The desired status the destination. We want the following
-    // behaviour: a shadow GET will always either return NULL, or a
-    // shadow temp with all of it's shadow values
-    // initialized/created. If at least one location in the source has a
-    // shadow, it does the latter, otherwise the former.
-    //
-    // Therefore, targetStatus will be Vt_Shadowed if any source
-    // location is Vt_Shadowed, Vt_Unknown if no source location is
-    // Vt_Shadowed, but some are Vt_Unknown, and Vt_Unshadowed if all
-    // source locations are Vt_Unshadowed.
-    ShadowStatus targetStatus = Ss_Unshadowed;
-    for(int i = 0; i < src_size; ++i){
-      if (tsShadowStatus[tsSrc + i] == Ss_Shadowed){
-        targetStatus = Ss_Shadowed;
-      } else if (tsShadowStatus[tsSrc + i] == Ss_Unknown &&
-                 targetStatus != Ss_Shadowed){
-        targetStatus = Ss_Unknown;
-      }
+  ShadowStatus targetStatus = Ss_Unshadowed;
+  for(int i = 0; i < INT(src_size); ++i){
+    if (tsShadowStatus[tsSrc + i] == Ss_Shadowed){
+      targetStatus = Ss_Shadowed;
+    } else if (tsShadowStatus[tsSrc + i] == Ss_Unknown &&
+               targetStatus != Ss_Shadowed){
+      targetStatus = Ss_Unknown;
     }
-    tempShadowStatus[dest] = targetStatus;
-    if (targetStatus == Ss_Unshadowed){
-      return;
+  }
+  tempShadowStatus[dest] = targetStatus;
+  switch(targetStatus){
+  case Ss_Shadowed:{
+    IRExpr* vals[MAX_TEMP_SHADOWS];
+    for(int i = 0; i < INT(src_size); ++i){
+      int src_addr = tsSrc + i * sizeof(float);
+      vals[i] = runGetTSVal(sbOut, src_addr);
     }
-
-    // The inferred type of the values in the GET.
-    ValueType valType = inferTSBlockType(tsSrc, instrIdx, src_size);
-
-    switch(valType){
-    case Vt_Unknown:
-    case Vt_UnknownFloat:{
-      IRExpr* temp;
-      switch(src_size){
-      case 2:{
-        temp = runPureCCall64_2(sbOut, dynamicGet64,
-                                mkU64(tsSrc),
-                                IRExpr_RdTmp(dest));
-      }
-        break;
-      case 4:{
-        temp = runPureCCall64_3(sbOut, dynamicGet128,
-                                mkU64(tsSrc),
-                                runGet64C(sbOut, tsSrc),
-                                runGet64C(sbOut, tsSrc + sizeof(double)));
-      }
-        break;
-      case 8:{
-        addStoreC(sbOut, runGet256C(sbOut, tsSrc), &getBytes);
-        temp = runPureCCall64_2(sbOut, dynamicGet256, mkU64(tsSrc),
-                                mkU64((uintptr_t)&getBytes));
-      }
-        break;
-      default:
-        tl_assert(0);
-        return;
-      }
-      addStoreTemp(sbOut, temp, valType, dest);
-    }
-      break;
-    case Vt_Single:
-    case Vt_Double:{
-
-    switch(targetStatus){
-    case Ss_Shadowed:{
-      IRExpr* loadedVals[MAX_TEMP_SHADOWS];
-      for(int i = 0; i < src_size; ++i){
-        if (valType == Vt_Double && i % 2 == 1){
-          continue;
-        }
-        int valIdx = valType == Vt_Double ? i / 2 : i;
-        int tsAddr = tsSrc + i * sizeof(float);
-        switch(tsShadowStatus[tsAddr]){
-        case Ss_Shadowed:{
-          loadedVals[valIdx] = runGetTSVal(sbOut, tsAddr);
-        }
-          break;
-        case Ss_Unshadowed:{
-          IRExpr* clientVal =
-            valType == Vt_Double ?
-            runGet64C(sbOut, tsAddr) :
-            runF32toF64(sbOut, runGet32C(sbOut, tsAddr));
-          loadedVals[valIdx] = runMkShadowVal(sbOut, valType, clientVal);
-        }
-          break;
-        case Ss_Unknown:{
-          IRExpr* loaded = runGetTSVal(sbOut, tsSrc);
-          IRExpr* valDoesntExist = runZeroCheck64(sbOut, loaded);
-          IRExpr* clientVal =
-            valType == Vt_Double ?
-            runGet64C(sbOut, tsAddr) :
-            runF32toF64(sbOut, runGet32C(sbOut, tsAddr));
-          IRExpr* createdVal =
-            runMkShadowValG(sbOut, valDoesntExist, valType, clientVal);
-          loadedVals[valIdx] = runITE(sbOut, valDoesntExist,
-                                      createdVal, loaded);
-        }
-          break;
-        default:
-          tl_assert(0);
-          return;
-        }
-      }
-      IRExpr* temp = runMkShadowTempValues(sbOut,
-                                           valType == Vt_Double ?
-                                           src_size / 2
-                                           : src_size,
-                                           loadedVals);
-      addStoreTemp(sbOut, temp, valType, dest);
-    }
-      break;
-    case Ss_Unknown:{
-      IRExpr* someValNonNull = IRExpr_Const(IRConst_U1(False));
-      IRExpr* loadedVals[MAX_TEMP_SHADOWS];
-      for(int i = 0; i < src_size; ++i){
-        if (valType == Vt_Double && i % 2 == 1){
-          continue;
-        }
-        int valIdx = valType == Vt_Double ? i / 2 : i;
-        int tsAddr = tsSrc + i * sizeof(float);
-        if (tsShadowStatus[tsAddr] == Ss_Unshadowed){
-          continue;
-        }
-        loadedVals[valIdx] = runGetTSVal(sbOut, tsAddr);
+    IRExpr* temp = runMkShadowTempValues(sbOut, src_size, vals);
+    addStoreTemp(sbOut, temp, dest);
+  }
+    break;
+  case Ss_Unknown:{
+    IRExpr* loadedVals[MAX_TEMP_SHADOWS];
+    IRExpr* someValNonNull = IRExpr_Const(IRConst_U1(False));
+    for(int i = 0; i < INT(src_size); ++i){
+      int tsAddr = tsSrc + i * sizeof(float);
+      if (tsShadowStatus[tsAddr] == Ss_Unshadowed){
+        loadedVals[i] = mkU64(0);
+      } else {
+        loadedVals[i] = runGetTSVal(sbOut, tsAddr);
         someValNonNull = runOr(sbOut, someValNonNull,
-                               runNonZeroCheck64(sbOut, loadedVals[valIdx]));
+                               runNonZeroCheck64(sbOut, loadedVals[i]));
       }
-      for(int i = 0; i < src_size; ++i){
-        if (valType == Vt_Double && i % 2 == 1){
-          continue;
-        }
-        int valIdx = valType == Vt_Double ? i / 2 : i;
-        int tsAddr = tsSrc + i * sizeof(float);
-        IRExpr* clientVal =
-          valType == Vt_Double ?
-          runGet64C(sbOut, tsAddr) :
-          runF32toF64(sbOut, runGet32C(sbOut, tsAddr));
-        if (tsShadowStatus[tsAddr] == Ss_Unshadowed){
-          loadedVals[valIdx] = runMkShadowVal(sbOut, valType, clientVal);
-        } else {
-          IRExpr* valDoesntExist = runZeroCheck64(sbOut, loadedVals[valIdx]);
-          IRExpr* shouldCreateNewVal = runAnd(sbOut, valDoesntExist, someValNonNull);
-          IRExpr* createdVal = runMkShadowValG(sbOut, shouldCreateNewVal,
-                                               valType, clientVal);
-          loadedVals[valIdx] = runITE(sbOut, valDoesntExist,
-                                      createdVal, loadedVals[valIdx]);
-        }
-      }
-      IRExpr* temp = runMkShadowTempValuesG(sbOut, someValNonNull,
-                                            valType == Vt_Double ?
-                                            src_size / 2
-                                            : src_size,
-                                            loadedVals);
-      addStoreTemp(sbOut, temp, valType, dest);
     }
-      break;
-    case Ss_Unshadowed:
-    default:
-      tl_assert(0);
-      return;
-    }
-    }
-      break;
-    default:
-      tl_assert(0);
-      return;
-    }
+    IRExpr* temp = runMkShadowTempValuesG(sbOut, someValNonNull, src_size, loadedVals);
+    addStoreTemp(sbOut, temp, dest);
+  }
+    break;
+  case Ss_Unshadowed:
+    return;
+  default:
+    tl_assert(0);
+    return;
   }
 }
 void instrumentGetI(IRSB* sbOut, IRTemp dest,
@@ -571,36 +346,23 @@ void instrumentGetI(IRSB* sbOut, IRTemp dest,
     return;
   }
   tempShadowStatus[dest] = Ss_Unknown;
-  int src_size = typeSize(elemType);
+  FloatBlocks src_size = typeSize(elemType);
   IRExpr* src_addrs[4];
 
-  for(int i = 0; i < src_size; ++i){
+  for(int i = 0; i < INT(src_size); ++i){
     src_addrs[i] =
       mkArrayLookupExpr(sbOut, arrayBase, varOffset,
-                        constOffset * src_size + i, numElems, Ity_F32);
+                        constOffset * INT(src_size) + i, numElems, Ity_F32);
   }
-  if (src_size == 1){
-    IRExpr* val = runGetTSValDynamic(sbOut, src_addrs[0]);
-    IRExpr* valNonNull = runNonZeroCheck64(sbOut, val);
-    IRExpr* temp = runMkShadowTempValuesG(sbOut, valNonNull, 1, &val);
-    addStoreTempUnknown(sbOut, temp, dest);
-  } else if (src_size == 2){
-    IRExpr* temp =
-      runPureCCall64_2(sbOut, dynamicGet64,
-                       src_addrs[0],
-                       runGetI64(sbOut, varOffset, constOffset,
-                                 arrayBase, numElems));
-    addStoreTempUnknown(sbOut, temp, dest);
-  } else if (src_size == 4){
-    IRExpr* temp =
-      runPureCCall64_3(sbOut, dynamicGet128,
-                       src_addrs[0],
-                       runGetI64(sbOut, varOffset, constOffset,
-                                 arrayBase, numElems),
-                       runGetI64(sbOut, varOffset, constOffset + 1,
-                                 arrayBase, numElems));
-    addStoreTempUnknown(sbOut, temp, dest);
+  IRExpr* loadedVals[MAX_TEMP_SHADOWS];
+  IRExpr* someValNonNull = IRExpr_Const(IRConst_U1(False));
+  for(int i = 0; i < INT(src_size); ++i){
+    loadedVals[i] = runGetTSValDynamic(sbOut, src_addrs[i]);
+    someValNonNull = runOr(sbOut, someValNonNull,
+                           runNonZeroCheck64(sbOut, loadedVals[i]));
   }
+  IRExpr* temp = runMkShadowTempValuesG(sbOut, someValNonNull, src_size, loadedVals);
+  addStoreTemp(sbOut, temp, dest);
 }
 void instrumentLoad(IRSB* sbOut, IRTemp dest,
                     IRExpr* addr, IRType type){
@@ -608,9 +370,9 @@ void instrumentLoad(IRSB* sbOut, IRTemp dest,
     return;
   }
   tempShadowStatus[dest] = Ss_Unknown;
-  int dest_size = typeSize(type);
+  FloatBlocks dest_size = typeSize(type);
   IRExpr* st = runGetMemUnknown(sbOut, dest_size, addr);
-  addStoreTemp(sbOut, st, tempType(dest), dest);
+  addStoreTemp(sbOut, st, dest);
 }
 void instrumentLoadG(IRSB* sbOut, IRTemp dest,
                      IRExpr* altValue, IRExpr* guard,
@@ -619,7 +381,7 @@ void instrumentLoadG(IRSB* sbOut, IRTemp dest,
     return;
   }
   tempShadowStatus[dest] = Ss_Unknown;
-  int dest_size = loadConversionSize(conversion);
+  FloatBlocks dest_size = loadConversionSize(conversion);
   IRExpr* st = runGetMemUnknownG(sbOut, guard, dest_size, addr);
   IRExpr* stAlt;
   if (altValue->tag == Iex_Const){
@@ -634,7 +396,7 @@ void instrumentLoadG(IRSB* sbOut, IRTemp dest,
 }
 void instrumentStore(IRSB* sbOut, IRExpr* addr,
                      IRExpr* data){
-  int dest_size = exprSize(sbOut->tyenv, data);
+  FloatBlocks dest_size = exprSize(sbOut->tyenv, data);
   if (data->tag == Iex_RdTmp && canBeShadowed(sbOut->tyenv, data)){
     int idx = data->Iex.RdTmp.tmp;
     IRExpr* st = runLoadTemp(sbOut, idx);
@@ -645,7 +407,7 @@ void instrumentStore(IRSB* sbOut, IRExpr* addr,
 }
 void instrumentStoreG(IRSB* sbOut, IRExpr* addr,
                       IRExpr* guard, IRExpr* data){
-  int dest_size = exprSize(sbOut->tyenv, data);
+  FloatBlocks dest_size = exprSize(sbOut->tyenv, data);
   if (data->tag == Iex_RdTmp){
     int idx = data->Iex.RdTmp.tmp;
     IRExpr* st = runLoadTemp(sbOut, idx);
@@ -666,45 +428,45 @@ void addBlockCleanupG(IRSB* sbOut, IRExpr* guard){
   cleanupBlockOwnership(sbOut, guard);
 }
 IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
-                               int num_values,
+                               FloatBlocks num_blocks,
                                IRExpr** values){
-  IRExpr* stackEmpty = runStackEmpty(sbOut, freedTemps[num_values-1]);
+  IRExpr* stackEmpty = runStackEmpty(sbOut, freedTemps[INT(num_blocks)-1]);
   IRExpr* shouldMake = runAnd(sbOut, guard, stackEmpty);
   IRExpr* freshTemp = runDirtyG_1_1(sbOut, shouldMake, newShadowTemp,
-                                    mkU64(num_values));
+                                    mkU64(INT(num_blocks)));
   IRExpr* shouldPop = runAnd(sbOut, guard,
                              runUnop(sbOut, Iop_Not1, stackEmpty));
   IRExpr* poppedTemp = runStackPopG(sbOut,
                                     shouldPop,
-                                    freedTemps[num_values-1]);
+                                    freedTemps[INT(num_blocks)-1]);
   IRExpr* temp = runITE(sbOut, stackEmpty, freshTemp, poppedTemp);
   IRExpr* tempValues = runArrowG(sbOut, guard, temp, ShadowTemp, values);
-  for(int i = 0; i < num_values; ++i){
+  for(int i = 0; i < INT(num_blocks); ++i){
     addSVOwnNonNullG(sbOut, guard, values[i]);
     addStoreIndexG(sbOut, guard, tempValues, ShadowValue*, i, values[i]);
   }
   IRExpr* result = runITE(sbOut, guard, temp, mkU64(0));
   if (PRINT_TEMP_MOVES){
     addPrintG2(guard, "making new temp %p w/ vals ", temp);
-    for(int i = 0; i < num_values; ++i){
+    for(int i = 0; i < INT(num_blocks); ++i){
       addPrintG2(guard, "%p, ", values[i]);
     }
     addPrintG(guard, "-> ");
   }
   return result;
 }
-IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
+IRExpr* runMkShadowTempValues(IRSB* sbOut, FloatBlocks num_blocks,
                               IRExpr** values){
-  IRExpr* stackEmpty = runStackEmpty(sbOut, freedTemps[num_values-1]);
+  IRExpr* stackEmpty = runStackEmpty(sbOut, freedTemps[INT(num_blocks)-1]);
   IRExpr* freshTemp = runDirtyG_1_1(sbOut, stackEmpty, newShadowTemp,
-                                    mkU64(num_values));
+                                    mkU64(INT(num_blocks)));
   IRExpr* poppedTemp = runStackPopG(sbOut,
                                     runUnop(sbOut, Iop_Not1, stackEmpty),
-                                    freedTemps[num_values-1]);
+                                    freedTemps[INT(num_blocks)-1]);
   IRExpr* temp = runITE(sbOut, stackEmpty, freshTemp, poppedTemp);
   IRExpr* tempValues = runArrow(sbOut, temp, ShadowTemp, values);
-  for(int i = 0; i < num_values; ++i){
-    addSVOwnNonNull(sbOut, values[i]);
+  for(int i = 0; i < INT(num_blocks); ++i){
+    addSVOwn(sbOut, values[i]);
     addStoreIndex(sbOut, tempValues, ShadowValue*, i, values[i]);
   }
   if (PRINT_TEMP_MOVES){
@@ -736,7 +498,7 @@ IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
     tl_assert(bytesType == Ity_V128);
     addStoreC(sbOut, argExpr, computedArgs.argValues[0]);
     result = runPureCCall64(sbOut, mkShadowTempTwoDoubles,
-                          mkU64((uintptr_t)computedArgs.argValues[0]));
+                            mkU64((uintptr_t)computedArgs.argValues[0]));
   } else if (num_vals == 2 && valType == Vt_Single) {
     tl_assert(bytesType == Ity_I64);
     result = runPureCCall64(sbOut, mkShadowTempTwoSingles, argExpr);
@@ -750,7 +512,7 @@ IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
     tl_assert2(0, "Hey, you can't have %d vals!\n", num_vals);
   }
   if (canStoreShadow(sbOut->tyenv, argExpr)){
-    addStoreTemp(sbOut, result, valType,
+    addStoreTemp(sbOut, result,
                  argExpr->Iex.RdTmp.tmp);
     tempShadowStatus[argExpr->Iex.RdTmp.tmp] = Ss_Shadowed;
   }
@@ -793,7 +555,7 @@ IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
     tl_assert2(0, "Hey, you can't have %d vals!\n", num_vals);
   }
   if (canStoreShadow(sbOut->tyenv, argExpr)){
-    addStoreTempG(sbOut, guard, result, valType,
+    addStoreTempG(sbOut, guard, result,
                   argExpr->Iex.RdTmp.tmp);
     tempShadowStatus[argExpr->Iex.RdTmp.tmp] = Ss_Unknown;
   }
@@ -854,13 +616,8 @@ IRExpr* runGetOrMakeTSVal(IRSB* sbOut, int tsSrc, ValueType type){
   }
 }
 void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
-                        IRExpr* newVal, ValueType floatType,
+                        IRExpr* newVal,
                         int instrIdx){
-  tl_assert(floatType == Vt_Single ||
-            floatType == Vt_Double);
-  tl_assert2(tsType(tsDest, instrIdx) == floatType,
-             "Trying to set as nonnull TS(%d), which wasn't inferred non null at %d!\n",
-             tsDest, instrIdx);
   addSVOwnNonNull(sbOut, newVal);
   addSetTSVal(sbOut, tsDest, newVal);
   tsShadowStatus[tsDest] = Ss_Shadowed;
@@ -919,24 +676,15 @@ void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal){
                              mkU64(sizeof(ShadowValue*)))));
 }
 void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
-                  ValueType type,
                   int idx){
   if (PRINT_VALUE_MOVES || PRINT_TEMP_MOVES){
     IRExpr* tempNonNull = runNonZeroCheck64(sbOut, shadow_temp);
     addPrintG2(tempNonNull, "storing in t%d\n", mkU64(idx));
-    /* addPrint2("storing in t%d\n", mkU64(idx)); */
   }
-  tl_assert2(type == Vt_Unknown ||
-             type == tempType(idx),
-             "Tried to store a temp at t%d with a different type than inferred! "
-             "Inferred %s, storing %s",
-             idx, typeName(tempType(idx)), typeName(type));
   addStoreC(sbOut, shadow_temp, &(shadowTemps[idx]));
   cleanupAtEndOfBlock(sbOut, idx);
 }
-void addStoreTempG(IRSB* sbOut, IRExpr* guard,
-                   IRExpr* shadow_temp,
-                   ValueType type,
+void addStoreTempG(IRSB* sbOut, IRExpr* guard, IRExpr* shadow_temp,
                    int idx){
   if (PRINT_VALUE_MOVES || PRINT_TEMP_MOVES){
     IRExpr* tempNonNull = runNonZeroCheck64(sbOut, shadow_temp);
@@ -950,14 +698,11 @@ void addStoreTempNonFloat(IRSB* sbOut, int idx){
   if (PRINT_TYPES){
     VG_(printf)("Setting %d to non float.\n", idx);
   }
-  tl_assert2(tempType(idx) == Vt_NonFloat,
-             "Tried to set t%d to a nonfloat, but we believe it to be %s!\n",
-             idx, typeName(tempType(idx)));
   tempShadowStatus[idx] = Ss_Unshadowed;
 }
 void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe,
                          int idx){
-  addStoreTemp(sbOut, shadow_temp_maybe, Vt_Unknown, idx);
+  addStoreTemp(sbOut, shadow_temp_maybe, idx);
 }
 IRExpr* getBucketAddr(IRSB* sbOut, IRExpr* memAddr){
   IRExpr* bucket = runMod(sbOut, memAddr, mkU32(LARGE_PRIME));
@@ -992,11 +737,11 @@ QuickBucketResult quickGetBucketG(IRSB* sbOut, IRExpr* guard,
   return result;
 }
 IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
-                          int size, IRExpr* memSrc){
+                          FloatBlocks size, IRExpr* memSrc){
   QuickBucketResult qresults[MAX_TEMP_SHADOWS];
   IRExpr* anyNonTrivialChains = mkU1(False);
   IRExpr* allNull_64 = mkU64(1);
-  for(int i = 0; i < size; ++i){
+  for(int i = 0; i < INT(size); ++i){
     qresults[i] = quickGetBucketG(sbOut, guard,
                                   runBinop(sbOut, Iop_Add64, memSrc,
                                            mkU64(i * sizeof(float))));
@@ -1017,17 +762,17 @@ IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
                 runGetMemG(sbOut, goToC, size, memSrc),
                 mkU64(0));
 }
-IRExpr* runGetMemUnknown(IRSB* sbOut, int size, IRExpr* memSrc){
+IRExpr* runGetMemUnknown(IRSB* sbOut, FloatBlocks size, IRExpr* memSrc){
   return runGetMemUnknownG(sbOut, mkU1(True), size, memSrc);
 }
-IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc){
+IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, FloatBlocks size, IRExpr* memSrc){
   IRTemp result = newIRTemp(sbOut->tyenv, Ity_I64);
   IRDirty* loadDirty;
   loadDirty =
     unsafeIRDirty_1_N(result,
                       2, "dynamicLoad",
                       VG_(fnptr_to_fnentry)(dynamicLoad),
-                      mkIRExprVec_2(memSrc, mkU64(size)));
+                      mkIRExprVec_2(memSrc, mkU64(INT(size))));
   loadDirty->guard = guard;
   loadDirty->mFx = Ifx_Read;
   loadDirty->mAddr = mkU64((uintptr_t)shadowMemTable);
@@ -1035,13 +780,12 @@ IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc){
   addStmtToIRSB(sbOut, IRStmt_Dirty(loadDirty));
   return runITE(sbOut, guard, IRExpr_RdTmp(result), mkU64(0));
 }
-void addClearMem(IRSB* sbOut, int size, IRExpr* memDest){
+void addClearMem(IRSB* sbOut, FloatBlocks size, IRExpr* memDest){
   addClearMemG(sbOut, mkU1(True), size, memDest);
 }
-void addClearMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memDest){
+void addClearMemG(IRSB* sbOut, IRExpr* guard, FloatBlocks size, IRExpr* memDest){
   IRExpr* hasExistingShadow = mkU1(False);
-  /* IRExpr* hasCollision = mkU1(False); */
-  for(int i = 0; i < size; ++i){
+  for(int i = 0; i < INT(size); ++i){
     IRExpr* valDest = runBinop(sbOut, Iop_Add64, memDest,
                                mkU64(i * sizeof(float)));
     IRExpr* destBucket = runMod(sbOut, valDest, mkU32(LARGE_PRIME));
@@ -1059,7 +803,7 @@ void addClearMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memDest){
              runAnd(sbOut, hasExistingShadow, guard),
              size, memDest, mkU64(0));
 }
-void addSetMemUnknownG(IRSB* sbOut, IRExpr* guard, int size,
+void addSetMemUnknownG(IRSB* sbOut, IRExpr* guard, FloatBlocks size,
                       IRExpr* memDest, IRExpr* st){
   IRExpr* tempNonNull = runNonZeroCheck64(sbOut, st);
   IRExpr* tempNonNull_32 = runUnop(sbOut, Iop_1Uto32, tempNonNull);
@@ -1078,23 +822,23 @@ void addSetMemUnknownG(IRSB* sbOut, IRExpr* guard, int size,
                      guard_32));
   addStmtToIRSB(sbOut,
                 mkDirtyG_0_3(setMemShadowTemp,
-                             memDest, mkU64(size), st,
+                             memDest, mkU64(INT(size)), st,
                              shouldDoCSet));
 }
-void addSetMemUnknown(IRSB* sbOut, int size,
+void addSetMemUnknown(IRSB* sbOut, FloatBlocks size,
                       IRExpr* memDest, IRExpr* st){
   addSetMemUnknownG(sbOut, mkU1(True), size, memDest, st);
 }
-void addSetMemNonNull(IRSB* sbOut, int size,
+void addSetMemNonNull(IRSB* sbOut, FloatBlocks size,
                       IRExpr* memDest, IRExpr* newTemp){
   addSetMemG(sbOut, mkU1(True), size, memDest, newTemp);
 }
-void addSetMemG(IRSB* sbOut, IRExpr* guard, int size,
+void addSetMemG(IRSB* sbOut, IRExpr* guard, FloatBlocks size,
                 IRExpr* memDest, IRExpr* newTemp){
   IRDirty* storeDirty =
     unsafeIRDirty_0_N(3, "setMemShadowTemp",
                       VG_(fnptr_to_fnentry)(setMemShadowTemp),
-                      mkIRExprVec_3(memDest, mkU64(size), newTemp));
+                      mkIRExprVec_3(memDest, mkU64(INT(size)), newTemp));
   storeDirty->guard = guard;
   storeDirty->mFx = Ifx_Modify;
   storeDirty->mAddr = mkU64((uintptr_t)shadowMemTable);
@@ -1160,7 +904,7 @@ IRExpr* mkArrayLookupExpr(IRSB* sbOut,
   return lookupExpr;
 }
 
-void addStoreTempCopy(IRSB* sbOut, IRExpr* original, IRTemp dest, ValueType type){
+void addStoreTempCopy(IRSB* sbOut, IRExpr* original, IRTemp dest, ValueType* types){
   IRTemp newShadowTempCopy = newIRTemp(sbOut->tyenv, Ity_I64);
   IRExpr* originalNonNull = runNonZeroCheck64(sbOut, original);
   IRDirty* copyShadowTempDirty =
@@ -1174,5 +918,5 @@ void addStoreTempCopy(IRSB* sbOut, IRExpr* original, IRTemp dest, ValueType type
   copyShadowTempDirty->guard = originalNonNull;
   addStmtToIRSB(sbOut, IRStmt_Dirty(copyShadowTempDirty));
   addStoreTempG(sbOut, originalNonNull, IRExpr_RdTmp(newShadowTempCopy),
-                type, dest);
+                dest);
 }

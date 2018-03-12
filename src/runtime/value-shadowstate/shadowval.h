@@ -56,11 +56,11 @@ typedef struct _ShadowTemp {
   struct _ShadowTemp* next;
 
   ShadowValue** values;
-  int num_vals;
+  FloatBlocks num_blocks;
 } ShadowTemp;
 
 // Don't assume that the new shadow temp will have NULL values!!!
-VG_REGPARM(1) ShadowTemp* newShadowTemp(UWord num_vals);
+VG_REGPARM(1) ShadowTemp* newShadowTemp(FloatBlocks num_vals);
 ShadowTemp* copyShadowTemp(ShadowTemp* temp);
 void changeSingleValueType(ShadowTemp* temp, ValueType type);
 
@@ -72,12 +72,11 @@ VG_REGPARM(2) void assertTempValid(const char* label, ShadowTemp* temp);
 
 VG_REGPARM(3) void assertValType(const char* label, ShadowValue* val, ValueType type);
 VG_REGPARM(3) void assertTempType(const char* label, ShadowTemp* temp, ValueType type);
-VG_REGPARM(3) void assertNumVals(const char* label, ShadowTemp* temp, int num_vals);
-VG_REGPARM(3) void assertNumValsNot(const char* label,
-                                    ShadowTemp* temp,
-                                    int num_vals);
-VG_REGPARM(3) void assertDynamicSize(const char* label,
-                                     ShadowTemp* temp,
-                                     int num_halfwords);
+VG_REGPARM(3) void assertNumBlocks(const char* label, ShadowTemp* temp,
+                                   FloatBlocks num_blocks);
+VG_REGPARM(3) void assertNumBlocksNot(const char* label, ShadowTemp* temp,
+                                      FloatBlocks num_blocks);
+VG_REGPARM(3) void assertDynamicSize(const char* label, ShadowTemp* temp,
+                                     FloatBlocks num_blocks);
 
 #endif

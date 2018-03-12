@@ -37,13 +37,12 @@
 #include "pub_tool_libcprint.h"
 #include "pub_tool_libcassert.h"
 
-VG_REGPARM(1) ShadowTemp* newShadowTemp(UWord num_vals){
+VG_REGPARM(1) ShadowTemp* newShadowTemp(FloatBlocks num_blocks){
   ShadowTemp* newShadowTemp =
     VG_(perm_malloc)(sizeof(ShadowTemp), vg_alignof(ShadowTemp));
-  newShadowTemp->num_vals = num_vals;
-  tl_assert(num_vals > 0);
+  newShadowTemp->num_blocks = num_blocks;
   newShadowTemp->values =
-    VG_(perm_malloc)(num_vals * sizeof(ShadowValue*), vg_alignof(ShadowValue*));
+    VG_(perm_malloc)(INT(num_blocks) * sizeof(ShadowValue*), vg_alignof(ShadowValue*));
   return newShadowTemp;
 }
 void changeSingleValueType(ShadowTemp* temp, ValueType type){
@@ -77,7 +76,8 @@ VG_REGPARM(2) void assertValValid(const char* label, ShadowValue* val){
   tl_assert2(val->real != NULL, "%s: value is %p", label, val);
 }
 VG_REGPARM(2) void assertTempValid(const char* label, ShadowTemp* temp){
-  for(int i = 0; i < temp->num_vals; ++i){
+  for(int i = 0; i < INT(temp->num_blocks);
+      i += temp->values[i]->type == Vt_Double ? 2 : 1){
     tl_assert2(temp->values[i] != NULL,
                "%s: Value %d of temp %p is NULL!",
                label, i, temp);
@@ -90,49 +90,37 @@ VG_REGPARM(3) void assertValType(const char* label, ShadowValue* val, ValueType 
              label, type, val, val->type);
 }
 VG_REGPARM(3) void assertTempType(const char* label, ShadowTemp* temp, ValueType type){
-  for(int i = 0; i < temp->num_vals; ++i){
+  for(int i = 0; i < INT(temp->num_blocks);
+      i += temp->values[i]->type == Vt_Double ? 2 : 1){
     tl_assert2(temp->values[i]->type == type,
                "%s: Expected type %d for %p, got %d\n",
                label, type, temp->values[i], temp->values[i]->type);
   }
 }
-VG_REGPARM(3) void assertNumVals(const char* label, ShadowTemp* temp,
-                                 int num_vals){
-  tl_assert2(temp->num_vals == num_vals,
+VG_REGPARM(3) void assertNumBlocks(const char* label, ShadowTemp* temp,
+                                   FloatBlocks num_blocks){
+  tl_assert2(INT(temp->num_blocks) == INT(num_blocks),
              "%s: Expected %d vals in %p, got %d\n",
-             label, num_vals, temp, temp->num_vals);
+             label, INT(num_blocks), temp, INT(temp->num_blocks));
 }
-VG_REGPARM(3) void assertNumValsNot(const char* label,
-                                    ShadowTemp* temp,
-                                    int num_vals){
-  tl_assert2(temp->num_vals != num_vals,
+VG_REGPARM(3) void assertNumBlocksNot(const char* label,
+                                      ShadowTemp* temp,
+                                      FloatBlocks num_blocks){
+  tl_assert2(INT(temp->num_blocks) != INT(num_blocks),
              "%s: Expected not %d vals in %p, got %d\n",
-             label, num_vals, temp, temp->num_vals);
+             label, INT(num_blocks), temp, INT(temp->num_blocks));
 }
 
 VG_REGPARM(3) void assertDynamicSize(const char* label,
                                      ShadowTemp* temp,
-                                     int num_halfwords){
+                                     FloatBlocks num_blocks){
   if (temp == NULL) return;
-  if (temp->values[0]->type == Vt_Single){
-    tl_assert2(temp->num_vals == num_halfwords,
-               "%s: Expected %d vals in %p (of type Single), got %d",
-               label, num_halfwords, temp, temp->num_vals);
-    for(int i = 1; i < temp->num_vals; ++i){
-      tl_assert2(temp->values[i]->type == Vt_Single,
-                 "%s: Value %d in %p is not a Single, but value 0 is!",
-                 label, i, temp);
-    }
-  } else {
-    tl_assert2(temp->values[0]->type == Vt_Double,
-               "%s: Invalid type %d!",temp->values[0]->type);
-    tl_assert2(temp->num_vals == num_halfwords / 2,
-               "%s: Expected %d vals in %p (of type Double), got %d",
-               label, num_halfwords / 2, temp, temp->num_vals);
-    for(int i = 1; i < temp->num_vals; ++i){
-      tl_assert2(temp->values[i]->type == Vt_Double,
-                 "%s: Value %d in %p is not a Double, but value 0 is!",
-                 label, i, temp);
-    }
+  tl_assert2(INT(temp->num_blocks) == INT(num_blocks),
+             "%s: Expected %d vals in %p, got %d",
+             label, INT(num_blocks), temp, INT(temp->num_blocks));
+  for(int i = 1; i < INT(temp->num_blocks); ++i){
+    tl_assert2(temp->values[i]->type == temp->values[0]->type,
+               "%s: Value %d in %p is not a %s, but value 0 is!",
+               label, i, temp, typeName(temp->values[0]->type));
   }
 }

@@ -36,14 +36,14 @@
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertTempType", VG_(fnptr_to_fnentry)(assertTempType), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_temp_expr, mkU64(val_type)))))
 #define addTempTypeAssertG(sbOut, guard, label, shadow_temp_expr, val_type) \
   addStmtToIRSB(sbOut, mkDirtyG_0_3(assertTempType, mkU64((uintptr_t)label), shadow_temp_expr, mkU64(val_type), guard))
-#define addNumValsAssert(sbOut, label, shadow_expr, num_vals)     \
-  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumVals", VG_(fnptr_to_fnentry)(assertNumVals), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_expr, mkU64(num_vals)))))
-#define addNumValsAssertNot(sbOut, label, shadow_expr, num_vals)     \
-  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumValsNot", VG_(fnptr_to_fnentry)(assertNumValsNot), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_expr, mkU64(num_vals)))))
-#define addNumValsAssertG(sbOut, guard, label, shadow_expr, num_vals) \
-  addStmtToIRSB(sbOut, mkDirtyG_0_3(assertNumVals, mkU64((uintptr_t)label), shadow_expr, mkU64(num_vals), guard))
-#define addNumValsAssertNotG(sbOut, guard, label, shadow_expr, num_vals) \
-  addStmtToIRSB(sbOut, mkDirtyG_0_3(assertNumValsNot, mkU64((uintptr_t)label), shadow_expr, mkU64(num_vals), guard))
+#define addNumBlocksAssert(sbOut, label, shadow_expr, num_blocks)     \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumVals", VG_(fnptr_to_fnentry)(assertNumVals), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_expr, mkU64(num_blocks)))))
+#define addNumBlocksAssertNot(sbOut, label, shadow_expr, num_blocks)     \
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "assertNumValsNot", VG_(fnptr_to_fnentry)(assertNumValsNot), mkIRExprVec_3(mkU64((uintptr_t)label), shadow_expr, mkU64(num_blocks)))))
+#define addNumValsAssertG(sbOut, guard, label, shadow_expr, num_blocks) \
+  addStmtToIRSB(sbOut, mkDirtyG_0_3(assertNumVals, mkU64((uintptr_t)label), shadow_expr, mkU64(num_blocks), guard))
+#define addNumValsAssertNotG(sbOut, guard, label, shadow_expr, num_blocks) \
+  addStmtToIRSB(sbOut, mkDirtyG_0_3(assertNumValsNot, mkU64((uintptr_t)label), shadow_expr, mkU64(num_blocks), guard))
 
 #define addAssertValValid(sbOut, label, val) \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(2, "assertValValid", assertValValid, mkIRExprVec_2(mkU64((uintptr_t)label), val))))
@@ -82,7 +82,7 @@ void assertValOwned(char* message, ShadowValue* val){
 
 static inline
 void assertTempValsOwned(char* message, ShadowTemp* temp){
-  for(int i = 0; i < temp->num_vals; ++i){
+  for(int i = 0; i < INT(temp->num_blocks); ++i){
     assertValOwned(message, temp->values[i]);
   }
 }

@@ -56,14 +56,6 @@ ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
   result->block_addr = block_addr;
 
   result->expr = NULL;
-  result->exinfo.numSIMDOperands =
-    op_code == 0x0 ? 1 : numSIMDOperands(op_code);
-
-  result->exinfo.numChannels =
-    op_code == 0x0 ? 1 : numChannelsOut(op_code);
-  result->exinfo.nargs = nargs;
-  result->exinfo.argPrecision =
-    op_code == 0x0 ? Vt_Double : argPrecision(op_code);
   initializeAggregate(&(result->agg), nargs);
   return result;
 }

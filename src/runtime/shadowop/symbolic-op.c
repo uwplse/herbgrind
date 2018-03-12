@@ -59,11 +59,12 @@ void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
     return;
   }
   ConcExpr* exprArgs[MAX_BRANCH_ARGS];
-  for(int i = 0; i < opinfo->exinfo.nargs; ++i){
+  int nargs = numArgs(opinfo->op_code);
+  for(int i = 0; i < nargs; ++i){
     exprArgs[i] = args[i]->expr;
   }
   *result = mkBranchConcExpr(computedResult, opinfo,
-                             opinfo->exinfo.nargs, exprArgs);
+                             nargs, exprArgs);
   generalizeSymbolicExpr(&(opinfo->expr), *result);
   if (problematic){
     updateProblematicRanges(opinfo->expr, *result);
