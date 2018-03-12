@@ -347,7 +347,8 @@ ValueType conversionArgPrecision(IROp op_code, int argIndex){
 }
 
 ValueType opBlockArgPrecision(IROp op_code, int blockIdx){
-  if (opArgPrecision(op_code) == Vt_Double){
+  ValueType globalPrecision = opArgPrecision(op_code);
+  if (globalPrecision == Vt_Double){
     if (blockIdx / 2 >= numSIMDOperands(op_code)){
       return Vt_Unknown;
     }
@@ -355,13 +356,13 @@ ValueType opBlockArgPrecision(IROp op_code, int blockIdx){
       return Vt_NonFloat;
     }
     return Vt_Double;
-  } else if (opArgPrecision(op_code) == Vt_Single) {
+  } else if (globalPrecision == Vt_Single) {
     if (blockIdx >= numSIMDOperands(op_code)){
       return Vt_Unknown;
     }
     return Vt_Single;
   } else {
-    return Vt_Unknown;
+    return globalPrecision;
   }
 }
 ValueType opArgPrecision(IROp op_code){
@@ -550,7 +551,8 @@ ValueType opArgPrecision(IROp op_code){
   }
 }
 ValueType resultBlockPrecision(IROp op_code, int blockIdx){
-  if (resultPrecision(op_code) == Vt_Double){
+  ValueType globalPrecision = resultPrecision(op_code);
+  if (globalPrecision == Vt_Double){
     if (blockIdx / 2 >= numSIMDOperands(op_code)){
       return Vt_Unknown;
     }
@@ -558,13 +560,13 @@ ValueType resultBlockPrecision(IROp op_code, int blockIdx){
       return Vt_NonFloat;
     }
     return Vt_Double;
-  } else if (resultPrecision(op_code) == Vt_Single) {
+  } else if (globalPrecision == Vt_Single) {
     if (blockIdx >= numSIMDOperands(op_code)){
       return Vt_Unknown;
     }
     return Vt_Single;
   } else {
-    return Vt_Unknown;
+    return globalPrecision;
   }
 }
 ValueType resultPrecision(IROp op_code){
