@@ -87,7 +87,6 @@ def checkFile(name, name_expected, ignoreProps):
         # This brilliant idea courtesy of Stuart Pernsteiner, PLSE wizard extraordinaire
         if HEX_RE.sub("<addr>", actualText) != HEX_RE.sub("<addr>", expectedText):
             print("Different textual outputs!")
-            print(str(e))
             print("\nActual ::")
             print(actualText)
             print("\nExpected ::")
