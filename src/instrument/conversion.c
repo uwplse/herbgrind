@@ -316,8 +316,8 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
         } else {
           IRExpr* vals =
             runArrowG(sbOut, inputPreexisting, shadowInputs[0], ShadowTemp, values);
-          IRExpr* firstVal = runIndex(sbOut, vals, ShadowValue*, 0);
-          addValTypeAssert(sbOut, "Iop_64to32 (2)", firstVal, Vt_Single);
+          IRExpr* firstVal = runIndexG(sbOut, inputPreexisting, vals, ShadowValue*, 0);
+          addValTypeAssertG(sbOut, inputPreexisting, "Iop_64to32 (2)", firstVal, Vt_Single);
         }
         convertFunc = i64to32;
       }
