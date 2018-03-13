@@ -122,9 +122,9 @@ IRExpr* runAndto64(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2);
   runBinop(sbOut, Iop_CmpEQ64, check, mkU64(0))
 
 #define addPrintOp(op_code) \
-  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "ppIROp", VG_(fnptr_to_fnentry)(ppIROp), mkIRExprVec_1(mkU64((uintptr_t)op_code)))))
+  addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "ppIROp_Extended", VG_(fnptr_to_fnentry)(ppIROp_Extended), mkIRExprVec_1(mkU64((uintptr_t)op_code)))))
 #define addPrintOpG(guard, op_code)                                     \
-  addStmtToIRSB(sbOut, mkDirtyG_0_1(VG_(fnptr_to_fnentry)(ppIROp), mkU64((uintptr_t)op_code), guard))
+  addStmtToIRSB(sbOut, mkDirtyG_0_1(ppIROp_Extended, mkU64((uintptr_t)op_code), guard))
 #define addPrintTy(ty_code) \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "ppIRType", VG_(fnptr_to_fnentry)(ppIRType), mkIRExprVec_1(mkU64((uintptr_t)ty_code)))))
 #define addPrintExpr(expr) \
