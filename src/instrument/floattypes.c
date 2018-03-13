@@ -461,6 +461,9 @@ ValueType opArgPrecision(IROp op_code){
   case Iop_32UtoV128:
   case Iop_ZeroHI96ofV128:
   case Iop_V128to32:
+  case Iop_64to32:
+  case Iop_64HIto32:
+  case Iop_32HLto64:
     return Vt_SingleOrNonFloat;
   case Iop_CmpF64:
   case Iop_CmpEQ64Fx2:
@@ -525,7 +528,6 @@ ValueType opArgPrecision(IROp op_code){
   case Iop_Max64Fx2:
   case Iop_Min64F0x2:
   case Iop_Min64Fx2:
-  case Iop_64to32:
   case Iop_F64toI32S:
   case Iop_F64toI64S:
   case Iop_F64toI32U:
@@ -584,7 +586,6 @@ ValueType resultPrecision(IROp op_code){
     // Non-semantic ops have no need for this, since they will never
     // be constructing new shadow values, so we can just return
     // Vt_NonFloat for them.
-  case Iop_64to32:
   case Iop_RecipEst32Fx4:
   case Iop_RSqrtEst32Fx4:
   case Iop_Abs32Fx4:
@@ -648,6 +649,9 @@ ValueType resultPrecision(IROp op_code){
   case Iop_V128to32:
   case Iop_32UtoV128:
   case Iop_SetV128lo32:
+  case Iop_64to32:
+  case Iop_64HIto32:
+  case Iop_32HLto64:
     return Vt_SingleOrNonFloat;
   case Iop_32Uto64:
   case Iop_RSqrtEst5GoodF64:
