@@ -216,6 +216,7 @@ FloatBlocks typeSize(IRType type){
     // be non-float easily.
   case Ity_I1:
   case Ity_I8:
+  case Ity_I16:
     return FB(1);
   default:
     ppIRType(type);
