@@ -1,6 +1,6 @@
 (output
   (function "main")
-  (filename "redir_test.c")
+  (filename "redir.c")
   (line-num 9)
   (instr-addr 400899)
   (avg-error 0.000000)
