@@ -104,6 +104,8 @@ ValueType exprBlockType(IRExpr* expr, int blockIdx){
   }
 }
 Bool refineTempBlockType(int tempIdx, int blockIdx, ValueType type){
+  tl_assert2(tempIdx >= 0 && tempIdx < MAX_TEMPS,
+             "Temp index %d is invalid!!\n", tempIdx);
   /* VG_(printf)("Refining type of t%d from %s with %s\n", */
   /*             tempIdx, typeName(tempTypes[tempIdx]), typeName(type)); */
   ValueType refinedType = typeMeet(type, tempBlockType(tempIdx, blockIdx));
@@ -766,6 +768,9 @@ void ppValueType(ValueType type){
   case Vt_SingleOrNonFloat:
     VG_(printf)("Vt_SingleOrNonFloat");
     break;
+  default:
+    tl_assert(0);
+    return;
   }
 }
 // This function does type inference for the super block. The new type
