@@ -1,7 +1,7 @@
 (output
   (function "main")
   (filename "same-small.c")
-  (line-num 7)
+  (line-num 6)
   (instr-addr 400821)
   (avg-error 0.000000)
   (max-error 0.000000)

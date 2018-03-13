@@ -1,7 +1,7 @@
 (output
   (function "main")
   (filename "simple-negate.c")
-  (line-num 11)
+  (line-num 9)
   (instr-addr 400844)
   (avg-error 61.901585)
   (max-error 61.901585)
@@ -16,7 +16,7 @@
      (example problematic input ())
      (function "main")
      (filename "simple-negate.c")
-     (line-num 10)
+     (line-num 8)
      (instr-addr 400828)
      (avg-error 61.901585)
      (max-error 61.901585)

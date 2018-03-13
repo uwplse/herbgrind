@@ -1,7 +1,7 @@
 (output
   (function "main")
   (filename "small.c")
-  (line-num 12)
+  (line-num 11)
   (instr-addr 4008A0)
   (avg-error 32.617943)
   (max-error 32.617943)
@@ -16,7 +16,7 @@
      (example problematic input ())
      (function "calcY")
      (filename "small.c")
-     (line-num 17)
+     (line-num 16)
      (instr-addr 4008EB)
      (avg-error 32.617943)
      (max-error 32.617943)

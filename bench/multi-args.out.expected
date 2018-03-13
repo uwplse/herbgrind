@@ -1,7 +1,7 @@
 (output
   (function "main")
   (filename "multi-args.c")
-  (line-num 13)
+  (line-num 11)
   (instr-addr 400872)
   (avg-error 30.970597)
   (max-error 61.941194)
@@ -23,7 +23,7 @@
      (example problematic input (1.000000e12, 10.000000e-13))
      (function "main")
      (filename "multi-args.c")
-     (line-num 12)
+     (line-num 10)
      (instr-addr 40084D)
      (avg-error 30.970597)
      (max-error 61.941194)
