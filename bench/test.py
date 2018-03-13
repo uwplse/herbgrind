@@ -3,6 +3,7 @@
 import subprocess
 import sys
 import string
+import re
 
 EPSILON = .1
 EXTRA_ARGS = []
@@ -76,12 +77,16 @@ def checkMatch(expected, actual):
             print("{} mismatch: expected {}, got {}".format(fieldName, expectedResult, actualResult))
             success = False
     
+HEX_RE = re.compile(r"[0-9a-fA-F]{4,}")
 
 def checkFile(name, name_expected, ignoreProps):
     global success
     with open(name) as actual, open(name_expected) as expected:
         actualText = actual.read()
         expectedText = expected.read()
+        # This brilliant idea courtesy of Stuart Pernsteiner, PLSE wizard extraordinaire
+        if HEX_RE.sub("<addr>", actualText) != HEX_RE.sub("<addr>", expectedText):
+            print "Different textual outputs!"
         actualResults = list(parseSexp(actualText))
         expectedResults = list(parseSexp(expectedText))
         if len(actualResults) != len(expectedResults):
