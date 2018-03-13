@@ -1007,8 +1007,14 @@ void inferTypes(IRSB* sbIn){
                         tempSize(sbIn->tyenv, destTemp), resultTypes);
               for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
                 dirty |= refineTempBlockType(destTemp, i, resultTypes[i]);
-                dirty |= refineTempBlockType(source1Temp, i, tempBlockType(destTemp, i));
-                dirty |= refineTempBlockType(source2Temp, i, tempBlockType(destTemp, i));
+                if (source1Temp != -1){
+                  dirty |= refineTempBlockType(source1Temp, i,
+                                               tempBlockType(destTemp, i));
+                }
+                if (source2Temp != -1){
+                  dirty |= refineTempBlockType(source2Temp, i,
+                                               tempBlockType(destTemp, i));
+                }
               }
             }
             break;
