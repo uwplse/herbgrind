@@ -43,6 +43,7 @@ typedef enum {
   Vt_UnknownFloat,
   Vt_Double,
   Vt_Single,
+  Vt_SingleOrNonFloat,
 } ValueType;
 
 typedef enum {
@@ -68,6 +69,8 @@ extern ShadowStatus tsShadowStatus[MAX_REGISTERS];
 
 // Meet and join operations for the type lattice
 // Cheat sheet: join -> union, meet -> intersect
+// If that doesn't help: join -> go "up" the lattice (towards Vt_Unknown)
+//                       meet -> go "down" the lattice (towards a concrete type)
 void typeJoins(ValueType* types1, ValueType* types2,
                FloatBlocks numTypes, ValueType* out);
 ValueType typeJoin(ValueType type1, ValueType type2);

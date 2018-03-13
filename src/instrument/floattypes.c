@@ -67,7 +67,7 @@ ValueType tempBlockType(int idx, int blockIdx){
   return tempTypes[idx][blockIdx];
 }
 ValueType* exprTypeArray(IRExpr* expr){
-  static ValueType typeArrays[5][8] = {
+  static ValueType typeArrays[6][8] = {
     {Vt_Unknown, Vt_Unknown, Vt_Unknown, Vt_Unknown,
      Vt_Unknown, Vt_Unknown, Vt_Unknown, Vt_Unknown},
     {Vt_NonFloat, Vt_NonFloat, Vt_NonFloat, Vt_NonFloat,
@@ -77,7 +77,11 @@ ValueType* exprTypeArray(IRExpr* expr){
     {Vt_Double, Vt_Double, Vt_Double, Vt_Double,
      Vt_Double, Vt_Double, Vt_Double, Vt_Double},
     {Vt_Single, Vt_Single, Vt_Single, Vt_Single,
-     Vt_Single, Vt_Single, Vt_Single, Vt_Single}};
+     Vt_Single, Vt_Single, Vt_Single, Vt_Single},
+    {Vt_SingleOrNonFloat, Vt_SingleOrNonFloat,
+     Vt_SingleOrNonFloat, Vt_SingleOrNonFloat,
+     Vt_SingleOrNonFloat, Vt_SingleOrNonFloat,
+     Vt_SingleOrNonFloat, Vt_SingleOrNonFloat}};
   switch(expr->tag){
   case Iex_RdTmp:
     return tempTypeArray(expr->Iex.RdTmp.tmp);
@@ -107,8 +111,10 @@ Bool refineTempBlockType(int tempIdx, int blockIdx, ValueType type){
     return False;
   } else {
     if (print_type_inference){
-      VG_(printf)("Refining type of t%d from %s to %s\n",
-                  tempIdx, typeName(tempTypes[tempIdx][blockIdx]), typeName(refinedType));
+      VG_(printf)("Refining type of t%d[%d] from %s to %s\n",
+                  tempIdx, blockIdx,
+                  typeName(tempTypes[tempIdx][blockIdx]),
+                  typeName(refinedType));
     }
     tempTypes[tempIdx][blockIdx] = refinedType;
     return True;
@@ -443,18 +449,19 @@ ValueType opArgPrecision(IROp op_code){
   case Iop_DivF64r32:
   case Iop_MAddF64r32:
   case Iop_MSubF64r32:
-  case Iop_ZeroHI96ofV128:
-  case Iop_V128to32:
   case Iop_F32toF64:
   case Iop_RoundF32toInt:
-  case Iop_SetV128lo32:
-  case Iop_32Uto64:
-  case Iop_32UtoV128:
   case Iop_F32toI32S:
   case Iop_F32toI64S:
   case Iop_F32toI32U:
   case Iop_F32toI64U:
     return Vt_Single;
+  case Iop_SetV128lo32:
+  case Iop_32Uto64:
+  case Iop_32UtoV128:
+  case Iop_ZeroHI96ofV128:
+  case Iop_V128to32:
+    return Vt_SingleOrNonFloat;
   case Iop_CmpF64:
   case Iop_CmpEQ64Fx2:
   case Iop_CmpLT64Fx2:
@@ -632,15 +639,16 @@ ValueType resultPrecision(IROp op_code){
   case Iop_DivF64r32:
   case Iop_MAddF64r32:
   case Iop_MSubF64r32:
-  case Iop_ZeroHI96ofV128:
-  case Iop_V128to32:
-  case Iop_32UtoV128:
   case Iop_RoundF32toInt:
-  case Iop_SetV128lo32:
   case Iop_RoundF64toF32:
   case Iop_TruncF64asF32:
   case Iop_F64toF32:
     return Vt_Single;
+  case Iop_ZeroHI96ofV128:
+  case Iop_V128to32:
+  case Iop_32UtoV128:
+  case Iop_SetV128lo32:
+    return Vt_SingleOrNonFloat;
   case Iop_32Uto64:
   case Iop_RSqrtEst5GoodF64:
   case Iop_RecipEst64Fx2:
@@ -749,6 +757,9 @@ void ppValueType(ValueType type){
     break;
   case Vt_Double:
     VG_(printf)("Vt_Double");
+    break;
+  case Vt_SingleOrNonFloat:
+    VG_(printf)("Vt_SingleOrNonFloat");
     break;
   }
 }
@@ -1137,7 +1148,8 @@ void inferTypes(IRSB* sbIn){
   }
 }
 
-void typeJoins(ValueType* types1, ValueType* types2, FloatBlocks numTypes, ValueType* out){
+void typeJoins(ValueType* types1, ValueType* types2,
+               FloatBlocks numTypes, ValueType* out){
   for(int i = 0; i < INT(numTypes); ++i){
     out[i] = typeJoin(types1[i], types2[i]);
   }
@@ -1150,6 +1162,8 @@ ValueType typeJoin(ValueType type1, ValueType type2){
   case Vt_NonFloat:
     if (type2 == Vt_NonFloat){
       return Vt_NonFloat;
+    } else if (type2 == Vt_Single){
+      return Vt_SingleOrNonFloat;
     } else {
       return Vt_Unknown;
     }
@@ -1170,6 +1184,7 @@ ValueType typeJoin(ValueType type1, ValueType type2){
       return Vt_UnknownFloat;
     case Vt_Unknown:
     case Vt_NonFloat:
+    case Vt_SingleOrNonFloat:
       return Vt_Unknown;
     }
   case Vt_Single:
@@ -1182,6 +1197,17 @@ ValueType typeJoin(ValueType type1, ValueType type2){
     case Vt_Unknown:
     case Vt_NonFloat:
       return Vt_Unknown;
+    case Vt_SingleOrNonFloat:
+      return Vt_SingleOrNonFloat;
+    }
+  case Vt_SingleOrNonFloat:
+    switch(type2){
+    case Vt_Single:
+    case Vt_NonFloat:
+    case Vt_SingleOrNonFloat:
+      return Vt_SingleOrNonFloat;
+    default:
+      return Vt_Unknown;
     }
   default:
     tl_assert(0);
@@ -1193,7 +1219,8 @@ ValueType typeMeet(ValueType type1, ValueType type2){
   case Vt_Unknown:
     return type2;
   case Vt_NonFloat:
-    tl_assert2(type2 == Vt_Unknown || type2 == Vt_NonFloat,
+    tl_assert2(type2 == Vt_Unknown || type2 == Vt_NonFloat ||
+               type2 == Vt_SingleOrNonFloat,
                "Cannot meet types %s and %s!\n", typeName(type1), typeName(type2));
     return Vt_NonFloat;
   case Vt_UnknownFloat:
@@ -1201,17 +1228,30 @@ ValueType typeMeet(ValueType type1, ValueType type2){
                "Cannot meet types %s and %s!\n", typeName(type1), typeName(type2));
     if (type2 == Vt_Unknown){
       return Vt_UnknownFloat;
+    } else if (type2 == Vt_SingleOrNonFloat){
+      return Vt_Single;
     } else {
       return type2;
     }
   case Vt_Double:
-    tl_assert2(type2 != Vt_NonFloat && type2 != Vt_Single,
+    tl_assert2(type2 != Vt_NonFloat && type2 != Vt_Single &&
+               type2 != Vt_SingleOrNonFloat,
                "Cannot meet types %s and %s!\n", typeName(type1), typeName(type2));
     return Vt_Double;
   case Vt_Single:
     tl_assert2(type2 != Vt_NonFloat && type2 != Vt_Double,
                "Cannot meet types %s and %s!\n", typeName(type1), typeName(type2));
     return Vt_Single;
+  case Vt_SingleOrNonFloat:
+    tl_assert2(type2 != Vt_Double,
+               "Cannot meet type Vt_Double with type Vt_SingleOrNonFloat!\n");
+    if (type2 == Vt_Single || type2 == Vt_UnknownFloat){
+      return Vt_Single;
+    } else if (type2 == Vt_NonFloat){
+      return Vt_NonFloat;
+    } else {
+      return Vt_SingleOrNonFloat;
+    }
   default:
     tl_assert(0);
     return Vt_Unknown;
@@ -1230,6 +1270,8 @@ const char* typeName(ValueType type){
     return "Vt_Double";
   case Vt_Single:
     return "Vt_Single";
+  case Vt_SingleOrNonFloat:
+    return "Vt_SingleOrNonFloat";
   default:
     tl_assert(0);
     return "";
@@ -1255,6 +1297,7 @@ ValueType constType(const IRConst* constant){
   case Ity_I16:
     return Vt_NonFloat;
   case Ity_I32:
+    return Vt_SingleOrNonFloat;
   case Ity_I64:
   case Ity_V128:
   case Ity_V256:
@@ -1275,7 +1318,6 @@ int isFloatType(ValueType type){
 
 void printTypeState(IRTypeEnv* tyenv){
   for(int i = 0; i < tyenv->types_used; ++i){
-    VG_(printf)("Printing state for t%d...\n", i);
     int hasKnown = 0;
     for(int j = 0; j < INT(tempSize(tyenv, i)); ++j){
       if (tempTypes[i][j] != Vt_Unknown){
