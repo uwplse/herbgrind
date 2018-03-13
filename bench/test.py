@@ -6,7 +6,7 @@ import re
 HEX_RE = re.compile(r"[0-9a-fA-F]{6}")
 
 def compare_results(actual, expected):
-    return HEX_RE.sub("<addr>", actual) != HEX_RE.sub("<addr>", expected)
+    return HEX_RE.sub("<addr>", actual) == HEX_RE.sub("<addr>", expected)
 
 def test(prog):
     global success
