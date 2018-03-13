@@ -65,6 +65,9 @@ VarList extraVars;
 List_Impl(NodePos, Group);
 Xarray_Impl(Group, GroupList);
 // This is unfortunate...
+inline int graftPointConc(ConcExpr* parent, ConcExpr* child);
+inline int graftPointSymb(SymbExpr* parent, SymbExpr* child);
+
 inline
 int graftPointConc(ConcExpr* parent, ConcExpr* child){
   return 1;

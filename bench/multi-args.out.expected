@@ -1,0 +1,35 @@
+(output
+  (function "main")
+  (filename "multi-args.c")
+  (line-num 11)
+  (instr-addr 400872)
+  (avg-error 30.970597)
+  (max-error 61.941194)
+  (num-calls 2)
+  (influences
+    (
+    (
+     (expr
+       (FPCore (x y)
+      :pre (and (and (<= 5.000000e-1 x) (<= x 1.000000e12)) (and (<= 10.000000e-13 y) (<= y 1.200000)))
+          (- (+ y x) x)))
+     (var-problematic-ranges
+       (x
+         (range-min 1.000000e12)
+         (range-max 1.000000e12))
+       (y
+         (range-min 10.000000e-13)
+         (range-max 10.000000e-13)))
+     (example problematic input (1.000000e12, 10.000000e-13))
+     (function "main")
+     (filename "multi-args.c")
+     (line-num 10)
+     (instr-addr 40084D)
+     (avg-error 30.970597)
+     (max-error 61.941194)
+     (avg-local-error 30.970597)
+     (max-local-error 61.941194)
+     (num-calls 2))
+    )
+  )
+)

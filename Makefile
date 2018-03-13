@@ -77,8 +77,8 @@ all: compile
 # repo currently exists.
 valgrind/README:
 # Check out valgrind from source.
-	svn co --ignore-externals $(VALGRIND_REPO_LOCATION)@$(VALGRIND_REVISION) valgrind
-	svn co $(VEX_REPO_LOCATION)@$(VEX_REVISION) valgrind/VEX
+	svn co -q --ignore-externals $(VALGRIND_REPO_LOCATION)@$(VALGRIND_REVISION) valgrind
+	svn co -q $(VEX_REPO_LOCATION)@$(VEX_REVISION) valgrind/VEX
 # Make a directory for the herbgrind tool
 	mkdir valgrind/herbgrind
 # ...and copy the files from the top level herbgrind folder into it.
@@ -236,8 +236,14 @@ clear-preload:
 
 .PHONY: test backup-logs
 
-test: compile
-	python bench/test.py
+TESTS=$(wildcard bench/*.out.expected)
+
+bench/%.out: bench/%.c
+	$(MAKE) -C bench $*.out
+
+# The .out version is the binary; TESTS stores the expected output files
+test: compile $(TESTS) $(TESTS:.out.expected=.out)
+	python3 bench/test.py $(TESTS:.out.expected=.out)
 
 backup-logs:
 	tar czf logs.tar.gz logs

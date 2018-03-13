@@ -1,0 +1,13 @@
+(output
+  (function "main")
+  (filename "some-trig.c")
+  (line-num 8)
+  (instr-addr 40095D)
+  (avg-error 61.981567)
+  (max-error 61.981567)
+  (num-calls 1)
+  (influences
+    (
+    )
+  )
+)

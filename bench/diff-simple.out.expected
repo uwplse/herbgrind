@@ -1,0 +1,28 @@
+(output
+  (function "main")
+  (filename "diff-simple.c")
+  (line-num 8)
+  (instr-addr 400580)
+  (avg-error 61.998590)
+  (max-error 61.998590)
+  (num-calls 1)
+  (influences
+    (
+    (
+     (expr
+       (FPCore ()
+          (- (+ 1.000000 1.000000e16) 1.000000e16)))
+     (var-problematic-ranges)
+     (example problematic input ())
+     (function "main")
+     (filename "diff-simple.c")
+     (line-num 7)
+     (instr-addr 40055B)
+     (avg-error 61.998590)
+     (max-error 61.998590)
+     (avg-local-error 61.998590)
+     (max-local-error 61.998590)
+     (num-calls 1))
+    )
+  )
+)

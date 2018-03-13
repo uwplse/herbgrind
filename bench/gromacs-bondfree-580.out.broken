@@ -1,0 +1,38 @@
+(output
+  (function "main")
+  (filename "gromacs-bondfree-580.c")
+  (line-num 27)
+  (instr-addr 1088DF)
+  (avg-error 16.016219)
+  (max-error 61.791429)
+  (num-calls 10)
+  (influences
+    (
+    (
+     (expr
+       (FPCore (x y z)
+      :pre (and (and (<= 3.727454e-43 x) (<= x 1.389515e3)) (and (<= 5.823796e-42 y) (<= y 2.684534e17)) (and (<= 4.904545e-44 z) (<= z 1.067773e12)))
+          (+ (* x x) (+ (* y y) (* z z)))))
+     (var-problematic-ranges
+       (x
+         (range-min 3.727454e-43)
+         (range-max 1.389515e3))
+       (y
+         (range-min 5.823796e-42)
+         (range-max 2.684534e17))
+       (z
+         (range-min 4.904545e-44)
+         (range-max 1.067773e12)))
+     (example problematic input (1.389515e3, 2.684534e17, 7.165306e-1))
+     (function "iprod")
+     (filename "gromacs-bondfree-580.c")
+     (line-num 6)
+     (instr-addr 10884C)
+     (avg-error 30.644307)
+     (max-error 61.549503)
+     (avg-local-error 30.644307)
+     (max-local-error 61.549503)
+     (num-calls 10))
+    )
+  )
+)

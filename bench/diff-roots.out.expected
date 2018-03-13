@@ -1,0 +1,32 @@
+(output
+  (function "main")
+  (filename "diff-roots.c")
+  (line-num 112)
+  (instr-addr 4006CE)
+  (avg-error 27.803370)
+  (max-error 61.959340)
+  (num-calls 100)
+  (influences
+    (
+    (
+     (expr
+       (FPCore (x)
+      :pre (and (<= 2.325516e-303 x) (<= x 4.576299e307))
+          (- (sqrt (+ 1.000000 x)) (sqrt x))))
+     (var-problematic-ranges
+       (x
+         (range-min 1.389515e3)
+         (range-max 3.977039e299)))
+     (example problematic input (1.066873e41))
+     (function "main")
+     (filename "diff-roots.c")
+     (line-num 111)
+     (instr-addr 4006A6)
+     (avg-error 27.803370)
+     (max-error 61.959340)
+     (avg-local-error 27.803370)
+     (max-local-error 61.959340)
+     (num-calls 100))
+    )
+  )
+)

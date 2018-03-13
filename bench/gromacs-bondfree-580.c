@@ -1,42 +1,29 @@
 #include <math.h>
- 
 #include <stdio.h>
-#include <stdlib.h>
-#include "herbgrind.h"
  
 static inline float iprod(float* a,float* b)
 {
   return (a[0]*b[0]+a[1]*b[1]+a[2]*b[2]);
 }
- 
-double rand_double() {
-        long long c0 = rand()&0xffff;
-        long long c1 = rand()&0xffff;
-        long long c2 = rand()&0xffff;
-        long long c3 = rand()&0xffff;
-        long long c = ((c3 << 48) | (c2 << 32) | (c1<<16) | c0);
-        return *(double*)&c;
-}
- 
-float rand_legit_positive_float() {
-  float result;
-  do {
-    result = rand_double();
-  } while (result != result || result * result == INFINITY || result <= 0);
-  return result;
-}
- 
+
+float r_kj[10][3] = {
+  {268453443323035648, 0.71653062105178833008, 1389.514892578125},
+  {2.0770905828637609147e-10, 4.5552733528942065653e-24, 2.793811015866509706e-10},
+  {0.092040725052356719971, 0.0022920905612409114838, 5.4301075065642613301e-21},
+  {943433600, 5.7629808612905003154e-30, 1.9748078868190349535e-40},
+  {3.715846901286568027e-07, 184.290313720703125, 1.8683431344172884485e-29},
+  {4.208303749919650727e-08, 1.8677865192031556994e-39, 3.7274539151040134087e-43},
+  {5.8237964177339397468e-42, 4.9045446251368597482e-44, 3.2664267203411485923e-42},
+  {340.728424072265625, 2.7634128318965167637e-10, 1205.4989013671875},
+  {1056530038784, 1067773132800, 4.8185892015429297611e-37},
+  {0.0053226999007165431976, 1.2250422945568828905e-22, 8.1286535331538631898e-39}
+};
+
 int main(int argc, char** argv){
-  float r_kj[3];
   float nrkj2, nrkj;
   for (int i = 0; i < 10; i++){
-    r_kj[0] = rand_legit_positive_float();
-    r_kj[1] = rand_legit_positive_float();
-    r_kj[2] = rand_legit_positive_float();
-    HERBGRIND_BEGIN();
-    nrkj2 = iprod(r_kj, r_kj);
+    nrkj2 = iprod(r_kj[i], r_kj[i]);
     nrkj = sqrt(nrkj2);
-    HERBGRIND_END();
     printf("%e\n", nrkj);
   }
   return 0;
