@@ -3,7 +3,7 @@
 import subprocess
 import sys
 import re
-HEX_RE = re.compile(r"\(instr-addr [0-9a-fA-F]{6}\)")
+HEX_RE = re.compile(r"\(instr-addr [0-9a-fA-F]+\)")
 
 def compare_results(actual, expected):
     return HEX_RE.sub("<addr>", actual) == HEX_RE.sub("<addr>", expected)
