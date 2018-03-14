@@ -90,13 +90,14 @@ VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
   for(int i = 0; i < nentries; ++i){
     ShadowTemp* temp = shadowTemps[entries[i]];
     if (temp == NULL) continue;
-    for(int j = 0; j < INT(temp->num_blocks);
-        j += temp->values[j]->type == Vt_Double ? 2 : 1){
+    for(int j = 0; j < INT(temp->num_blocks); ++j){
       if (PRINT_VALUE_MOVES){
-        VG_(printf)("Cleaning up value %p (old rc %lu) "
-                    "from temp %p in %d at end of block.\n",
-                    temp->values[j], temp->values[j]->ref_count,
-                    temp, entries[i]);
+        if (temp->values[j] != NULL){
+          VG_(printf)("Cleaning up value %p (old rc %lu) "
+                      "from temp %p in %d at end of block.\n",
+                      temp->values[j], temp->values[j]->ref_count,
+                      temp, entries[i]);
+        }
       }
       disownShadowValue(temp->values[j]);
     }
@@ -136,10 +137,7 @@ VG_REGPARM(3) void setMemShadowTemp(Addr64 memDest,
   for(int i = 0; i < size; ++i){
     UWord addr = memDest + i * sizeof(float);
     removeMemShadow(addr);
-    if (st != NULL){
-      if (i % 2 == 1 && st->values[i - 1]->type == Vt_Double){
-        continue;
-      }
+    if (st != NULL && st->values[i] != NULL){
       addMemShadow(addr, st->values[i]);
     }
   }
@@ -312,16 +310,12 @@ ShadowValue* mkShadowValue(ValueType type, double value){
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
   ShadowTemp* result = mkShadowTemp(temp->num_blocks);
   for(int i = 0; i < INT(temp->num_blocks); ++i){
-    if (i % 2 == 1 && temp->values[i-1]->type == Vt_Double){
-      result->values[i] = NULL;
-    } else {
-      ownShadowValue(temp->values[i]);
-      result->values[i] = temp->values[i];
-      if (PRINT_VALUE_MOVES){
-        VG_(printf)("Copying %p (new rc %lu) from %p to new temp %p\n",
-                    temp->values[i], temp->values[i]->ref_count, temp,
-                    result);
-      }
+    ownShadowValue(temp->values[i]);
+    result->values[i] = temp->values[i];
+    if (PRINT_VALUE_MOVES){
+      VG_(printf)("Copying %p (new rc %lu) from %p to new temp %p\n",
+                  temp->values[i], temp->values[i]->ref_count, temp,
+                  result);
     }
   }
   return result;
@@ -329,15 +323,15 @@ VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
 VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
   ShadowTemp* result = mkShadowTemp(temp->num_blocks);
   for(int i = 0; i < INT(temp->num_blocks); ++i){
-    if (i % 2 == 1 && temp->values[i-1]->type == Vt_Double){
-      result->values[i] = NULL;
-    } else {
+    if (temp->values[i] != NULL){
       result->values[i] = copyShadowValue(temp->values[i]);
-      if (PRINT_VALUE_MOVES){
-        VG_(printf)("Copying shadow value %p from temp %p "
-                    "to shadow value %p at temp %p\n",
-                    temp->values[i], temp, result->values[i], result);
-      }
+    } else {
+      result->values[i] = NULL;
+    }
+    if (PRINT_VALUE_MOVES){
+      VG_(printf)("Copying shadow value %p from temp %p "
+                  "to shadow value %p at temp %p\n",
+                  temp->values[i], temp, result->values[i], result);
     }
   }
   return result;
@@ -346,13 +340,13 @@ inline
 void disownShadowTemp(ShadowTemp* temp){
   for(int i = 0; i < INT(temp->num_blocks); ++i){
     if (PRINT_VALUE_MOVES){
-      VG_(printf)("Disowning %p (rc %lu) as part of disowning temp %p\n",
-                  temp->values[i], temp->values[i]->ref_count, temp);
+      if (temp->values[i] != NULL){
+        VG_(printf)("Disowning %p (rc %lu) as part of disowning temp %p\n",
+                    temp->values[i], temp->values[i]->ref_count, temp);
+      }
     }
-    if (i % 2 == 0 || temp->values[i-1]->type != Vt_Double){
-      disownShadowValue(temp->values[i]);
-      temp->values[i] = NULL;
-    }
+    disownShadowValue(temp->values[i]);
+    temp->values[i] = NULL;
   }
   freeShadowTemp(temp);
 }
