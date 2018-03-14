@@ -38,7 +38,7 @@
 double execLocalOp(ShadowOpInfo* info, Real realVal,
                    ShadowValue* res, ShadowValue** args){
   if (no_reals) return 0;
-  int nargs = numArgs(info->op_code);
+  int nargs = numArgs(info);
   double exactRoundedArgs[4];
   for(int i = 0; i < nargs; ++i){
     exactRoundedArgs[i] = getDouble(args[i]->real);

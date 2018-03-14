@@ -59,7 +59,7 @@ void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
     return;
   }
   ConcExpr* exprArgs[MAX_BRANCH_ARGS];
-  int nargs = numArgs(opinfo->op_code);
+  int nargs = numArgs(opinfo);
   for(int i = 0; i < nargs; ++i){
     exprArgs[i] = args[i]->expr;
   }

@@ -111,4 +111,6 @@ void printOpInfo(ShadowOpInfo* opinfo);
 void ppAddr(Addr addr);
 char* getAddrString(Addr addr);
 
+int numArgs(ShadowOpInfo* opinfo);
+
 #endif

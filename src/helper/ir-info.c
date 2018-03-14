@@ -34,7 +34,7 @@
 #include "../instrument/floattypes.h"
 #include <math.h>
 
-int numArgs(IROp_Extended op_code){
+int getNativeNumArgs(IROp_Extended op_code){
   switch((int)op_code){
     // Unary ops
   case Iop_RecipEst32Fx4:
@@ -174,7 +174,9 @@ int numArgs(IROp_Extended op_code){
   case Iop_MSubF64r32:
     return 4;
   default:
-    ppIROp(op_code);
+    VG_(printf)("Op %d: ", op_code);
+    ppIROp_Extended(op_code);
+    VG_(printf)("\n");
     tl_assert(0);
     return 0;
   }

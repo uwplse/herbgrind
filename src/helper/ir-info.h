@@ -42,7 +42,7 @@ typedef enum {
 int numChannelsIn(IROp op_code);
 int numChannelsOut(IROp op_code);
 int numSIMDOperands(IROp op_code);
-int numArgs(IROp_Extended op_code);
+int getNativeNumArgs(IROp_Extended op_code);
 int inferOtherNumChannels(int inferIndex, IRExpr* arg, IROp op_code);
 const char* getOpcodeSymbol(IROp op_code);
 double runEmulatedOp(IROp op_code, double* args);
