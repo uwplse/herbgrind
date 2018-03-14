@@ -36,7 +36,7 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
   if (no_reals) return;
   ShadowTemp* args[2];
   for(int i = 0; i < 2; ++i){
-    args[i] = getArg(i, numChannelsIn(info->op_code), info->argTemps[i]);
+    args[i] = getArg(i, info->op_code, info->argTemps[i]);
   }
   int correctOutput;
   if (numSIMDOperands(info->op_code) == 1){
