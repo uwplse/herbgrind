@@ -210,6 +210,7 @@ FloatBlocks typeSize(IRType type){
   case Ity_F64:
     return FB(2);
   case Ity_V128:
+  case Ity_I128:
     return FB(4);
   case Ity_V256:
     return FB(8);
