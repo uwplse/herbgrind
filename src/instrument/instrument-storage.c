@@ -305,7 +305,11 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
     IRExpr* vals[MAX_TEMP_SHADOWS];
     for(int i = 0; i < INT(src_size); ++i){
       int src_addr = tsSrc + i * sizeof(float);
-      vals[i] = runGetTSVal(sbOut, src_addr, instrIdx);
+      if (tsAddrCanHaveShadow(src_addr, instrIdx)){
+        vals[i] = runGetTSVal(sbOut, src_addr, instrIdx);
+      } else {
+        vals[i] = mkU64(0);
+      }
     }
     IRExpr* temp = runMkShadowTempValues(sbOut, src_size, vals);
     addStoreTemp(sbOut, temp, dest);
