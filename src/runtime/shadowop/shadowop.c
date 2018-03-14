@@ -104,19 +104,23 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
   if (PRINT_VALUE_MOVES){
     ppIROp_Extended(opInfo->op_code);
     VG_(printf)(": Making value(s) ");
-    for(int i = 0; i < numOperandChannels; ++i){
+    for(int i = 0; i < numOperandBlocks; ++i){
       if (i == 0){
         VG_(printf)("%p", result->values[i]);
       } else {
         VG_(printf)(", %p", result->values[i]);
       }
     }
-    if (numOperandChannels < numChannels){
+    if (numOperandBlocks < INT(numBlocks)){
       VG_(printf)(" and copying shadow value(s) ");
-      for(int i = numOperandChannels;
-          i < numChannels; ++i){
-        VG_(printf)("%p (new rc %lu), ",
-                    result->values[i], result->values[i]->ref_count);
+      for(int i = numOperandBlocks;
+          i < INT(numBlocks); ++i){
+        if (result->values[i] != NULL){
+          VG_(printf)("%p (new rc %lu), ",
+                      result->values[i], result->values[i]->ref_count);
+        } else {
+          VG_(printf)("NULL, ");
+        }
       }
       VG_(printf)("from %p to %p -> ", args[0], result);
     } else {
