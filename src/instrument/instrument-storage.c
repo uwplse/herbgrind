@@ -151,7 +151,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
         ppValueType(tsType(dest_addr, instrIdx));
         VG_(printf)("\n");
       }
-      IRExpr* oldVal = runGetTSVal(sbOut, dest_addr);
+      IRExpr* oldVal = runGetTSVal(sbOut, dest_addr, instrIdx);
       // If we don't know whether or not it's a shadowed float at
       // runtime, we'll do a runtime check to see if there is a shadow
       // value there, and disown it if there is.
@@ -192,7 +192,8 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
     for(int i = 0; i < INT(dest_size); ++i){
       int dest_addr = tsDest + i * sizeof(float);
       IRExpr* val = runIndex(sbOut, values, ShadowValue*, i);
-      addSetTSValNonNull(sbOut, dest_addr, val, instrIdx);
+      addSVOwn(sbOut, val);
+      addSetTSVal(sbOut, dest_addr, val, instrIdx);
       tsShadowStatus[dest_addr] = Ss_Shadowed;
     }
   }
@@ -239,11 +240,11 @@ void instrumentPutI(IRSB* sbOut,
                         numElems, Ity_F32);
     IRExpr* oldVal = runGetTSValDynamic(sbOut, dest_addrs[i]);
     addSVDisown(sbOut, oldVal);
-    addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
+    addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0), instrIdx);
   }
   if (data->tag == Iex_Const){
     for(int i = 0; i < INT(dest_size); ++i){
-      addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
+      addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0), instrIdx);
     }
     return;
   }
@@ -255,8 +256,8 @@ void instrumentPutI(IRSB* sbOut,
     IRExpr* values = runArrow(sbOut, temp, ShadowTemp, values);
     for(int i = 0; i < INT(dest_size); ++i){
       IRExpr* val = runIndex(sbOut, values, ShadowValue*, i);
-      addSVOwnNonNull(sbOut, val);
-      addSetTSValDynamic(sbOut, dest_addrs[i], val);
+      addSVOwn(sbOut, val);
+      addSetTSValDynamic(sbOut, dest_addrs[i], val, instrIdx);
     }
   }
     break;
@@ -267,14 +268,14 @@ void instrumentPutI(IRSB* sbOut,
       runArrowG(sbOut, loadedTempNonNull, loadedTemp, ShadowTemp, values);
     for(int i = 0; i < INT(dest_size); ++i){
       IRExpr* val = runIndexG(sbOut, loadedTempNonNull, loadedVals, ShadowValue*, i);
-      addSVOwnNonNullG(sbOut, loadedTempNonNull, val);
-      addSetTSValDynamic(sbOut, dest_addrs[i], val);
+      addSVOwn(sbOut, val);
+      addSetTSValDynamic(sbOut, dest_addrs[i], val, instrIdx);
     }
   }
     break;
   case Ss_Unshadowed:{
     for(int i = 0; i < INT(dest_size); ++i){
-      addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0));
+      addSetTSValDynamic(sbOut, dest_addrs[i], mkU64(0), instrIdx);
     }
   }
     break;
@@ -308,7 +309,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
     IRExpr* vals[MAX_TEMP_SHADOWS];
     for(int i = 0; i < INT(src_size); ++i){
       int src_addr = tsSrc + i * sizeof(float);
-      vals[i] = runGetTSVal(sbOut, src_addr);
+      vals[i] = runGetTSVal(sbOut, src_addr, instrIdx);
     }
     IRExpr* temp = runMkShadowTempValues(sbOut, src_size, vals);
     addStoreTemp(sbOut, temp, dest);
@@ -319,10 +320,11 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
     IRExpr* someValNonNull = IRExpr_Const(IRConst_U1(False));
     for(int i = 0; i < INT(src_size); ++i){
       int tsAddr = tsSrc + i * sizeof(float);
-      if (tsShadowStatus[tsAddr] == Ss_Unshadowed){
+      if (tsShadowStatus[tsAddr] == Ss_Unshadowed ||
+          !tsAddrCanHaveShadow(tsAddr, instrIdx)){
         loadedVals[i] = mkU64(0);
       } else {
-        loadedVals[i] = runGetTSVal(sbOut, tsAddr);
+        loadedVals[i] = runGetTSVal(sbOut, tsAddr, instrIdx);
         someValNonNull = runOr(sbOut, someValNonNull,
                                runNonZeroCheck64(sbOut, loadedVals[i]));
       }
@@ -564,7 +566,8 @@ IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
 IRExpr* runLoadTemp(IRSB* sbOut, int idx){
   return runLoad64C(sbOut, &(shadowTemps[idx]));
 }
-IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc){
+IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc, int instrIdx){
+  tl_assert(tsAddrCanHaveShadow(tsSrc, instrIdx));
   IRExpr* val = runLoad64C(sbOut,
                            &(shadowThreadState[VG_(get_running_tid)()][tsSrc]));
   if (PRINT_VALUE_MOVES){
@@ -619,34 +622,34 @@ void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
                         IRExpr* newVal,
                         int instrIdx){
   addSVOwnNonNull(sbOut, newVal);
-  addSetTSVal(sbOut, tsDest, newVal);
+  addSetTSVal(sbOut, tsDest, newVal, instrIdx);
   tsShadowStatus[tsDest] = Ss_Shadowed;
 }
 void addSetTSValNonFloat(IRSB* sbOut, Int tsDest, int instrIdx){
-  addSetTSVal(sbOut, tsDest, mkU64(0));
+  addSetTSVal(sbOut, tsDest, mkU64(0), instrIdx);
   tsShadowStatus[tsDest] = Ss_Unshadowed;
   tl_assert2(tsType(tsDest, instrIdx) == Vt_NonFloat,
              "False setting TS(%d) to NonFloat.\n", tsDest);
 }
 void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest, int instrIdx){
-  addSetTSVal(sbOut, tsDest, mkU64(0));
+  addSetTSVal(sbOut, tsDest, mkU64(0), instrIdx);
   tsShadowStatus[tsDest] = Ss_Unshadowed;
 }
 void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal, int instrIdx){
-  addSetTSVal(sbOut, tsDest, newVal);
+  addSetTSVal(sbOut, tsDest, newVal, instrIdx);
   tsShadowStatus[tsDest] = Ss_Unknown;
 }
-void addSetTSValG(IRSB* sbOut, IRExpr* guard, Int tsDest, IRExpr* newVal){
-  addStoreGC(sbOut, guard,
-             newVal,
-             &(shadowThreadState[VG_(get_running_tid)()][tsDest]));
-}
-void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal){
+void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal, int instrIdx){
   if (PRINT_VALUE_MOVES){
-    IRExpr* existing = runGetTSVal(sbOut, tsDest);
-    IRExpr* overwriting = runNonZeroCheck64(sbOut, existing);
+    IRExpr* shouldPrintAtAll;
     IRExpr* valueNonNull = runNonZeroCheck64(sbOut, newVal);
-    IRExpr* shouldPrintAtAll = runOr(sbOut, overwriting, valueNonNull);
+    if (tsAddrCanHaveShadow(tsDest, instrIdx)){
+      IRExpr* existing = runGetTSVal(sbOut, tsDest, instrIdx);
+      IRExpr* overwriting = runNonZeroCheck64(sbOut, existing);
+      shouldPrintAtAll = runOr(sbOut, overwriting, valueNonNull);
+    } else {
+      shouldPrintAtAll = valueNonNull;
+    }
     addPrintG3(shouldPrintAtAll,
                "addSetTSVal: Setting thread state TS(%d) to %p\n",
                mkU64(tsDest), newVal);
@@ -655,7 +658,7 @@ void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal){
             newVal,
             &(shadowThreadState[VG_(get_running_tid)()][tsDest]));
 }
-void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal){
+void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal, int instrIdx){
   if (PRINT_VALUE_MOVES){
     IRExpr* existing = runGetTSValDynamic(sbOut, tsDest);
     IRExpr* overwriting = runNonZeroCheck64(sbOut, existing);
