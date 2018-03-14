@@ -243,27 +243,21 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
   case Iop_F64toF32:
   case Iop_F32toF64:
     {
+      FloatBlocks dest_size = op_code == Iop_F32toF64 ?
+        FB(2) : FB(1);
+      IRExpr* vals[2];
+      vals[0] = runIndex(sbOut, runArrow(sbOut, shadowInputs[0], ShadowTemp, values),
+                         ShadowValue*, 0);
+      if (INT(dest_size) == 2){
+        vals[1] = mkU64(0);
+      }
       if (inputPreexisting == NULL){
         tl_assert(shadowInputs[0]);
-        shadowOutput =
-          runPureCCall64(sbOut, deepCopyShadowTemp, shadowInputs[0]);
+        shadowOutput = runMkShadowTempValues(sbOut, dest_size, vals);
       } else {
         tl_assert(shadowInputs[0]);
-        shadowOutput =
-          runDirtyG_1_1(sbOut, inputPreexisting, deepCopyShadowTemp,
-                        shadowInputs[0]);
+        shadowOutput = runMkShadowTempValuesG(sbOut, inputPreexisting, dest_size, vals);
       }
-
-      IRDirty* changeTypeDirty =
-        unsafeIRDirty_0_N(2, "changeSingleValueType",
-                          VG_(fnptr_to_fnentry)(changeSingleValueType),
-                          mkIRExprVec_2(shadowOutput,
-                                        mkU64(op_code == Iop_F32toF64 ?
-                                              Vt_Double : Vt_Single)));
-      if (inputPreexisting != NULL){
-        changeTypeDirty->guard = inputPreexisting;
-      }
-      addStmtToIRSB(sbOut, IRStmt_Dirty(changeTypeDirty));
     }
     break;
     // These manipulate SIMD values
