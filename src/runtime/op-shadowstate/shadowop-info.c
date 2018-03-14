@@ -143,7 +143,6 @@ void updateInputRecords(InputsRecord* record, ShadowValue** args, int nargs){
 }
 
 int numArgs(ShadowOpInfo* opinfo){
-  VG_(printf)("Getting num args.\n");
   if (opinfo->op_code == 0){
     return getWrappedNumArgs(opinfo->op_type);
   } else {
