@@ -161,17 +161,19 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
                     "from thread state overwrite at %d (static)\n",
                     oldVal, mkU64(dest_addr));
         }
-        addSVDisownNonNull(sbOut, oldVal);
+        addSVDisown(sbOut, oldVal);
       } else {
+        IRExpr* oldValNonNull =
+          runNonZeroCheck64(sbOut, oldVal);
         if (PRINT_VALUE_MOVES){
-          IRExpr* oldValNonNull =
-            runNonZeroCheck64(sbOut, oldVal);
+          const char* formatString =
+            "Disowning %p "
+            "from thread state overwrite at %d (dynamic)\n";
           addPrintG3(oldValNonNull,
-                     "Disowning %p "
-                     "from thread state overwrite at %d (dynamic)\n",
+                     formatString,
                      oldVal, mkU64(dest_addr));
         }
-        addSVDisown(sbOut, oldVal);
+        addSVDisownNonNullG(sbOut, oldValNonNull, oldVal);
       }
     }
   }
@@ -444,7 +446,7 @@ IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
   IRExpr* temp = runITE(sbOut, stackEmpty, freshTemp, poppedTemp);
   IRExpr* tempValues = runArrowG(sbOut, guard, temp, ShadowTemp, values);
   for(int i = 0; i < INT(num_blocks); ++i){
-    addSVOwnNonNullG(sbOut, guard, values[i]);
+    addSVOwnG(sbOut, guard, values[i]);
     addStoreIndexG(sbOut, guard, tempValues, ShadowValue*, i, values[i]);
   }
   IRExpr* result = runITE(sbOut, guard, temp, mkU64(0));
