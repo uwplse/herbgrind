@@ -86,7 +86,6 @@ IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
 
 IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc, int instrIdx);
 IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc);
-IRExpr* runGetOrMakeTSVal(IRSB* sbOut, int tsSrc, ValueType type);
 void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
                         IRExpr* newVal,
                         int instrIdx);
@@ -96,7 +95,6 @@ void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest,
                            int instrIdx);
 void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal,
                         int instrIdx);
-void addSetTSValG(IRSB* sbOut, IRExpr* guard, Int tsDest, IRExpr* newVal);
 void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal, int instrIdx);
 void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal, int instrIdx);
 

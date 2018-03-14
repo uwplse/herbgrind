@@ -258,7 +258,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   execSymbolicOp(opinfo, &(result->expr), clientResult, args,
                  bitsGlobalError > error_threshold);
   if (print_expr_refs){
-    VG_(printf)("Making new expression %p for value %p with 0 references.\n",
+    VG_(printf)("Making new expression %p for value %p with 1 references.\n",
                 result->expr, result);
   }
   if (print_semantic_ops){

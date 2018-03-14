@@ -146,7 +146,7 @@ IRExpr* runAndto64(IRSB* sbOut, IRExpr* arg1, IRExpr* arg2);
 #define addPrint3(format, arg1, arg2)                                   \
   addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "print", VG_(fnptr_to_fnentry)(VG_(printf)), mkIRExprVec_3(mkU64((uintptr_t)format), arg1, arg2))))
 #define addPrintG3(guard, format, arg1, arg2)                      \
-  addStmtToIRSB(sbOut, mkDirtyG_0_3(VG_(fnptr_to_fnentry)(VG_(printf)), mkU64((uintptr_t)format), arg1, arg2, guard))
+  addStmtToIRSB(sbOut, mkDirtyG_0_3(VG_(printf), mkU64((uintptr_t)format), arg1, arg2, guard))
 
 #define mkConvert(dest, input, conversion)                    \
   unsafeIRDirty_1_N(dest, 1, #conversion, VG_(fnptr_to_fnentry)(conversion), mkIRExprVec_1(input))

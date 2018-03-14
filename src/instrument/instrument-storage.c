@@ -145,12 +145,6 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
     // we don't need to bother trying to clear it or change it's
     // static info here
     if (tsAddrCanHaveShadow(dest_addr, instrIdx)){
-      if (PRINT_TYPES){
-        VG_(printf)("Types: Setting up a disown for %d because it's type is ",
-                    dest_addr);
-        ppValueType(tsType(dest_addr, instrIdx));
-        VG_(printf)("\n");
-      }
       IRExpr* oldVal = runGetTSVal(sbOut, dest_addr, instrIdx);
       // If we don't know whether or not it's a shadowed float at
       // runtime, we'll do a runtime check to see if there is a shadow
@@ -572,10 +566,14 @@ IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc, int instrIdx){
   tl_assert(tsAddrCanHaveShadow(tsSrc, instrIdx));
   IRExpr* val = runLoad64C(sbOut,
                            &(shadowThreadState[VG_(get_running_tid)()][tsSrc]));
-  if (PRINT_VALUE_MOVES){
-    IRExpr* valExists = runNonZeroCheck64(sbOut, val);
-    addPrintG3(valExists, "Getting val %p from TS(%d) -> ", val, mkU64(tsSrc));
-  }
+  /* if (PRINT_VALUE_MOVES){ */
+  /*   if (tsHasStaticShadow(tsSrc, instrIdx)){ */
+  /*     addPrint3("Getting val %p from TS(%d) -> ", val, mkU64(tsSrc)); */
+  /*   } else { */
+  /*     IRExpr* valExists = runNonZeroCheck64(sbOut, val); */
+  /*     addPrintG3(valExists, "Getting val %p from TS(%d) -> ", val, mkU64(tsSrc)); */
+  /*   } */
+  /* } */
   return val;
 }
 IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc){
@@ -585,40 +583,6 @@ IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc){
                             mkU64((uintptr_t)shadowThreadState
                                   [VG_(get_running_tid)()]),
                             tsSrc));
-}
-IRExpr* runGetOrMakeTSVal(IRSB* sbOut, int tsSrc, ValueType type){
-  tl_assert(type == Vt_Double || type == Vt_Single);
-  switch(tsShadowStatus[tsSrc]){
-  case Ss_Shadowed:
-    return runGetTSVal(sbOut, tsSrc);
-  case Ss_Unshadowed:
-    {
-      IRExpr* valExpr;
-      if (type == Vt_Double){
-        valExpr = runGet64C(sbOut, tsSrc);
-      } else {
-        valExpr = runF32toF64(sbOut, runGet32C(sbOut, tsSrc));
-      }
-      return runMkShadowVal(sbOut, type, valExpr);
-    }
-  case Ss_Unknown:
-    {
-      IRExpr* loaded = runGetTSVal(sbOut, tsSrc);
-      IRExpr* loadedNull = runZeroCheck64(sbOut, loaded);
-      IRExpr* valExpr;
-      if (type == Vt_Double){
-        valExpr = runGet64C(sbOut, tsSrc);
-      } else {
-        valExpr = runF32toF64(sbOut, runGet32C(sbOut, tsSrc));
-      }
-      IRExpr* freshSV = runMkShadowValG(sbOut, loadedNull,
-                                        type, valExpr);
-      return runITE(sbOut, loadedNull, freshSV, loaded);
-    }
-  default:
-    tl_assert(0);
-    return NULL;
-  }
 }
 void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
                         IRExpr* newVal,

@@ -195,9 +195,6 @@ void addSVDisownNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
   IRStmt* freeVal =
     mkDirtyG_0_1(freeShadowValue, sv, lastRef);
   addStmtToIRSB(sbOut, freeVal);
-  if (PRINT_VALUE_MOVES){
-    addPrintG(guard, "disowning value.\n");
-  }
 }
 void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
   IRExpr* valueNonNull = runNonZeroCheck64(sbOut, sv);
