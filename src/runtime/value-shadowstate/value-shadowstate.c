@@ -263,6 +263,9 @@ ShadowValue* mkShadowValueBare(ValueType type){
     }
   } else {
     result = (void*)stack_pop_fast(freedVals);
+    tl_assert2(result->ref_count == 0,
+               "Shadow value %p just popped off the stack has a ref count of %d!\n",
+               result, result->ref_count);
     result->type = type;
   }
   result->ref_count = 1;
