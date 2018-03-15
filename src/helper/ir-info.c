@@ -398,6 +398,7 @@ int numSIMDOperands(IROp op_code){
   case Iop_RoundF64toF32:
   case Iop_TruncF64asF32:
   case Iop_ReinterpF64asI64:
+  case Iop_I32StoF64:
     return 1;
     // Binary Ops
   case Iop_RecipStep32Fx4:
@@ -505,6 +506,7 @@ int numSIMDOperands(IROp op_code){
   case Iop_MSubF64r32:
     return 1;
   default:
+    ppIROp_Extended(op_code);
     tl_assert(0);
     return 0;
   }
