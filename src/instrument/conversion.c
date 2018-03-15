@@ -246,15 +246,19 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       FloatBlocks dest_size = op_code == Iop_F32toF64 ?
         FB(2) : FB(1);
       IRExpr* vals[2];
-      vals[0] = runIndex(sbOut, runArrow(sbOut, shadowInputs[0], ShadowTemp, values),
-                         ShadowValue*, 0);
       if (INT(dest_size) == 2){
         vals[1] = mkU64(0);
       }
       if (inputPreexisting == NULL){
+        vals[0] = runIndex(sbOut, runArrow(sbOut, shadowInputs[0], ShadowTemp, values),
+                           ShadowValue*, 0);
         tl_assert(shadowInputs[0]);
         shadowOutput = runMkShadowTempValues(sbOut, dest_size, vals);
       } else {
+        vals[0] = runIndexG(sbOut, inputPreexisting,
+                            runArrowG(sbOut, inputPreexisting,
+                                      shadowInputs[0], ShadowTemp, values),
+                            ShadowValue*, 0);
         tl_assert(shadowInputs[0]);
         shadowOutput = runMkShadowTempValuesG(sbOut, inputPreexisting, dest_size, vals);
       }
