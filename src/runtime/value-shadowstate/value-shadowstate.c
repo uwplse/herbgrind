@@ -316,9 +316,11 @@ VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
     ownShadowValue(temp->values[i]);
     result->values[i] = temp->values[i];
     if (PRINT_VALUE_MOVES){
-      VG_(printf)("Copying %p (new rc %lu) from %p to new temp %p\n",
-                  temp->values[i], temp->values[i]->ref_count, temp,
-                  result);
+      if (temp->values[i] != NULL){
+        VG_(printf)("Copying %p (new rc %lu) from %p to new temp %p\n",
+                    temp->values[i], temp->values[i]->ref_count, temp,
+                    result);
+      }
     }
   }
   return result;
