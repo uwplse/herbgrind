@@ -656,8 +656,8 @@ ValueType resultPrecision(IROp op_code){
   case Iop_64to32:
   case Iop_64HIto32:
   case Iop_32HLto64:
-    return Vt_SingleOrNonFloat;
   case Iop_32Uto64:
+    return Vt_SingleOrNonFloat;
   case Iop_RSqrtEst5GoodF64:
   case Iop_RecipEst64Fx2:
   case Iop_RSqrtEst64Fx2:
@@ -715,13 +715,13 @@ ValueType resultPrecision(IROp op_code){
   case Iop_F128HItoF64:
   case Iop_F128LOtoF64:
   case Iop_RoundF64toInt:
-  case Iop_64HLtoV128:
   case Iop_F64HLtoF128:
   case Iop_F32toF64:
   case Iop_I32StoF64:
   case Iop_I64StoF64:
   case Iop_ReinterpF64asI64:
     return Vt_Double;
+  case Iop_64HLtoV128:
   case Iop_SetV128lo64:
   case Iop_64UtoV128:
   case Iop_XorV128:
