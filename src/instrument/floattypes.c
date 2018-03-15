@@ -1076,14 +1076,19 @@ void inferTypes(IRSB* sbIn){
                   dirty |= refineExprBlockType(expr->Iex.Binop.arg1, i, arg1Type);
                   dirty |= refineExprBlockType(expr->Iex.Binop.arg2, i, arg2Type);
                 }
-                if (!staticallyFloatType(arg1Type) &&
-                    !staticallyFloatType(arg2Type)){
+                if (staticallyFloatType(arg1Type) ||
+                    staticallyFloatType(arg2Type)){
                   for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
                     refineTempBlockType(destTemp, i, typeMeet(arg1Type, arg2Type));
                   }
                 } else {
                   for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
-                    refineTempBlockType(destTemp, i, resultPrecision(op));
+                    if (resultPrecision(op) == Vt_Double &&
+                        i % 2 == 1){
+                      refineTempBlockType(destTemp, i, Vt_NonFloat);
+                    } else {
+                      refineTempBlockType(destTemp, i, resultPrecision(op));
+                    }
                   }
                 }
               } else {
@@ -1112,10 +1117,15 @@ void inferTypes(IRSB* sbIn){
                   dirty |= refineExprBlockType(arg, i, srcType);
                 }
                 for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
-                  if (!staticallyFloat(arg, i)){
+                  if (staticallyFloat(arg, i)){
                     refineTempBlockType(destTemp, i, exprBlockType(arg, i));
                   } else {
-                    refineTempBlockType(destTemp, i, resultPrecision(op));
+                    if (resultPrecision(op) == Vt_Double &&
+                        i % 2 == 1){
+                      refineTempBlockType(destTemp, i, Vt_NonFloat);
+                    } else {
+                      refineTempBlockType(destTemp, i, resultPrecision(op));
+                    }
                   }
                 }
               } else {
