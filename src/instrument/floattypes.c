@@ -1073,11 +1073,12 @@ void inferTypes(IRSB* sbIn){
                 }
 
                 for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
-                  dirty |= refineExprBlockType(expr->Iex.Binop.arg1, i, arg1Type);
-                  dirty |= refineExprBlockType(expr->Iex.Binop.arg2, i, arg2Type);
+                  IRExpr* arg1 = expr->Iex.Binop.arg1;
+                  IRExpr* arg2 = expr->Iex.Binop.arg2;
+                  dirty |= refineExprBlockType(arg1, i, arg1Type);
+                  dirty |= refineExprBlockType(arg2, i, arg2Type);
                 }
-                if (staticallyFloatType(arg1Type) ||
-                    staticallyFloatType(arg2Type)){
+                if (resultPrecision(op) == Vt_Unknown){
                   for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
                     refineTempBlockType(destTemp, i, typeMeet(arg1Type, arg2Type));
                   }
@@ -1094,8 +1095,10 @@ void inferTypes(IRSB* sbIn){
               } else {
                 for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
                   ValueType argType = opBlockArgPrecision(op, i);
-                  dirty |= refineExprBlockType(expr->Iex.Binop.arg1, i, argType);
-                  dirty |= refineExprBlockType(expr->Iex.Binop.arg2, i, argType);
+                  IRExpr* arg1 = expr->Iex.Binop.arg1;
+                  IRExpr* arg2 = expr->Iex.Binop.arg2;
+                  dirty |= refineExprBlockType(arg1, i, argType);
+                  dirty |= refineExprBlockType(arg2, i, argType);
                   dirty |= refineTempBlockType(destTemp, i, resultBlockPrecision(op, i));
                 }
               }
@@ -1117,7 +1120,7 @@ void inferTypes(IRSB* sbIn){
                   dirty |= refineExprBlockType(arg, i, srcType);
                 }
                 for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
-                  if (staticallyFloat(arg, i)){
+                  if (resultPrecision(op) == Vt_Unknown){
                     refineTempBlockType(destTemp, i, exprBlockType(arg, i));
                   } else {
                     if (resultPrecision(op) == Vt_Double &&
@@ -1355,9 +1358,7 @@ void printTypeState(IRTypeEnv* tyenv){
     if (hasKnown){
       VG_(printf)("t%d :", i);
       for(int j = 0; j < INT(tempSize(tyenv, i)); ++j){
-        if (tempTypes[i][j] != Vt_Unknown){
-          VG_(printf)(" %s", typeName(tempTypes[i][j]));
-        }
+        VG_(printf)(" %s", typeName(tempTypes[i][j]));
       }
       VG_(printf)("\n");
     }

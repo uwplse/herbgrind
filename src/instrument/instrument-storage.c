@@ -485,33 +485,34 @@ IRExpr* runMkShadowValG(IRSB* sbOut, IRExpr* guard,
   return runDirtyG_1_2(sbOut, guard, mkShadowValue_wrapper,
                        mkU64(type), valExpr);
 }
-IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
-                     ValueType valType, int num_vals){
+IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr, ValueType valType){
   IRExpr* result;
   IRType bytesType = typeOfIRExpr(sbOut->tyenv, argExpr);
-  if (num_vals == 1){
+  int num_blocks = INT(exprSize(sbOut->tyenv, argExpr));
+  if (num_blocks == 1){
+    tl_assert(valType == Vt_Single);
     IRExpr* argI64 = toDoubleBytes(sbOut, argExpr);;
-    if (valType == Vt_Single){
-      result = runPureCCall64(sbOut, mkShadowTempOneSingle, argI64);
-    } else {
-      result = runPureCCall64(sbOut, mkShadowTempOneDouble, argI64);
-    }
-  } else if (num_vals == 2 && valType == Vt_Double) {
-    tl_assert(bytesType == Ity_V128);
-    addStoreC(sbOut, argExpr, computedArgs.argValues[0]);
-    result = runPureCCall64(sbOut, mkShadowTempTwoDoubles,
-                            mkU64((uintptr_t)computedArgs.argValues[0]));
-  } else if (num_vals == 2 && valType == Vt_Single) {
+    result = runPureCCall64(sbOut, mkShadowTempOneSingle, argI64);
+  } else if (num_blocks == 2 && valType == Vt_Single) {
     tl_assert(bytesType == Ity_I64);
     result = runPureCCall64(sbOut, mkShadowTempTwoSingles, argExpr);
-  } else if (num_vals == 4) {
-    tl_assert(valType == Vt_Single);
+  } else if (num_blocks == 2 && valType == Vt_Double) {
+    tl_assert(bytesType == Ity_I64);
+    addStoreC(sbOut, argExpr, computedArgs.argValues[0]);
+    result = runPureCCall64(sbOut, mkShadowTempOneDouble,
+                            mkU64((uintptr_t)computedArgs.argValues[0]));
+  } else if (num_blocks == 4) {
     tl_assert(bytesType == Ity_V128);
     addStoreC(sbOut, argExpr, computedArgs.argValues[0]);
-    result = runPureCCall64(sbOut, mkShadowTempFourSingles,
-                          mkU64((uintptr_t)computedArgs.argValues[0]));
+    if (valType == Vt_Single){
+      result = runPureCCall64(sbOut, mkShadowTempFourSingles,
+                              mkU64((uintptr_t)computedArgs.argValuesF[0]));
+    } else {
+      result = runPureCCall64(sbOut, mkShadowTempTwoDoubles,
+                              mkU64((uintptr_t)computedArgs.argValues[0]));
+    }
   } else {
-    tl_assert2(0, "Hey, you can't have %d vals!\n", num_vals);
+    tl_assert2(0, "Hey, you can't have %d vals!\n", num_blocks);
   }
   if (canStoreShadow(sbOut->tyenv, argExpr)){
     addStoreTemp(sbOut, result,
@@ -520,41 +521,42 @@ IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
   }
   return result;
 }
-IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
-                      IRExpr* argExpr,
-                      ValueType valType, int num_vals){
+IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard, IRExpr* argExpr,
+                      ValueType valType){
   IRExpr* result;
   IRType bytesType = typeOfIRExpr(sbOut->tyenv, argExpr);
-  if (num_vals == 1){
-    if (valType == Vt_Single){
-      tl_assert(bytesType == Ity_I32);
-    } else {
-      tl_assert(bytesType == Ity_I64 || bytesType == Ity_F64);
-    }
+  int num_blocks = INT(exprSize(sbOut->tyenv, argExpr));
+  if (num_blocks == 1){
+    tl_assert2(valType == Vt_Single || valType == Vt_SingleOrNonFloat,
+               "Wrong type! %s", typeName(valType));
     IRExpr* argI64 = toDoubleBytes(sbOut, argExpr);
     result = runDirtyG_1_1(sbOut, guard,
-                           valType == Vt_Single ?
-                           (void*)mkShadowTempOneSingle :
-                           (void*)mkShadowTempOneDouble,
+                           mkShadowTempOneSingle,
                            argI64);
-  } else if (num_vals == 2 && valType == Vt_Single){
+  } else if (num_blocks == 2 &&
+             (valType == Vt_Single || valType == Vt_SingleOrNonFloat)){
     tl_assert(bytesType == Ity_I64);
     result = runDirtyG_1_1(sbOut, guard, mkShadowTempTwoSingles, argExpr);
-  } else if (num_vals == 2 && valType == Vt_Double){
-    tl_assert(bytesType == Ity_V128);
+  } else if (num_blocks == 2 && valType == Vt_Double){
+    tl_assert(bytesType == Ity_I64);
     addStoreGC(sbOut, guard, argExpr, computedArgs.argValues[0]);
     result = runDirtyG_1_1(sbOut, guard,
-                           mkShadowTempTwoDoubles,
+                           mkShadowTempOneDouble,
                            mkU64((uintptr_t)computedArgs.argValues[0]));
-  } else if (num_vals == 4){
-    tl_assert(valType == Vt_Single);
+  } else if (num_blocks == 4){
     tl_assert(bytesType == Ity_V128);
     addStoreGC(sbOut, guard, argExpr, computedArgs.argValues[0]);
-    result = runDirtyG_1_1(sbOut, guard,
-                           mkShadowTempFourSingles,
-                           mkU64((uintptr_t)computedArgs.argValues[0]));
+    if (valType == Vt_Single || valType == Vt_SingleOrNonFloat){
+      result = runDirtyG_1_1(sbOut, guard,
+                             mkShadowTempFourSingles,
+                             mkU64((uintptr_t)computedArgs.argValuesF[0]));
+    } else {
+      result = runDirtyG_1_1(sbOut, guard,
+                             mkShadowTempTwoDoubles,
+                             mkU64((uintptr_t)computedArgs.argValues[0]));
+    }
   } else {
-    tl_assert2(0, "Hey, you can't have %d vals!\n", num_vals);
+    tl_assert2(0, "Hey, you can't have %d vals!\n", num_blocks);
   }
   if (canStoreShadow(sbOut->tyenv, argExpr)){
     addStoreTempG(sbOut, guard, result,

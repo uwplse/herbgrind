@@ -78,11 +78,9 @@ IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
 IRExpr* runMkShadowVal(IRSB* sbOut, ValueType type, IRExpr* valExpr);
 IRExpr* runMkShadowValG(IRSB* sbOut, IRExpr* guard,
                         ValueType type, IRExpr* valExpr);
-IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
-                      IRExpr* argExpr,
-                      ValueType type, int num_vals);
-IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
-                     ValueType type, int num_vals);
+IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard, IRExpr* argExpr,
+                      ValueType type);
+IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr, ValueType type);
 
 IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc, int instrIdx);
 IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc);

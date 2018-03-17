@@ -101,13 +101,10 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
           if (!staticallyShadowed(argExprs[i])){
             IRExpr* loadedNull =
               runZeroCheck64(sbOut, shadowInputs[i]);
-            int numVals =
-              inferOtherNumChannels(i, argExprs[1-i], op_code);
             IRExpr* freshInput =
               runMakeInputG(sbOut, loadedNull,
                             argExprs[i],
-                            tempBlockType(argExprs[1-i]->Iex.RdTmp.tmp, 0),
-                            numVals);
+                            tempBlockType(argExprs[1-i]->Iex.RdTmp.tmp, 0));
             shadowInputs[i] = runITE(sbOut, loadedNull,
                                      freshInput,
                                      shadowInputs[i]);
@@ -121,12 +118,9 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
         } else {
           inputsPreexistingStatic[i] = DefinitelyFalse;
           inputsPreexistingDynamic[i] = NULL;
-          int numVals =
-            inferOtherNumChannels(i, argExprs[1-i], op_code);
           shadowInputs[i] =
             runMakeInput(sbOut, argExprs[i],
-                         tempBlockType(argExprs[1-i]->Iex.RdTmp.tmp, 0),
-                         numVals);
+                         tempBlockType(argExprs[1-i]->Iex.RdTmp.tmp, 0));
         }
       }
       // To make sure we don't accidentally use this in any guarded
@@ -142,11 +136,9 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       // You better make sure you handle all the cases where this
       // could be false lower down.
       if (inferredPrecision != Vt_Unknown){
-        int num_vals =
-          inferOtherNumChannels(0, shadowInputs[1], op_code);
         shadowInputs[0] =
           runMakeInputG(sbOut, inputPreexisting, argExprs[0],
-                        inferredPrecision, num_vals);
+                        inferredPrecision);
       } else {
         shadowInputs[0] = NULL;
       }
@@ -164,12 +156,9 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       // could be false lower down.
       ValueType inferredPrecision = opArgPrecision(op_code);
       if (inferredPrecision != Vt_Unknown){
-        int numChannels = inferOtherNumChannels(1, shadowInputs[0],
-                                                op_code);
         shadowInputs[1] =
           runMakeInputG(sbOut, inputPreexisting, argExprs[1],
-                        inferredPrecision,
-                        numChannels);
+                        inferredPrecision);
       } else {
         shadowInputs[1] = NULL;
       }
@@ -199,9 +188,7 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
         if (inferredPrecision != Vt_Unknown){
           IRExpr* freshInput =
             runMakeInputG(sbOut, shouldMake, argExprs[i],
-                          inferredPrecision,
-                          inferOtherNumChannels(i, argExprs[i-1],
-                                                op_code));
+                          inferredPrecision);
           shadowInputs[i] =
             runITE(sbOut, shouldMake, freshInput, shadowInputs[i]);
         }
