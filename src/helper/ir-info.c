@@ -524,7 +524,9 @@ int inferOtherNumChannels(int inferIndex, IRExpr* arg, IROp op_code){
         tl_assert(tempBlockType(tmp, 1) == Vt_Single);
         return 4;
       } else {
-        tl_assert(tempBlockType(tmp, 1) == Vt_NonFloat);
+        tl_assert2(tempBlockType(tmp, 1) == Vt_NonFloat,
+                   "t%d: Type 0 is %s, Type 1 is %s",
+                   tmp, typeName(otherArgType), typeName(tempBlockType(tmp, 1)));
         return 2;
       }
     } else {
