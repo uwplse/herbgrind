@@ -232,7 +232,7 @@ void instrumentPutI(IRSB* sbOut,
   for(int i = 0; i < INT(dest_size); ++i){
     dest_addrs[i] =
       mkArrayLookupExpr(sbOut, arrayBase, varOffset,
-                        (constOffset * INT(dest_size)) + i,
+                        (constOffset * INT(dest_size) * sizeof(float)) + i,
                         numElems, Ity_F32);
     IRExpr* oldVal = runGetTSValDynamic(sbOut, dest_addrs[i]);
     addSVDisown(sbOut, oldVal);
@@ -378,7 +378,7 @@ void instrumentGetI(IRSB* sbOut, IRTemp dest,
   for(int i = 0; i < INT(src_size); ++i){
     src_addrs[i] =
       mkArrayLookupExpr(sbOut, arrayBase, varOffset,
-                        constOffset * INT(src_size) + i, numElems, Ity_F32);
+                        constOffset * INT(src_size) * sizeof(float) + i, numElems, Ity_F32);
   }
   IRExpr* loadedVals[MAX_TEMP_SHADOWS];
   IRExpr* someValNonNull = IRExpr_Const(IRConst_U1(False));
