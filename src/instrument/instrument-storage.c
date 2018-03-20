@@ -317,21 +317,44 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
   }
     break;
   case Ss_Unknown:{
-    IRExpr* loadedVals[MAX_TEMP_SHADOWS];
-    IRExpr* someValNonNull = IRExpr_Const(IRConst_U1(False));
-    for(int i = 0; i < INT(src_size); ++i){
-      int tsAddr = tsSrc + i * sizeof(float);
-      if (tsShadowStatus[tsAddr] == Ss_Unshadowed ||
-          !tsAddrCanHaveShadow(tsAddr, instrIdx)){
-        loadedVals[i] = mkU64(0);
-      } else {
-        loadedVals[i] = runGetTSVal(sbOut, tsAddr, instrIdx);
-        someValNonNull = runOr(sbOut, someValNonNull,
-                               runNonZeroCheck64(sbOut, loadedVals[i]));
+    // Special case this because we can generate slightly more
+    // efficient VEX this way. Unfortunately this kind of tweaking is
+    // necessary to keep superblocks under the hard cap on number of
+    // statements.
+    if (INT(src_size) == 1){
+      IRExpr* loadedVal = runGetTSVal(sbOut, tsSrc, instrIdx);
+      IRExpr* loadedValNonNull = runNonZeroCheck64(sbOut, loadedVal);
+      IRExpr* temp = runMkShadowTempValuesG(sbOut, loadedValNonNull,
+                                            src_size, &loadedVal);
+      addStoreTemp(sbOut, temp, dest);
+    } else {
+      IRExpr* loadedVals[MAX_TEMP_SHADOWS];
+      IRExpr* someValNonNull32 = NULL;
+      Bool someValChecked = False;
+      for(int i = 0; i < INT(src_size); ++i){
+        int tsAddr = tsSrc + i * sizeof(float);
+        if (!tsAddrCanBeShadowed(tsAddr, instrIdx)){
+          loadedVals[i] = mkU64(0);
+        } else {
+          loadedVals[i] = runGetTSVal(sbOut, tsAddr, instrIdx);
+          IRExpr* thisValNonNull32 =
+            runUnop(sbOut, Iop_1Uto32,
+                    runNonZeroCheck64(sbOut, loadedVals[i]));
+          if (!someValChecked){
+            someValNonNull32 = thisValNonNull32;
+            someValChecked = True;
+          } else {
+            someValNonNull32 = runBinop(sbOut, Iop_Or32,
+                                        someValNonNull32,
+                                        thisValNonNull32);
+          }
+        }
       }
+      tl_assert(someValNonNull32 != NULL);
+      IRExpr* someValNonNull = runUnop(sbOut, Iop_32to1, someValNonNull32);
+      IRExpr* temp = runMkShadowTempValuesG(sbOut, someValNonNull, src_size, loadedVals);
+      addStoreTemp(sbOut, temp, dest);
     }
-    IRExpr* temp = runMkShadowTempValuesG(sbOut, someValNonNull, src_size, loadedVals);
-    addStoreTemp(sbOut, temp, dest);
   }
     break;
   case Ss_Unshadowed:
