@@ -144,7 +144,7 @@ void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
     // (meaning it's been overwritten by a non-float this block), then
     // we don't need to bother trying to clear it or change it's
     // static info here
-    if (tsAddrCanHaveShadow(dest_addr, instrIdx)){
+    if (tsAddrCanBeShadowed(dest_addr, instrIdx)){
       IRExpr* oldVal = runGetTSVal(sbOut, dest_addr, instrIdx);
       // If we don't know whether or not it's a shadowed float at
       // runtime, we'll do a runtime check to see if there is a shadow
@@ -292,9 +292,10 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
 
   ShadowStatus targetStatus = Ss_Unshadowed;
   for(int i = 0; i < INT(src_size); ++i){
-    if (tsShadowStatus[tsSrc + i] == Ss_Shadowed){
+    int tsAddr = tsSrc + i * sizeof(float);
+    if (tsShadowStatus[tsAddr] == Ss_Shadowed){
       targetStatus = Ss_Shadowed;
-    } else if (tsShadowStatus[tsSrc + i] == Ss_Unknown &&
+    } else if (tsAddrCanBeShadowed(tsAddr, instrIdx) &&
                targetStatus != Ss_Shadowed){
       targetStatus = Ss_Unknown;
     }
@@ -305,7 +306,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
     IRExpr* vals[MAX_TEMP_SHADOWS];
     for(int i = 0; i < INT(src_size); ++i){
       int src_addr = tsSrc + i * sizeof(float);
-      if (tsAddrCanHaveShadow(src_addr, instrIdx)){
+      if (tsAddrCanBeShadowed(src_addr, instrIdx)){
         vals[i] = runGetTSVal(sbOut, src_addr, instrIdx);
       } else {
         vals[i] = mkU64(0);
@@ -569,7 +570,7 @@ IRExpr* runLoadTemp(IRSB* sbOut, int idx){
   return runLoad64C(sbOut, &(shadowTemps[idx]));
 }
 IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc, int instrIdx){
-  tl_assert(tsAddrCanHaveShadow(tsSrc, instrIdx));
+  tl_assert(tsAddrCanBeShadowed(tsSrc, instrIdx));
   IRExpr* val = runLoad64C(sbOut,
                            &(shadowThreadState[VG_(get_running_tid)()][tsSrc]));
   /* if (PRINT_VALUE_MOVES){ */
@@ -615,7 +616,7 @@ void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal, int instrIdx){
   if (PRINT_VALUE_MOVES){
     IRExpr* shouldPrintAtAll;
     IRExpr* valueNonNull = runNonZeroCheck64(sbOut, newVal);
-    if (tsAddrCanHaveShadow(tsDest, instrIdx)){
+    if (tsAddrCanBeShadowed(tsDest, instrIdx)){
       IRExpr* existing = runGetTSVal(sbOut, tsDest, instrIdx);
       IRExpr* overwriting = runNonZeroCheck64(sbOut, existing);
       shouldPrintAtAll = runOr(sbOut, overwriting, valueNonNull);

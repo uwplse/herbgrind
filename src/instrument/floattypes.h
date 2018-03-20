@@ -121,7 +121,7 @@ Bool refineTSType(int tempIdx, int instrIdx, ValueType type);
 
 ValueType tsType(Int tsAddr, int instrIdx);
 ValueType inferTSBlockType(int tsAddr, int instrIdx, FloatBlocks size);
-Bool tsAddrCanHaveShadow(Int tsAddr, int instrIdx);
+Bool tsAddrCanBeShadowed(Int tsAddr, int instrIdx);
 Bool tsHasStaticShadow(Int tsAddr, int instrIdx);
 
 int numTempValues(IRSB* sbOut, int idx);

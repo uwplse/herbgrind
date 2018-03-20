@@ -241,8 +241,9 @@ FloatBlocks loadConversionSize(IRLoadGOp conversion){
   }
 }
 
-Bool tsAddrCanHaveShadow(Int tsAddr, int instrIdx){
-  return tsType(tsAddr, instrIdx) != Vt_NonFloat;
+Bool tsAddrCanBeShadowed(Int tsAddr, int instrIdx){
+  return tsType(tsAddr, instrIdx) != Vt_NonFloat &&
+    tsShadowStatus[tsAddr] != Ss_Unshadowed;
 }
 Bool tsHasStaticShadow(Int tsAddr, int instrIdx){
   return tsShadowStatus[tsAddr] == Ss_Shadowed;
