@@ -965,9 +965,9 @@ Bool isSpecialOp(IROp op_code){
   case Iop_AndV128:
   case Iop_OrV128:
   case Iop_NotV128:
-  case Iop_Shr64:
-  case Iop_Shl64:
-  case Iop_Sar64:
+  /* case Iop_Shr64: */
+  /* case Iop_Shl64: */
+  /* case Iop_Sar64: */
     return True;
   default:
     return False;
