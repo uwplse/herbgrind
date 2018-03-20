@@ -114,12 +114,22 @@ ShadowValue* getTS(Int idx){
   return result;
 }
 VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, FloatBlocks numBlocks){
-  ShadowTemp* newTemp = mkShadowTemp(numBlocks);
+  ShadowValue* values[MAX_TEMP_SHADOWS];
+  Bool atLeastOneNonNull = False;
   for(int i = 0; i < INT(numBlocks); ++i){
-    newTemp->values[i] = getMemShadow(memSrc + i * sizeof(float));
-    ownShadowValue(newTemp->values[i]);
+    values[i] = getMemShadow(memSrc + i * sizeof(float));
+    atLeastOneNonNull = atLeastOneNonNull || values[i] != NULL;
   }
-  return newTemp;
+  if (atLeastOneNonNull){
+    ShadowTemp* newTemp = mkShadowTemp(numBlocks);
+    for(int i = 0; i < INT(numBlocks); ++i){
+      newTemp->values[i] = values[i];
+      ownShadowValue(values[i]);
+    }
+    return newTemp;
+  } else {
+    return NULL;
+  }
 }
 VG_REGPARM(1) ShadowValue* getMemShadow(Addr64 addr){
   int key = addr % LARGE_PRIME;
