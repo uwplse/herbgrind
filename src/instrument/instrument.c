@@ -110,6 +110,9 @@ void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){
 void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
                          Addr stAddr, Addr blockAddr,
                          int stIdx){
+  if (dummy){
+    return;
+  }
   switch(stmt->tag){
   case Ist_NoOp:
   case Ist_IMark:
