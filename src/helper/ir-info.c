@@ -293,6 +293,10 @@ int numChannelsIn(IROp op_code){
   case Iop_SqrtF32:
   case Iop_CmpF64:
   case Iop_CmpF32:
+  case Iop_F64toI32S:
+  case Iop_F64toI32U:
+  case Iop_F64toI64S:
+  case Iop_F64toI64U:
     return 1;
     // Ternary Ops
   case Iop_Add32Fx8:
@@ -399,6 +403,7 @@ int numSIMDOperands(IROp op_code){
   case Iop_TruncF64asF32:
   case Iop_ReinterpF64asI64:
   case Iop_I32StoF64:
+  case Iop_I32UtoF64:
   case Iop_F64toI32S:
     return 1;
     // Binary Ops
@@ -456,6 +461,10 @@ int numSIMDOperands(IROp op_code){
   case Iop_CmpUN32F0x4:
   case Iop_CmpEQ64F0x2:
   case Iop_CmpEQ32F0x4:
+  case Iop_I64StoF64:
+  case Iop_I64UtoF64:
+  case Iop_I64UtoF32:
+  case Iop_I32UtoF32:
     return 1;
     // Ternary Ops
   case Iop_Add32Fx8:
