@@ -1141,10 +1141,17 @@ void inferTypes(IRSB* sbIn){
               }
             }
             break;
-          case Iex_Const:
+          case Iex_Const:{
+            ValueType valType = constType(expr->Iex.Const.con);
             for(int i = 0; i < INT(tempSize(sbIn->tyenv, destTemp)); ++i){
-              dirty |= refineTempBlockType(destTemp, i, constType(expr->Iex.Const.con));
+              if (valType == Vt_Double &&
+                  i % 2 == 1){
+                dirty |= refineTempBlockType(destTemp, i, Vt_NonFloat);
+              } else {
+                dirty |= refineTempBlockType(destTemp, i, valType);
+              }
             }
+          }
             break;
           case Iex_CCall:
             break;
