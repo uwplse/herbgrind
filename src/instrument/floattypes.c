@@ -106,8 +106,8 @@ ValueType exprBlockType(IRExpr* expr, int blockIdx){
 Bool refineTempBlockType(int tempIdx, int blockIdx, ValueType type){
   tl_assert2(tempIdx >= 0 && tempIdx < MAX_TEMPS,
              "Temp index %d is invalid!!\n", tempIdx);
-  /* VG_(printf)("Refining type of t%d from %s with %s\n", */
-  /*             tempIdx, typeName(tempTypes[tempIdx]), typeName(type)); */
+  /* VG_(printf)("Refining type of t%d[%d] from %s with %s\n", */
+  /*             tempIdx, blockIdx, typeName(tempTypes[tempIdx][blockIdx]), typeName(type)); */
   ValueType refinedType = typeMeet(type, tempBlockType(tempIdx, blockIdx));
   if (tempTypes[tempIdx][blockIdx] == refinedType){
     return False;
