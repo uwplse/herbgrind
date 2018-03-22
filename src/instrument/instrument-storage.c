@@ -877,13 +877,12 @@ IRExpr* mkArrayLookupExpr(IRSB* sbOut,
                           Int bias, Int len,
                           IRType elemSize){
   // Set op the temps to hold all the different intermediary values.
-  IRExpr* added = runBinop(sbOut, Iop_Add64,
-                           runUnop(sbOut, Iop_32Uto64, idx),
-                           mkU64(bias < 0 ? bias + len : bias));
-  IRExpr* divmod = runBinop(sbOut,
-                            Iop_DivModU64to32,
-                            added,
-                            mkU32(len));
+  IRExpr* idx64 = runUnop(sbOut, Iop_32Uto64, idx);
+  int regularizedBias = (bias % len) < 0 ? (bias % len) + len : (bias % len);
+  IRExpr* biasExpr = mkU64(regularizedBias);
+  IRExpr* added = runBinop(sbOut, Iop_Add64, idx64, biasExpr);
+  IRExpr* divmod = runBinop(sbOut, Iop_DivModU64to32,
+                            added, mkU32(len));
   IRExpr* index =
     runUnop(sbOut,
             Iop_32Uto64,
