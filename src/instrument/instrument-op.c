@@ -280,7 +280,7 @@ void handleExitFloatOp(IRSB* sbOut, IROp op_code,
       IRDirty* dirty =
         unsafeIRDirty_0_N(2, "checkConvert",
                           VG_(fnptr_to_fnentry)(checkConvert),
-                          mkIRExprVec_3(mkU64(argPrecision),
+                          mkIRExprVec_3(mkU64(op_code),
                                         mkU64(argTemp),
                                         mkU64(curAddr)));
       dirty->mFx = Ifx_Read;

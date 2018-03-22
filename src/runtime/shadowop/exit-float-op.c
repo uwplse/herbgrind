@@ -205,9 +205,9 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
     }
   }
 }
-VG_REGPARM(3) void checkConvert(ValueType argPrecision, IRTemp tmp,
+VG_REGPARM(3) void checkConvert(IROp_Extended op, IRTemp tmp,
                                 Addr curAddr){
-  ShadowTemp* arg = getArg(0, 1, tmp);
+  ShadowTemp* arg = getArg(0, op, tmp);
   int correctResult = (int)getDouble(arg->values[0]->real);
   int computedValue =
     *((int*)&computedResult.f[0]);
