@@ -8,6 +8,10 @@ CC ?= gcc
 # NOTE : does not build mini-nocall.sout (trouble on osx)
 all: $(COUT)
 
+testprog.out: testprog.c
+	$(CC) -o $@ $< $(FLAGS) -lmpfr
+	chmod u+x $@
+
 %.out: %.c
 	$(CC) -o $@ $< $(FLAGS)
 	chmod u+x $@
