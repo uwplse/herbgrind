@@ -304,18 +304,23 @@ void handleSpecialOp(IRSB* sbOut, IROp op_code,
                      IRExpr** argExprs, IRTemp dest,
                      Addr curAddr, Addr block_addr){
   switch(op_code){
-  case Iop_I32StoF64:
-  case Iop_I64StoF64:
   case Iop_AndV128:
   case Iop_OrV128:
   case Iop_NotV128:
-  case Iop_Shr64:
-  case Iop_Shl64:
-  case Iop_Sar64:
-    tempShadowStatus[dest] = Ss_Unknown;
+  /* case Iop_Shr64: */
+  /* case Iop_Shl64: */
+  /* case Iop_Sar64: */
+  case Iop_I32StoF64:
+  case Iop_I64StoF64:
+    tempShadowStatus[dest] = Ss_Unshadowed;
     break;
   case Iop_XorV128:
-    instrumentPossibleNegate(sbOut, argExprs, dest, curAddr, block_addr);
+    if (tempShadowStatus[src] == Ss_Unshadowed){
+      tempShadowStatus[dest] == Ss_Unshadowed;
+    } else {
+      instrumentPossibleNegate(sbOut, argExprs, dest, curAddr, block_addr);
+      tempShadowStatus[dest] = Ss_Unknown;
+    }
     break;
   default:
     tl_assert(0);
