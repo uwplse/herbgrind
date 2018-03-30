@@ -366,7 +366,8 @@ ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
   ConcExpr* result;
   if (stack_empty(branchCExprs[nargs-1])){
     result = VG_(malloc)("expr", sizeof(ConcExpr));
-    result->branch.args = VG_(malloc)("expr args", sizeof(ConcExpr*) * nargs);
+    result->branch.args = VG_(perm_malloc)(sizeof(ConcExpr*) * nargs,
+                                           VG_(alignof)(ConcExpr*)));
     result->branch.nargs = nargs;
     result->type = Node_Branch;
   } else {
