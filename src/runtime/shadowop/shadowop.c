@@ -319,10 +319,21 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   return result;
 }
 
-FloatBlocks numOpBlocks(IROp op){
-  IRType destType;
-  IRType argTypes[4];
-  typeOfPrimop(op, &destType,
-               &(argTypes[0]), &(argTypes[1]), &(argTypes[2]), &(argTypes[3]));
-  return typeSize(destType);
+FloatBlocks numOpBlocks(IROp_Extended op){
+  if (op >= (IROp_Extended)Iop_LAST){
+    switch(op){
+    case IEop_Neg32F0x4:
+    case IEop_Neg64F0x2:
+      return FB(4);
+    default:
+      tl_assert(0);
+      return FB(0);
+    }
+  } else {
+    IRType destType;
+    IRType argTypes[4];
+    typeOfPrimop(op, &destType,
+                 &(argTypes[0]), &(argTypes[1]), &(argTypes[2]), &(argTypes[3]));
+    return typeSize(destType);
+  }
 }
