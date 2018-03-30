@@ -44,6 +44,7 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
   ShadowOpInfo* opInfo = infoInstance->info;
   // Make sure the op code is sane, so that things don't go bonkers
   // later.
+  tl_assert(((IROp)opInfo->op_code) > Iop_INVALID);
   tl_assert(opInfo->op_code <
             IEop_REALLY_LAST_FOR_REAL_GUYS);
 

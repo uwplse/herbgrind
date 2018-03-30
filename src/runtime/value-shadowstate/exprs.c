@@ -147,6 +147,7 @@ int graftPointSymb(SymbExpr* parent, SymbExpr* child){
       local_acc = pre_f(local_acc, expr, pos, map, depth, isGraft);     \
       for(int i = 0; i < expr->branch.nargs; ++i){                      \
         NodePos newPos = rconsPos(pos, i);                              \
+        tl_assert(expr->branch.nargs > i);
         SymbExpr* childNode = expr->branch.args[i];                     \
         int linkIsGraft = graftPointSymb(expr, childNode);              \
         if (depth < MAX_FOLD_DEPTH){                                    \
@@ -211,6 +212,7 @@ T foldId_##N(T v, SymbExpr* e, NodePos p,                               \
       local_acc = pre_f(local_acc, expr, pos, map, depth, 0);           \
       for(int i = 0; i < expr->branch.nargs; ++i){                      \
         NodePos newPos = rconsPos(pos, i);                              \
+        tl_assert(expr->branch.nargs > i);
         SymbExpr* childNode = expr->branch.args[i];                     \
         int linkIsGraft = graftPointSymb(expr, childNode);              \
         if (depth < MAX_FOLD_DEPTH && !linkIsGraft){                    \
@@ -379,12 +381,15 @@ ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
   result->branch.op = op;
 
   for(int i = 0; i < nargs; ++i){
+    tl_assert(i < result->branch.nargs);
+    tl_assert(result->branch.nargs > i);
     result->branch.args[i] = args[i];
   }
 
   // Grafts
   result->ngrafts = 0;
   for(int i = 0; i < nargs; ++i){
+    tl_assert(i < result->branch.nargs);
     ConcExpr* child = result->branch.args[i];
     if (graftPointConc(result, child)){
 
@@ -401,6 +406,7 @@ ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
   }
   int grafti = 0;
   for(int i = 0; i < nargs; ++i){
+    tl_assert(i < result->branch.nargs);
     ConcExpr* child = result->branch.args[i];
     if (graftPointConc(result, child)){
       result->grafts[grafti].parent = result;
@@ -466,11 +472,14 @@ SymbExpr* concreteToSymbolic(ConcExpr* cexpr){
       VG_(perm_malloc)(sizeof(SymbExpr*) * cexpr->branch.nargs,
                        vg_alignof(SymbExpr*));
     for(int i = 0; i < cexpr->branch.nargs; ++i){
+      tl_assert(i < cexpr->branch.nargs);
       ConcExpr* arg = cexpr->branch.args[i];
       if (arg->type == Node_Leaf){
+        tl_assert(i < result->branch.nargs);
         result->branch.args[i] = mkFreshSymbolicLeaf(True, arg->value);
       } else {
         tl_assert(arg->branch.op->expr != NULL);
+        tl_assert(i < result->branch.nargs);
         result->branch.args[i] = arg->branch.op->expr;
       }
     }
@@ -564,6 +573,7 @@ Group pruneGroupToValidVars(Group group, SymbExpr* structure){
         case Iop_MulF128:
         case Iop_MulF32:
         case Iop_MulF64r32:{
+          tl_assert(curExpr->branch.nargs > 1);
           SymbExpr* arg0 = curExpr->branch.args[0];
           SymbExpr* arg1 = curExpr->branch.args[1];
           if ((arg0->isConst && arg0->constVal == 0.0) ||
@@ -576,6 +586,7 @@ Group pruneGroupToValidVars(Group group, SymbExpr* structure){
           break;
         }
       }
+      tl_assert(pos->data[i] < curExpr->branch.nargs);
       curExpr = curExpr->branch.args[pos->data[i]];
     }
     if (!curExpr->isConst){
@@ -973,6 +984,7 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
       case Iop_MulF32:
       case Iop_MulF64r32:
         {
+          tl_assert(curExpr->branch.nargs > 1);
           SymbExpr* arg0 = curExpr->branch.args[0];
           SymbExpr* arg1 = curExpr->branch.args[1];
           if (arg0->isConst && arg0->constVal == 1.0){
@@ -1021,6 +1033,7 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
       case Iop_AddF32:
       case Iop_AddF64r32:
         {
+          tl_assert(curExpr->branch.nargs > 1);
           SymbExpr* arg0 = curExpr->branch.args[0];
           SymbExpr* arg1 = curExpr->branch.args[1];
           if (arg0->isConst && arg0->constVal == 0.0){
@@ -1065,6 +1078,7 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
       case Iop_SubF32:
       case Iop_SubF64r32:
         {
+          tl_assert(curExpr->branch.nargs > 1);
           SymbExpr* arg0 = curExpr->branch.args[0];
           SymbExpr* arg1 = curExpr->branch.args[1];
           if (arg1->isConst && arg1->constVal == 0.0){
@@ -1088,6 +1102,7 @@ void recursivelyPopulateRanges(RangeRecord* totalRanges, RangeRecord* problemati
     }
   }
   for(int i = 0; i < curExpr->branch.nargs; ++i){
+    tl_assert(curExpr->branch.nargs > i);
     SymbExpr* childExpr = curExpr->branch.args[i];
     NodePos childPos = rconsPos(curPos, i);
     if (childExpr->type == Node_Leaf || max_depth == 1){
@@ -1176,6 +1191,7 @@ void ppConcExpr(ConcExpr* expr){
     VG_(printf)("(%s", opSym(expr->branch.op));
     for (int i = 0; i < expr->branch.nargs; ++i){
       VG_(printf)(" ");
+      tl_assert(expr->branch.nargs > i);
       ppConcExpr(expr->branch.args[i]);
     }
     VG_(printf)(")");
@@ -1190,10 +1206,12 @@ void ppConcExprNoGrafts(ConcExpr* expr){
                 opSym(expr->branch.op));
     for (int i = 0; i < expr->branch.nargs; ++i){
       VG_(printf)(" ");
+      tl_assert(expr->branch.nargs > i);
       ConcExpr* childNode = expr->branch.args[i];
       if (graftPointConc(expr, childNode)){
         VG_(printf)("[_]");
       } else {
+        tl_assert(expr->branch.nargs > i);
         ppConcExprNoGrafts(expr->branch.args[i]);
       }
     }
@@ -1314,6 +1332,7 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
         {
           SymbExpr* arg0 = expr->branch.args[0];
           SymbExpr* arg1 = expr->branch.args[1];
+          tl_assert(expr->branch.nargs > 1);
           if (arg0->isConst && arg0->constVal == 1.0){
             recursivelyToString(arg1, buf, varMap,
                                 parent_func, curColor,
@@ -1350,6 +1369,7 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
         {
           SymbExpr* arg0 = expr->branch.args[0];
           SymbExpr* arg1 = expr->branch.args[1];
+          tl_assert(expr->branch.nargs > 1);
           if (arg0->isConst && arg0->constVal == 0.0){
             recursivelyToString(arg1, buf, varMap,
                                 parent_func, curColor,
@@ -1380,6 +1400,7 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
         {
           SymbExpr* arg0 = expr->branch.args[0];
           SymbExpr* arg1 = expr->branch.args[1];
+          tl_assert(expr->branch.nargs > 1);
           if (arg0->isConst && arg0->constVal == 0.0){
             const char* fnname;
             if (!(VG_(get_fnname)(expr->branch.op->op_addr, &fnname))){
@@ -1440,6 +1461,7 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
     printBBuf(buf, "(%s", opSym(expr->branch.op));
 
     for(int i = 0; i < expr->branch.nargs; i++){
+      tl_assert(expr->branch.nargs > i);
       recursivelyToString(expr->branch.args[i], buf, varMap,
                           fnname, curColor,
                           rconsPos(curPos, i),
