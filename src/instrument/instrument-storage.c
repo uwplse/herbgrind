@@ -63,7 +63,7 @@ void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src){
 
   // Copy across the new temp and increment it's ref count.
   // Increment the ref count of the new temp
-  addStoreTempCopy(sbOut, newShadowTemp, dest, tempTypeArray(src));
+  addStoreTempCopy(sbOut, newShadowTemp, dest);
 }
 void instrumentWriteConst(IRSB* sbOut, IRTemp dest,
                           IRConst* con){
@@ -103,13 +103,9 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
     tempShadowStatus[dest] = Ss_Unknown;
   }
 
-  ValueType* trueType = exprTypeArray(trueExpr);
-  ValueType* falseType = exprTypeArray(falseExpr);
   IRExpr* resultSt =
     runITE(sbOut, cond, trueSt, falseSt);
-  ValueType joinedTypes[MAX_TEMP_SHADOWS];
-  typeJoins(trueType, falseType, tempSize(sbOut->tyenv, dest), joinedTypes);
-  addStoreTempCopy(sbOut, resultSt, dest, joinedTypes);
+  addStoreTempCopy(sbOut, resultSt, dest);
 }
 void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data, int instrIdx){
   // This procedure adds instrumentation to sbOut which shadows the
@@ -902,7 +898,7 @@ IRExpr* mkArrayLookupExpr(IRSB* sbOut,
   return lookupExpr;
 }
 
-void addStoreTempCopy(IRSB* sbOut, IRExpr* original, IRTemp dest, ValueType* types){
+void addStoreTempCopy(IRSB* sbOut, IRExpr* original, IRTemp dest){
   IRTemp newShadowTempCopy = newIRTemp(sbOut->tyenv, Ity_I64);
   IRExpr* originalNonNull = runNonZeroCheck64(sbOut, original);
   IRDirty* copyShadowTempDirty =

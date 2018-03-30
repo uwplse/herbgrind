@@ -104,8 +104,7 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard,
                    int idx);
 void addStoreTempNonFloat(IRSB* sbOut, int idx);
 void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx);
-void addStoreTempCopy(IRSB* sbOut, IRExpr* original,
-                      IRTemp dest, ValueType* types);
+void addStoreTempCopy(IRSB* sbOut, IRExpr* original, IRTemp dest);
 
 IRExpr* getBucketAddr(IRSB* sbOut, IRExpr* memAddr);
 typedef struct {
