@@ -147,7 +147,6 @@ int graftPointSymb(SymbExpr* parent, SymbExpr* child){
       local_acc = pre_f(local_acc, expr, pos, map, depth, isGraft);     \
       for(int i = 0; i < expr->branch.nargs; ++i){                      \
         NodePos newPos = rconsPos(pos, i);                              \
-        tl_assert(expr->branch.nargs > i);
         SymbExpr* childNode = expr->branch.args[i];                     \
         int linkIsGraft = graftPointSymb(expr, childNode);              \
         if (depth < MAX_FOLD_DEPTH){                                    \
@@ -212,7 +211,6 @@ T foldId_##N(T v, SymbExpr* e, NodePos p,                               \
       local_acc = pre_f(local_acc, expr, pos, map, depth, 0);           \
       for(int i = 0; i < expr->branch.nargs; ++i){                      \
         NodePos newPos = rconsPos(pos, i);                              \
-        tl_assert(expr->branch.nargs > i);
         SymbExpr* childNode = expr->branch.args[i];                     \
         int linkIsGraft = graftPointSymb(expr, childNode);              \
         if (depth < MAX_FOLD_DEPTH && !linkIsGraft){                    \
@@ -367,7 +365,7 @@ ConcExpr* mkBranchConcExpr(double value, ShadowOpInfo* op,
   if (stack_empty(branchCExprs[nargs-1])){
     result = VG_(malloc)("expr", sizeof(ConcExpr));
     result->branch.args = VG_(perm_malloc)(sizeof(ConcExpr*) * nargs,
-                                           VG_(alignof)(ConcExpr*)));
+                                           vg_alignof(ConcExpr*));
     result->branch.nargs = nargs;
     result->type = Node_Branch;
   } else {

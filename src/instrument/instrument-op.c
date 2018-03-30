@@ -315,8 +315,9 @@ void handleSpecialOp(IRSB* sbOut, IROp op_code,
     tempShadowStatus[dest] = Ss_Unshadowed;
     break;
   case Iop_XorV128:
-    if (tempShadowStatus[src] == Ss_Unshadowed){
-      tempShadowStatus[dest] == Ss_Unshadowed;
+    if (!canBeShadowed(sbOut->tyenv, argExprs[0]) &&
+        !canBeShadowed(sbOut->tyenv, argExprs[1])){
+      tempShadowStatus[dest] = Ss_Unshadowed;
     } else {
       instrumentPossibleNegate(sbOut, argExprs, dest, curAddr, block_addr);
       tempShadowStatus[dest] = Ss_Unknown;
