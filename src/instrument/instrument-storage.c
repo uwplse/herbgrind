@@ -79,22 +79,32 @@ void instrumentITE(IRSB* sbOut, IRTemp dest,
   IRExpr* trueSt;
   IRExpr* falseSt;
   ShadowStatus trueShadowed, falseShadowed;
-  if (!canBeShadowed(sbOut->tyenv, trueExpr)){
-    trueSt = mkU64(0);
-    trueShadowed = Ss_Unshadowed;
-  } else {
+  if (canBeShadowed(sbOut->tyenv, trueExpr)){
     tl_assert(trueExpr->tag == Iex_RdTmp);
+    tl_assert2(trueExpr->Iex.RdTmp.tmp >= 0 &&
+               trueExpr->Iex.RdTmp.tmp < MAX_TEMPS,
+               "Bad temp num for trueExpr! Temp is %d",
+               trueExpr->Iex.RdTmp.tmp);
     trueSt = runLoadTemp(sbOut, trueExpr->Iex.RdTmp.tmp);
     trueShadowed = tempShadowStatus[trueExpr->Iex.RdTmp.tmp];
-  }
-  if (!canBeShadowed(sbOut->tyenv, falseExpr)){
-    falseSt = mkU64(0);
-    falseShadowed = Ss_Unshadowed;
   } else {
+    trueSt = mkU64(0);
+    trueShadowed = False;
+  }
+  if (canBeShadowed(sbOut->tyenv, falseExpr)){
     tl_assert(falseExpr->tag == Iex_RdTmp);
+    tl_assert2(falseExpr->Iex.RdTmp.tmp >= 0 &&
+               falseExpr->Iex.RdTmp.tmp < MAX_TEMPS,
+               "Bad temp num for falseExpr! Temp is %d",
+               falseExpr->Iex.RdTmp.tmp);
     falseSt = runLoadTemp(sbOut, falseExpr->Iex.RdTmp.tmp);
     falseShadowed = tempShadowStatus[falseExpr->Iex.RdTmp.tmp];
+  } else {
+    falseSt = mkU64(0);
+    falseShadowed = False;
   }
+  tl_assert(dest > 0);
+  tl_assert(dest < MAX_TEMPS);
 
   // Propagate the shadow status conservatively
   if (trueShadowed == falseShadowed){
