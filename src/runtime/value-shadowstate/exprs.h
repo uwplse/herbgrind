@@ -48,30 +48,17 @@ typedef enum {
   Node_Leaf
 } NodeType;
 
-typedef struct _ConcGraft {
-  struct _Graft* next;
-  ConcExpr* parent;
-  int childIndex;
-} ConcGraft;
-
 struct _ConcExpr {
   struct _ConcExpr* next;
   int ref_count;
   NodeType type;
   double value;
-  int ngrafts;
-  ConcGraft* grafts;
   struct {
     ShadowOpInfo* op;
     int nargs;
     ConcExpr** args;
   } branch;
 };
-
-typedef struct _SymbGraft {
-  SymbExpr* parent;
-  int childIndex;
-} SymbGraft;
 
 List_H(NodePos, Group);
 Xarray_H(Group, GroupList);
@@ -82,8 +69,6 @@ struct _SymbExpr {
   NodeType type;
   double constVal;
   Bool isConst;
-  int ngrafts;
-  SymbGraft* grafts;
   struct {
     ShadowOpInfo* op;
     int nargs;
@@ -109,9 +94,6 @@ void disownConcExpr(ConcExpr* expr);
 SymbExpr* mkFreshSymbolicLeaf(Bool isConst, double constVal);
 SymbExpr* concreteToSymbolic(ConcExpr* cexpr);
 
-void pushConcGraftStack(ConcGraft* graft, int count);
-ConcGraft* popConcGraftStack(int count);
-
 int hasRepeatedVars(SymbExpr* expr);
 SymbExpr* varSwallow(SymbExpr* expr);
 
@@ -136,10 +118,8 @@ void ppEquivGroups(GroupList groups);
 const char* opSym(ShadowOpInfo* op);
 void ppConcExprBounded(ConcExpr* expr, int max_depth);
 void ppConcExpr(ConcExpr* expr);
-void ppConcExprNoGrafts(ConcExpr* expr);
 void ppSymbExpr(SymbExpr* expr);
 void ppSymbExprNoVars(SymbExpr* expr);
-void ppSymbExprNoGrafts(SymbExpr* expr);
 
 int numVarNodes(SymbExpr* expr);
 int numRepeatedVars(SymbExpr* expr, GroupList trimmedGroups);
@@ -158,27 +138,11 @@ int writeSymbExprToString(char* buf, SymbExpr* expr,
 
 char* symbExprToStringNoVars(SymbExpr* expr);
 int noVarsVarLength(VarMap* map, NodePos pos);
-int symbExprNoVarsPrintLenGraft(SymbExpr* expr, VarMap* varMap,
-                                NodePos curPos, int depth);
 int symbExprNoVarsPrintLen(SymbExpr* expr);
 int writeVarBlank(char* buf, VarMap* varMap, NodePos curPos);
-int writeGraftsNoVars(char* buf, SymbExpr* expr,
-                      NodePos curPos, VarMap* varMap,
-                      int depth);
 void writeSymbExprToStringNoVars(int buflen, char* buf, SymbExpr* expr);
 
 
-// Without grafts
-char* symbExprToStringNoGrafts(SymbExpr* expr);
-int symbExprGraftPrintLenBlankGrafts(SymbExpr* expr, VarMap* varMap,
-                                     NodePos curPos, int depth);
-int symbExprPrintLenBlankGrafts(SymbExpr* expr, VarMap* varMap,
-                                NodePos curPos, int depth);
-int writeGraftsBlankGrafts(char* buf, SymbExpr* expr,
-                           NodePos curPos, VarMap* varMap, int depth);
-int writeSymbExprToStringBlankGrafts(char* buf, SymbExpr* expr,
-                                     NodePos curPos, VarMap* varMap,
-                                     int depth);
 int floatPrintLen(double f);
 #define MAX_BRANCH_ARGS 3
 #endif

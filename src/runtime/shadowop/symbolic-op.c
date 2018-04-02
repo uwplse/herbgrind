@@ -37,21 +37,6 @@
 
 #define GENERALIZE_DEPTH 2
 
-inline
-ConcExpr* concGraftChild(ConcGraft graft);
-
-inline
-SymbExpr* symbGraftChild(SymbGraft graft);
-
-inline
-ConcExpr* concGraftChild(ConcGraft graft){
-  return graft.parent->branch.args[graft.childIndex];
-}
-inline
-SymbExpr* symbGraftChild(SymbGraft graft){
-  return graft.parent->branch.args[graft.childIndex];
-}
-
 void execSymbolicOp(ShadowOpInfo* opinfo, ConcExpr** result,
                     double computedResult, ShadowValue** args,
                     Bool problematic){
@@ -151,40 +136,38 @@ void generalizeStructure(SymbExpr* symbExpr, ConcExpr* concExpr,
   if (depth == 0){
     return;
   }
-  for(int i = 0; i < symbExpr->ngrafts; ++i){
-    SymbGraft curSymbGraft = symbExpr->grafts[i];
-    ConcGraft curConcGraft = concExpr->grafts[i];
-    SymbExpr* symbMatch = symbGraftChild(curSymbGraft);
-    ConcExpr* concMatch = concGraftChild(curConcGraft);
+  if (symbExpr->isConst){
+    // NaN constants defer to whatever they generalize with
+    if (symbExpr->constVal != symbExpr->constVal){
+      symbExpr->constVal = concExpr->value;
+    } else if (symbExpr->constVal != concExpr->value &&
+               concExpr->value == concExpr->value){
+      symbExpr->isConst = False;
+    }
+  }
+  if (symbExpr->type == Node_Leaf){
+    return;
+  }
 
-    // Check grafts for cutting.
-    if (symbMatch->type == Node_Branch){
-      if (concMatch->type == Node_Leaf ||
-          concMatch->branch.op != symbMatch->branch.op){
-        curSymbGraft.parent->branch.args[curSymbGraft.childIndex] =
-          mkFreshSymbolicLeaf(symbMatch->isConst,
-                              symbMatch->constVal);
-        symbMatch = symbGraftChild(curSymbGraft);
+  tl_assert(symbExpr->type == Node_Branch);
+  tl_assert(concExpr->type == Node_Branch);
+  tl_assert(symbExpr->branch.nargs == concExpr->branch.nargs);
+  for(int i = 0; i < symbExpr->branch.nargs; ++i){
+    SymbExpr* symbChild = symbExpr->branch.args[i];
+    ConcExpr* concChild = concExpr->branch.args[i];
+
+    if (symbChild->type == Node_Branch){
+      if (concChild->type == Node_Leaf ||
+          concChild->branch.op != symbChild->branch.op){
+        symbExpr->branch.args[i] =
+          mkFreshSymbolicLeaf(symbChild->isConst, symbChild->constVal);
+        symbChild = symbExpr->branch.args[i];
         if (!generalize_to_constant){
-          symbMatch->isConst = False;
+          symbChild->isConst = False;
         }
       }
     }
-    // Check nodes for variance
-    if (symbMatch->isConst){
-      if (symbMatch->constVal != symbMatch->constVal){
-        symbMatch->constVal = concMatch->value;
-      } else if (!NaNSafeEquals(symbMatch->constVal, concMatch->value) &&
-                 concMatch->value == concMatch->value){
-        symbMatch->isConst = False;
-      }
-    }
-
-    // Recurse
-    if (concMatch->type == Node_Branch &&
-        symbMatch->type == Node_Branch){
-      generalizeStructure(symbMatch, concMatch, depth - 1);
-    }
+    generalizeStructure(symbChild, concChild, depth - 1);
   }
 }
 
@@ -270,44 +253,34 @@ void getGrouped(GroupList groupList, VgHashTable* valMap,
 void getGrouped(GroupList groupList, VgHashTable* valMap,
                 ConcExpr* concExpr, SymbExpr* symbExpr,
                 NodePos curPos, int maxDepth){
-  tl_assert2(concExpr->ngrafts == symbExpr->ngrafts,
-             "concrete expression has %d grafts, "
-             "but symbolic expression has %d\n",
-             concExpr->ngrafts, symbExpr->ngrafts);
-  for(int i = 0; i < concExpr->ngrafts; ++i){
-    ConcGraft curGraft = concExpr->grafts[i];
-    SymbGraft symbGraft = symbExpr->grafts[i];
-    ConcExpr* curNode = curGraft.parent;
-    SymbExpr* symbNode = symbGraft.parent;
-    NodePos graftPos = rconsPos(curPos, i);
-    double value = concGraftChild(curGraft)->value;
+  tl_assert(symbExpr->type == Node_Branch);
+  tl_assert(concExpr->type == Node_Branch);
+  tl_assert(symbExpr->branch.nargs == concExpr->branch.nargs);
+  for(int i = 0; i < concExpr->branch.nargs; ++i){
+    ConcExpr* concChild = concExpr->branch.args[i];
+    SymbExpr* symbChild = symbExpr->branch.args[i];
+    NodePos newPos = rconsPos(curPos, i);
+    double value = concChild->value;
 
     int existingEntry =
       lookupVal(valMap, value);
     int groupIdx;
     if (existingEntry == -1){
       groupIdx = groupList->size;
-      addValEntry(valMap, concGraftChild(curGraft)->value, groupIdx);
+      addValEntry(valMap, value, groupIdx);
       Group newGroup = NULL;
       XApush(GroupList)(groupList, newGroup);
     } else {
       groupIdx = existingEntry;
     }
     Group* groupLoc = &(groupList->data[groupIdx]);
-    lpush(Group)(groupLoc, graftPos);
+    lpush(Group)(groupLoc, newPos);
 
-    ConcExpr* curChild = concGraftChild(curGraft);
-    SymbExpr* symbChild = symbGraftChild(symbGraft);
-    if (curNode->type == Node_Branch &&
-        symbNode->type == Node_Branch &&
-        curChild->type == Node_Branch &&
+    if (concChild->type == Node_Branch &&
         symbChild->type == Node_Branch &&
-        curChild->branch.op == symbChild->branch.op){
+        concChild->branch.op == symbChild->branch.op){
       if (maxDepth > 1){
-        getGrouped(groupList, valMap,
-                   curNode->branch.args[curGraft.childIndex],
-                   symbNode->branch.args[curGraft.childIndex],
-                   graftPos, maxDepth - 1);
+        getGrouped(groupList, valMap, concChild, symbChild, newPos, maxDepth - 1);
       } else {
         for(int j = 0; j < symbChild->branch.groups->size; ++j){
           Group oldGroup = symbChild->branch.groups->data[j];
@@ -317,7 +290,7 @@ void getGrouped(GroupList groupList, VgHashTable* valMap,
             if (childItem->item->len <
                 max_expr_block_depth){
               lpush(Group)(&newGroup,
-                           appendPos(graftPos, childItem->item));
+                           appendPos(newPos, childItem->item));
             }
           }
           XApush(GroupList)(groupList, newGroup);
@@ -457,11 +430,10 @@ ConcExpr* concExprPosGet(ConcExpr* expr, NodePos pos){
     if (curExpr->type == Node_Leaf){
       return NULL;
     }
-    if (curExpr->ngrafts <= pos->data[i]){
+    if (curExpr->branch.nargs <= pos->data[i]){
       return NULL;
     }
-    ConcGraft curGraft = curExpr->grafts[pos->data[i]];
-    curExpr = curGraft.parent->branch.args[curGraft.childIndex];
+    curExpr = curExpr->branch.args[pos->data[i]];
   }
   return curExpr;
 }
@@ -484,7 +456,7 @@ SymbExpr** symbExprPosGetRef(SymbExpr** expr, NodePos pos){
     if ((*curExpr)->type == Node_Leaf){
       return NULL;
     }
-    if ((*curExpr)->ngrafts <= pos->data[i]){
+    if ((*curExpr)->branch.nargs <= pos->data[i]){
       return NULL;
     }
     curExpr = &((*curExpr)->branch.args[pos->data[i]]);
