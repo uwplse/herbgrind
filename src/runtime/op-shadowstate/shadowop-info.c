@@ -58,6 +58,13 @@ ShadowOpInfo* mkShadowOpInfo(IROp_Extended op_code, OpType type,
   result->op_type = type;
 
   result->expr = NULL;
+  if (nargs != numArgs(result)){
+    printOpInfo(result);
+    VG_(printf)("\n");
+  }
+  tl_assert2(nargs == numArgs(result),
+             "nargs and numArgs don't match! nargs is %d, but numArgs returns %d",
+             nargs, numArgs(result));
   initializeAggregate(&(result->agg), nargs);
   return result;
 }
