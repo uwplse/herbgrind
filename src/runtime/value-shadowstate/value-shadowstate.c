@@ -52,7 +52,7 @@ ShadowTemp* shadowTemps[MAX_TEMPS];
 ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
 TableValueEntry* shadowMemTable[LARGE_PRIME];
 
-Stack* freedTemps[MAX_TEMP_SHADOWS];
+Stack* freedTemps[MAX_TEMP_BLOCKS];
 Stack* freedVals;
 Stack* tableEntries;
 
@@ -60,7 +60,7 @@ Word256 getBytes;
 inline TableValueEntry* mkTableEntry(void);
 
 void initValueShadowState(void){
-  for(int i = 0; i < MAX_TEMP_SHADOWS; ++i){
+  for(int i = 0; i < MAX_TEMP_BLOCKS; ++i){
     freedTemps[i] = mkStack();
   }
   freedVals = mkStack();
@@ -114,7 +114,7 @@ ShadowValue* getTS(Int idx){
   return result;
 }
 VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, FloatBlocks numBlocks){
-  ShadowValue* values[MAX_TEMP_SHADOWS];
+  ShadowValue* values[MAX_TEMP_BLOCKS];
   Bool atLeastOneNonNull = False;
   for(int i = 0; i < INT(numBlocks); ++i){
     values[i] = getMemShadow(memSrc + i * sizeof(float));

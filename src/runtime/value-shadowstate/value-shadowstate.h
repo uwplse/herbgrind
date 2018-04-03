@@ -87,7 +87,7 @@ extern ShadowTemp* shadowTemps[MAX_TEMPS];
 extern ShadowValue* shadowThreadState[MAX_THREADS][MAX_REGISTERS];
 extern TableValueEntry* shadowMemTable[LARGE_PRIME];
 
-extern Stack* freedTemps[MAX_TEMP_SHADOWS];
+extern Stack* freedTemps[MAX_TEMP_BLOCKS];
 extern Stack* freedVals;
 extern Stack* tableEntries;
 extern VgHashTable* valueCacheSingle;

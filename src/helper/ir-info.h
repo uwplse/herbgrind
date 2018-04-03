@@ -53,7 +53,7 @@ Bool isFloatOp(IROp op);
 Bool isExitFloatOp(IROp op);
 Bool isConversionOp(IROp op_code);
 
-#define MAX_TEMP_SHADOWS 8
+#define MAX_TEMP_BLOCKS 8
 
 #define IEop_INVALID (IROp_Extended)(Iop_INVALID)
 

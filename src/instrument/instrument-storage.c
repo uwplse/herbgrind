@@ -309,7 +309,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
   tempShadowStatus[dest] = targetStatus;
   switch(targetStatus){
   case Ss_Shadowed:{
-    IRExpr* vals[MAX_TEMP_SHADOWS];
+    IRExpr* vals[MAX_TEMP_BLOCKS];
     for(int i = 0; i < INT(src_size); ++i){
       int src_addr = tsSrc + i * sizeof(float);
       if (tsAddrCanBeShadowed(src_addr, instrIdx)){
@@ -334,7 +334,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
                                             src_size, &loadedVal);
       addStoreTemp(sbOut, temp, dest);
     } else {
-      IRExpr* loadedVals[MAX_TEMP_SHADOWS];
+      IRExpr* loadedVals[MAX_TEMP_BLOCKS];
       IRExpr* someValNonNull32 = NULL;
       Bool someValChecked = False;
       for(int i = 0; i < INT(src_size); ++i){
@@ -386,7 +386,7 @@ void instrumentGetI(IRSB* sbOut, IRTemp dest,
       mkArrayLookupExpr(sbOut, arrayBase, varOffset,
                         constOffset * INT(src_size) * sizeof(float) + i, numElems, Ity_F32);
   }
-  IRExpr* loadedVals[MAX_TEMP_SHADOWS];
+  IRExpr* loadedVals[MAX_TEMP_BLOCKS];
   IRExpr* someValNonNull = IRExpr_Const(IRConst_U1(False));
   for(int i = 0; i < INT(src_size); ++i){
     loadedVals[i] = runGetTSValDynamic(sbOut, src_addrs[i]);
@@ -743,7 +743,7 @@ QuickBucketResult quickGetBucketG(IRSB* sbOut, IRExpr* guard,
 }
 IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
                           FloatBlocks size, IRExpr* memSrc){
-  QuickBucketResult qresults[MAX_TEMP_SHADOWS];
+  QuickBucketResult qresults[MAX_TEMP_BLOCKS];
   IRExpr* anyNonTrivialChains = mkU1(False);
   IRExpr* allNull_64 = mkU64(1);
   for(int i = 0; i < INT(size); ++i){

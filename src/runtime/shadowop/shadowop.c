@@ -54,11 +54,14 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
 
   // Get the computed and shadow arguments.
   int nargs = numArgs(opInfo);
+  tl_assert(nargs <= 4);
   int numChannels = numChannelsOut(opInfo->op_code);
+  tl_assert(numChannels <= MAX_TEMP_BLOCKS);
   ShadowTemp* args[4];
-  double clientArgs[4][4];
+  double clientArgs[4][MAX_TEMP_BLOCKS];
   for(int i = 0; i < nargs; ++i){
     args[i] = getArg(i, opInfo->op_code, infoInstance->argTemps[i]);
+    tl_assert(INT(args[i]->num_blocks) == INT(numBlocks));
     for (int j = 0; j < numChannels; ++j){
       ValueType argPrecision = opBlockArgPrecision(opInfo->op_code, j / 2);
       clientArgs[j][i] = argPrecision == Vt_Double ?
@@ -71,7 +74,7 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
   int numOperandBlocks =
     numOperandChannels * (opArgPrecision(opInfo->op_code) == Vt_Double ? 2 : 1);
   for(int i = 0; i < numOperandBlocks; ++i){
-    ShadowValue* vals[nargs];
+    ShadowValue* vals[MAX_TEMP_BLOCKS];
     ValueType argPrecision = opArgPrecision(opInfo->op_code);
     if (argPrecision == Vt_Double && i % 2 == 1){
       result->values[i] = NULL;

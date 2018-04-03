@@ -38,7 +38,7 @@
 
 Stack* tsTypeEntries = NULL;
 
-ValueType tempTypes[MAX_TEMPS][MAX_TEMP_SHADOWS];
+ValueType tempTypes[MAX_TEMPS][MAX_TEMP_BLOCKS];
 TSTypeEntry* tsTypes[MAX_REGISTERS];
 ShadowStatus tempShadowStatus[MAX_TEMPS];
 ShadowStatus tsShadowStatus[MAX_REGISTERS];
