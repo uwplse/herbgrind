@@ -130,7 +130,7 @@ void printOpInfo(ShadowOpInfo* opinfo){
   if (opinfo->op_code == 0){
     VG_(printf)("%s", getWrappedName(opinfo->op_type));
   } else {
-    ppIROp(opinfo->op_code);
+    ppIROp_Extended(opinfo->op_code);
   }
   VG_(printf)(" at ");
   ppAddr(opinfo->op_addr);
