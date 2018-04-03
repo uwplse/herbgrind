@@ -304,15 +304,16 @@ ShadowValue* mkShadowValue(ValueType type, double value){
         VG_(printf)("\n");
       }
       setReal(result->real, value);
+
+      ValueCacheEntry* newEntry = (void*)mkTableEntry();
+      newEntry->val = result;
+      newEntry->key = key;
+      VG_(HT_add_node)(type == Vt_Single ? valueCacheSingle : valueCacheDouble,
+                       newEntry);
     }
     if (!no_exprs){
       result->expr = mkLeafConcExpr(value);
     }
-    ValueCacheEntry* newEntry = (void*)mkTableEntry();
-    newEntry->val = result;
-    newEntry->key = key;
-    VG_(HT_add_node)(type == Vt_Single ? valueCacheSingle : valueCacheDouble,
-                     newEntry);
   } else {
     result = existingEntry->val;
     ownShadowValue(result);
