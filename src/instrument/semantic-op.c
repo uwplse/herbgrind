@@ -179,7 +179,7 @@ ShadowOpInfoInstance* getSemanticOpInfoInstance(Addr callAddr, Addr block_addr,
     VG_(HT_gen_lookup)(semanticOpInfoMap, &key, cmpSemOpInfoEntry);
   if (entry == NULL){
     ShadowOpInfo* callInfo =
-      mkShadowOpInfo(op_code, callAddr, block_addr, nargs);
+      mkShadowOpInfo(op_code, OP_INVALID, callAddr, block_addr, nargs);
     entry = VG_(perm_malloc)(sizeof(SemOpInfoEntry),
                              vg_alignof(SemOpInfoEntry));
     entry->call_addr = callAddr;

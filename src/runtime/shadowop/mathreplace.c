@@ -127,8 +127,7 @@ ShadowOpInfo* getWrappedOpInfo(Addr callAddr, OpType opType, int nargs){
     VG_(HT_gen_lookup)(mathreplaceOpInfoMap, &key, cmp_op_entry_by_type);
   if (entry == NULL){
     ShadowOpInfo* callInfo =
-      mkShadowOpInfo(0x0, callAddr, callAddr, nargs);
-    callInfo->op_type = opType;
+      mkShadowOpInfo(0x0, opType, callAddr, callAddr, nargs);
     entry = VG_(perm_malloc)(sizeof(MrOpInfoEntry),
                              vg_alignof(MrOpInfoEntry));
     entry->call_addr = callAddr;

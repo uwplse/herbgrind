@@ -48,12 +48,14 @@ void initOpShadowState(void){
   intMarkMap = VG_(HT_construct)("int mark map");
 }
 
-ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
+ShadowOpInfo* mkShadowOpInfo(IROp_Extended op_code, OpType type,
+                             Addr op_addr, Addr block_addr,
                              int nargs){
   ShadowOpInfo* result = VG_(perm_malloc)(sizeof(ShadowOpInfo), vg_alignof(ShadowOpInfo));
   result->op_code = op_code;
   result->op_addr = op_addr;
   result->block_addr = block_addr;
+  result->op_type = type;
 
   result->expr = NULL;
   initializeAggregate(&(result->agg), nargs);

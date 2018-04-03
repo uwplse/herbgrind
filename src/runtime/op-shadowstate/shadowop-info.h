@@ -99,7 +99,8 @@ typedef struct _semOpInfoEntry {
 
 
 void initOpShadowState(void);
-ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
+ShadowOpInfo* mkShadowOpInfo(IROp_Extended op_code, OpType type,
+                             Addr op_addr, Addr block_addr,
                              int nargs);
 void initializeAggregate(Aggregate* agg, int nargs);
 void initializeErrorAggregate(ErrorAggregate* error_agg);
