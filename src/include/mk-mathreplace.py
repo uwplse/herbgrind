@@ -290,6 +290,9 @@ def write_switch_funcs(f, l):
 
 def write_switch_names(f, l):
     f.write("  switch(op){ \\\n")
+    f.write("  case OP_INVALID: \\\n")
+    f.write("    namevar = \"invalid\"; \\\n")
+    f.write("    break;\\\n")
     for op in l:
         f.write("  case OP_{}: \\\n".format(op.func.upper()))
         f.write("    namevar = \"{}\"; \\\n".format(op.native_func))
