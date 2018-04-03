@@ -181,6 +181,7 @@ def write_mathreplace_funcs(ops, fname):
 
         f.write("// Finally, define an enum for the operations we support.\n")
         f.write("typedef enum {\n")
+        f.write("  OP_INVALID,\n");
         f.write("  // Unary functions\n")
         f.write("  UNARY_OPS_LIST\n")
         f.write("  // Binary\n")
