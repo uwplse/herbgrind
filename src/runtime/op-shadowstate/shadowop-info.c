@@ -58,13 +58,13 @@ ShadowOpInfo* mkShadowOpInfo(IROp_Extended op_code, OpType type,
   result->op_type = type;
 
   result->expr = NULL;
-  if (nargs != numArgs(result)){
+  if (nargs != numFloatArgs(result)){
     printOpInfo(result);
     VG_(printf)("\n");
   }
-  tl_assert2(nargs == numArgs(result),
+  tl_assert2(nargs == numFloatArgs(result),
              "nargs and numArgs don't match! nargs is %d, but numArgs returns %d",
-             nargs, numArgs(result));
+             nargs, numFloatArgs(result));
   initializeAggregate(&(result->agg), nargs);
   return result;
 }
@@ -151,10 +151,10 @@ void updateInputRecords(InputsRecord* record, ShadowValue** args, int nargs){
   }
 }
 
-int numArgs(ShadowOpInfo* opinfo){
+int numFloatArgs(ShadowOpInfo* opinfo){
   if (opinfo->op_code == 0){
     return getWrappedNumArgs(opinfo->op_type);
   } else {
-    return getNativeNumArgs(opinfo->op_code);
+    return getNativeNumFloatArgs(opinfo->op_code);
   }
 }

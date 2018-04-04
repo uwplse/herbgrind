@@ -34,7 +34,7 @@
 #include "../instrument/floattypes.h"
 #include <math.h>
 
-int getNativeNumArgs(IROp_Extended op_code){
+int getNativeNumFloatArgs(IROp_Extended op_code){
   switch((int)op_code){
     // Unary ops
   case Iop_RecipEst32Fx4:
@@ -77,6 +77,15 @@ int getNativeNumArgs(IROp_Extended op_code){
   case Iop_TruncF64asF32:
   case Iop_ReinterpF64asI64:
   case Iop_SetV128lo64:
+  case Iop_RoundF64toInt:
+  case Iop_RoundF32toInt:
+  case Iop_F64toF32:
+  case Iop_SinF64:
+  case Iop_CosF64:
+  case Iop_TanF64:
+  case Iop_2xm1F64:
+  case Iop_SqrtF64:
+  case Iop_SqrtF32:
     return 1;
     // Binary Ops
   case Iop_RecipStep32Fx4:
@@ -113,21 +122,10 @@ int getNativeNumArgs(IROp_Extended op_code){
   case Iop_CmpEQ64F0x2:
   case Iop_RecpExpF64:
   case Iop_RecpExpF32:
-  case Iop_RoundF64toInt:
-  case Iop_RoundF32toInt:
   case Iop_64HLtoV128:
   case Iop_F64HLtoF128:
-  case Iop_F64toF32:
-  case Iop_SinF64:
-  case Iop_CosF64:
-  case Iop_TanF64:
-  case Iop_2xm1F64:
-  case Iop_SqrtF64:
-  case Iop_SqrtF32:
   case Iop_CmpF64:
   case Iop_CmpF32:
-    return 2;
-    // Ternary Ops
   case Iop_Add32Fx8:
   case Iop_Sub32Fx8:
   case Iop_Mul32Fx8:
@@ -164,15 +162,15 @@ int getNativeNumArgs(IROp_Extended op_code){
   case Iop_SubF64r32:
   case Iop_MulF64r32:
   case Iop_DivF64r32:
-    return 3;
-    // Quadnary ops
+    return 2;
+    // Ternary Ops
   case Iop_MAddF32:
   case Iop_MSubF32:
   case Iop_MAddF64:
   case Iop_MSubF64:
   case Iop_MAddF64r32:
   case Iop_MSubF64r32:
-    return 4;
+    return 3;
   default:
     VG_(printf)("Op %d: ", op_code);
     ppIROp_Extended(op_code);

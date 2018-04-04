@@ -53,7 +53,7 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
   ShadowTemp* result = mkShadowTemp(numBlocks);
 
   // Get the computed and shadow arguments.
-  int nargs = numArgs(opInfo);
+  int nargs = numFloatArgs(opInfo);
   tl_assert(nargs <= 4);
   int numChannels = numChannelsOut(opInfo->op_code);
   tl_assert(numChannels <= MAX_TEMP_BLOCKS);
@@ -203,7 +203,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   // and *64F0x2), then we should only be run on the first value in
   // that instruction.
   ValueType argPrecision = opArgPrecision(opinfo->op_code);
-  int nargs = numArgs(opinfo);
+  int nargs = numFloatArgs(opinfo);
   if (!dont_ignore_pure_zeroes && !no_reals){
     switch((int)opinfo->op_code){
     case Iop_Mul32F0x4:
