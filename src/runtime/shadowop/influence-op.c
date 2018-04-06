@@ -48,6 +48,9 @@ void execInfluencesOp(ShadowOpInfo* info,
 }
 
 void trackOpAsInfluence(ShadowOpInfo* info, ShadowValue* value){
+  if (no_influences){
+    return;
+  }
   dedupAddInfluenceToList(&(value->influences), info);
 }
 

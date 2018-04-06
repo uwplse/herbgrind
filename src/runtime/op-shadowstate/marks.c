@@ -138,6 +138,9 @@ MarkInfo* getMarkInfo(Addr callAddr){
 }
 
 void dedupAddInfluencesToList(InfluenceList* list, InfluenceList influences){
+  if (no_influences){
+    return;
+  }
   for(InfluenceList curNode = influences; curNode != NULL;
       curNode = curNode->next){
     dedupAddInfluenceToList(list, curNode->item);
