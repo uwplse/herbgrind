@@ -247,7 +247,9 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                                       shadowInputs[0], ShadowTemp, values),
                             ShadowValue*, 0);
         tl_assert(shadowInputs[0]);
-        shadowOutput = runMkShadowTempValuesG(sbOut, inputPreexisting, dest_size, vals);
+        shadowOutput = runMkShadowTempValuesG(sbOut,
+                                              inputPreexisting, NULL,
+                                              dest_size, vals);
       }
     }
     break;

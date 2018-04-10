@@ -72,7 +72,8 @@ void addBlockCleanupG(IRSB* sbOut, IRExpr* guard);
 
 IRExpr* runMkShadowTempValues(IRSB* sbOut, FloatBlocks num_blocks,
                               IRExpr** values);
-IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
+IRExpr* runMkShadowTempValuesG(IRSB* sbOut,
+                               IRExpr* guard, IRExpr* guard32,
                                FloatBlocks num_blocks,
                                IRExpr** values);
 IRExpr* runMkShadowVal(IRSB* sbOut, ValueType type, IRExpr* valExpr);
@@ -109,8 +110,9 @@ void addStoreTempCopy(IRSB* sbOut, IRExpr* original, IRTemp dest);
 IRExpr* getBucketAddr(IRSB* sbOut, IRExpr* memAddr);
 typedef struct {
   IRExpr* entry;
-  IRExpr* stillSearching;
+  IRExpr* stillSearching32;
 } QuickBucketResult;
+QuickBucketResult quickGetBucket(IRSB* sbOut, IRExpr* memAddr);
 QuickBucketResult quickGetBucketG(IRSB* sbOut, IRExpr* guard,
                                   IRExpr* memAddr);
 IRExpr* runGetMemUnknown(IRSB* sbOut, FloatBlocks size, IRExpr* memSrc);

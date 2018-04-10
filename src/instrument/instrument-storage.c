@@ -330,7 +330,7 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
     if (INT(src_size) == 1){
       IRExpr* loadedVal = runGetTSVal(sbOut, tsSrc, instrIdx);
       IRExpr* loadedValNonNull = runNonZeroCheck64(sbOut, loadedVal);
-      IRExpr* temp = runMkShadowTempValuesG(sbOut, loadedValNonNull,
+      IRExpr* temp = runMkShadowTempValuesG(sbOut, loadedValNonNull, NULL,
                                             src_size, &loadedVal);
       addStoreTemp(sbOut, temp, dest);
     } else {
@@ -358,7 +358,9 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       }
       tl_assert(someValNonNull32 != NULL);
       IRExpr* someValNonNull = runUnop(sbOut, Iop_32to1, someValNonNull32);
-      IRExpr* temp = runMkShadowTempValuesG(sbOut, someValNonNull, src_size, loadedVals);
+      IRExpr* temp = runMkShadowTempValuesG(sbOut,
+                                            someValNonNull, someValNonNull32,
+                                            src_size, loadedVals);
       addStoreTemp(sbOut, temp, dest);
     }
   }
@@ -393,7 +395,8 @@ void instrumentGetI(IRSB* sbOut, IRTemp dest,
     someValNonNull = runOr(sbOut, someValNonNull,
                            runNonZeroCheck64(sbOut, loadedVals[i]));
   }
-  IRExpr* temp = runMkShadowTempValuesG(sbOut, someValNonNull, src_size, loadedVals);
+  IRExpr* temp = runMkShadowTempValuesG(sbOut, someValNonNull, NULL,
+                                        src_size, loadedVals);
   addStoreTemp(sbOut, temp, dest);
 }
 void instrumentLoad(IRSB* sbOut, IRTemp dest,
@@ -459,31 +462,42 @@ void finishInstrumentingBlock(IRSB* sbOut){
 void addBlockCleanupG(IRSB* sbOut, IRExpr* guard){
   cleanupBlockOwnership(sbOut, guard);
 }
-IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
+IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard1,
+                               IRExpr* guard32,
                                FloatBlocks num_blocks,
                                IRExpr** values){
-  IRExpr* stackEmpty = runStackEmpty(sbOut, freedTemps[INT(num_blocks)-1]);
-  IRExpr* shouldMake = runAnd(sbOut, guard, stackEmpty);
-  IRExpr* freshTemp = runDirtyG_1_1(sbOut, shouldMake, newShadowTemp,
-                                    mkU64(INT(num_blocks)));
-  IRExpr* shouldPop = runAnd(sbOut, guard,
-                             runUnop(sbOut, Iop_Not1, stackEmpty));
-  IRExpr* poppedTemp = runStackPopG(sbOut,
-                                    shouldPop,
-                                    freedTemps[INT(num_blocks)-1]);
-  IRExpr* temp = runITE(sbOut, stackEmpty, freshTemp, poppedTemp);
-  IRExpr* tempValues = runArrowG(sbOut, guard, temp, ShadowTemp, values);
-  for(int i = 0; i < INT(num_blocks); ++i){
-    addSVOwnG(sbOut, guard, values[i]);
-    addStoreIndexG(sbOut, guard, tempValues, ShadowValue*, i, values[i]);
+  if (guard32 == NULL){
+    guard32 = runUnop(sbOut, Iop_1Uto32, guard1);
   }
-  IRExpr* result = runITE(sbOut, guard, temp, mkU64(0));
+  IRExpr* stackEmpty1 = runStackEmpty(sbOut, freedTemps[INT(num_blocks)-1]);
+  IRExpr* stackEmpty32 = runUnop(sbOut, Iop_1Uto32, stackEmpty1);
+  IRExpr* shouldMake32 = runBinop(sbOut, Iop_And32, stackEmpty32, guard32);
+  IRExpr* shouldMake1 = runUnop(sbOut, Iop_32to1, shouldMake32);
+  IRExpr* freshTemp = runDirtyG_1_1(sbOut, shouldMake1, newShadowTemp,
+                                    mkU64(INT(num_blocks)));
+  IRExpr* shouldPop32 = runBinop(sbOut, Iop_And32, guard32,
+                                 runUnop(sbOut, Iop_Not32, stackEmpty32));
+  IRExpr* shouldPop1 = runUnop(sbOut, Iop_32to1, shouldPop32);
+  IRExpr* poppedTemp = runStackPopG(sbOut, shouldPop1,
+                                    freedTemps[INT(num_blocks)-1]);
+  IRExpr* temp = runITE(sbOut, stackEmpty1, freshTemp, poppedTemp);
+  IRExpr* tempValues = runArrowG(sbOut, guard1, temp, ShadowTemp, values);
+  for(int i = 0; i < INT(num_blocks); ++i){
+    IRExpr* valueNonNull32 = runUnop(sbOut, Iop_1Uto32,
+                                     runNonZeroCheck64(sbOut, values[i]));
+    IRExpr* shouldOwn1 = runUnop(sbOut, Iop_32to1,
+                                 runBinop(sbOut, Iop_And32,
+                                          valueNonNull32, guard32));
+    addSVOwnNonNullG(sbOut, shouldOwn1, values[i]);
+    addStoreIndexG(sbOut, guard1, tempValues, ShadowValue*, i, values[i]);
+  }
+  IRExpr* result = runITE(sbOut, guard1, temp, mkU64(0));
   if (PRINT_TEMP_MOVES){
-    addPrintG2(guard, "making new temp %p w/ vals ", temp);
+    addPrintG2(guard1, "making new temp %p w/ vals ", temp);
     for(int i = 0; i < INT(num_blocks); ++i){
-      addPrintG2(guard, "%p, ", values[i]);
+      addPrintG2(guard1, "%p, ", values[i]);
     }
-    addPrintG(guard, "-> ");
+    addPrintG(guard1, "-> ");
   }
   return result;
 }
@@ -718,6 +732,30 @@ IRExpr* getBucketAddr(IRSB* sbOut, IRExpr* memAddr){
                            mkU64(sizeof(TableValueEntry*))));
 }
 
+QuickBucketResult quickGetBucket(IRSB* sbOut, IRExpr* memAddr){
+  QuickBucketResult result;
+  IRExpr* bucketEntry =
+    runLoad64(sbOut, getBucketAddr(sbOut, memAddr));
+  IRExpr* entryExists =
+    runNonZeroCheck64(sbOut, bucketEntry);
+  IRExpr* entryAddr =
+    runArrowG(sbOut, entryExists, bucketEntry,
+              TableValueEntry, addr);
+  IRExpr* entryNext =
+    runArrowG(sbOut, entryExists, bucketEntry,
+              TableValueEntry, next);
+  IRExpr* addrMatches =
+    runBinop(sbOut, Iop_CmpEQ64, entryAddr, memAddr);
+  IRExpr* moreChain = runNonZeroCheck64(sbOut, entryNext);
+  result.entry =
+    runArrowG(sbOut, addrMatches, bucketEntry, TableValueEntry, val);
+  result.stillSearching32 =
+    runBinop(sbOut, Iop_And32,
+             runUnop(sbOut, Iop_1Uto32, moreChain),
+             runUnop(sbOut, Iop_Not32,
+                     runUnop(sbOut, Iop_1Uto32, addrMatches)));
+  return result;
+}
 QuickBucketResult quickGetBucketG(IRSB* sbOut, IRExpr* guard,
                                   IRExpr* memAddr){
   QuickBucketResult result;
@@ -736,39 +774,79 @@ QuickBucketResult quickGetBucketG(IRSB* sbOut, IRExpr* guard,
   IRExpr* moreChain = runNonZeroCheck64(sbOut, entryNext);
   result.entry =
     runArrowG(sbOut, addrMatches, bucketEntry, TableValueEntry, val);
-  result.stillSearching =
-    runAnd(sbOut, moreChain,
-           runUnop(sbOut, Iop_Not1, addrMatches));
+  result.stillSearching32 =
+    runBinop(sbOut, Iop_And32,
+             runUnop(sbOut, Iop_1Uto32, moreChain),
+             runUnop(sbOut, Iop_Not32,
+                     runUnop(sbOut, Iop_1Uto32, addrMatches)));
   return result;
 }
 IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
                           FloatBlocks size, IRExpr* memSrc){
   QuickBucketResult qresults[MAX_TEMP_BLOCKS];
-  IRExpr* anyNonTrivialChains = mkU1(False);
-  IRExpr* allNull_64 = mkU64(1);
+  IRExpr* anyNonTrivialChains_32 = mkU32(0);
+  IRExpr* allNull_32 = mkU32(1);
   for(int i = 0; i < INT(size); ++i){
     qresults[i] = quickGetBucketG(sbOut, guard,
                                   runBinop(sbOut, Iop_Add64, memSrc,
                                            mkU64(i * sizeof(float))));
-    anyNonTrivialChains = runOr(sbOut, anyNonTrivialChains,
-                                qresults[i].stillSearching);
+    anyNonTrivialChains_32 =
+      runBinop(sbOut, Iop_Or32,
+               anyNonTrivialChains_32,
+               qresults[i].stillSearching32);
     IRExpr* entryNull = runZeroCheck64(sbOut, qresults[i].entry);
-    allNull_64 = runBinop(sbOut, Iop_And64,
-                          allNull_64,
-                          runUnop(sbOut, Iop_1Uto64,
+    allNull_32 = runBinop(sbOut, Iop_And32,
+                          allNull_32,
+                          runUnop(sbOut, Iop_1Uto32,
                                   entryNull));
   }
   IRExpr* goToC = runOr(sbOut,
-                        anyNonTrivialChains,
+                        runUnop(sbOut, Iop_32to1, anyNonTrivialChains_32),
                         runUnop(sbOut, Iop_Not1,
-                                runUnop(sbOut, Iop_64to1,
-                                        allNull_64)));
+                                runUnop(sbOut, Iop_32to1,
+                                        allNull_32)));
   return runITE(sbOut, goToC,
                 runGetMemG(sbOut, goToC, size, memSrc),
                 mkU64(0));
 }
 IRExpr* runGetMemUnknown(IRSB* sbOut, FloatBlocks size, IRExpr* memSrc){
-  return runGetMemUnknownG(sbOut, mkU1(True), size, memSrc);
+  IRExpr* anyNonTrivialChains_32 = NULL;
+  IRExpr* allNull_32 = NULL;
+  if (INT(size) == 1){
+    QuickBucketResult qresult =
+      quickGetBucket(sbOut, memSrc);
+    IRExpr* entryNull = runZeroCheck64(sbOut, qresult.entry);
+    anyNonTrivialChains_32 = qresult.stillSearching32;
+    allNull_32 = runUnop(sbOut, Iop_1Uto32, entryNull);
+  } else {
+    QuickBucketResult qresults[MAX_TEMP_BLOCKS];
+    for(int i = 0; i < INT(size); ++i){
+      qresults[i] = quickGetBucket(sbOut,
+                                   runBinop(sbOut, Iop_Add64, memSrc,
+                                            mkU64(i * sizeof(float))));
+      IRExpr* entryNull = runZeroCheck64(sbOut, qresults[i].entry);
+      if (i == 0){
+        anyNonTrivialChains_32 = qresults[i].stillSearching32;
+        allNull_32 = runUnop(sbOut, Iop_1Uto32, entryNull);
+      } else {
+        anyNonTrivialChains_32 = runBinop(sbOut, Iop_Or32,
+                                          anyNonTrivialChains_32,
+                                          qresults[i].stillSearching32);
+        allNull_32 = runBinop(sbOut, Iop_And32, allNull_32,
+                              runUnop(sbOut, Iop_1Uto32, entryNull));
+      }
+    }
+  }
+  tl_assert(anyNonTrivialChains_32 != NULL);
+  tl_assert(allNull_32 != NULL);
+  IRExpr* goToC = runUnop(sbOut, Iop_32to1,
+                          runBinop(sbOut, Iop_Or32,
+                                   anyNonTrivialChains_32,
+                                   runUnop(sbOut, Iop_Not32,
+                                           allNull_32)));
+  return runITE(sbOut, goToC,
+                runGetMemG(sbOut, goToC, size, memSrc),
+                mkU64(0));
 }
 IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, FloatBlocks size, IRExpr* memSrc){
   IRTemp result = newIRTemp(sbOut->tyenv, Ity_I64);
