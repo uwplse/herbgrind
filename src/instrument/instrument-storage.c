@@ -429,6 +429,26 @@ void instrumentLoadG(IRSB* sbOut, IRTemp dest,
                       runITE(sbOut, guard, st, stAlt),
                       dest);
 }
+// This version of instrumentLoadG is for when we're hitting the limit
+// on VEX instructions. Goes to C more eagerly, but produces a shitton
+// less VEX.
+void instrumentLoadGSmallButSlow(IRSB* sbOut, IRTemp dest,
+                                 IRExpr* altValue, IRExpr* guard,
+                                 IRExpr* addr, IRLoadGOp conversion){
+  tempShadowStatus[dest] = Ss_Unknown;
+  FloatBlocks dest_size = loadConversionSize(conversion);
+  IRExpr* st = runGetMemG(sbOut, guard, dest_size, addr);
+  IRExpr* stAlt;
+  if (altValue->tag == Iex_Const){
+    stAlt = mkU64(0);
+  } else {
+    tl_assert(altValue->tag == Iex_RdTmp);
+    stAlt = runLoadTemp(sbOut, altValue->Iex.RdTmp.tmp);
+  }
+  addStoreTempUnknown(sbOut,
+                      runITE(sbOut, guard, st, stAlt),
+                      dest);
+}
 void instrumentStore(IRSB* sbOut, IRExpr* addr,
                      IRExpr* data){
   FloatBlocks dest_size = exprSize(sbOut->tyenv, data);

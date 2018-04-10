@@ -77,7 +77,8 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
     }
     addStmtToIRSB(sbOut, stmt);
     if (curAddr)
-      instrumentStatement(sbOut, stmt, curAddr, closure->readdr, i);
+      instrumentStatement(sbOut, stmt, curAddr, closure->readdr,
+                          i, sbIn->stmts_used);
   }
   finishInstrumentingBlock(sbOut);
   if (PRINT_BLOCK_BOUNDRIES){
@@ -109,7 +110,7 @@ void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){
 
 void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
                          Addr stAddr, Addr blockAddr,
-                         int stIdx){
+                         int stIdx, int numStmtsIn){
   if (dummy){
     return;
   }
@@ -208,12 +209,21 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
                      stmt->Ist.StoreG.details->data);
     break;
   case Ist_LoadG:
-    instrumentLoadG(sbOut,
-                    stmt->Ist.LoadG.details->dst,
-                    stmt->Ist.LoadG.details->alt,
-                    stmt->Ist.LoadG.details->guard,
-                    stmt->Ist.LoadG.details->addr,
-                    stmt->Ist.LoadG.details->cvt);
+    if (numStmtsIn < LOADG_FALLBACK_THRESHOLD){
+      instrumentLoadG(sbOut,
+                      stmt->Ist.LoadG.details->dst,
+                      stmt->Ist.LoadG.details->alt,
+                      stmt->Ist.LoadG.details->guard,
+                      stmt->Ist.LoadG.details->addr,
+                      stmt->Ist.LoadG.details->cvt);
+    } else {
+      instrumentLoadGSmallButSlow(sbOut,
+                                  stmt->Ist.LoadG.details->dst,
+                                  stmt->Ist.LoadG.details->alt,
+                                  stmt->Ist.LoadG.details->guard,
+                                  stmt->Ist.LoadG.details->addr,
+                                  stmt->Ist.LoadG.details->cvt);
+    }
     break;
   case Ist_CAS:
     instrumentCAS(sbOut,
