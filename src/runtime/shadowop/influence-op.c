@@ -56,7 +56,9 @@ void execInfluencesOp(ShadowOpInfo* info,
                                                  flagged ? info : NULL);
 
     *res = mergeInfluences(intermediary, args[2]->influences, NULL);
-    freeInfluenceList(intermediary);
+    if (intermediary != NULL){
+      freeInfluenceList(intermediary);
+    }
   }
 }
 
