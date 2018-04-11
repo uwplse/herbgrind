@@ -1,0 +1,32 @@
+(output
+  (function "main")
+  (filename "exact-ranges.c")
+  (line-num 15)
+  (instr-addr 108737)
+  (avg-error 49.092344)
+  (max-error 61.923180)
+  (num-calls 12)
+  (influences
+    (
+    (
+     (expr
+       (FPCore (x)
+      :pre (and (<= 7.745966692414830e-1 x) (<= x 7.745966692414842e-1))
+          (- (* (* 5.000000 x) x) 3.000000)))
+     (var-problematic-ranges
+       (x
+         (range-min 7.745966692414830e-1)
+         (range-max 7.745966692414842e-1)))
+     (example problematic input (7.745966692414830e-1))
+     (function "main")
+     (filename "exact-ranges.c")
+     (line-num 14)
+     (instr-addr 108711)
+     (avg-error 49.092344)
+     (max-error 61.923180)
+     (avg-local-error 49.009538)
+     (max-local-error 61.923180)
+     (num-calls 12))
+    )
+  )
+)
