@@ -37,6 +37,7 @@
 #include "../shadowop/mathreplace.h"
 
 #include <math.h>
+#include <stdint.h>
 
 VgHashTable* mathreplaceOpInfoMap = NULL;
 VgHashTable* semanticOpInfoMap = NULL;
@@ -48,22 +49,23 @@ void initOpShadowState(void){
   intMarkMap = VG_(HT_construct)("int mark map");
 }
 
-ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
+ShadowOpInfo* mkShadowOpInfo(IROp_Extended op_code, OpType type,
+                             Addr op_addr, Addr block_addr,
                              int nargs){
   ShadowOpInfo* result = VG_(perm_malloc)(sizeof(ShadowOpInfo), vg_alignof(ShadowOpInfo));
   result->op_code = op_code;
   result->op_addr = op_addr;
   result->block_addr = block_addr;
+  result->op_type = type;
 
   result->expr = NULL;
-  result->exinfo.numSIMDOperands =
-    op_code == 0x0 ? 1 : numSIMDOperands(op_code);
-
-  result->exinfo.numChannels =
-    op_code == 0x0 ? 1 : numChannelsOut(op_code);
-  result->exinfo.nargs = nargs;
-  result->exinfo.argPrecision =
-    op_code == 0x0 ? Ft_Double : argPrecision(op_code);
+  if (nargs != numFloatArgs(result)){
+    printOpInfo(result);
+    VG_(printf)("\n");
+  }
+  tl_assert2(nargs == numFloatArgs(result),
+             "nargs and numArgs don't match! nargs is %d, but numArgs returns %d",
+             nargs, numFloatArgs(result));
   initializeAggregate(&(result->agg), nargs);
   return result;
 }
@@ -138,7 +140,7 @@ void printOpInfo(ShadowOpInfo* opinfo){
   if (opinfo->op_code == 0){
     VG_(printf)("%s", getWrappedName(opinfo->op_type));
   } else {
-    ppIROp(opinfo->op_code);
+    ppIROp_Extended(opinfo->op_code);
   }
   VG_(printf)(" at ");
   ppAddr(opinfo->op_addr);
@@ -147,5 +149,36 @@ void printOpInfo(ShadowOpInfo* opinfo){
 void updateInputRecords(InputsRecord* record, ShadowValue** args, int nargs){
   for (int i = 0; i < nargs; ++i){
     updateRangeRecord(record->range_records + i, getDouble(args[i]->real));
+  }
+}
+
+int numFloatArgs(ShadowOpInfo* opinfo){
+  if (opinfo->op_code == 0){
+    return getWrappedNumArgs(opinfo->op_type);
+  } else {
+    return getNativeNumFloatArgs(opinfo->op_code);
+  }
+}
+
+int cmpInfo(ShadowOpInfo* info1, ShadowOpInfo* info2){
+  if (info1->agg.local_error.max_error >
+      info2->agg.local_error.max_error){
+    return 1;
+  } else if (info1->agg.local_error.max_error <
+             info2->agg.local_error.max_error){
+    return -1;
+  } else if (info1->agg.local_error.total_error / info1->agg.local_error.num_evals >
+             info2->agg.local_error.total_error / info2->agg.local_error.num_evals){
+    return 1;
+  } else if (info1->agg.local_error.total_error / info1->agg.local_error.num_evals >
+             info2->agg.local_error.total_error / info2->agg.local_error.num_evals){
+    return -1;
+  } else if ((uintptr_t)info1 > (uintptr_t)info2){
+    return 1;
+  } else if ((uintptr_t)info1 < (uintptr_t)info2){
+    return -1;
+  } else {
+    tl_assert(info1 == info2);
+    return 0;
   }
 }

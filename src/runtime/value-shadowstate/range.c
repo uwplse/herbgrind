@@ -149,8 +149,8 @@ void printRangeAsPreconditionToBBuf(const char* varName,
       printBBufFloat(buf, totalRange->pos_range.min);
       printBBuf(buf, " %s)", varName);
     } else {
-      tl_assert2(totalRange->pos_range.min != totalRange->pos_range.max,
-                 "What");
+      /* tl_assert2(totalRange->pos_range.min != totalRange->pos_range.max, */
+      /*            "What"); */
       printBBuf(buf, " (and (<= ");
       printBBufFloat(buf, totalRange->pos_range.min);
       printBBuf(buf, " %s) (<= %s ", varName, varName);

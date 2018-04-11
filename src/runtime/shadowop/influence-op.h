@@ -36,9 +36,11 @@ void trackOpAsInfluence(ShadowOpInfo* info, ShadowValue* value);
 void forceTrack(Addr varAddr);
 void forceTrackF(Addr varAddr);
 void execInfluencesOp(ShadowOpInfo* info,
-                      InfluenceList* res, ShadowValue** args);
+                      InfluenceList* res, ShadowValue** args,
+                      Bool flagged);
+InfluenceList cloneInfluences(InfluenceList influences);
+void inPlaceMergeInfluences(InfluenceList* dest, InfluenceList arg);
 void dedupAddInfluenceToList(InfluenceList* influences,
                              ShadowOpInfo* influence);
-InfluenceList cloneInfluences(InfluenceList influences);
 
 #endif

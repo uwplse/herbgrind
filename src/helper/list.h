@@ -41,6 +41,8 @@
   void lpush_##name(name* list_loc, Type list_item);    \
   Type lpop_##name(name* list_loc);                     \
   int  length_##name(name* list_loc);                   \
+  int  lcontains_##name(name* list_loc, Type item);     \
+  void lfree_##name(name* list_loc);                    \
   Type* getIdxLoc_##name(name* list_loc, int idx);      \
   extern name unused_nodes_##name;
 #define List_Impl(Type, name)           \
@@ -75,6 +77,20 @@
     }                                                                   \
     return result;                                                      \
   }                                                                     \
+  int lcontains_##name(name* list_loc, Type item){                      \
+    for(name curNode = *list_loc; curNode != NULL;                      \
+        curNode = curNode->next){                                       \
+      if (item == curNode->item){                                       \
+        return 1;                                                       \
+      }                                                                 \
+    }                                                                   \
+    return 0;                                                           \
+  }                                                                     \
+  void lfree_##name(name* list_loc){                                    \
+    while(*list_loc != NULL){                                           \
+      (void)lpop_##name(list_loc);                                      \
+    }                                                                   \
+  }                                                                     \
   Type* getIdxLoc_##name(name* list_loc, int idx){                      \
     name curNode = *list_loc;                                           \
     for(int i = 0; i < idx; i++){                                       \
@@ -90,6 +106,8 @@
 #define lpop(type) lpop_##type
 #define lpush(type) lpush_##type
 #define length(type) length_##type
+#define lcontains(type) lcontains_##type
+#define lfree(type) lfree_##type
 #define getIdxLoc(type) getIdxLoc_##type
 
 #endif

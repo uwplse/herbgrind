@@ -38,55 +38,96 @@
 #define MAX_REGISTERS 1000
 
 typedef enum {
-  Ft_Unknown,
-  Ft_NonFloat,
-  Ft_Unshadowed,
-  Ft_Single,
-  Ft_Double
-} FloatType;
+  Vt_Unknown,
+  Vt_NonFloat,
+  Vt_UnknownFloat,
+  Vt_Double,
+  Vt_Single,
+  Vt_SingleOrNonFloat,
+} ValueType;
 
-extern FloatType tempContext[MAX_TEMPS];
-extern FloatType tsContext[MAX_REGISTERS];
-extern VgHashTable* memContext;
+typedef enum {
+  Ss_Unknown,
+  Ss_Shadowed,
+  Ss_Unshadowed,
+} ShadowStatus;
+
+typedef struct _TSTypeEntry {
+  struct _TSTypeEntry* next;
+  ValueType type;
+  int instrIndexSet;
+} TSTypeEntry;
+
+typedef struct {
+  int blocks;
+} FloatBlocks;
+#define INT(x) x.blocks
+#define FB(x) (FloatBlocks){x}
+
+extern ShadowStatus tempShadowStatus[MAX_TEMPS];
+extern ShadowStatus tsShadowStatus[MAX_REGISTERS];
+
+// Meet and join operations for the type lattice
+// Cheat sheet: join -> union, meet -> intersect
+// If that doesn't help: join -> go "up" the lattice (towards Vt_Unknown)
+//                       meet -> go "down" the lattice (towards a concrete type)
+void typeJoins(ValueType* types1, ValueType* types2,
+               FloatBlocks numTypes, ValueType* out);
+ValueType typeJoin(ValueType type1, ValueType type2);
+ValueType typeMeet(ValueType type1, ValueType type2);
+const char* typeName(ValueType type);
+
+ValueType constType(const IRConst* constant);
 
 void initTypeState(void);
 void resetTypeState(void);
+void cleanupTypeState(void);
 void addClearMemTypes(void);
+void inferTypes(IRSB* sbIn);
 
-FloatType argPrecision(IROp op_code);
-FloatType resultPrecision(IROp op_code);
+ValueType opArgPrecision(IROp op_code);
+ValueType opBlockArgPrecision(IROp op_code, int blockIdx);
+ValueType conversionArgPrecision(IROp op_code, int argIndex);
+ValueType resultPrecision(IROp op_code);
+ValueType resultBlockPrecision(IROp op_code, int blockIndex);
 
-int isFloatType(IRType type);
+int isFloatType(ValueType type);
+int isFloatIRType(IRType type);
 int isFloat(IRTypeEnv* env, IRTemp temp);
 
-void ppFloatType(FloatType type);
+void ppValueType(ValueType type);
 
-void setTempType(int idx, FloatType type);
-Bool tempIsTyped(int idx);
-FloatType tempType(int idx);
-Bool hasStaticShadow(IRExpr* expr);
-Bool canHaveShadow(IRTypeEnv* tyenv, IRExpr* expr);
-Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr);
+// Returns true if anything was changed, false otherwise
+/* Bool refineTempType(int tempIdx, ValueType type); */
+Bool refineTempBlockType(int tempIdx, int valIdx, ValueType type);
+Bool refineExprBlockType(IRExpr* expr, int valIdx, ValueType type);
+
+ValueType* tempTypeArray(int idx);
+ValueType tempBlockType(int idx, int valIdx);
+ValueType* exprTypeArray(IRExpr* expr);
+ValueType exprBlockType(IRExpr* expr, int idx);
+Bool canBeFloat(IRTypeEnv* typeEnv, IRExpr* expr, int valIdx);
+Bool someCanBeFloat(IRTypeEnv* typeEnv, IRExpr* expr);
+Bool staticallyFloatType(ValueType type);
+Bool staticallyFloat(IRExpr* expr, int valIdx);
+Bool someStaticallyFloat(IRTypeEnv* env, IRExpr* expr);
+Bool staticallyShadowed(IRExpr* expr);
 Bool canStoreShadow(IRTypeEnv* typeEnv, IRExpr* expr);
+Bool canBeShadowed(IRTypeEnv* typeEnv, IRExpr* expr);
 
-void setTSType(int idx, FloatType type);
-FloatType inferTSType64(Int tsAddr);
-Bool tsAddrCanHaveShadow(Int tsAddr);
-Bool tsHasStaticShadow(Int tsAddr);
+// Returns true if anything was changed, false otherwise
+Bool setTSType(int idx, int instrIdx, ValueType type);
+Bool refineTSType(int tempIdx, int instrIdx, ValueType type);
 
-FloatType inferMemType(ULong addr, int size);
-void addClearMemType(void);
-void setMemType(ULong addr, FloatType type);
-FloatType getMemType(ULong addr);
-FloatType lookupMemType(ULong addr);
-Bool memAddrCanHaveShadow(ULong memAddr);
-Bool memAddrHasStaticShadow(ULong memAddr);
-// Keep in mind this block len is in chunks (aka 4-byte units)
-Bool memBlockCanHaveShadow(ULong blockStart, int block_len);
+ValueType tsType(Int tsAddr, int instrIdx);
+ValueType inferTSBlockType(int tsAddr, int instrIdx, FloatBlocks size);
+Bool tsAddrCanBeShadowed(Int tsAddr, int instrIdx);
+Bool tsHasStaticShadow(Int tsAddr, int instrIdx);
 
-int valueSize(IRSB* sbOut, int idx);
 int numTempValues(IRSB* sbOut, int idx);
-int exprSize(IRTypeEnv* tyenv, IRExpr* expr);
-int typeSize(IRType type);
-int loadConversionSize(IRLoadGOp conversion);
+FloatBlocks tempSize(IRTypeEnv* tyenv, IRTemp tmp);
+FloatBlocks exprSize(IRTypeEnv* tyenv, IRExpr* expr);
+FloatBlocks typeSize(IRType type);
+FloatBlocks loadConversionSize(IRLoadGOp conversion);
+void printTypeState(IRTypeEnv* tyenv);
 #endif

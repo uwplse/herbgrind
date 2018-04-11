@@ -62,13 +62,6 @@ typedef struct _Aggregate {
   InputsRecord inputs;
 } Aggregate;
 
-typedef struct _ExtraInfo {
-  int numSIMDOperands;
-  int numChannels;
-  int nargs;
-  FloatType argPrecision;
-} ExtraInfo;
-
 typedef struct _ShadowOpInfo {
   // These two are mutually exclusive.
   IROp_Extended op_code;
@@ -78,7 +71,6 @@ typedef struct _ShadowOpInfo {
   Addr block_addr;
   Aggregate agg;
   SymbExpr* expr;
-  ExtraInfo exinfo;
 } ShadowOpInfo;
 
 typedef struct _ShadowOpInfoInstance {
@@ -89,7 +81,6 @@ typedef struct _ShadowOpInfoInstance {
 typedef struct _ShadowCmpInfo {
   Addr op_addr;
   IROp op_code;
-  FloatType precision;
   IRTemp argTemps[2];
 } ShadowCmpInfo;
 
@@ -108,7 +99,8 @@ typedef struct _semOpInfoEntry {
 
 
 void initOpShadowState(void);
-ShadowOpInfo* mkShadowOpInfo(IROp op_code, Addr op_addr, Addr block_addr,
+ShadowOpInfo* mkShadowOpInfo(IROp_Extended op_code, OpType type,
+                             Addr op_addr, Addr block_addr,
                              int nargs);
 void initializeAggregate(Aggregate* agg, int nargs);
 void initializeErrorAggregate(ErrorAggregate* error_agg);
@@ -119,5 +111,9 @@ void updateInputRecords(InputsRecord* record, ShadowValue** args, int nargs);
 void printOpInfo(ShadowOpInfo* opinfo);
 void ppAddr(Addr addr);
 char* getAddrString(Addr addr);
+
+int numFloatArgs(ShadowOpInfo* opinfo);
+
+int cmpInfo(ShadowOpInfo* info1, ShadowOpInfo* info2);
 
 #endif

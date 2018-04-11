@@ -181,6 +181,7 @@ def write_mathreplace_funcs(ops, fname):
 
         f.write("// Finally, define an enum for the operations we support.\n")
         f.write("typedef enum {\n")
+        f.write("  OP_INVALID,\n");
         f.write("  // Unary functions\n")
         f.write("  UNARY_OPS_LIST\n")
         f.write("  // Binary\n")
@@ -289,6 +290,9 @@ def write_switch_funcs(f, l):
 
 def write_switch_names(f, l):
     f.write("  switch(op){ \\\n")
+    f.write("  case OP_INVALID: \\\n")
+    f.write("    namevar = \"invalid\"; \\\n")
+    f.write("    break;\\\n")
     for op in l:
         f.write("  case OP_{}: \\\n".format(op.func.upper()))
         f.write("    namevar = \"{}\"; \\\n".format(op.native_func))

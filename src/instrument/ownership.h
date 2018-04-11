@@ -50,6 +50,7 @@ void addSVDisownNonNull(IRSB* sbOut, IRExpr* sv);
 void addSVDisownNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv);
 void addSVDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* sv);
 void addSVOwn(IRSB* sbOut, IRExpr* sv);
+void addSVOwnG(IRSB* sbOut, IRExpr* guard, IRExpr* sv);
 void addSVOwnNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv);
 void addSVOwnNonNull(IRSB* sbOut, IRExpr* sv);
 void addExprDisownG(IRSB* sbOut, IRExpr* guard, IRExpr* expr);

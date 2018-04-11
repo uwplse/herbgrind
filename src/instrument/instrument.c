@@ -58,6 +58,7 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
     VG_(printf)("Instrumenting block at %p:\n", (void*)closure->readdr);
     printSuperBlock(sbIn);
   }
+  inferTypes(sbIn);
   if (PRINT_RUN_BLOCKS){
     char* blockMessage = VG_(perm_malloc)(35, 1);
     VG_(snprintf)(blockMessage, 35,
@@ -76,7 +77,8 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
     }
     addStmtToIRSB(sbOut, stmt);
     if (curAddr)
-      instrumentStatement(sbOut, stmt, curAddr, closure->readdr);
+      instrumentStatement(sbOut, stmt, curAddr, closure->readdr,
+                          i, sbIn->stmts_used);
   }
   finishInstrumentingBlock(sbOut);
   if (PRINT_BLOCK_BOUNDRIES){
@@ -94,6 +96,7 @@ void init_instrumentation(void){
 }
 
 void finish_instrumentation(void){
+  cleanupTypeState();
 }
 void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){
   switch(stmt->tag){
@@ -106,7 +109,11 @@ void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){
 }
 
 void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
-                         Addr stAddr, Addr blockAddr){
+                         Addr stAddr, Addr blockAddr,
+                         int stIdx, int numStmtsIn){
+  if (dummy){
+    return;
+  }
   switch(stmt->tag){
   case Ist_NoOp:
   case Ist_IMark:
@@ -115,7 +122,8 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
   case Ist_AbiHint:
     break;
   case Ist_Put:
-    instrumentPut(sbOut, stmt->Ist.Put.offset, stmt->Ist.Put.data);
+    instrumentPut(sbOut, stmt->Ist.Put.offset, stmt->Ist.Put.data,
+                  stIdx);
     break;
   case Ist_PutI:
     instrumentPutI(sbOut,
@@ -124,7 +132,8 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
                    stmt->Ist.PutI.details->descr->base,
                    stmt->Ist.PutI.details->descr->nElems,
                    stmt->Ist.PutI.details->descr->elemTy,
-                   stmt->Ist.PutI.details->data);
+                   stmt->Ist.PutI.details->data,
+                   stIdx);
     break;
   case Ist_WrTmp:
     {
@@ -134,7 +143,8 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
         instrumentGet(sbOut,
                       stmt->Ist.WrTmp.tmp,
                       expr->Iex.Get.offset,
-                      expr->Iex.Get.ty);
+                      expr->Iex.Get.ty,
+                      stIdx);
         break;
       case Iex_GetI:
         instrumentGetI(sbOut,
@@ -143,7 +153,8 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
                        expr->Iex.GetI.bias,
                        expr->Iex.GetI.descr->base,
                        expr->Iex.GetI.descr->nElems,
-                       expr->Iex.GetI.descr->elemTy);
+                       expr->Iex.GetI.descr->elemTy,
+                       stIdx);
         break;
       case Iex_RdTmp:
         instrumentRdTmp(sbOut,
@@ -170,7 +181,8 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
         instrumentOp(sbOut,
                      stmt->Ist.WrTmp.tmp,
                      expr,
-                     stAddr, blockAddr);
+                     stAddr, blockAddr,
+                     stIdx);
         break;
       case Iex_Const:
         instrumentWriteConst(sbOut,
@@ -197,12 +209,21 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
                      stmt->Ist.StoreG.details->data);
     break;
   case Ist_LoadG:
-    instrumentLoadG(sbOut,
-                    stmt->Ist.LoadG.details->dst,
-                    stmt->Ist.LoadG.details->alt,
-                    stmt->Ist.LoadG.details->guard,
-                    stmt->Ist.LoadG.details->addr,
-                    stmt->Ist.LoadG.details->cvt);
+    if (numStmtsIn < LOADG_FALLBACK_THRESHOLD){
+      instrumentLoadG(sbOut,
+                      stmt->Ist.LoadG.details->dst,
+                      stmt->Ist.LoadG.details->alt,
+                      stmt->Ist.LoadG.details->guard,
+                      stmt->Ist.LoadG.details->addr,
+                      stmt->Ist.LoadG.details->cvt);
+    } else {
+      instrumentLoadGSmallButSlow(sbOut,
+                                  stmt->Ist.LoadG.details->dst,
+                                  stmt->Ist.LoadG.details->alt,
+                                  stmt->Ist.LoadG.details->guard,
+                                  stmt->Ist.LoadG.details->addr,
+                                  stmt->Ist.LoadG.details->cvt);
+    }
     break;
   case Ist_CAS:
     instrumentCAS(sbOut,
@@ -225,6 +246,9 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
 void printSuperBlock(IRSB* superblock){
   for(int i = 0; i < superblock->stmts_used; i++){
     IRStmt* st = superblock->stmts[i];
+    if (print_statement_numbers){
+      VG_(printf)("%d: ", i);
+    }
     ppIRStmt(st);
     VG_(printf)("\n");
   }

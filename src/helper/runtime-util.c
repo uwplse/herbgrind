@@ -100,6 +100,9 @@ void printBBufFloat(BBuf* buf, double val){
   }
 }
 
+VG_REGPARM(1) void ppFloat_wrapper(UWord value){
+  ppFloat(*(double*)(void*)&value);
+}
 void ppFloat(double val){
   int i = 0;
   if (val != val){

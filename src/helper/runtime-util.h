@@ -35,6 +35,7 @@
 
 Addr getCallAddr(void);
 void printBBufFloat(BBuf* buf, double value);
+VG_REGPARM(1) void ppFloat_wrapper(UWord value);
 void ppFloat(double value);
 inline int NaNSafeEquals(double a, double b);
 

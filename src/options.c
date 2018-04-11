@@ -56,6 +56,9 @@ Bool print_inputs = False;
 Bool print_expr_updates = False;
 Bool print_flagged = False;
 Bool print_compares = False;
+Bool print_type_inference = False;
+Bool print_inferred_types = False;
+Bool print_statement_numbers = False;
 Int longprint_len = 15;
 
 Bool dont_ignore_pure_zeroes = False;
@@ -75,17 +78,19 @@ Bool var_swallow = True;
 Bool unsound_var_swallow = False;
 Bool follow_real_execution = False;
 Bool double_comparisons = False;
-Bool use_ranges = True;
 Bool flip_ranges = False;
 Bool generalize_to_constant = True;
 
 Bool no_exprs = False;
 Bool no_influences = False;
 Bool no_reals = False;
+Bool use_ranges = True;
+Bool dummy = False;
 
 Int precision = 1000;
 Int max_expr_block_depth = 5;
 double error_threshold = 5.0;
+Int max_influences = 20;
 const char* output_filename = NULL;
 
 // Called to process each command line option.
@@ -108,6 +113,9 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-flagged", print_flagged, True) {}
   else if VG_XACT_CLO(arg, "--print-object-files", print_object_files, True) {}
   else if VG_XACT_CLO(arg, "--print-compares", print_compares, True) {}
+  else if VG_XACT_CLO(arg, "--print-type-inference", print_type_inference, True) {}
+  else if VG_XACT_CLO(arg, "--print-inferred-types", print_inferred_types, True) {}
+  else if VG_XACT_CLO(arg, "--print-statement-numbers", print_statement_numbers, True) {}
   else if VG_XACT_CLO(arg, "--output-subexpr-sources", print_subexpr_locations, True) {}
   else if VG_XACT_CLO(arg, "--dont-ignore-pure-zeroes", dont_ignore_pure_zeroes, True) {}
   else if VG_XACT_CLO(arg, "--no-sound-simplify", sound_simplify, False) {}
@@ -133,10 +141,13 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--no-influences", no_influences, True) {}
   else if VG_XACT_CLO(arg, "--no-reals", no_reals, True) {}
   else if VG_XACT_CLO(arg, "--no-ranges", use_ranges, False) {}
+  else if VG_XACT_CLO(arg, "--dummy", dummy, True) {}
+
   else if VG_BINT_CLO(arg, "--longprint-len", longprint_len, 1, 1000) {}
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else if VG_BINT_CLO(arg, "--max-expr-block-depth", max_expr_block_depth, 1, 100) {}
   else if VG_DBL_CLO(arg, "--error-threshold", error_threshold) {}
+  else if VG_BINT_CLO(arg, "--max-influences", max_influences, 1, 1000) {}
   else if VG_STR_CLO(arg, "--outfile", output_filename) {}
   else return False;
   return True;
@@ -199,7 +210,7 @@ void hg_print_debug_usage(void){
               "returns to Valgrind.\n"
               " --print-block-boundries "
               "Prints +++++ between each executed block.\n"
-              " --print-run-blocks"
+              " --print-run-blocks "
               "Prints the addresses of each run block.\n"
               " --print-temp-moves "
               "Prints each shadow temp movement.\n"

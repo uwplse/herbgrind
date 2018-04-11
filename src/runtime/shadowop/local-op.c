@@ -36,9 +36,9 @@
 #include "pub_tool_libcprint.h"
 
 double execLocalOp(ShadowOpInfo* info, Real realVal,
-                 ShadowValue* res, ShadowValue** args){
+                   ShadowValue* res, ShadowValue** args){
   if (no_reals) return 0;
-  int nargs = info->exinfo.nargs;
+  int nargs = numFloatArgs(info);
   double exactRoundedArgs[4];
   for(int i = 0; i < nargs; ++i){
     exactRoundedArgs[i] = getDouble(args[i]->real);
@@ -51,17 +51,5 @@ double execLocalOp(ShadowOpInfo* info, Real realVal,
     locallyApproximateResult =
       runEmulatedOp(info->op_code, exactRoundedArgs);
   }
-  double bitsLocalError =
-    updateError(&(info->agg.local_error), realVal, locallyApproximateResult);
-
-  if (bitsLocalError >= error_threshold){
-    if (print_flagged){
-      VG_(printf)("Hit local error! ");
-      printOpInfo(info);
-      VG_(printf)("\n");
-    }
-    trackOpAsInfluence(info, res);
-  }
-
-  return bitsLocalError;
+  return updateError(&(info->agg.local_error), realVal, locallyApproximateResult);
 }

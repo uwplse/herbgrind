@@ -11,7 +11,7 @@
     (
      (expr
        (FPCore ()
-          (- (+ 5.000000 -10.000000e-21) 5.000000)))
+          (- (+ 5.000000 (- 10.000000e-21)) 5.000000)))
      (var-problematic-ranges)
      (example problematic input ())
      (function "main")

@@ -57,6 +57,9 @@ extern Bool print_inputs;
 extern Bool print_expr_updates;
 extern Bool print_flagged;
 extern Bool print_compares;
+extern Bool print_type_inference;
+extern Bool print_inferred_types;
+extern Bool print_statement_numbers;
 extern Int longprint_len;
 
 extern Bool dont_ignore_pure_zeroes;
@@ -83,10 +86,12 @@ extern Bool no_exprs;
 extern Bool no_influences;
 extern Bool no_reals;
 extern Bool use_ranges;
+extern Bool dummy;
 
 extern Int precision;
 extern Int max_expr_block_depth;
 extern double error_threshold;
+extern Int max_influences;
 extern const char* output_filename;
 
 #define USE_MPFR

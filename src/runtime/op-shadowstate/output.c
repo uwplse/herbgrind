@@ -307,9 +307,8 @@ void writeInfluences(Int fileD, InfluenceList influences){
     char startparen[] = "    (\n";
     VG_(write)(fileD, startparen, sizeof(startparen) - 1);
   }
-  for(InfluenceList curNode = influences;
-      curNode != NULL; curNode = curNode->next){
-    ShadowOpInfo* opinfo = curNode->item;
+  for(int j = 0; influences != NULL && j < influences->length; ++j){
+    ShadowOpInfo* opinfo = influences->data[j];
 
     int numVars;
     char* exprString = NULL;

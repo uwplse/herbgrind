@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- Herbgrind: a valgrind tool for Herbie           instrument.h ---*/
+/*--- Herbgrind: a valgrind tool for Herbie       influence-list.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -7,7 +7,7 @@
    floating point accuracy problems in binary programs and extracting
    problematic expressions.
 
-   Copyright (C) 2016-2017 Alex Sanchez-Stern
+   Copyright (C) 2016-2017Alex Sanchez-Stern
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -27,22 +27,20 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#include "pub_tool_tooliface.h"
+#ifndef _INFLUENCE_LIST_H
+#define _INFLUENCE_LIST_H
 
-IRSB* hg_instrument(VgCallbackClosure* closure,
-                    IRSB* sbIn,
-                    const VexGuestLayout* layout,
-                    const VexGuestExtents* vge,
-                    const VexArchInfo* archinfo_host,
-                    IRType gWordTy, IRType hWordTy);
+#include "../op-shadowstate/shadowop-info.h"
 
-void init_instrumentation(void);
+typedef struct _influenceList{
+  struct _influenceList* next;
+  int length;
+  ShadowOpInfo** data;
+} *InfluenceList;
 
-void finish_instrumentation(void);
+InfluenceList mkInfluenceList(void);
+void freeInfluenceList(InfluenceList il);
+InfluenceList mergeInfluences(InfluenceList il1, InfluenceList il2,
+                              ShadowOpInfo* extra);
 
-void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
-                         Addr stAddr, Addr block_addr,
-                         int stIdx, int numStmtsIn);
-void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr);
-
-void printSuperBlock(IRSB* superblock);
+#endif

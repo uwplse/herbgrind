@@ -32,23 +32,55 @@
 #include "../value-shadowstate/value-shadowstate.h"
 #include "../value-shadowstate/exprs.h"
 
-List_Impl(ShadowOpInfo*, InfluenceList);
-
 void execInfluencesOp(ShadowOpInfo* info,
-                      InfluenceList* res, ShadowValue** args){
+                      InfluenceList* res, ShadowValue** args,
+                      Bool flagged){
+  if (flagged && print_flagged){
+    VG_(printf)("Hit local error! ");
+    printOpInfo(info);
+    VG_(printf)("\n");
+  }
   if (no_influences){
     return;
   }
-  for(int i = 0; i < info->exinfo.nargs; ++i){
-    for(InfluenceList curNode = args[i]->influences;
-        curNode != NULL; curNode = curNode->next){
-      dedupAddInfluenceToList(res, curNode->item);
+  if (numFloatArgs(info) == 1){
+    *res = mergeInfluences(args[0]->influences, NULL,
+                           flagged ? info : NULL);
+  } else if (numFloatArgs(info) == 2){
+    *res = mergeInfluences(args[0]->influences, args[1]->influences,
+                           flagged ? info : NULL);
+  } else {
+    tl_assert(numFloatArgs(info) == 3);
+    InfluenceList intermediary = mergeInfluences(args[0]->influences,
+                                                 args[1]->influences,
+                                                 flagged ? info : NULL);
+
+    *res = mergeInfluences(intermediary, args[2]->influences, NULL);
+    if (intermediary != NULL){
+      freeInfluenceList(intermediary);
     }
   }
 }
 
+void inPlaceMergeInfluences(InfluenceList* dest, InfluenceList arg){
+  InfluenceList lst = mergeInfluences(*dest, arg, NULL);
+  if (*dest != NULL){
+    freeInfluenceList(*dest);
+  }
+  *dest = lst;
+}
 void trackOpAsInfluence(ShadowOpInfo* info, ShadowValue* value){
-  dedupAddInfluenceToList(&(value->influences), info);
+  if (no_influences){
+    return;
+  }
+  InfluenceList lst = mergeInfluences(value->influences, NULL, info);
+  if (value->influences != NULL){
+    freeInfluenceList(value->influences);
+  }
+  value->influences = lst;
+}
+InfluenceList cloneInfluences(InfluenceList influences){
+  return mergeInfluences(influences, NULL, NULL);
 }
 
 void forceTrack(Addr varAddr){
@@ -58,23 +90,4 @@ void forceTrack(Addr varAddr){
   trackOpAsInfluence(info, val);
 }
 void forceTrackF(Addr varAddr){
-}
-
-void dedupAddInfluenceToList(InfluenceList* influences,
-                             ShadowOpInfo* influence){
-  for(InfluenceList curNode = *influences; curNode != NULL;
-      curNode = curNode->next){
-    if (curNode->item == influence){
-      return;
-    }
-  }
-  lpush(InfluenceList)(influences, influence);
-}
-InfluenceList cloneInfluences(InfluenceList influences){
-  InfluenceList newInfluences = NULL;
-  for(InfluenceList curNode = influences; curNode != NULL;
-      curNode = curNode->next){
-    lpush(InfluenceList)(&newInfluences, curNode->item);
-  }
-  return newInfluences;
 }

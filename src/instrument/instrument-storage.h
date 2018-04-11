@@ -42,21 +42,29 @@ void instrumentWriteConst(IRSB* sbOut, IRTemp dest,
 void instrumentITE(IRSB* sbOut, IRTemp dest,
                    IRExpr* cond,
                    IRExpr* trueExpr, IRExpr* falseExpr);
-void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data);
+void instrumentPut(IRSB* sbOut, Int tsDest, IRExpr* data,
+                   int instrIdx);
 void instrumentPutI(IRSB* sbOut,
                     IRExpr* varOffset, Int constOffset,
                     Int arrayBase, Int numElems, IRType elemType,
-                    IRExpr* data);
+                    IRExpr* data,
+                    int instrIdx);
 void instrumentGet(IRSB* sbOut, IRTemp dest,
-                   Int tsSrc, IRType type);
+                   Int tsSrc, IRType type,
+                   int instrIdx);
 void instrumentGetI(IRSB* sbOut, IRTemp dest,
                     IRExpr* varOffset, Int constOffset,
-                    Int arrayBase, Int numElems, IRType elemType);
+                    Int arrayBase, Int numElems, IRType elemType,
+                    int instrIdx);
 void instrumentLoad(IRSB* sbOut, IRTemp dest,
                     IRExpr* addr, IRType type);
+#define LOADG_FALLBACK_THRESHOLD 250
 void instrumentLoadG(IRSB* sbOut, IRTemp dest,
                      IRExpr* altValue, IRExpr* guard,
                      IRExpr* addr, IRLoadGOp conversion);
+void instrumentLoadGSmallButSlow(IRSB* sbOut, IRTemp dest,
+                                 IRExpr* altValue, IRExpr* guard,
+                                 IRExpr* addr, IRLoadGOp conversion);
 void instrumentStore(IRSB* sbOut, IRExpr* addr,
                      IRExpr* data);
 void instrumentStoreG(IRSB* sbOut, IRExpr* addr,
@@ -66,64 +74,64 @@ void instrumentCAS(IRSB* sbOut,
 void finishInstrumentingBlock(IRSB* sbOut);
 void addBlockCleanupG(IRSB* sbOut, IRExpr* guard);
 
-IRExpr* runMkShadowTempValues(IRSB* sbOut, int num_values,
+IRExpr* runMkShadowTempValues(IRSB* sbOut, FloatBlocks num_blocks,
                               IRExpr** values);
-IRExpr* runMkShadowTempValuesG(IRSB* sbOut, IRExpr* guard,
-                               int num_values,
+IRExpr* runMkShadowTempValuesG(IRSB* sbOut,
+                               IRExpr* guard, IRExpr* guard32,
+                               FloatBlocks num_blocks,
                                IRExpr** values);
-IRExpr* runMkShadowVal(IRSB* sbOut, FloatType type, IRExpr* valExpr);
+IRExpr* runMkShadowVal(IRSB* sbOut, ValueType type, IRExpr* valExpr);
 IRExpr* runMkShadowValG(IRSB* sbOut, IRExpr* guard,
-                        FloatType type, IRExpr* valExpr);
-IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard,
-                      IRExpr* argExpr,
-                      FloatType type, int num_vals);
-IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr,
-                     FloatType type, int num_vals);
+                        ValueType type, IRExpr* valExpr);
+IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard, IRExpr* argExpr,
+                      ValueType type);
+IRExpr* runMakeInput(IRSB* sbOut, IRExpr* argExpr, ValueType type);
 
-IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc);
+IRExpr* runGetTSVal(IRSB* sbOut, Int tsSrc, int instrIdx);
 IRExpr* runGetTSValDynamic(IRSB* sbOut, IRExpr* tsSrc);
 void addSetTSValNonNull(IRSB* sbOut, Int tsDest,
-                        IRExpr* newVal, FloatType floatType);
-void addSetTSValNonFloat(IRSB* sbOut, Int tsDest);
-void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest);
-void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal);
-void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal);
-void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal);
+                        IRExpr* newVal,
+                        int instrIdx);
+void addSetTSValNonFloat(IRSB* sbOut, Int tsDest,
+                         int instrIdx);
+void addSetTSValUnshadowed(IRSB* sbOut, Int tsDest,
+                           int instrIdx);
+void addSetTSValUnknown(IRSB* sbOut, Int tsDest, IRExpr* newVal,
+                        int instrIdx);
+void addSetTSVal(IRSB* sbOut, Int tsDest, IRExpr* newVal, int instrIdx);
+void addSetTSValDynamic(IRSB* sbOut, IRExpr* tsDest, IRExpr* newVal, int instrIdx);
 
 IRExpr* runLoadTemp(IRSB* sbOut, int idx);
 void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
-                  FloatType type,
                   int idx);
 void addStoreTempG(IRSB* sbOut, IRExpr* guard,
                    IRExpr* shadow_temp,
-                   FloatType type,
                    int idx);
 void addStoreTempNonFloat(IRSB* sbOut, int idx);
 void addStoreTempUnknown(IRSB* sbOut, IRExpr* shadow_temp_maybe, int idx);
-void addStoreTempUnshadowed(IRSB* sbOut, int idx);
-void addStoreTempCopy(IRSB* sbOut, IRExpr* original,
-                      IRTemp dest, FloatType type);
+void addStoreTempCopy(IRSB* sbOut, IRExpr* original, IRTemp dest);
 
 IRExpr* getBucketAddr(IRSB* sbOut, IRExpr* memAddr);
 typedef struct {
   IRExpr* entry;
-  IRExpr* stillSearching;
+  IRExpr* stillSearching32;
 } QuickBucketResult;
+QuickBucketResult quickGetBucket(IRSB* sbOut, IRExpr* memAddr);
 QuickBucketResult quickGetBucketG(IRSB* sbOut, IRExpr* guard,
                                   IRExpr* memAddr);
-IRExpr* runGetMemUnknown(IRSB* sbOut, int size, IRExpr* memSrc);
+IRExpr* runGetMemUnknown(IRSB* sbOut, FloatBlocks size, IRExpr* memSrc);
 IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
-                          int size, IRExpr* memSrc);
-IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memSrc);
-void addSetMemNonNull(IRSB* sbOut, int size,
+                          FloatBlocks size, IRExpr* memSrc);
+IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, FloatBlocks size, IRExpr* memSrc);
+void addSetMemNonNull(IRSB* sbOut, FloatBlocks size,
                       IRExpr* memDest, IRExpr* newTemp);
-void addSetMemG(IRSB* sbOut, IRExpr* guard, int size,
+void addSetMemG(IRSB* sbOut, IRExpr* guard, FloatBlocks size,
                 IRExpr* memDest, IRExpr* newTemp);
-void addClearMem(IRSB* sbOut, int size, IRExpr* memDest);
-void addClearMemG(IRSB* sbOut, IRExpr* guard, int size, IRExpr* memDest);
-void addSetMemUnknown(IRSB* sbOut, int size,
+void addClearMem(IRSB* sbOut, FloatBlocks size, IRExpr* memDest);
+void addClearMemG(IRSB* sbOut, IRExpr* guard, FloatBlocks size, IRExpr* memDest);
+void addSetMemUnknown(IRSB* sbOut, FloatBlocks size,
                       IRExpr* memDest, IRExpr* st);
-void addSetMemUnknownG(IRSB* sbOut, IRExpr* guard, int size,
+void addSetMemUnknownG(IRSB* sbOut, IRExpr* guard, FloatBlocks size,
                        IRExpr* memDest, IRExpr* st);
 
 IRExpr* toDoubleBytes(IRSB* sbOut, IRExpr* floatExpr);

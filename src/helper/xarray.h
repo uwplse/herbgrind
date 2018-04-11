@@ -33,7 +33,9 @@
 #include "pub_tool_libcassert.h"
 #include "pub_tool_mallocfree.h"
 
+#ifndef INITIAL_XARRAY_CAPACITY
 #define INITIAL_XARRAY_CAPACITY 4
+#endif
 
 #define Xarray_H(Type, name)                    \
   typedef struct _##name                        \

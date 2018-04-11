@@ -54,7 +54,7 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
   tl_assert2(0, "Can't wrap math ops in GMP mode!\n");
 #endif
   int nargs = getWrappedNumArgs(type);
-  FloatType op_precision = getWrappedPrecision(type);
+  ValueType op_precision = getWrappedPrecision(type);
   ShadowValue* shadowArgs[MAX_WRAPPED_ARGS];
   for(int i = 0; i < nargs; ++i){
     shadowArgs[i] = getMemShadow((UWord)&(args[i]));
@@ -68,6 +68,15 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
       // to memory adds a reference too, so we get a redundant
       // reference. This removes that.
       disownShadowValue(shadowArgs[i]);
+    }
+  }
+  if (print_inputs){
+    for(int i = 0; i < nargs; ++i){
+      VG_(printf)("Arg %d is computed as ", i + 1);
+      ppFloat(args[i]);
+      VG_(printf)(", and is shadowed as ");
+      ppFloat(getDouble(shadowArgs[i]->real));
+      VG_(printf)("\n");
     }
   }
   ShadowValue* shadowResult = runWrappedShadowOp(type, shadowArgs);
@@ -86,10 +95,10 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
   execSymbolicOp(info, &(shadowResult->expr),
                  *resLoc, shadowArgs,
                  bitsGlobalError > error_threshold);
-  if (!no_reals){
+  double bitsLocalError =
     execLocalOp(info, shadowResult->real, shadowResult, shadowArgs);
-  }
-  execInfluencesOp(info, &(shadowResult->influences), shadowArgs);
+  execInfluencesOp(info, &(shadowResult->influences), shadowArgs,
+                   bitsLocalError >= error_threshold);
   if (print_semantic_ops){
     VG_(printf)("%p = %s", shadowResult, getWrappedName(type));
     switch(nargs){
@@ -118,8 +127,7 @@ ShadowOpInfo* getWrappedOpInfo(Addr callAddr, OpType opType, int nargs){
     VG_(HT_gen_lookup)(mathreplaceOpInfoMap, &key, cmp_op_entry_by_type);
   if (entry == NULL){
     ShadowOpInfo* callInfo =
-      mkShadowOpInfo(0x0, callAddr, callAddr, nargs);
-    callInfo->op_type = opType;
+      mkShadowOpInfo(0x0, opType, callAddr, callAddr, nargs);
     entry = VG_(perm_malloc)(sizeof(MrOpInfoEntry),
                              vg_alignof(MrOpInfoEntry));
     entry->call_addr = callAddr;
@@ -144,12 +152,12 @@ int getWrappedNumArgs(OpType type){
   }
 }
 
-FloatType getWrappedPrecision(OpType type){
+ValueType getWrappedPrecision(OpType type){
   switch(type){
   case SINGLE_CASES:
-    return Ft_Single;
+    return Vt_Single;
   case DOUBLE_CASES:
-    return Ft_Double;
+    return Vt_Double;
   default:
     tl_assert(0);
     return 0;

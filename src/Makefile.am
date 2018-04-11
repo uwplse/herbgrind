@@ -30,6 +30,7 @@ runtime/value-shadowstate/shadowval.c					\
 runtime/value-shadowstate/exprs.c runtime/value-shadowstate/real.c	\
 runtime/value-shadowstate/pos-tree.c					\
 runtime/value-shadowstate/range.c					\
+runtime/value-shadowstate/influence-list.c				\
 runtime/op-shadowstate/shadowop-info.c runtime/op-shadowstate/marks.c	\
 runtime/op-shadowstate/output.c runtime/shadowop/shadowop.c		\
 runtime/shadowop/realop.c runtime/shadowop/conversions.c		\

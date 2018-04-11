@@ -142,6 +142,10 @@ void addSVOwn(IRSB* sbOut, IRExpr* sv){
   IRExpr* valueNonNull = runNonZeroCheck64(sbOut, sv);
   addSVOwnNonNullG(sbOut, valueNonNull, sv);
 }
+void addSVOwnG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
+  IRExpr* valueNonNull = runNonZeroCheck64(sbOut, sv);
+  addSVOwnNonNullG(sbOut, runAnd(sbOut, valueNonNull, guard), sv);
+}
 void addSVOwnNonNullG(IRSB* sbOut, IRExpr* guard, IRExpr* sv){
   IRExpr* prevRefCount =
     runArrowG(sbOut, guard, sv, ShadowValue, ref_count);
