@@ -81,6 +81,13 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
       continue;
     }
     for(int j = 0; j < nargs; ++j){
+      if (args[j]->values[i] == NULL){
+        args[j]->values[i] = mkShadowValue(argPrecision, clientArgs[i][j]);
+        if (PRINT_VALUE_MOVES){
+          VG_(printf)("Making shadow value %p for argument %d (%p) in t%d.\n",
+                      args[j]->values[j], j, args[j], infoInstance->argTemps[i]);
+        }
+      }
       vals[j] = args[j]->values[i];
     }
     double computedOutput = (argPrecision == Vt_Single ?
