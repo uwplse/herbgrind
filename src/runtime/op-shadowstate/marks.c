@@ -159,7 +159,7 @@ InfluenceList filterInfluenceSubexprs(InfluenceList influences){
   for(int i = 0; i < influences->length; ++i){
     ShadowOpInfo* influence = influences->data[i];
     for(int j = 0; j < influences->length; ++j){
-      ShadowOpInfo* otherInfluence = influences->data[i];
+      ShadowOpInfo* otherInfluence = influences->data[j];
       if (otherInfluence == influence){
         continue;
       }
