@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-int main(int argc, char** argv){
+int main() {
   double xs[2] = {1.2, 1e-12};
   double ys[2] = {0.5, 1e12};
   double x, y, z;

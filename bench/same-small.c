@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-int main(int argc, char** argv){
+int main() {
   volatile double x = 1.0;
   double y = x + x;
   printf("%e\n", y);

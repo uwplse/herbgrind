@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 
-int main(int argc, char** argv){
+int main() {
   volatile double x1, y1, z1;
   double x, y, z, w;
   x1 = 1 + 1e-15;

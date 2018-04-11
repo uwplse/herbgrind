@@ -3,7 +3,7 @@
 double __attribute__ ((noinline)) add(double x, double y){
   return x + y;
 }
-int main(int argc, char** argv){
+int main() {
   volatile double x, y, z1, z2, z3;
   z1 = 5;
   z2 = 6;

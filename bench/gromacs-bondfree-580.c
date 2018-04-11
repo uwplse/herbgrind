@@ -19,7 +19,7 @@ float r_kj[10][3] = {
   {0.0053226999007165431976, 1.2250422945568828905e-22, 8.1286535331538631898e-39}
 };
 
-int main(int argc, char** argv){
+int main() {
   float nrkj2, nrkj;
   for (int i = 0; i < 10; i++){
     nrkj2 = iprod(r_kj[i], r_kj[i]);

@@ -4,7 +4,7 @@ double addTwo(double x, double y){
   return x + y;
 }
 
-int main(int argc, char** argv){
+int main() {
   volatile double x, y, z;
   z = 3;
   x = addTwo(z + 2, 4);

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 
-int main(int argc, char** argv){
+int main() {
   volatile double x,y;
   x = 3;
   y = sqrt(x + 1);

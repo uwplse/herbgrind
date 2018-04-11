@@ -104,7 +104,7 @@ double inputs[] = {
   -9.70840407053036266314e+78
 };
 
-int main(int argc, char** argv){
+int main() {
   volatile double x,y;
   for (int i = 0; i < 100; i++){
     x = fabs(inputs[i]);

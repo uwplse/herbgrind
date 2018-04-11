@@ -1,17 +1,15 @@
 #include <stdio.h>
 #include <math.h>
 
-void calcY(double* y, double x);
+void calcY(double* y, double x){
+  *y = sqrt(x + 1) - sqrt(x);
+}
 
-int main(int argc, char** argv){
+int main() {
   double x,y;
   x = 1e10;
   calcY(&y, x);
   calcY(&y, x);
   printf("%e\n", y);
   return 0;
-}
-
-void calcY(double* y, double x){
-  *y = sqrt(x + 1) - sqrt(x);
 }

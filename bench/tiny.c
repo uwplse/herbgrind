@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-int main(int argc, char** argv){
+int main() {
   int x;
   x = 1 + 2;
   printf("%d\n", x);
