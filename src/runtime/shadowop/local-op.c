@@ -51,17 +51,5 @@ double execLocalOp(ShadowOpInfo* info, Real realVal,
     locallyApproximateResult =
       runEmulatedOp(info->op_code, exactRoundedArgs);
   }
-  double bitsLocalError =
-    updateError(&(info->agg.local_error), realVal, locallyApproximateResult);
-
-  if (bitsLocalError >= error_threshold){
-    if (print_flagged){
-      VG_(printf)("Hit local error! ");
-      printOpInfo(info);
-      VG_(printf)("\n");
-    }
-    trackOpAsInfluence(info, res);
-  }
-
-  return bitsLocalError;
+  return updateError(&(info->agg.local_error), realVal, locallyApproximateResult);
 }

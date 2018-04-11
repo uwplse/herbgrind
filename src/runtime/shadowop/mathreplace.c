@@ -95,8 +95,10 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
   execSymbolicOp(info, &(shadowResult->expr),
                  *resLoc, shadowArgs,
                  bitsGlobalError > error_threshold);
-  execLocalOp(info, shadowResult->real, shadowResult, shadowArgs);
-  execInfluencesOp(info, &(shadowResult->influences), shadowArgs);
+  double bitsLocalError =
+    execLocalOp(info, shadowResult->real, shadowResult, shadowArgs);
+  execInfluencesOp(info, &(shadowResult->influences), shadowArgs,
+                   bitsLocalError >= error_threshold);
   if (print_semantic_ops){
     VG_(printf)("%p = %s", shadowResult, getWrappedName(type));
     switch(nargs){

@@ -226,7 +226,10 @@ ShadowTemp* mkShadowTemp(FloatBlocks num_blocks){
   return result;
 }
 void freeShadowValue(ShadowValue* val){
-  lfree(InfluenceList)(&(val->influences));
+  if (val->influences != NULL){
+    freeInfluenceList(val->influences);
+    val->influences = NULL;
+  }
   if (!no_exprs){
     if (print_expr_refs){
       VG_(printf)("Disowning expression %p as part of freeing val %p\n",

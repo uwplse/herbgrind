@@ -65,7 +65,6 @@ void markEscapeFromFloat(const char* markType,
                          int numVals, ShadowValue** values);
 IntMarkInfo* getIntMarkInfo(Addr callAddr, const char* markType);
 MarkInfo* getMarkInfo(Addr callAddr);
-void dedupAddInfluencesToList(InfluenceList* info, InfluenceList influences);
 void printMarkInfo(MarkInfo* info);
 int isSubexpr(SymbExpr* needle, SymbExpr* haystack, int depth);
 InfluenceList filterInfluenceSubexprs(InfluenceList influences);

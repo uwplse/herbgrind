@@ -37,8 +37,7 @@
 #include "../../instrument/floattypes.h"
 #include "../../helper/list.h"
 #include "../op-shadowstate/shadowop-info.h"
-
-List_H(ShadowOpInfo*, InfluenceList);
+#include "influence-list.h"
 
 typedef struct _ShadowValue {
   // For the various data structures that will hold these values.

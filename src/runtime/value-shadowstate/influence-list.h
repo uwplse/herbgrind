@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- Herbgrind: a valgrind tool for Herbie         influence-op.h ---*/
+/*--- Herbgrind: a valgrind tool for Herbie       influence-list.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -7,7 +7,7 @@
    floating point accuracy problems in binary programs and extracting
    problematic expressions.
 
-   Copyright (C) 2016-2017 Alex Sanchez-Stern
+   Copyright (C) 2016-2017Alex Sanchez-Stern
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -27,20 +27,20 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#ifndef _INFLUENCE_OP_H
-#define _INFLUENCE_OP_H
+#ifndef _INFLUENCE_LIST_H
+#define _INFLUENCE_LIST_H
 
-#include "../value-shadowstate/shadowval.h"
+#include "../op-shadowstate/shadowop-info.h"
 
-void trackOpAsInfluence(ShadowOpInfo* info, ShadowValue* value);
-void forceTrack(Addr varAddr);
-void forceTrackF(Addr varAddr);
-void execInfluencesOp(ShadowOpInfo* info,
-                      InfluenceList* res, ShadowValue** args,
-                      Bool flagged);
-InfluenceList cloneInfluences(InfluenceList influences);
-void inPlaceMergeInfluences(InfluenceList* dest, InfluenceList arg);
-void dedupAddInfluenceToList(InfluenceList* influences,
-                             ShadowOpInfo* influence);
+typedef struct _influenceList{
+  struct _influenceList* next;
+  int length;
+  ShadowOpInfo** data;
+} *InfluenceList;
+
+InfluenceList mkInfluenceList(void);
+void freeInfluenceList(InfluenceList il);
+InfluenceList mergeInfluences(InfluenceList il1, InfluenceList il2,
+                              ShadowOpInfo* extra);
 
 #endif

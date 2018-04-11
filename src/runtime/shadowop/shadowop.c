@@ -182,10 +182,10 @@ void ppInfluenceAddrs(ShadowValue* val);
 void ppInfluenceAddrs(ShadowValue* val){
   tl_assert(val != NULL);
   InfluenceList list = val->influences;
-  if (list != NULL){
-    VG_(printf)("%lX", list->item->op_addr);
-    for(InfluenceList curNode = list->next; curNode != NULL; curNode = curNode->next){
-      VG_(printf)(", and %lX", curNode->item->op_addr);
+  if (list != NULL && list->length > 0){
+    VG_(printf)("%lX", list->data[0]->op_addr);
+    for(int i = 1; i < list->length; ++i){
+      VG_(printf)(", and %lX", list->data[i]->op_addr);
     }
   }
 }
@@ -253,7 +253,8 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   if (print_errors_long || print_errors){
     VG_(printf)("Local:\n");
   }
-  execLocalOp(opinfo, result->real, result, args);
+  double bitsLocalError =
+    execLocalOp(opinfo, result->real, result, args);
   if (print_errors_long || print_errors){
     VG_(printf)("Global:\n");
   }
@@ -319,7 +320,8 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
       break;
     }
   }
-  execInfluencesOp(opinfo, &(result->influences), args);
+  execInfluencesOp(opinfo, &(result->influences), args,
+                   bitsLocalError >= error_threshold);
   return result;
 }
 

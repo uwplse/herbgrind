@@ -36,6 +36,7 @@ src/runtime/value-shadowstate/exprs.hh					\
 src/runtime/value-shadowstate/real.h					\
 src/runtime/value-shadowstate/pos-tree.h				\
 src/runtime/value-shadowstate/range.h					\
+src/runtime/value-shadowstate/influence-list.h				\
 src/runtime/op-shadowstate/shadowop-info.h				\
 src/runtime/op-shadowstate/marks.h					\
 src/runtime/op-shadowstate/output.h src/runtime/shadowop/shadowop.h	\
@@ -59,6 +60,7 @@ src/runtime/value-shadowstate/exprs.c					\
 src/runtime/value-shadowstate/real.c					\
 src/runtime/value-shadowstate/pos-tree.c				\
 src/runtime/value-shadowstate/range.c					\
+src/runtime/value-shadowstate/influence-list.c				\
 src/runtime/op-shadowstate/shadowop-info.c				\
 src/runtime/op-shadowstate/marks.c					\
 src/runtime/op-shadowstate/output.c src/runtime/shadowop/shadowop.c	\

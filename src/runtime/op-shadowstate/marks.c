@@ -48,7 +48,7 @@ void maybeMarkImportant(Addr varAddr){
   double thisError =
     updateError(&(info->eagg), val->real, *(double*)varAddr);
   if (thisError >= error_threshold){
-    dedupAddInfluencesToList(&(info->influences), val->influences);
+    inPlaceMergeInfluences(&(info->influences), val->influences);
   }
   if (!no_exprs){
     tl_assert(val->expr != NULL);
@@ -73,7 +73,7 @@ void markImportant(Addr varAddr){
   double thisError =
     updateError(&(info->eagg), val->real, *(double*)varAddr);
   if (thisError >= error_threshold){
-    dedupAddInfluencesToList(&(info->influences), val->influences);
+    inPlaceMergeInfluences(&(info->influences), val->influences);
   }
   if (!no_exprs){
     tl_assert(val->expr != NULL);
@@ -95,8 +95,7 @@ void markEscapeFromFloat(const char* markType,
   }
   for(int i = 0; i < num_vals; ++i){
     if (mismatch){
-      dedupAddInfluencesToList(&(info->influences),
-                               values[i]->influences);
+      inPlaceMergeInfluences(&(info->influences), values[i]->influences);
     }
     if (!no_exprs){
       tl_assert(values[i]->expr != NULL);
@@ -137,16 +136,6 @@ MarkInfo* getMarkInfo(Addr callAddr){
   return markInfo;
 }
 
-void dedupAddInfluencesToList(InfluenceList* list, InfluenceList influences){
-  if (no_influences){
-    return;
-  }
-  for(InfluenceList curNode = influences; curNode != NULL;
-      curNode = curNode->next){
-    dedupAddInfluenceToList(list, curNode->item);
-  }
-}
-
 void printMarkInfo(MarkInfo* info){
   VG_(printf)("At ");
   ppAddr(info->addr);
@@ -165,15 +154,12 @@ int isSubexpr(SymbExpr* needle, SymbExpr* haystack, int depth){
 }
 
 InfluenceList filterInfluenceSubexprs(InfluenceList influences){
-  InfluenceList result = NULL;
-  for(InfluenceList curNode = influences;
-      curNode != NULL;
-      curNode = curNode->next){
-    ShadowOpInfo* influence = curNode->item;
-    for(InfluenceList otherNode = influences;
-        otherNode != NULL;
-        otherNode = otherNode->next){
-      ShadowOpInfo* otherInfluence = otherNode->item;
+  if (influences == NULL) return NULL;
+  InfluenceList result = mkInfluenceList();
+  for(int i = 0; i < influences->length; ++i){
+    ShadowOpInfo* influence = influences->data[i];
+    for(int j = 0; j < influences->length; ++j){
+      ShadowOpInfo* otherInfluence = influences->data[i];
       if (otherInfluence == influence){
         continue;
       }
@@ -182,20 +168,18 @@ InfluenceList filterInfluenceSubexprs(InfluenceList influences){
         goto dont_keep_influence;
       }
     }
-    lpush(InfluenceList)(&result, influence);
+    result->data[result->length++] = influences->data[i];
   dont_keep_influence:;
   }
   return result;
 }
 
 InfluenceList filterUnimprovableInfluences(InfluenceList influences){
-  InfluenceList result = NULL;
-  for(InfluenceList curNode = influences;
-      curNode != NULL;
-      curNode = curNode->next){
-    ShadowOpInfo* influence = curNode->item;
-    if (hasRepeatedVars(influence->expr)){
-      lpush(InfluenceList)(&result, influence);
+  if (influences == NULL) return NULL;
+  InfluenceList result = mkInfluenceList();
+  for(int i = 0; i < influences->length; ++i){
+    if (hasRepeatedVars(influences->data[i]->expr)){
+      result->data[result->length++] = influences->data[i];
     }
   }
   return result;

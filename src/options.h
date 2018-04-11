@@ -91,6 +91,7 @@ extern Bool dummy;
 extern Int precision;
 extern Int max_expr_block_depth;
 extern double error_threshold;
+extern Int max_influences;
 extern const char* output_filename;
 
 #define USE_MPFR

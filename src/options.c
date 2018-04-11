@@ -90,6 +90,7 @@ Bool dummy = False;
 Int precision = 1000;
 Int max_expr_block_depth = 5;
 double error_threshold = 5.0;
+Int max_influences = 20;
 const char* output_filename = NULL;
 
 // Called to process each command line option.
@@ -146,6 +147,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_BINT_CLO(arg, "--precision", precision, MPFR_PREC_MIN, MPFR_PREC_MAX){}
   else if VG_BINT_CLO(arg, "--max-expr-block-depth", max_expr_block_depth, 1, 100) {}
   else if VG_DBL_CLO(arg, "--error-threshold", error_threshold) {}
+  else if VG_BINT_CLO(arg, "--max-influences", max_influences, 1, 1000) {}
   else if VG_STR_CLO(arg, "--outfile", output_filename) {}
   else return False;
   return True;
