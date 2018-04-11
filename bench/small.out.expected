@@ -16,7 +16,7 @@
      (example problematic input ())
      (function "calcY")
      (filename "small.c")
-     (line-num 16)
+     (line-num 5)
      (instr-addr 4008EB)
      (avg-error 32.617943)
      (max-error 32.617943)
