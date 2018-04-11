@@ -37,6 +37,7 @@
 #include "../shadowop/mathreplace.h"
 
 #include <math.h>
+#include <stdint.h>
 
 VgHashTable* mathreplaceOpInfoMap = NULL;
 VgHashTable* semanticOpInfoMap = NULL;
@@ -156,5 +157,28 @@ int numFloatArgs(ShadowOpInfo* opinfo){
     return getWrappedNumArgs(opinfo->op_type);
   } else {
     return getNativeNumFloatArgs(opinfo->op_code);
+  }
+}
+
+int cmpInfo(ShadowOpInfo* info1, ShadowOpInfo* info2){
+  if (info1->agg.local_error.max_error >
+      info2->agg.local_error.max_error){
+    return 1;
+  } else if (info1->agg.local_error.max_error <
+             info2->agg.local_error.max_error){
+    return -1;
+  } else if (info1->agg.local_error.total_error / info1->agg.local_error.num_evals >
+             info2->agg.local_error.total_error / info2->agg.local_error.num_evals){
+    return 1;
+  } else if (info1->agg.local_error.total_error / info1->agg.local_error.num_evals >
+             info2->agg.local_error.total_error / info2->agg.local_error.num_evals){
+    return -1;
+  } else if ((uintptr_t)info1 > (uintptr_t)info2){
+    return 1;
+  } else if ((uintptr_t)info1 < (uintptr_t)info2){
+    return -1;
+  } else {
+    tl_assert(info1 == info2);
+    return 0;
   }
 }

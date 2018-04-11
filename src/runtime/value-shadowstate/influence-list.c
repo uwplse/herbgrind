@@ -76,37 +76,41 @@ InfluenceList mergeInfluences(InfluenceList il1, InfluenceList il2,
          extra != NULL) &&
         result->length < max_influences){
     if (il1 != NULL && i < il1->length &&
-        (il2 == NULL || j >= il2->length || score(il1->data[i]) >= score(il2->data[j])) &&
-        (extra == NULL || score(il1->data[i]) >= score(extra))){
-      result->data[result->length++] = il1->data[i++];
+        (il2 == NULL || j >= il2->length || cmpInfo(il1->data[i], il2->data[j]) >= 0) &&
+        (extra == NULL || cmpInfo(il1->data[i], extra) >= 0)){
+      if (result->length == 0 || result->data[result->length-1] != il1->data[i]){
+        result->data[result->length++] = il1->data[i];
+      }
+      i++;
     } else if (il2 != NULL && j < il2->length &&
                (il1 == NULL || i >= il1->length ||
-                score(il2->data[j]) >= score(il1->data[i])) &&
-               (extra == NULL || score(il2->data[j]) >= score(extra))){
-      result->data[result->length++] = il2->data[j++];
+                cmpInfo(il2->data[j], il1->data[i]) >= 0) &&
+               (extra == NULL || cmpInfo(il2->data[j], extra) >= 0)){
+      if (result->length == 0 || result->data[result->length-1] != il2->data[j]){
+        result->data[result->length++] = il2->data[j++];
+      }
+      j++;
     } else if (extra != NULL &&
-               (il1 == NULL || i >= il1->length || score(extra) >= score(il1->data[i])) &&
-               (il2 == NULL || j >= il2->length || score(extra) >= score(il2->data[j]))){
-      result->data[result->length++] = extra;
+               (il1 == NULL || i >= il1->length || cmpInfo(extra, il1->data[i]) >= 0) &&
+               (il2 == NULL || j >= il2->length || cmpInfo(extra, il2->data[j]) >= 0)){
+      if (result->length == 0 || result->data[result->length-1] != extra){
+        result->data[result->length++] = extra;
+      }
       extra = NULL;
     } else {
+      VG_(printf)("cmpInfo(il2->data[j], il1->data[i]) : %d\n",
+                  cmpInfo(il2->data[j], il1->data[i]));
+      VG_(printf)("il2->data[j]: %p\nil1->data[i]: %p\n",
+                  il2->data[j], il1->data[i]);
       VG_(printf)("extra: %p\n", extra);
       VG_(printf)("i: %d, il1: %p", i, il1);
       if (il1 != NULL){
         VG_(printf)(" il1->length : %d", il1->length);
-        if (i < il1->length){
-          VG_(printf)(" score: ");
-          ppFloat(score(il1->data[i]));
-        }
       }
       VG_(printf)("\n");
       VG_(printf)("j: %d, il2: %p", j, il2);
       if (il2 != NULL){
-        VG_(printf)(" il2->length = %d", il2->length);
-        if (j < il2->length){
-          VG_(printf)(" score: ");
-          ppFloat(score(il2->data[j]));
-        }
+        VG_(printf)(" il2->length : %d", il2->length);
       }
       VG_(printf)("\n");
       tl_assert(0);

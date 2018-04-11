@@ -114,4 +114,6 @@ char* getAddrString(Addr addr);
 
 int numFloatArgs(ShadowOpInfo* opinfo);
 
+int cmpInfo(ShadowOpInfo* info1, ShadowOpInfo* info2);
+
 #endif
