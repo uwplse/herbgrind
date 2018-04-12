@@ -170,6 +170,7 @@ WRAP_BINARY_OPS
 WRAP_TERNARY_OPS
 #endif
 
+#ifndef DONT_WRAP
 // This is a special wrap
 void VG_REPLACE_FUNCTION_ZU(LIBM_CPP, sincos)(double x, double* p_sin, double* p_cos);
 void VG_REPLACE_FUNCTION_ZU(LIBM_CPP, sincos)(double x, double* p_sin, double* p_cos){
@@ -250,3 +251,5 @@ complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divxc3)(complex double x, complex 
 complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divxc3)(complex double x, complex double y){
   return x / y;
 }
+
+#endif
