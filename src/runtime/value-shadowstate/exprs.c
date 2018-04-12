@@ -843,11 +843,11 @@ void registerPotentialVar(SymbExpr* node, SymbExpr* parent, int childIndex,
       !(VG_(OSetWord_Contains)(seenNodes, (UWord)(uintptr_t)childPos))){
     tl_assert2(*nextVarIdx < num_vars, "That's too much, man!");
     totalRanges[*nextVarIdx] = parent->branch.op->agg.inputs.range_records[childIndex];
-    tl_assert2(totalRanges[*nextVarIdx].pos_range.min !=
-               totalRanges[*nextVarIdx].pos_range.max,
-               "Expr %p (child %d of %p, opinfo %p), "
-               "is non-const, but has a range with only one value!\n",
-               node, childIndex, parent, parent->branch.op);
+    /* tl_assert2(totalRanges[*nextVarIdx].pos_range.min != */
+    /*            totalRanges[*nextVarIdx].pos_range.max, */
+    /*            "Expr %p (child %d of %p, opinfo %p), " */
+    /*            "is non-const, but has a range with only one value!\n", */
+    /*            node, childIndex, parent, parent->branch.op); */
     RangeRecord* result = lookupRangeRecord(rangeTable, childPos);
     if (result == NULL){
       VG_(printf)("Couldn't find range table entry for ");
