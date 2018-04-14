@@ -209,7 +209,7 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
         canonicalValue = nodeValue;
         lpush(Group)(&(newCurGroup), groupMemberPos);
       } else {
-        if (nodeValue != canonicalValue){
+        if (!NaNSafeEquals(nodeValue, canonicalValue)){
           if (splitMap == NULL){
             splitMap = VG_(HT_construct)("split map.\n");
           }
@@ -226,10 +226,11 @@ void intersectEqualities(SymbExpr* symbExpr, ConcExpr* concExpr){
             addRangeEntryCopy(symbExpr->branch.varProblematicRanges,
                               groupMemberPos,
                               existingRange);
-          addExampleEntryCopy(symbExpr->branch.exampleProblematicArgs,
-                              groupMemberPos,
-                              lookupExampleInput(symbExpr->branch.exampleProblematicArgs,
-                                                 canonicalPos));
+            addExampleEntryCopy(symbExpr->branch.exampleProblematicArgs,
+                                groupMemberPos,
+                                lookupExampleInput(symbExpr->branch
+                                                   .exampleProblematicArgs,
+                                                   canonicalPos));
           } else {
             lpush(Group)(&(newGroups->data[splitGroup]), groupMemberPos);
           }
