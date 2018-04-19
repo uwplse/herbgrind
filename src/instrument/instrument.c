@@ -169,10 +169,17 @@ void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
                       expr->Iex.ITE.iffalse);
         break;
       case Iex_Load:
-        instrumentLoad(sbOut,
-                       stmt->Ist.WrTmp.tmp,
-                       expr->Iex.Load.addr,
-                       expr->Iex.Load.ty);
+        if (numStmtsIn < LOAD_FALLBACK_THRESHOLD){
+          instrumentLoad(sbOut,
+                         stmt->Ist.WrTmp.tmp,
+                         expr->Iex.Load.addr,
+                         expr->Iex.Load.ty);
+        } else {
+          instrumentLoadSmallButSlow(sbOut,
+                                     stmt->Ist.WrTmp.tmp,
+                                     expr->Iex.Load.addr,
+                                     expr->Iex.Load.ty);
+        }
         break;
       case Iex_Qop:
       case Iex_Triop:

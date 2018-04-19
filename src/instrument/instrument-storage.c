@@ -409,6 +409,16 @@ void instrumentLoad(IRSB* sbOut, IRTemp dest,
   IRExpr* st = runGetMemUnknown(sbOut, dest_size, addr);
   addStoreTemp(sbOut, st, dest);
 }
+void instrumentLoadSmallButSlow(IRSB* sbOut, IRTemp dest,
+                                IRExpr* addr, IRType type){
+  if (!isFloat(sbOut->tyenv, dest)){
+    return;
+  }
+  tempShadowStatus[dest] = Ss_Unknown;
+  FloatBlocks dest_size = typeSize(type);
+  IRExpr* st = runGetMem(sbOut, dest_size, addr);
+  addStoreTemp(sbOut, st, dest);
+}
 void instrumentLoadG(IRSB* sbOut, IRTemp dest,
                      IRExpr* altValue, IRExpr* guard,
                      IRExpr* addr, IRLoadGOp conversion){
@@ -882,6 +892,19 @@ IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, FloatBlocks size, IRExpr* memSrc)
   loadDirty->mSize = sizeof(TableValueEntry) * LARGE_PRIME;
   addStmtToIRSB(sbOut, IRStmt_Dirty(loadDirty));
   return runITE(sbOut, guard, IRExpr_RdTmp(result), mkU64(0));
+}
+IRExpr* runGetMem(IRSB* sbOut, FloatBlocks size, IRExpr* memSrc){
+  IRTemp result = newIRTemp(sbOut->tyenv, Ity_I64);
+  IRDirty* loadDirty =
+    unsafeIRDirty_1_N(result,
+                      2, "dynamicLoad",
+                      VG_(fnptr_to_fnentry)(dynamicLoad),
+                      mkIRExprVec_2(memSrc, mkU64(INT(size))));
+  loadDirty->mFx = Ifx_Read;
+  loadDirty->mAddr = mkU64((uintptr_t)shadowMemTable);
+  loadDirty->mSize = sizeof(TableValueEntry) * LARGE_PRIME;
+  addStmtToIRSB(sbOut, IRStmt_Dirty(loadDirty));
+  return IRExpr_RdTmp(result);
 }
 void addClearMem(IRSB* sbOut, FloatBlocks size, IRExpr* memDest){
   addClearMemG(sbOut, mkU1(True), size, memDest);

@@ -58,7 +58,10 @@ void instrumentGetI(IRSB* sbOut, IRTemp dest,
                     int instrIdx);
 void instrumentLoad(IRSB* sbOut, IRTemp dest,
                     IRExpr* addr, IRType type);
+void instrumentLoadSmallButSlow(IRSB* sbOut, IRTemp dest,
+                                IRExpr* addr, IRType type);
 #define LOADG_FALLBACK_THRESHOLD 250
+#define LOAD_FALLBACK_THRESHOLD 315
 void instrumentLoadG(IRSB* sbOut, IRTemp dest,
                      IRExpr* altValue, IRExpr* guard,
                      IRExpr* addr, IRLoadGOp conversion);
@@ -122,6 +125,7 @@ QuickBucketResult quickGetBucketG(IRSB* sbOut, IRExpr* guard,
 IRExpr* runGetMemUnknown(IRSB* sbOut, FloatBlocks size, IRExpr* memSrc);
 IRExpr* runGetMemUnknownG(IRSB* sbOut, IRExpr* guard,
                           FloatBlocks size, IRExpr* memSrc);
+IRExpr* runGetMem(IRSB* sbOut, FloatBlocks size, IRExpr* memSrc);
 IRExpr* runGetMemG(IRSB* sbOut, IRExpr* guard, FloatBlocks size, IRExpr* memSrc);
 void addSetMemNonNull(IRSB* sbOut, FloatBlocks size,
                       IRExpr* memDest, IRExpr* newTemp);
