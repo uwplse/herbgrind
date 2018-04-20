@@ -403,6 +403,8 @@ int numSIMDOperands(IROp op_code){
   case Iop_I32StoF64:
   case Iop_I32UtoF64:
   case Iop_F64toI32S:
+  case Iop_F64toI64S:
+  case Iop_I64StoF64:
     return 1;
     // Binary Ops
   case Iop_RecipStep32Fx4:
