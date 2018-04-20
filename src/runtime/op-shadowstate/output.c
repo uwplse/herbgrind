@@ -57,8 +57,10 @@ void writeOutput(void){
 
   if (VG_(HT_count_nodes)(markMap) == 0 &&
       !haveErroneousIntMarks()){
-    char output[] = "No marks found!\n";
-    VG_(write)(fileD, output, sizeof(output));
+    if (!output_sexp){
+      char output[] = "No marks found!\n";
+      VG_(write)(fileD, output, sizeof(output));
+    }
     return;
   }
   VG_(HT_ResetIter)(markMap);
