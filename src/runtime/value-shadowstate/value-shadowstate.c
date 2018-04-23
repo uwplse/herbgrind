@@ -226,6 +226,9 @@ ShadowTemp* mkShadowTemp(FloatBlocks num_blocks){
   return result;
 }
 void freeShadowValue(ShadowValue* val){
+  if (PRINT_VALUE_MOVES){
+    VG_(printf)("Disowned last reference to %p! Freeing...\n", val);
+  }
   if (val->influences != NULL){
     freeInfluenceList(val->influences);
     val->influences = NULL;
@@ -386,9 +389,6 @@ void disownShadowValue(ShadowValue* val){
   val->ref_count--;
   if (val->ref_count == 0){
     freeShadowValue(val);
-    if (PRINT_VALUE_MOVES){
-      VG_(printf)("Disowned last reference to %p! Freeing...\n", val);
-    }
   }
 }
 void ownShadowValue(ShadowValue* val){

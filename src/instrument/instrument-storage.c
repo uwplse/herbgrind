@@ -310,6 +310,9 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
   switch(targetStatus){
   case Ss_Shadowed:{
     IRExpr* vals[MAX_TEMP_BLOCKS];
+    if (PRINT_VALUE_MOVES){
+      addPrint2("GET: Making new temp in t%d with values ", mkU64(dest));
+    }
     for(int i = 0; i < INT(src_size); ++i){
       int src_addr = tsSrc + i * sizeof(float);
       if (tsAddrCanBeShadowed(src_addr, instrIdx)){
@@ -317,7 +320,13 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       } else {
         vals[i] = mkU64(0);
       }
+      if (i == 0){
+        addPrint2("%p", vals[i]);
+      } else {
+        addPrint2(", %p", vals[i]);
+      }
     }
+    addPrint(" from TS(%d)\n", mkU64(tsSrc));
     IRExpr* temp = runMkShadowTempValues(sbOut, src_size, vals);
     addStoreTemp(sbOut, temp, dest);
   }
