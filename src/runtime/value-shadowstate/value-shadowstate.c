@@ -122,6 +122,17 @@ VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, FloatBlocks numBlocks){
   }
   if (atLeastOneNonNull){
     ShadowTemp* newTemp = mkShadowTemp(numBlocks);
+    if (PRINT_VALUE_MOVES){
+      VG_(printf)("LOAD: Making new temp with values ");
+      for(int i = 0; i < INT(numBlocks); ++i){
+        if (i == 0){
+          VG_(printf)("%p", values[i]);
+        } else {
+          VG_(printf)(", %p", values[i]);
+        }
+      }
+      VG_(printf)(" from MEM[%lX]\n", memSrc);
+    }
     for(int i = 0; i < INT(numBlocks); ++i){
       newTemp->values[i] = values[i];
       ownShadowValue(values[i]);
