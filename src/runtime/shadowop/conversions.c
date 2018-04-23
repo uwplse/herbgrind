@@ -217,6 +217,7 @@ ShadowTemp* setV128lo64Dynamic2(ShadowTemp* top,
     result->values[1] = NULL;
     result->values[2] = top->values[2];
     result->values[3] = top->values[3]; // NULL
+    ownShadowValue(top->values[2]);
     if (PRINT_TEMP_MOVES){
       VG_(printf)("Made %p with two doubles because %p has two doubles.\n",
                   result, top);
@@ -229,6 +230,8 @@ ShadowTemp* setV128lo64Dynamic2(ShadowTemp* top,
     result->values[1] = mkShadowValue(Vt_Single, floatValues[1]);
     result->values[2] = top->values[2];
     result->values[3] = top->values[3];
+    ownShadowValue(top->values[2]);
+    ownShadowValue(top->values[3]);
     if (PRINT_TEMP_MOVES){
       VG_(printf)("Made %p with four singles because "
                   "%p has four singles.\n",
@@ -254,6 +257,7 @@ ShadowTemp* setV128lo64Dynamic1(ShadowTemp* bottom,
     result->values[1] = bottom->values[1]; // NULL
     result->values[2] = mkShadowValue(Vt_Double, val);
     result->values[3] = NULL;
+    ownShadowValue(bottom->values[0]);
     if (PRINT_TEMP_MOVES){
       VG_(printf)("Made %p with two doubles because %p has one double.\n",
                   result, bottom);
@@ -266,6 +270,8 @@ ShadowTemp* setV128lo64Dynamic1(ShadowTemp* bottom,
     result->values[1] = bottom->values[1];
     result->values[2] = mkShadowValue(Vt_Single, floatValues[0]);
     result->values[3] = mkShadowValue(Vt_Single, floatValues[1]);
+    ownShadowValue(bottom->values[0]);
+    ownShadowValue(bottom->values[1]);
     if (PRINT_TEMP_MOVES){
       VG_(printf)("Made %p with four singles because "
                   "%p has two singles.\n",
