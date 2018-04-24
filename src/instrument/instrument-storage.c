@@ -310,6 +310,9 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
   switch(targetStatus){
   case Ss_Shadowed:{
     IRExpr* vals[MAX_TEMP_BLOCKS];
+    if (PRINT_VALUE_MOVES){
+      addPrint2("GET: Making new temp in t%d with values ", mkU64(dest));
+    }
     for(int i = 0; i < INT(src_size); ++i){
       int src_addr = tsSrc + i * sizeof(float);
       if (tsAddrCanBeShadowed(src_addr, instrIdx)){
@@ -317,6 +320,16 @@ void instrumentGet(IRSB* sbOut, IRTemp dest,
       } else {
         vals[i] = mkU64(0);
       }
+      if (PRINT_VALUE_MOVES){
+        if (i == 0){
+          addPrint2("%p", vals[i]);
+        } else {
+          addPrint2(", %p", vals[i]);
+        }
+      }
+    }
+    if (PRINT_VALUE_MOVES){
+      addPrint2(" from TS(%d)\n", mkU64(tsSrc));
     }
     IRExpr* temp = runMkShadowTempValues(sbOut, src_size, vals);
     addStoreTemp(sbOut, temp, dest);
@@ -407,6 +420,9 @@ void instrumentLoad(IRSB* sbOut, IRTemp dest,
   tempShadowStatus[dest] = Ss_Unknown;
   FloatBlocks dest_size = typeSize(type);
   IRExpr* st = runGetMemUnknown(sbOut, dest_size, addr);
+  if (PRINT_VALUE_MOVES){
+    addPrintG2(runNonZeroCheck64(sbOut, st), "Loading to %d\n", mkU64(dest));
+  }
   addStoreTemp(sbOut, st, dest);
 }
 void instrumentLoadSmallButSlow(IRSB* sbOut, IRTemp dest,
@@ -417,6 +433,9 @@ void instrumentLoadSmallButSlow(IRSB* sbOut, IRTemp dest,
   tempShadowStatus[dest] = Ss_Unknown;
   FloatBlocks dest_size = typeSize(type);
   IRExpr* st = runGetMem(sbOut, dest_size, addr);
+  if (PRINT_VALUE_MOVES){
+    addPrintG2(runNonZeroCheck64(sbOut, st), "Loading to %d\n", mkU64(dest));
+  }
   addStoreTemp(sbOut, st, dest);
 }
 void instrumentLoadG(IRSB* sbOut, IRTemp dest,
@@ -435,9 +454,11 @@ void instrumentLoadG(IRSB* sbOut, IRTemp dest,
     tl_assert(altValue->tag == Iex_RdTmp);
     stAlt = runLoadTemp(sbOut, altValue->Iex.RdTmp.tmp);
   }
-  addStoreTempUnknown(sbOut,
-                      runITE(sbOut, guard, st, stAlt),
-                      dest);
+  IRExpr* result = runITE(sbOut, guard, st, stAlt);
+  if (PRINT_VALUE_MOVES){
+    addPrintG2(runNonZeroCheck64(sbOut, result), "Loading to %d\n", mkU64(dest));
+  }
+  addStoreTempUnknown(sbOut, result, dest);
 }
 // This version of instrumentLoadG is for when we're hitting the limit
 // on VEX instructions. Goes to C more eagerly, but produces a shitton
@@ -455,9 +476,11 @@ void instrumentLoadGSmallButSlow(IRSB* sbOut, IRTemp dest,
     tl_assert(altValue->tag == Iex_RdTmp);
     stAlt = runLoadTemp(sbOut, altValue->Iex.RdTmp.tmp);
   }
-  addStoreTempUnknown(sbOut,
-                      runITE(sbOut, guard, st, stAlt),
-                      dest);
+  IRExpr* result = runITE(sbOut, guard, st, stAlt);
+  if (PRINT_VALUE_MOVES){
+    addPrintG2(runNonZeroCheck64(sbOut, result), "Loading to %d\n", mkU64(dest));
+  }
+  addStoreTempUnknown(sbOut, result, dest);
 }
 void instrumentStore(IRSB* sbOut, IRExpr* addr,
                      IRExpr* data){
@@ -728,7 +751,7 @@ void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
                   int idx){
   if (PRINT_VALUE_MOVES || PRINT_TEMP_MOVES){
     IRExpr* tempNonNull = runNonZeroCheck64(sbOut, shadow_temp);
-    addPrintG2(tempNonNull, "storing in t%d\n", mkU64(idx));
+    addPrintG2(tempNonNull, "[1] storing in t%d\n", mkU64(idx));
   }
   addStoreC(sbOut, shadow_temp, &(shadowTemps[idx]));
   cleanupAtEndOfBlock(sbOut, idx);
@@ -738,7 +761,7 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard, IRExpr* shadow_temp,
   if (PRINT_VALUE_MOVES || PRINT_TEMP_MOVES){
     IRExpr* tempNonNull = runNonZeroCheck64(sbOut, shadow_temp);
     IRExpr* shouldPrint = runAnd(sbOut, tempNonNull, guard);
-    addPrintG2(shouldPrint, "storing in t%d\n", mkU64(idx));
+    addPrintG2(shouldPrint, "[2] storing in t%d\n", mkU64(idx));
   }
   addStoreGC(sbOut, guard, shadow_temp, &(shadowTemps[idx]));
   cleanupAtEndOfBlock(sbOut, idx);

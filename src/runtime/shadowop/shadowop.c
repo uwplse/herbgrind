@@ -84,8 +84,8 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
       if (args[j]->values[i] == NULL){
         args[j]->values[i] = mkShadowValue(argPrecision, clientArgs[i][j]);
         if (PRINT_VALUE_MOVES){
-          VG_(printf)("Making shadow value %p for argument %d (%p) in t%d.\n",
-                      args[j]->values[j], j, args[j], infoInstance->argTemps[i]);
+          VG_(printf)("Making shadow value %p for argument %d block %d (%p) in t%d.\n",
+                      args[j]->values[j], j, i, args[j], infoInstance->argTemps[i]);
         }
       }
       vals[j] = args[j]->values[i];
@@ -169,8 +169,8 @@ ShadowTemp* getArg(int argIdx, IROp op, IRTemp argTemp){
       result->values[j] =
         mkShadowValue(argPrecision, value);
       if (PRINT_VALUE_MOVES){
-        VG_(printf)("Making shadow value %p for argument %d (%p) in t%d.\n",
-                    result->values[j], argIdx, result, argTemp);
+        VG_(printf)("Making shadow value %p for argument %d block %d (%p) in t%d.\n",
+                    result->values[j], argIdx, j, result, argTemp);
       }
     }
     if (argTemp != -1){
