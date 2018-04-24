@@ -280,6 +280,8 @@ ShadowValue* copyShadowValue(ShadowValue* val){
 }
 inline
 ShadowValue* mkShadowValueBare(ValueType type){
+  tl_assert2(type == Vt_Single || type == Vt_Double,
+             "Invalid type! %s\n", typeName(type));
   ShadowValue* result;
   if (stack_empty_fast(freedVals)){
     result = newShadowValue(type);
