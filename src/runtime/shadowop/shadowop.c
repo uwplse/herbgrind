@@ -150,7 +150,7 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
 ShadowTemp* getArg(int argIdx, IROp op, IRTemp argTemp){
   if (argTemp == -1 ||
       shadowTemps[argTemp] == NULL){
-    FloatBlocks numBlocks = numOpBlocks(op);
+    FloatBlocks numBlocks = numOpArgBlocks(op);
     FloatBlocks numOperandBlocks = numOpOperandBlocks(op);
     ShadowTemp* result = mkShadowTemp(numBlocks);
     if (PRINT_TEMP_MOVES){
@@ -332,6 +332,24 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   return result;
 }
 
+FloatBlocks numOpArgBlocks(IROp_Extended op){
+  if (op >= (IROp_Extended)Iop_LAST){
+    switch(op){
+    case IEop_Neg32F0x4:
+    case IEop_Neg64F0x2:
+      return FB(4);
+    default:
+      tl_assert(0);
+      return FB(0);
+    }
+  } else {
+    IRType destType;
+    IRType argTypes[4];
+    typeOfPrimop(op, &destType,
+                 &(argTypes[0]), &(argTypes[1]), &(argTypes[2]), &(argTypes[3]));
+    return typeSize(argTypes[0]);
+  }
+}
 FloatBlocks numOpBlocks(IROp_Extended op){
   if (op >= (IROp_Extended)Iop_LAST){
     switch(op){
