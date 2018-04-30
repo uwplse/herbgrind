@@ -123,6 +123,7 @@ void recursivelyOwnConcExpr(ConcExpr* expr, int depth){
   (expr->ref_count)++;
   if (expr->type == Node_Branch){
     for(int i = 0; i < expr->branch.nargs; ++i){
+      tl_assert(expr->branch.args[i] != NULL);
       recursivelyOwnConcExpr(expr->branch.args[i], depth - 1);
     }
   }
