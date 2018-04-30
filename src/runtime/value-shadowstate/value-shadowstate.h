@@ -51,6 +51,8 @@
 #include "exprs.h"
 #include "pub_tool_tooliface.h"
 
+#include "pub_tool_libcprint.h"
+
 #include "../../helper/stack.h"
 
 #define MAX_THREADS 16
@@ -97,6 +99,8 @@ typedef struct _Word256 {
   UWord bytes[4];
 } Word256;
 extern Word256 getBytes;
+
+extern int blockStateDirty;
 
 void initValueShadowState(void);
 VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries);

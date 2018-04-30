@@ -43,6 +43,7 @@ void initOwnership(void){
 }
 void cleanupBlockOwnership(IRSB* sbOut, IRExpr* guard){
   if (VG_(sizeXA)(tempDebt) == 0){
+    addStoreGC(sbOut, guard, mkU64(0), &blockStateDirty);
     return;
   }
   IRTemp* curDebtContents =

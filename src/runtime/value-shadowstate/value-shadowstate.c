@@ -44,6 +44,8 @@
 
 #include <math.h>
 
+int blockStateDirty = 0;
+
 ArgUnion computedArgs;
 
 ResultUnion computedResult;
@@ -105,6 +107,7 @@ VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
     freeShadowTemp(temp);
     shadowTemps[entries[i]] = NULL;
   }
+  blockStateDirty = 0;
 }
 inline
 ShadowValue* getTS(Int idx){

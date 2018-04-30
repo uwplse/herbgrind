@@ -40,6 +40,7 @@
 #include "pub_tool_mallocfree.h"
 
 #include "../runtime/value-shadowstate/shadowval.h"
+#include "../runtime/value-shadowstate/value-shadowstate.h"
 
 #include "../helper/instrument-util.h"
 #include "../helper/debug.h"
@@ -64,6 +65,9 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
     VG_(snprintf)(blockMessage, 35,
                   "Running block at %p\n", (void*)closure->readdr);
     addPrint(blockMessage);
+    IRExpr* blockStateDirtyExpr = runLoad64C(sbOut, &blockStateDirty);
+    addAssertEQ(sbOut, "Uncleaned block!\n", blockStateDirtyExpr, mkU64(0));
+    addStoreC(sbOut, mkU64(1), &blockStateDirty);
   }
 
   Addr curAddr = 0;
