@@ -44,6 +44,8 @@
 
 #include <math.h>
 
+int blockStateDirty = 0;
+
 ArgUnion computedArgs;
 
 ResultUnion computedResult;
@@ -94,16 +96,18 @@ VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
       if (PRINT_VALUE_MOVES){
         if (temp->values[j] != NULL){
           VG_(printf)("Cleaning up value %p (old rc %lu) "
-                      "from temp %p in %d at end of block.\n",
+                      "from temp %p, block %d in %d at end of block.\n",
                       temp->values[j], temp->values[j]->ref_count,
-                      temp, entries[i]);
+                      temp, j, entries[i]);
         }
       }
       disownShadowValue(temp->values[j]);
+      temp->values[j] = NULL;
     }
     freeShadowTemp(temp);
     shadowTemps[entries[i]] = NULL;
   }
+  blockStateDirty = 0;
 }
 inline
 ShadowValue* getTS(Int idx){
@@ -280,6 +284,8 @@ ShadowValue* copyShadowValue(ShadowValue* val){
 }
 inline
 ShadowValue* mkShadowValueBare(ValueType type){
+  tl_assert2(type == Vt_Single || type == Vt_Double,
+             "Invalid type! %s\n", typeName(type));
   ShadowValue* result;
   if (stack_empty_fast(freedVals)){
     result = newShadowValue(type);

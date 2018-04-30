@@ -150,16 +150,16 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
 ShadowTemp* getArg(int argIdx, IROp op, IRTemp argTemp){
   if (argTemp == -1 ||
       shadowTemps[argTemp] == NULL){
-    FloatBlocks numBlocks = numOpBlocks(op);
-    int numChannels = numChannelsIn(op);
+    FloatBlocks numBlocks = numOpArgBlocks(op);
+    FloatBlocks numOperandBlocks = numOpOperandBlocks(op);
     ShadowTemp* result = mkShadowTemp(numBlocks);
     if (PRINT_TEMP_MOVES){
-      VG_(printf)("Making shadow temp %p (%d vals) for argument %d\n",
-                  result, numChannels, argIdx);
+      VG_(printf)("Making shadow temp %p (%d blocks) for argument %d\n",
+                  result, INT(numBlocks), argIdx);
     }
-    for(int j = 0; j < INT(numBlocks); j++){
+    for(int j = 0; j < INT(numOperandBlocks); j++){
       ValueType argPrecision = opBlockArgPrecision(op, j);
-      if (argPrecision == Vt_Double && j % 2 == 1){
+      if (argPrecision == Vt_NonFloat){
         result->values[j] = NULL;
         continue;
       }
@@ -175,8 +175,8 @@ ShadowTemp* getArg(int argIdx, IROp op, IRTemp argTemp){
     }
     if (argTemp != -1){
       if (PRINT_TEMP_MOVES){
-        VG_(printf)("Storing shadow temp %p (%d vals) at t%d for argument\n",
-                    result, numChannels, argTemp);
+        VG_(printf)("Storing shadow temp %p (%d blocks) at t%d for argument\n",
+                    result, INT(numBlocks), argTemp);
       }
       shadowTemps[argTemp] = result;
     }
@@ -332,6 +332,24 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   return result;
 }
 
+FloatBlocks numOpArgBlocks(IROp_Extended op){
+  if (op >= (IROp_Extended)Iop_LAST){
+    switch(op){
+    case IEop_Neg32F0x4:
+    case IEop_Neg64F0x2:
+      return FB(4);
+    default:
+      tl_assert(0);
+      return FB(0);
+    }
+  } else {
+    IRType destType;
+    IRType argTypes[4];
+    typeOfPrimop(op, &destType,
+                 &(argTypes[0]), &(argTypes[1]), &(argTypes[2]), &(argTypes[3]));
+    return typeSize(argTypes[0]);
+  }
+}
 FloatBlocks numOpBlocks(IROp_Extended op){
   if (op >= (IROp_Extended)Iop_LAST){
     switch(op){
@@ -349,4 +367,9 @@ FloatBlocks numOpBlocks(IROp_Extended op){
                  &(argTypes[0]), &(argTypes[1]), &(argTypes[2]), &(argTypes[3]));
     return typeSize(destType);
   }
+}
+FloatBlocks numOpOperandBlocks(IROp_Extended op){
+  int numOperandChannels = numSIMDOperands(op);
+  ValueType argPrecision = opArgPrecision(op);
+  return FB(numOperandChannels * (argPrecision == Vt_Double ? 2 : 1));
 }

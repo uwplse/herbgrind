@@ -43,5 +43,7 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
                                     double* computedArgs,
                                     double computedResult);
 
+FloatBlocks numOpArgBlocks(IROp_Extended op);
 FloatBlocks numOpBlocks(IROp_Extended op);
+FloatBlocks numOpOperandBlocks(IROp_Extended op);
 #endif

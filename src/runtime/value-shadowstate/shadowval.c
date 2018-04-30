@@ -86,8 +86,8 @@ VG_REGPARM(2) void assertTempValid(const char* label, ShadowTemp* temp){
 }
 VG_REGPARM(3) void assertValType(const char* label, ShadowValue* val, ValueType type){
   tl_assert2(val->type == type,
-             "%s: Expected type %d for %p, got %d\n",
-             label, type, val, val->type);
+             "%s: Expected type %s for %p, got %s\n",
+             label, typeName(type), val, typeName(val->type));
 }
 VG_REGPARM(3) void assertTempType(const char* label, ShadowTemp* temp, ValueType type){
   for(int i = 0; i < INT(temp->num_blocks);
