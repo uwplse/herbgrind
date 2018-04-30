@@ -196,9 +196,8 @@ void ownNonNullShadowValue(ShadowValue* val){
 __attribute__((always_inline))
 inline
 void disownShadowTemp_fast(ShadowTemp* temp){
-  for(int i = 0; i < INT(temp->num_blocks);
-      i+=temp->values[i]->type == Vt_Double ? 2 : 1){
-    disownNonNullShadowValue(temp->values[i]);
+  for(int i = 0; i < INT(temp->num_blocks); ++i){
+    disownShadowValue(temp->values[i]);
   }
   freeShadowTemp_fast(temp);
 }
