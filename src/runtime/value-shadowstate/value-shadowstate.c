@@ -100,6 +100,7 @@ VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
         }
       }
       disownShadowValue(temp->values[j]);
+      temp->values[j] = NULL;
     }
     freeShadowTemp(temp);
     shadowTemps[entries[i]] = NULL;
