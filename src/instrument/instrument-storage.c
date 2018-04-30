@@ -62,7 +62,6 @@ void instrumentRdTmp(IRSB* sbOut, IRTemp dest, IRTemp src){
   IRExpr* newShadowTemp = runLoadTemp(sbOut, src);
 
   // Copy across the new temp and increment it's ref count.
-  // Increment the ref count of the new temp
   addStoreTempCopy(sbOut, newShadowTemp, dest);
 }
 void instrumentWriteConst(IRSB* sbOut, IRTemp dest,
@@ -751,7 +750,7 @@ void addStoreTemp(IRSB* sbOut, IRExpr* shadow_temp,
                   int idx){
   if (PRINT_VALUE_MOVES || PRINT_TEMP_MOVES){
     IRExpr* tempNonNull = runNonZeroCheck64(sbOut, shadow_temp);
-    addPrintG2(tempNonNull, "[1] storing in t%d\n", mkU64(idx));
+    addPrintG3(tempNonNull, "[1] storing %p in t%d\n", shadow_temp, mkU64(idx));
   }
   addStoreC(sbOut, shadow_temp, &(shadowTemps[idx]));
   cleanupAtEndOfBlock(sbOut, idx);
@@ -761,7 +760,7 @@ void addStoreTempG(IRSB* sbOut, IRExpr* guard, IRExpr* shadow_temp,
   if (PRINT_VALUE_MOVES || PRINT_TEMP_MOVES){
     IRExpr* tempNonNull = runNonZeroCheck64(sbOut, shadow_temp);
     IRExpr* shouldPrint = runAnd(sbOut, tempNonNull, guard);
-    addPrintG2(shouldPrint, "[2] storing in t%d\n", mkU64(idx));
+    addPrintG3(shouldPrint, "[2] storing %p in t%d\n", shadow_temp, mkU64(idx));
   }
   addStoreGC(sbOut, guard, shadow_temp, &(shadowTemps[idx]));
   cleanupAtEndOfBlock(sbOut, idx);
