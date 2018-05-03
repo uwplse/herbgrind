@@ -555,6 +555,7 @@ ValueType opArgPrecision(IROp op_code){
     return Vt_Unknown;
   case Iop_I64StoF64:
   case Iop_I32StoF64:
+  case Iop_ReinterpI64asF64:
     return Vt_NonFloat;
   default:
     ppIROp_Extended(op_code);
@@ -718,6 +719,7 @@ ValueType resultPrecision(IROp op_code){
   case Iop_I32StoF64:
   case Iop_I64StoF64:
   case Iop_ReinterpF64asI64:
+  case Iop_ReinterpI64asF64:
     return Vt_Double;
   case Iop_ZeroHI64ofV128:
   case Iop_V128to64:
