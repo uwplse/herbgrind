@@ -1,27 +1,37 @@
-FLAGS=-g -std=c11 -lm
+CFLAGS=-g -std=c11 -lm
+CAMLFLAGs=
 
 CSRC = $(wildcard *.c)
-COUT = $(patsubst %.c,%.out,$(CSRC))
+COUT = $(patsubst %.c,%.c.out,$(CSRC))
+CAMLSRC = $(wildcard *.ml)
+CAMLOUT = $(patsubst %.ml,%.ml.out,$(CAMLSRC))
 
 CC ?= gcc
+CAMLC ?= ocamlopt
 
 # NOTE : does not build mini-nocall.sout (trouble on osx)
-all: $(COUT)
+all: $(COUT) $(CAMLOUT)
 
-testprog.out: testprog.c
-	$(CC) -o $@ $< $(FLAGS) -lmpfr
+testprog.c.out: testprog.c
+	$(CC) -o $@ $< $(CFLAGS) -lmpfr
 	chmod u+x $@
 
-%.out: %.c
-	$(CC) -o $@ $< $(FLAGS)
+%.c.out: %.c
+	$(CC) -o $@ $< $(CFLAGS)
+	chmod u+x $@
+
+%.ml.out: %.ml
+	$(CAMLC) -o $@ $< $(CAMLFLAGS)
 	chmod u+x $@
 
 %.sout: %.s
-	$(CC) -o $@ $< $(FLAGS)
+	$(CC) -o $@ $< $(CFLAGS)
 	chmod u+x $@
 
 %.s: %.c
-	$(CC) $(FLAGS) -S -o $@ $<
+	$(CC) $(CFLAGS) -S -o $@ $<
+
+
 
 clean:
 	rm -rf *.out *.sout *.dSYM
