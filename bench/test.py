@@ -24,6 +24,10 @@ def test(prog):
         print("Outputs match.")
         return True
     else:
+        if actual_text == "":
+            print("Empty file at {}!", prog + ".gh")
+        if expected_text == "":
+            print("Empty file at {}!", prog + ".expected")
         print("Outputs do not match!")
         print("Actual::", actual_text, sep="\n")
         print("Expected::", expected_text, sep="\n")
