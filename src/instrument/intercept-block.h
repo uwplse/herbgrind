@@ -32,6 +32,6 @@
 
 #include "pub_tool_tooliface.h"
 
-void maybeInterceptBlock(IRSB* sbOut, void* blockAddr);
+void maybeInterceptBlock(IRSB* sbOut, void* blockAddr, void* srcAddr);
 
 #endif

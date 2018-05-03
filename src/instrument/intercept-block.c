@@ -42,10 +42,9 @@
 const char * printfNames[] = {
   "camlPrintf__printf_1294",
   "camlPrintf__fprintf_1285",
-  "simple_printf",
 };
 
-void maybeInterceptBlock(IRSB* sbOut, void* blockAddr){
+void maybeInterceptBlock(IRSB* sbOut, void* blockAddr, void* srcAddr){
   const char * fnname;
   Bool isStart =
     VG_(get_fnname_if_entry)((uintptr_t)blockAddr, &fnname);
@@ -56,7 +55,7 @@ void maybeInterceptBlock(IRSB* sbOut, void* blockAddr){
         for(int j = 0; j < MAX_THREADSTATE_FLOAT_ARGS; ++j){
           addStoreC(sbOut, runGet64C(sbOut, 224 + 32 * j), &(doubleArgs[j]));
         }
-        addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(0, "interceptPrintf", VG_(fnptr_to_fnentry)(interceptPrintf), mkIRExprVec_0())));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "interceptPrintf", VG_(fnptr_to_fnentry)(interceptPrintf), mkIRExprVec_1(mkU64((uintptr_t)srcAddr)))));
         break;
       }
     }

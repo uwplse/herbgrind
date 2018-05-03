@@ -39,11 +39,11 @@
 
 double doubleArgs[MAX_THREADSTATE_FLOAT_ARGS];
 
-VG_REGPARM(0)
-void interceptPrintf(void){
+VG_REGPARM(1)
+void interceptPrintf(Addr address){
   ShadowValue* shadowArgs[MAX_THREADSTATE_FLOAT_ARGS];
   for (int i = 0; i < MAX_THREADSTATE_FLOAT_ARGS; ++i){
     shadowArgs[i] = getTS(224 + 32 * i);
-    maybeMarkImportant(shadowArgs[i], doubleArgs[i]);
+    maybeMarkImportantAtAddr(shadowArgs[i], doubleArgs[i], address);
   }
 }

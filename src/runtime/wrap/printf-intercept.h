@@ -36,7 +36,7 @@
 
 extern double doubleArgs[MAX_THREADSTATE_FLOAT_ARGS];
 
-VG_REGPARM(0)
-void interceptPrintf(void);
+VG_REGPARM(1)
+void interceptPrintf(Addr address);
 
 #endif

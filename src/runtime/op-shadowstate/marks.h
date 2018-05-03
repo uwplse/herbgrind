@@ -59,6 +59,8 @@ typedef struct _intMarkInfo {
 } IntMarkInfo;
 
 void maybeMarkImportant(ShadowValue* val, double clientVal);
+void maybeMarkImportantAtAddr(ShadowValue* val, double clientVAlue,
+                              Addr callAddr);
 void markImportant(ShadowValue* val, double clientVal);
 void markEscapeFromFloat(const char* markType,
                          int mismatch,

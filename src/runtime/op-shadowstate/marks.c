@@ -40,9 +40,13 @@ VgHashTable* markMap = NULL;
 VgHashTable* intMarkMap = NULL;
 
 void maybeMarkImportant(ShadowValue* val, double clientValue){
+  Addr callAddr = getCallAddr();
+  maybeMarkImportantAtAddr(val, clientValue, callAddr);
+}
+void maybeMarkImportantAtAddr(ShadowValue* val, double clientValue,
+                              Addr callAddr){
   if (no_influences) return;
   if (val == NULL) return;
-  Addr callAddr = getCallAddr();
   MarkInfo* info = getMarkInfo(callAddr);
   double thisError =
     updateError(&(info->eagg), val->real, clientValue);

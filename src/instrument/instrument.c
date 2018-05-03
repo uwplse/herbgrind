@@ -56,8 +56,6 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
                      IRType gWordTy, IRType hWordTy) {
   IRSB* sbOut = deepCopyIRSBExceptStmts(sbIn);
 
-  maybeInterceptBlock(sbOut, (void*)closure->readdr);
-
   if (PRINT_IN_BLOCKS){
     VG_(printf)("Instrumenting block at %p:\n", (void*)closure->readdr);
     printSuperBlock(sbIn);
@@ -74,13 +72,15 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
   }
 
   Addr curAddr = 0;
+  Addr prevAddr = -1;
   for(int i = 0; i < sbIn->stmts_used; ++i){
     IRStmt* stmt = sbIn->stmts[i];
     if (stmt->tag == Ist_IMark){
+      prevAddr = curAddr;
       curAddr = stmt->Ist.IMark.addr;
     }
     if (curAddr){
-      preInstrumentStatement(sbOut, stmt, curAddr);
+      preInstrumentStatement(sbOut, stmt, curAddr, prevAddr);
     }
     addStmtToIRSB(sbOut, stmt);
     if (curAddr)
@@ -106,11 +106,19 @@ void init_instrumentation(void){
 void finish_instrumentation(void){
   cleanupTypeState();
 }
-void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){
+void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr, Addr prevAddr){
   switch(stmt->tag){
   case Ist_Exit:
     addBlockCleanupG(sbOut, stmt->Ist.Exit.guard);
     break;
+  case Ist_AbiHint:
+    if (stmt->Ist.AbiHint.nia->tag == Iex_Const &&
+        stmt->Ist.AbiHint.nia->Iex.Const.con->tag == Ico_U64){
+
+      maybeInterceptBlock(sbOut,
+                          (void*)(uintptr_t)stmt->Ist.AbiHint.nia->Iex.Const.con->Ico.U64,
+                          (void*)prevAddr);
+    }
   default:
     break;
   }
