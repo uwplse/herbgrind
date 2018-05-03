@@ -244,8 +244,10 @@ clear-preload:
 
 TESTS=$(wildcard bench/*.out.expected)
 
-bench/%.out: bench/%.c
-	$(MAKE) -C bench $*.out
+bench/%.c.out: bench/%.c
+	$(MAKE) -C bench $*.c.out
+bench/%.ml.out: bench/%.ml
+	$(MAKE) -C bench $*.ml.out
 
 # The .out version is the binary; TESTS stores the expected output files
 test: compile $(TESTS) $(TESTS:.out.expected=.out)
