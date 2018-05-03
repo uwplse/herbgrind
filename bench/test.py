@@ -12,7 +12,9 @@ def test(prog):
     global success
     command = ["./valgrind/herbgrind-install/bin/valgrind", "--tool=herbgrind", "--output-sexp", prog]
     print("Calling `{}`...".format(" ".join(command)), end="")
-    status = subprocess.call(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = proc.communicate()
+    status = proc.poll()
     if status:
         print("Command failed (status {}).".format(status))
         success = False
@@ -25,6 +27,8 @@ def test(prog):
         print("Outputs do not match!")
         print("Actual::", actual_text, sep="\n")
         print("Expected::", expected_text, sep="\n")
+        print("stdout::", stdout.decode('utf-8'), sep="\n")
+        print("stderr::", stderr.decode('utf-8'), sep="\n")
         return False
 
 if __name__ == "__main__":
