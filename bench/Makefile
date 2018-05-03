@@ -7,7 +7,7 @@ CAMLSRC = $(wildcard *.ml)
 CAMLOUT = $(patsubst %.ml,%.ml.out,$(CAMLSRC))
 
 CC ?= gcc
-CAMLC ?= ocamlopt
+CAMLC ?= ocamlopt -g
 
 # NOTE : does not build mini-nocall.sout (trouble on osx)
 all: $(COUT) $(CAMLOUT)
