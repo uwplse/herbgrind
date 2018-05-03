@@ -3,7 +3,7 @@ dist: trusty
 install:
 - sudo add-apt-repository ppa:jonathonf/automake -y
 - sudo apt-get -q update
-- sudo apt-get -y install automake-1.15 libmpfr-dev
+- sudo apt-get -y install automake-1.15 libmpfr-dev ocaml
 - make V=0 setup
 script:
 - make V=0 compile
