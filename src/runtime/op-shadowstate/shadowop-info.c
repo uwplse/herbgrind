@@ -98,7 +98,11 @@ void ppAddr(Addr addr){
     VG_(printf)("%s:%u in %s (addr %lX)",
                 src_filename, src_line, fnname, addr);
   } else {
-    VG_(printf)("addr %lX", addr);
+    if (VG_(get_fnname)(addr, &fnname)){
+      VG_(printf)("%s (addr %lX)", fnname, addr);
+    } else {
+      VG_(printf)("addr %lX", addr);
+    }
   }
   if (print_object_files){
     const HChar* objname;
