@@ -45,11 +45,5 @@ void interceptPrintf(void){
   for (int i = 0; i < MAX_THREADSTATE_FLOAT_ARGS; ++i){
     shadowArgs[i] = getTS(224 + 32 * i);
     maybeMarkImportant(shadowArgs[i], doubleArgs[i]);
-    if (shadowArgs[i] != NULL){
-      VG_(printf)("Found shadow %p!\n", shadowArgs[i]);
-    }
-    /* VG_(printf)("Double is "); */
-    /* ppFloat(doubleArgs[i]); */
-    /* VG_(printf)("\n"); */
   }
 }
