@@ -39,14 +39,13 @@
 VgHashTable* markMap = NULL;
 VgHashTable* intMarkMap = NULL;
 
-void maybeMarkImportant(Addr varAddr){
+void maybeMarkImportant(ShadowValue* val, double clientValue){
   if (no_influences) return;
-  ShadowValue* val = getMemShadow(varAddr);
   if (val == NULL) return;
   Addr callAddr = getCallAddr();
   MarkInfo* info = getMarkInfo(callAddr);
   double thisError =
-    updateError(&(info->eagg), val->real, *(double*)varAddr);
+    updateError(&(info->eagg), val->real, clientValue);
   if (thisError >= error_threshold){
     inPlaceMergeInfluences(&(info->influences), val->influences);
   }
@@ -55,13 +54,12 @@ void maybeMarkImportant(Addr varAddr){
     generalizeSymbolicExpr(&(info->expr), val->expr);
   }
 }
-void markImportant(Addr varAddr){
+void markImportant(ShadowValue* val, double clientValue){
   if (no_influences){
     return;
   }
   Addr callAddr = getCallAddr();
   MarkInfo* info = getMarkInfo(callAddr);
-  ShadowValue* val = getMemShadow(varAddr);
   if (val == NULL){
     VG_(umsg)("This mark couldn't find a shadow value! This means either it lost the value, or there were no floating point operations on this value prior to hitting this mark.\n");
     if (info->eagg.max_error < 0){
@@ -71,7 +69,7 @@ void markImportant(Addr varAddr){
     return;
   }
   double thisError =
-    updateError(&(info->eagg), val->real, *(double*)varAddr);
+    updateError(&(info->eagg), val->real, clientValue);
   if (thisError >= error_threshold){
     inPlaceMergeInfluences(&(info->influences), val->influences);
   }

@@ -44,6 +44,7 @@
 
 #include "../helper/instrument-util.h"
 #include "../helper/debug.h"
+#include "intercept-block.h"
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
@@ -54,6 +55,8 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
                      const VexArchInfo* archinfo_host,
                      IRType gWordTy, IRType hWordTy) {
   IRSB* sbOut = deepCopyIRSBExceptStmts(sbIn);
+
+  maybeInterceptBlock(sbOut, (void*)closure->readdr);
 
   if (PRINT_IN_BLOCKS){
     VG_(printf)("Instrumenting block at %p:\n", (void*)closure->readdr);
@@ -81,7 +84,8 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
     }
     addStmtToIRSB(sbOut, stmt);
     if (curAddr)
-      instrumentStatement(sbOut, stmt, curAddr, closure->readdr,
+      instrumentStatement(sbOut, stmt,
+                          curAddr, closure->readdr,
                           i, sbIn->stmts_used);
   }
   finishInstrumentingBlock(sbOut);

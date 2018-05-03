@@ -44,10 +44,12 @@ src/runtime/shadowop/conversions.h src/runtime/shadowop/realop.h	\
 src/runtime/shadowop/error.h src/runtime/shadowop/mathreplace.h		\
 src/runtime/shadowop/symbolic-op.h					\
 src/runtime/shadowop/influence-op.h src/runtime/shadowop/local-op.h	\
-src/runtime/shadowop/exit-float-op.h src/instrument/instrument.h	\
+src/runtime/shadowop/exit-float-op.h					\
+src/runtime/wrap/printf-intercept.h src/instrument/instrument.h		\
 src/instrument/instrument-op.h src/instrument/instrument-storage.h	\
 src/instrument/conversion.h src/instrument/semantic-op.h		\
-src/instrument/ownership.h src/instrument/floattypes.h
+src/instrument/ownership.h src/instrument/floattypes.h			\
+src/instrument/intercept-block.h
 
 SOURCES=src/hg_main.c src/helper/mathwrap.c src/helper/printf-wrap.c	\
 src/include/mk-mathreplace.py src/helper/mpfr-valgrind-glue.c		\
@@ -68,10 +70,12 @@ src/runtime/shadowop/conversions.c src/runtime/shadowop/realop.c	\
 src/runtime/shadowop/error.c src/runtime/shadowop/mathreplace.c		\
 src/runtime/shadowop/symbolic-op.c					\
 src/runtime/shadowop/influence-op.c src/runtime/shadowop/local-op.c	\
-src/runtime/shadowop/exit-float-op.c src/instrument/instrument.c	\
+src/runtime/shadowop/exit-float-op.c					\
+src/runtime/wrap/printf-intercept.c src/instrument/instrument.c		\
 src/instrument/instrument-op.c src/instrument/instrument-storage.c	\
 src/instrument/conversion.c src/instrument/semantic-op.c		\
-src/instrument/ownership.c src/instrument/floattypes.c
+src/instrument/ownership.c src/instrument/floattypes.c			\
+src/instrument/intercept-block.c
 
 all: compile
 

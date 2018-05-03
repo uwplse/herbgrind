@@ -58,8 +58,8 @@ typedef struct _intMarkInfo {
   SymbExpr** exprs;
 } IntMarkInfo;
 
-void maybeMarkImportant(Addr varAddr);
-void markImportant(Addr varAddr);
+void maybeMarkImportant(ShadowValue* val, double clientVal);
+void markImportant(ShadowValue* val, double clientVal);
 void markEscapeFromFloat(const char* markType,
                          int mismatch,
                          int numVals, ShadowValue** values);
