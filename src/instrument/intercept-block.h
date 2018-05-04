@@ -33,5 +33,6 @@
 #include "pub_tool_tooliface.h"
 
 void maybeInterceptBlock(IRSB* sbOut, void* blockAddr, void* srcAddr);
+Bool isPrefix(const char* prefix, const char* str);
 
 #endif

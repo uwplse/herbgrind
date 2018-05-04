@@ -40,9 +40,20 @@
 #include <stdint.h>
 
 const char * printfNames[] = {
-  "camlPrintf__printf_1294",
-  "camlPrintf__fprintf_1285",
+  "camlPrintf__printf",
+  "camlPrintf__fprintf",
 };
+
+Bool isPrefix(const char* prefix, const char* str){
+  while(*prefix != '\0'){
+    if (*str != *prefix){
+      return False;
+    }
+    str++;
+    prefix++;
+  }
+  return True;
+}
 
 void maybeInterceptBlock(IRSB* sbOut, void* blockAddr, void* srcAddr){
   const char * fnname;
@@ -51,7 +62,7 @@ void maybeInterceptBlock(IRSB* sbOut, void* blockAddr, void* srcAddr){
   if (isStart){
     const int numPrintfNames = sizeof(printfNames) / sizeof(const char*);
     for(int i = 0; i < numPrintfNames; ++i){
-      if (VG_(strcmp)(fnname, printfNames[i]) == 0){
+      if (isPrefix(printfNames[i], fnname)){
         for(int j = 0; j < MAX_THREADSTATE_FLOAT_ARGS; ++j){
           addStoreC(sbOut, runGet64C(sbOut, 224 + 32 * j), &(doubleArgs[j]));
         }
