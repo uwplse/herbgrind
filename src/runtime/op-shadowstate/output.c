@@ -64,6 +64,7 @@ void writeOutput(void){
       char output[] = "No marks found!\n";
       VG_(write)(fileD, output, sizeof(output));
     }
+    VG_(printf)("Didn't find any marks!\n");
     return;
   }
   VG_(printf)("Writing float marks...\n");
