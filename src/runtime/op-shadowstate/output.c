@@ -49,6 +49,7 @@ void writeOutput(void){
     VG_(open)(getOutputFilename(),
               VKI_O_CREAT | VKI_O_TRUNC | VKI_O_WRONLY,
               VKI_S_IRUSR | VKI_S_IWUSR);
+  VG_(printf)("Opened file.\n");
 
   if (sr_isError(fileResult)){
     VG_(printf)("Couldn't open output file!\n");
@@ -56,6 +57,7 @@ void writeOutput(void){
   }
   Int fileD = sr_Res(fileResult);
 
+  VG_(printf)("Checking if there are marks...\n");
   if (VG_(HT_count_nodes)(markMap) == 0 &&
       !haveErroneousIntMarks()){
     if (!output_sexp){
