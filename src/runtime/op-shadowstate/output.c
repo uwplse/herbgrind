@@ -44,12 +44,10 @@
 #define ENTRY_BUFFER_SIZE 2048000
 
 void writeOutput(void){
-  VG_(printf)("Writing output...\n");
   SysRes fileResult =
     VG_(open)(getOutputFilename(),
               VKI_O_CREAT | VKI_O_TRUNC | VKI_O_WRONLY,
               VKI_S_IRUSR | VKI_S_IWUSR);
-  VG_(printf)("Opened file.\n");
 
   if (sr_isError(fileResult)){
     VG_(printf)("Couldn't open output file!\n");
@@ -57,7 +55,6 @@ void writeOutput(void){
   }
   Int fileD = sr_Res(fileResult);
 
-  VG_(printf)("Checking if there are marks...\n");
   if (VG_(HT_count_nodes)(markMap) == 0 &&
       !haveErroneousIntMarks()){
     if (!output_sexp){
@@ -67,7 +64,6 @@ void writeOutput(void){
     VG_(printf)("Didn't find any marks!\n");
     return;
   }
-  VG_(printf)("Writing float marks...\n");
   VG_(HT_ResetIter)(markMap);
   for(MarkInfo* markInfo = VG_(HT_Next)(markMap);
       markInfo != NULL; markInfo = VG_(HT_Next)(markMap)){
@@ -165,7 +161,6 @@ void writeOutput(void){
     char newline[] = "\n";
     VG_(write)(fileD, newline, 1);
   }
-  VG_(printf)("Writing int marks.\n");
   VG_(HT_ResetIter)(intMarkMap);
   for(IntMarkInfo* intMarkInfo = VG_(HT_Next)(intMarkMap);
       intMarkInfo != NULL; intMarkInfo = VG_(HT_Next)(intMarkMap)){
@@ -315,7 +310,6 @@ void writeInfluences(Int fileD, InfluenceList influences){
     char startparen[] = "    (\n";
     VG_(write)(fileD, startparen, sizeof(startparen) - 1);
   }
-  VG_(printf)("Writing influences...\n");
   for(int j = 0; influences != NULL && j < influences->length; ++j){
     ShadowOpInfo* opinfo = influences->data[j];
 
