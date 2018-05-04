@@ -44,6 +44,7 @@
 #define ENTRY_BUFFER_SIZE 2048000
 
 void writeOutput(void){
+  VG_(printf)("Writing output...\n");
   SysRes fileResult =
     VG_(open)(getOutputFilename(),
               VKI_O_CREAT | VKI_O_TRUNC | VKI_O_WRONLY,
@@ -63,6 +64,7 @@ void writeOutput(void){
     }
     return;
   }
+  VG_(printf)("Writing float marks...\n");
   VG_(HT_ResetIter)(markMap);
   for(MarkInfo* markInfo = VG_(HT_Next)(markMap);
       markInfo != NULL; markInfo = VG_(HT_Next)(markMap)){
@@ -160,6 +162,7 @@ void writeOutput(void){
     char newline[] = "\n";
     VG_(write)(fileD, newline, 1);
   }
+  VG_(printf)("Writing int marks.\n");
   VG_(HT_ResetIter)(intMarkMap);
   for(IntMarkInfo* intMarkInfo = VG_(HT_Next)(intMarkMap);
       intMarkInfo != NULL; intMarkInfo = VG_(HT_Next)(intMarkMap)){
@@ -309,6 +312,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
     char startparen[] = "    (\n";
     VG_(write)(fileD, startparen, sizeof(startparen) - 1);
   }
+  VG_(printf)("Writing influences...\n");
   for(int j = 0; influences != NULL && j < influences->length; ++j){
     ShadowOpInfo* opinfo = influences->data[j];
 
