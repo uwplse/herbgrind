@@ -136,9 +136,9 @@ ShadowValue* mkShadowValueBare(ValueType type);
 ShadowValue* mkShadowValue(ValueType type, double value);
 VG_REGPARM(2) ShadowValue* mkShadowValue_wrapper(ValueType type, UWord value);
 
-VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value);
-VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values);
-VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(double value);
+VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(UWord value);
+VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(UWord* values);
+VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(UWord value);
 VG_REGPARM(1) ShadowTemp* mkShadowTempTwoSingles(UWord values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSingles(float* values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempFourSinglesG(UWord guard, float* values);

@@ -635,10 +635,8 @@ IRExpr* runMakeInputG(IRSB* sbOut, IRExpr* guard, IRExpr* argExpr,
     result = runDirtyG_1_1(sbOut, guard, mkShadowTempTwoSingles, argExpr);
   } else if (num_blocks == 2 && valType == Vt_Double){
     tl_assert(bytesType == Ity_I64);
-    addStoreGC(sbOut, guard, argExpr, computedArgs.argValues[0]);
     result = runDirtyG_1_1(sbOut, guard,
-                           mkShadowTempOneDouble,
-                           mkU64((uintptr_t)computedArgs.argValues[0]));
+                           mkShadowTempOneDouble, argExpr);
   } else if (num_blocks == 4){
     tl_assert(bytesType == Ity_V128);
     addStoreGC(sbOut, guard, argExpr, computedArgs.argValues[0]);
