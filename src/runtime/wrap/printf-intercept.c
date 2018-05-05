@@ -34,16 +34,50 @@
 #include "../op-shadowstate/marks.h"
 
 #include "pub_tool_libcprint.h"
+#include "pub_tool_libcbase.h"
 
 #include <stdint.h>
 
 double doubleArgs[MAX_THREADSTATE_FLOAT_ARGS];
 
-VG_REGPARM(1)
-void interceptPrintf(Addr address){
-  ShadowValue* shadowArgs[MAX_THREADSTATE_FLOAT_ARGS];
-  for (int i = 0; i < MAX_THREADSTATE_FLOAT_ARGS; ++i){
-    shadowArgs[i] = getTS(224 + 32 * i);
-    maybeMarkImportantAtAddr(shadowArgs[i], doubleArgs[i], address);
+VG_REGPARM(2)
+void interceptPrintf(Addr address, void* stackFrame,
+                     ocamlFString* formatStringObject){
+  char* formatString = formatStringObject->string;
+  void* nextArg = (char*)stackFrame + 8;
+  for(char* p = formatString; *p != '\0'; ++p){
+    if (*p == '%'){
+      switch(*(p + 1)){
+      case 'e':
+      case 'f':
+        break;
+      default: {
+        /* int* argLoc = nextArg; */
+        nextArg = (char*)nextArg + 8;
+        /* VG_(printf)("argLoc is %p\n", argLoc); */
+        /* int arg = (*argLoc) >> 1; */
+        /* VG_(printf)("Found integer arg %d with format specifier %%d\n", arg); */
+      }
+        break;
+      }
+    }
+  }
+  for(char* p = formatString + VG_(strlen)(formatString); p != formatString; --p){
+    if (*p == '%'){
+      switch(*(p + 1)){
+      case 'e':
+      case 'f':{
+        double* argLoc = nextArg;
+        nextArg = (char*)nextArg + 8;
+        /* VG_(printf)("argLoc is %p\n", argLoc); */
+        maybeMarkImportantAtAddr(getMemShadow((uintptr_t)(void*)argLoc),
+                                 *argLoc, address);
+        /* VG_(printf)("Found double arg "); */
+        /* ppFloat(*argLoc); */
+        /* VG_(printf)(" for with format specifier %%%c\n", *(p + 1)); */
+      }
+        break;
+      }
+    }
   }
 }

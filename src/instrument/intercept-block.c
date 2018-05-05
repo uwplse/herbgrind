@@ -66,7 +66,7 @@ void maybeInterceptBlock(IRSB* sbOut, void* blockAddr, void* srcAddr){
         for(int j = 0; j < MAX_THREADSTATE_FLOAT_ARGS; ++j){
           addStoreC(sbOut, runGet64C(sbOut, 224 + 32 * j), &(doubleArgs[j]));
         }
-        addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(1, "interceptPrintf", VG_(fnptr_to_fnentry)(interceptPrintf), mkIRExprVec_1(mkU64((uintptr_t)srcAddr)))));
+        addStmtToIRSB(sbOut, IRStmt_Dirty(unsafeIRDirty_0_N(3, "interceptPrintf", VG_(fnptr_to_fnentry)(interceptPrintf), mkIRExprVec_3(mkU64((uintptr_t)srcAddr), runGet64C(sbOut, 48), runGet64C(sbOut, 40)))));
         break;
       }
     }
