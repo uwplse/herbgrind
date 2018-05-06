@@ -44,6 +44,7 @@
 #define ENTRY_BUFFER_SIZE 2048000
 
 void writeOutput(void){
+  VG_(printf)("Writing output to %s\n", getOutputFilename());
   SysRes fileResult =
     VG_(open)(getOutputFilename(),
               VKI_O_CREAT | VKI_O_TRUNC | VKI_O_WRONLY,
@@ -67,11 +68,13 @@ void writeOutput(void){
   VG_(HT_ResetIter)(markMap);
   for(MarkInfoArray* markInfoArray = VG_(HT_Next)(markMap);
       markInfoArray != NULL; markInfoArray = VG_(HT_Next)(markMap)){
+    VG_(printf)("Looking at mark array %p\n", markInfoArray);
     const char* src_filename;
     const char* fnname;
     unsigned int src_line;
     for(int argIdx = 0; argIdx < markInfoArray->nmarks; ++argIdx){
       MarkInfo* markInfo = &(markInfoArray->marks[argIdx]);
+      VG_(printf)("Looking at mark info %p\n", markInfo);
       if (markInfo->eagg.num_evals == 0){
         continue;
       }
@@ -174,6 +177,7 @@ void writeOutput(void){
   VG_(HT_ResetIter)(intMarkMap);
   for(IntMarkInfo* intMarkInfo = VG_(HT_Next)(intMarkMap);
       intMarkInfo != NULL; intMarkInfo = VG_(HT_Next)(intMarkMap)){
+    VG_(printf)("Looking at int mark info %p\n", intMarkInfo);
     if (intMarkInfo->num_mismatches == 0) continue;
     const char* src_filename;
     const char* fnname = getFnName(intMarkInfo->addr);
@@ -318,6 +322,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
   }
   for(int j = 0; influences != NULL && j < influences->length; ++j){
     ShadowOpInfo* opinfo = influences->data[j];
+    VG_(printf)("Writing influence %p\n", opinfo);
 
     int numVars;
     char* exprString = NULL;
