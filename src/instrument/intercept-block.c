@@ -36,6 +36,7 @@
 
 #include "../runtime/wrap/printf-intercept.h"
 #include "../helper/instrument-util.h"
+#include "../helper/runtime-util.h"
 
 #include <stdint.h>
 
@@ -43,17 +44,6 @@ const char * printfNames[] = {
   "camlPrintf__printf",
   "camlPrintf__fprintf",
 };
-
-Bool isPrefix(const char* prefix, const char* str){
-  while(*prefix != '\0'){
-    if (*str != *prefix){
-      return False;
-    }
-    str++;
-    prefix++;
-  }
-  return True;
-}
 
 void maybeInterceptBlock(IRSB* sbOut, void* blockAddr, void* srcAddr){
   const char * fnname;

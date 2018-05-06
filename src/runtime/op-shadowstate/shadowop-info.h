@@ -113,6 +113,7 @@ void ppAddr(Addr addr);
 char* getAddrString(Addr addr);
 
 int numFloatArgs(ShadowOpInfo* opinfo);
+const char* getFnName(Addr addr);
 
 int cmpInfo(ShadowOpInfo* info1, ShadowOpInfo* info2);
 

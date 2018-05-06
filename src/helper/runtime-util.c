@@ -35,6 +35,17 @@
 #include "pub_tool_libcprint.h"
 #include <math.h>
 
+Bool isPrefix(const char* prefix, const char* str){
+  while(*prefix != '\0'){
+    if (*str != *prefix){
+      return False;
+    }
+    str++;
+    prefix++;
+  }
+  return True;
+}
+
 #define NCALLFRAMES 5
 Addr getCallAddr(void){
   Addr trace[NCALLFRAMES];

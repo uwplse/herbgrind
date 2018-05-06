@@ -80,10 +80,8 @@ void writeOutput(void){
                                      NULL, &src_line)){
         src_line = -1;
         src_filename = "Unknown";
-        fnname = "Unknown";
-      } else {
-        VG_(get_fnname)(markInfo->addr, &fnname);
       }
+      fnname = getFnName(markInfo->addr);
 
       char _buf[ENTRY_BUFFER_SIZE];
       BBuf* buf = mkBBuf(ENTRY_BUFFER_SIZE, _buf);
@@ -178,7 +176,7 @@ void writeOutput(void){
       intMarkInfo != NULL; intMarkInfo = VG_(HT_Next)(intMarkMap)){
     if (intMarkInfo->num_mismatches == 0) continue;
     const char* src_filename;
-    const char* fnname;
+    const char* fnname = getFnName(intMarkInfo->addr);
     const char* objname;
     unsigned int src_line;
 
@@ -186,9 +184,6 @@ void writeOutput(void){
                                    NULL, &src_line)){
       src_line = -1;
       src_filename = "Unknown";
-      fnname = "Unknown";
-    } else {
-      VG_(get_fnname)(intMarkInfo->addr, &fnname);
     }
     if (print_object_files &&
         !VG_(get_objname)(intMarkInfo->addr, &objname)){
@@ -303,7 +298,6 @@ int haveErroneousIntMarks(void){
 
 void writeInfluences(Int fileD, InfluenceList influences){
   const char* src_filename;
-  const char* fnname;
   const char* objname;
   unsigned int src_line;
   char _buf[ENTRY_BUFFER_SIZE];
@@ -345,10 +339,8 @@ void writeInfluences(Int fileD, InfluenceList influences){
                                    NULL, &src_line)){
       src_line = -1;
       src_filename = "Unknown";
-      fnname = "Unknown";
-    } else {
-      VG_(get_fnname)(opinfo->op_addr, &fnname);
     }
+    const char* fnname = getFnName(opinfo->op_addr);
     if (!VG_(get_objname)(opinfo->op_addr, &objname)){
       objname = "Unknown object";
     }
