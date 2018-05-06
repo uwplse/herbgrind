@@ -91,7 +91,7 @@ void writeOutput(void){
       if (output_sexp){
         printBBuf(buf, "(output\n");
         printBBuf(buf,
-                  "  (argIdx %d\n"
+                  "  (argIdx %d)\n"
                   "  (function \"%s\")\n"
                   "  (filename \"%s\")\n"
                   "  (line-num %u)\n"
