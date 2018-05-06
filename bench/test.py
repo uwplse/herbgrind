@@ -10,7 +10,8 @@ def compare_results(actual, expected):
 
 def test(prog):
     global success
-    command = ["./valgrind/herbgrind-install/bin/valgrind", "--tool=herbgrind", "--output-sexp", "--print-inputs", "--print-errors", prog]
+    command = ["./valgrind/herbgrind-install/bin/valgrind", "--tool=herbgrind",
+               "--output-sexp", prog]
     print("Calling `{}`...".format(" ".join(command)), end="")
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = proc.communicate()
