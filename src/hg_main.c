@@ -61,11 +61,11 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
     break;
   case VG_USERREQ__MARK_IMPORTANT:
     markImportant(getMemShadow((Addr)arg[1]),
-                  *(double*)(Addr)arg[1]);
+                  *(double*)(Addr)arg[1], 0, 1);
     break;
   case VG_USERREQ__MAYBE_MARK_IMPORTANT:
     maybeMarkImportant(getMemShadow((Addr)arg[1]),
-                       *(double*)(Addr)arg[1]);
+                       *(double*)(Addr)arg[1], 0, 1);
     break;
   case VG_USERREQ__FORCE_TRACK:
     forceTrack((Addr)arg[1]);

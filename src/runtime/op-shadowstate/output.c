@@ -65,101 +65,108 @@ void writeOutput(void){
     return;
   }
   VG_(HT_ResetIter)(markMap);
-  for(MarkInfo* markInfo = VG_(HT_Next)(markMap);
-      markInfo != NULL; markInfo = VG_(HT_Next)(markMap)){
+  for(MarkInfoArray* markInfoArray = VG_(HT_Next)(markMap);
+      markInfoArray != NULL; markInfoArray = VG_(HT_Next)(markMap)){
     const char* src_filename;
     const char* fnname;
     unsigned int src_line;
+    for(int argIdx = 0; argIdx < markInfoArray->nmarks; ++argIdx){
+      MarkInfo* markInfo = &(markInfoArray->marks[argIdx]);
 
-    if (!VG_(get_filename_linenum)(markInfo->addr, &src_filename,
-                                   NULL, &src_line)){
-      src_line = -1;
-      src_filename = "Unknown";
-      fnname = "Unknown";
-    } else {
-      VG_(get_fnname)(markInfo->addr, &fnname);
-    }
+      if (!VG_(get_filename_linenum)(markInfo->addr, &src_filename,
+                                     NULL, &src_line)){
+        src_line = -1;
+        src_filename = "Unknown";
+        fnname = "Unknown";
+      } else {
+        VG_(get_fnname)(markInfo->addr, &fnname);
+      }
 
-    char _buf[ENTRY_BUFFER_SIZE];
-    BBuf* buf = mkBBuf(ENTRY_BUFFER_SIZE, _buf);
+      char _buf[ENTRY_BUFFER_SIZE];
+      BBuf* buf = mkBBuf(ENTRY_BUFFER_SIZE, _buf);
 
-    if (output_sexp){
-      printBBuf(buf, "(output\n");
-      printBBuf(buf,
-                "  (function \"%s\")\n"
-                "  (filename \"%s\")\n"
-                "  (line-num %u)\n"
-                "  (instr-addr %lX)\n",
-                fnname, src_filename, src_line,
-                markInfo->addr);
-      if (print_object_files){
-        const char* objfile_name;
-        if (!VG_(get_objname)(markInfo->addr, &objfile_name)){
-          objfile_name = "Unknown Object";
+      if (output_sexp){
+        printBBuf(buf, "(output\n");
+        printBBuf(buf,
+                  "  (function \"%s\")\n"
+                  "  (filename \"%s\")\n"
+                  "  (line-num %u)\n"
+                  "  (instr-addr %lX)\n",
+                  fnname, src_filename, src_line,
+                  markInfo->addr);
+        if (print_object_files){
+          const char* objfile_name;
+          if (!VG_(get_objname)(markInfo->addr, &objfile_name)){
+            objfile_name = "Unknown Object";
+          }
+          printBBuf(buf,
+                    "  (objectfile \"%s\")\n",
+                    objfile_name);
+        }
+        if (output_mark_exprs && !no_exprs){
+          printBBuf(buf, "  (full-expr \n");
+          int numVars;
+          char* exprString = symbExprToString(markInfo->expr, &numVars);
+          char* varString = symbExprVarString(numVars);
+          printBBuf(buf,
+                    "    (FPCore %s\n"
+                    "     %s))\n",
+                    varString, exprString);
         }
         printBBuf(buf,
-                  "  (objectfile \"%s\")\n",
-                  objfile_name);
-      }
-      if (output_mark_exprs && !no_exprs){
-        printBBuf(buf, "  (full-expr \n");
-        int numVars;
-        char* exprString = symbExprToString(markInfo->expr, &numVars);
-        char* varString = symbExprVarString(numVars);
-        printBBuf(buf,
-                  "    (FPCore %s\n"
-                  "     %s))\n",
-                  varString, exprString);
-      }
-      printBBuf(buf,
-                "  (avg-error %f)\n"
-                "  (max-error %f)\n"
-                "  (num-calls %lld)\n"
-                "  (influences\n",
-                markInfo->eagg.total_error /
-                markInfo->eagg.num_evals,
-                markInfo->eagg.max_error,
-                markInfo->eagg.num_evals);
-    } else {
-      printBBuf(buf, "Result");
-      char* addrString = getAddrString(markInfo->addr);
-      printBBuf(buf, " @ %s\n", addrString);
-      VG_(free)(addrString);
-      if (output_mark_exprs && !no_exprs){
-        printBBuf(buf, "  Full expr:\n");
-        int numVars;
-        char* exprString = symbExprToString(markInfo->expr, &numVars);
-        char* varString = symbExprVarString(numVars);
-        printBBuf(buf,
-                  "    (FPCore %s\n"
-                  "     %s))\n",
-                  varString, exprString);
-      }
+                  "  (avg-error %f)\n"
+                  "  (max-error %f)\n"
+                  "  (num-calls %lld)\n"
+                  "  (influences\n",
+                  markInfo->eagg.total_error /
+                  markInfo->eagg.num_evals,
+                  markInfo->eagg.max_error,
+                  markInfo->eagg.num_evals);
+      } else {
+        if (markInfoArray->nmarks > 1){
+          printBBuf(buf, "Result #%d\n", argIdx + 1);
+        } else {
+          printBBuf(buf, "Result");
+        }
+        char* addrString = getAddrString(markInfo->addr);
+        printBBuf(buf, " @ %s\n", addrString);
+        VG_(free)(addrString);
+        if (output_mark_exprs && !no_exprs){
+          printBBuf(buf, "  Full expr:\n");
+          int numVars;
+          char* exprString = symbExprToString(markInfo->expr, &numVars);
+          char* varString = symbExprVarString(numVars);
+          printBBuf(buf,
+                    "    (FPCore %s\n"
+                    "     %s))\n",
+                    varString, exprString);
+        }
 
-      printBBuf(buf,
-                "%f bits average error\n"
-                "%f bits max error\n"
-                "Aggregated over %lld instances\n"
-                "Influenced by erroneous expression:\n",
-                markInfo->eagg.total_error /
-                markInfo->eagg.num_evals,
-                markInfo->eagg.max_error,
-                markInfo->eagg.num_evals);
-    }
-    unsigned int entryLen = ENTRY_BUFFER_SIZE - buf->bound;
-    VG_(write)(fileD, _buf, entryLen);
+        printBBuf(buf,
+                  "%f bits average error\n"
+                  "%f bits max error\n"
+                  "Aggregated over %lld instances\n"
+                  "Influenced by erroneous expression:\n",
+                  markInfo->eagg.total_error /
+                  markInfo->eagg.num_evals,
+                  markInfo->eagg.max_error,
+                  markInfo->eagg.num_evals);
+      }
+      unsigned int entryLen = ENTRY_BUFFER_SIZE - buf->bound;
+      VG_(write)(fileD, _buf, entryLen);
 
-    InfluenceList filteredInfluences = filterInfluenceSubexprs(markInfo->influences);
-    if (only_improvable){
-      filteredInfluences = filterUnimprovableInfluences(filteredInfluences);
+      InfluenceList filteredInfluences = filterInfluenceSubexprs(markInfo->influences);
+      if (only_improvable){
+        filteredInfluences = filterUnimprovableInfluences(filteredInfluences);
+      }
+      writeInfluences(fileD, filteredInfluences);
+      if (output_sexp){
+        char endparens[] = "  )\n)";
+        VG_(write)(fileD, endparens, sizeof(endparens) - 1);
+      }
+      char newline[] = "\n";
+      VG_(write)(fileD, newline, 1);
     }
-    writeInfluences(fileD, filteredInfluences);
-    if (output_sexp){
-      char endparens[] = "  )\n)";
-      VG_(write)(fileD, endparens, sizeof(endparens) - 1);
-    }
-    char newline[] = "\n";
-    VG_(write)(fileD, newline, 1);
   }
   VG_(HT_ResetIter)(intMarkMap);
   for(IntMarkInfo* intMarkInfo = VG_(HT_Next)(intMarkMap);

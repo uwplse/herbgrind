@@ -45,11 +45,13 @@ void interceptPrintf(Addr address, void* stackFrame,
                      ocamlFString* formatStringObject){
   char* formatString = formatStringObject->string;
   void* nextArg = (char*)stackFrame + 8;
+  int numFloatArgs = 0;
   for(char* p = formatString; *p != '\0'; ++p){
     if (*p == '%'){
       switch(*(p + 1)){
       case 'e':
       case 'f':
+        numFloatArgs += 1;
         break;
       default: {
         /* int* argLoc = nextArg; */
@@ -62,6 +64,7 @@ void interceptPrintf(Addr address, void* stackFrame,
       }
     }
   }
+  int curArg = 1;
   for(char* p = formatString + VG_(strlen)(formatString); p != formatString; --p){
     if (*p == '%'){
       switch(*(p + 1)){
@@ -71,10 +74,11 @@ void interceptPrintf(Addr address, void* stackFrame,
         nextArg = (char*)nextArg + 8;
         /* VG_(printf)("argLoc is %p\n", argLoc); */
         maybeMarkImportantAtAddr(getMemShadow((uintptr_t)(void*)argLoc),
-                                 *argLoc, address);
+                                 *argLoc, numFloatArgs - curArg, numFloatArgs, address);
         /* VG_(printf)("Found double arg "); */
         /* ppFloat(*argLoc); */
         /* VG_(printf)(" for with format specifier %%%c\n", *(p + 1)); */
+        curArg += 1;
       }
         break;
       }

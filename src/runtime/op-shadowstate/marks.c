@@ -39,15 +39,15 @@
 VgHashTable* markMap = NULL;
 VgHashTable* intMarkMap = NULL;
 
-void maybeMarkImportant(ShadowValue* val, double clientValue){
+void maybeMarkImportant(ShadowValue* val, double clientValue, int argIdx, int nargs){
   Addr callAddr = getCallAddr();
-  maybeMarkImportantAtAddr(val, clientValue, callAddr);
+  maybeMarkImportantAtAddr(val, clientValue, argIdx, nargs, callAddr);
 }
 void maybeMarkImportantAtAddr(ShadowValue* val, double clientValue,
-                              Addr callAddr){
+                              int argIdx, int nargs, Addr callAddr){
   if (no_influences) return;
   if (val == NULL) return;
-  MarkInfo* info = getMarkInfo(callAddr);
+  MarkInfo* info = getMarkInfo(callAddr, argIdx, nargs);
   double thisError =
     updateError(&(info->eagg), val->real, clientValue);
   if (thisError >= error_threshold){
@@ -58,12 +58,12 @@ void maybeMarkImportantAtAddr(ShadowValue* val, double clientValue,
     generalizeSymbolicExpr(&(info->expr), val->expr);
   }
 }
-void markImportant(ShadowValue* val, double clientValue){
+void markImportant(ShadowValue* val, double clientValue, int argIdx, int nargs){
   if (no_influences){
     return;
   }
   Addr callAddr = getCallAddr();
-  MarkInfo* info = getMarkInfo(callAddr);
+  MarkInfo* info = getMarkInfo(callAddr, argIdx, nargs);
   if (val == NULL){
     VG_(umsg)("This mark couldn't find a shadow value! This means either it lost the value, or there were no floating point operations on this value prior to hitting this mark.\n");
     if (info->eagg.max_error < 0){
@@ -124,18 +124,26 @@ IntMarkInfo* getIntMarkInfo(Addr callAddr, const char* markType){
   }
   return markInfo;
 }
-MarkInfo* getMarkInfo(Addr callAddr){
-  MarkInfo* markInfo = VG_(HT_lookup)(markMap, callAddr);
-  if (markInfo == NULL){
-    markInfo = VG_(perm_malloc)(sizeof(MarkInfo), vg_alignof(MarkInfo));
-    markInfo->addr = callAddr;
-    markInfo->influences = NULL;
-    markInfo->eagg.max_error = -1;
-    markInfo->eagg.total_error = 0;
-    markInfo->eagg.num_evals = 0;
-    VG_(HT_add_node)(markMap, markInfo);
+MarkInfo* getMarkInfo(Addr callAddr, int argIdx, int nargs){
+  tl_assert(argIdx >= 0 && argIdx < nargs);
+  MarkInfoArray* markInfoArray = VG_(HT_lookup)(markMap, callAddr);
+  if (markInfoArray == NULL){
+    markInfoArray =
+      VG_(perm_malloc)(sizeof(MarkInfoArray), vg_alignof(MarkInfoArray));
+    markInfoArray->nmarks = nargs;
+    markInfoArray->marks = VG_(perm_malloc)(sizeof(MarkInfo) * nargs, vg_alignof(MarkInfo));
+    for(int i = 0; i < nargs; ++i){
+      markInfoArray->marks[i].addr = callAddr;
+      markInfoArray->marks[i].influences = NULL;
+      markInfoArray->marks[i].eagg.max_error = -1;
+      markInfoArray->marks[i].eagg.total_error = 0;
+      markInfoArray->marks[i].eagg.num_evals = 0;
+    }
+    markInfoArray->addr = callAddr;
+    VG_(HT_add_node)(markMap, markInfoArray);
   }
-  return markInfo;
+  MarkInfo* result = &(markInfoArray->marks[argIdx]);
+  return result;
 }
 
 void printMarkInfo(MarkInfo* info){
