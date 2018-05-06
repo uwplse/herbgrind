@@ -497,6 +497,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
     VG_(free)(exprString);
     VG_(free)(varString);
     VG_(write)(fileD, _buf, entryLen);
+    VG_(printf)("Finished writing influence.\n");
   }
   if (output_sexp){
     char endparen[] = "    )\n";
