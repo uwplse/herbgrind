@@ -46,6 +46,7 @@ void interceptPrintf(Addr address, void* stackFrame,
   char* formatString = formatStringObject->string;
   void* nextArg = (char*)stackFrame + 8;
   int numFloatArgs = 0;
+  /* VG_(printf)("Intercepting printf at %#lX with format %s\n", address, formatString); */
   for(char* p = formatString; *p != '\0'; ++p){
     if (*p == '%'){
       switch(*(p + 1)){
@@ -66,7 +67,7 @@ void interceptPrintf(Addr address, void* stackFrame,
     }
   }
   int curArg = 1;
-  for(char* p = formatString + VG_(strlen)(formatString); p != formatString; --p){
+  for(char* p = formatString + VG_(strlen)(formatString); p >= formatString; --p){
     if (*p == '%'){
       switch(*(p + 1)){
       case 'e':
