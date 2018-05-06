@@ -3,13 +3,21 @@ dist: trusty
 install:
 - sudo add-apt-repository ppa:jonathonf/automake -y
 - sudo apt-get -q update
-- sudo apt-get -y install automake-1.15 libmpfr-dev ocaml
+- sudo apt-get -y install automake-1.15
 - make V=0 setup
-script:
-- make V=0 compile
-- make -C bench gromacs-bondfree-580.s
-- cat bench/gromacs-bondfree-580.s
-- make test
+addons:
+  apt:
+    sources:
+      - avsm
+    packages:
+      - libgmp-dev
+      - libmpfr-dev
+      - ocaml
+      - aspcud
+      - opam
+script: bash -ex .travis.sh
+# perhaps should turn off root here
+# sudo: false
 notifications:
   slack:
     secure: MtMfMgq/4NaRpmFh/0XFmtRXVLBdg2RA2hrGYh7uqb7IemBE0FBeeawgg7gLUGEpJ3mP9FoytG4h4IHkQMgLnn9x3yDP+gEGptQ8vTHffWvmqDRPjY4VcNAFq9ducFmHUkqjAPrOnfDD1nG2Oercf8I/82h3oSDLuFZj4LSdq4YPmPtXXWa/hW0MS9SiP1u7Co8UeTFlEnAG1mR0V9QrkciJmvoEwbfjvhcdpQGljuNcmAZM/YTx13R/FenboWq06yDrc8h3Qi9P/Exwuec7M1Nay0u7D74lkUNoq76VpIH3DMA9uburoblgFOfIG17UkmgYZUttGlhb9JIs4QV8Gz4K3oMDtd0fS/AVdUQonoGi9i/w/RZkzVQNSZCcds9WfIjn5UIgcTG7EJxbu31VUPGhGYhSPHMI2UNhfu51MY8MHp0spjcueFSGohXnR/TY3wCCZ1Cm5Pcu3NXe30hxTq/nTdMepQ5uGM83xiXpgcH4nqcXQxEJmXsu6Elyudl51IkXWEDd5ghAP9/6xmtiVBmvFHrM8pk92RPB/iWua3EYr35bGXkHzBQEKI5rv7xZyYW0vA+mU8MEduYifeUs43uNLXztfh1z9kpzAtxJPsJWFdpDrslQigSfPSRK3Dx5YVNRBerAjR1BIxjkdjg8O9fdHYLM4ETDc6WQ8YQFIJM=
