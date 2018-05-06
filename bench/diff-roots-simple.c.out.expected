@@ -1,4 +1,5 @@
 (output
+  (argIdx 0)
   (function "main")
   (filename "diff-roots-simple.c")
   (line-num 8)
