@@ -91,10 +91,12 @@ void writeOutput(void){
       if (output_sexp){
         printBBuf(buf, "(output\n");
         printBBuf(buf,
+                  "  (argIdx %d\n"
                   "  (function \"%s\")\n"
                   "  (filename \"%s\")\n"
                   "  (line-num %u)\n"
                   "  (instr-addr %lX)\n",
+                  argIdx,
                   fnname, src_filename, src_line,
                   markInfo->addr);
         if (print_object_files){
@@ -127,9 +129,9 @@ void writeOutput(void){
                   markInfo->eagg.num_evals);
       } else {
         if (markInfoArray->nmarks > 1){
-          printBBuf(buf, "Result #%d\n", argIdx + 1);
+          printBBuf(buf, "Output, float arg #%d\n", argIdx + 1);
         } else {
-          printBBuf(buf, "Result");
+          printBBuf(buf, "Output");
         }
         char* addrString = getAddrString(markInfo->addr);
         printBBuf(buf, " @ %s\n", addrString);

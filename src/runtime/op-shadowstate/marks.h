@@ -38,6 +38,7 @@
 
 typedef struct _markInfo {
   Addr addr;
+  const char* markType;
   InfluenceList influences;
   ErrorAggregate eagg;
   SymbExpr* expr;
