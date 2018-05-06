@@ -50,6 +50,7 @@ void interceptPrintf(Addr address, void* stackFrame,
     if (*p == '%'){
       switch(*(p + 1)){
       case 'e':
+      case 'g':
       case 'f':
         numFloatArgs += 1;
         break;
@@ -69,6 +70,7 @@ void interceptPrintf(Addr address, void* stackFrame,
     if (*p == '%'){
       switch(*(p + 1)){
       case 'e':
+      case 'g':
       case 'f':{
         double* argLoc = nextArg;
         nextArg = (char*)nextArg + 8;
