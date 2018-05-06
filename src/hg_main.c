@@ -67,6 +67,11 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
     maybeMarkImportant(getMemShadow((Addr)arg[1]),
                        *(double*)(Addr)arg[1], 0, 1);
     break;
+  case VG_USERREQ__MAYBE_MARK_IMPORTANT_WITH_INDEX:
+    VG_(printf)("Marking arg %d of %d\n", (int)arg[2], (int)arg[3]);
+    maybeMarkImportant(getMemShadow((Addr)arg[1]),
+                       *(double*)(Addr)arg[1], (int)arg[2], (int)arg[3]);
+    break;
   case VG_USERREQ__FORCE_TRACK:
     forceTrack((Addr)arg[1]);
     break;

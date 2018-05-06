@@ -72,6 +72,9 @@ void writeOutput(void){
     unsigned int src_line;
     for(int argIdx = 0; argIdx < markInfoArray->nmarks; ++argIdx){
       MarkInfo* markInfo = &(markInfoArray->marks[argIdx]);
+      if (markInfo->eagg.num_evals == 0){
+        continue;
+      }
 
       if (!VG_(get_filename_linenum)(markInfo->addr, &src_filename,
                                      NULL, &src_line)){

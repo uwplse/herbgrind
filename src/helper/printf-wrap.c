@@ -37,10 +37,43 @@ int VG_REPLACE_FUNCTION_ZU(VG_Z_LIBC_SONAME, printf)(const char* format, ...);
 int VG_REPLACE_FUNCTION_ZU(VG_Z_LIBC_SONAME, printf)(const char* format, ...){
   va_list args;
   va_start(args, format);
-  for (const char* c = format; *c != '\0'; c++){
-    if (*c == '%'){
-      double d = va_arg(args, double);
-      HERBGRIND_MAYBE_MARK_IMPORTANT(d);
+  int numFloatArgs = 0;
+  for (const char* p = format; *p != '\0'; p++){
+    if (*p == '%'){
+      switch(*(p + 1)){
+      case 'e':
+      case 'f':
+        numFloatArgs += 1;
+        break;
+      default:
+        break;
+      }
+    }
+  }
+  int fArgIdx = 0;
+  for (const char* p = format; *p != '\0'; p++){
+    if (*p == '%'){
+      switch(*(p + 1)){
+      case 'e':
+      case 'f':{
+        double arg = va_arg(args, double);
+        HERBGRIND_MAYBE_MARK_IMPORTANT_WITH_INDEX(arg, fArgIdx, numFloatArgs);
+        fArgIdx += 1;
+      }
+        break;
+      case 'd':
+      case 'x':
+      case 'X':
+      case 'l':
+        va_arg(args, int);
+        break;
+      case 's':
+      case 'p':
+        va_arg(args, void*);
+      default:
+        tl_assert2(0, "We don't support the printf format specifier %%%c!\n", *(p + 1));
+        break;
+      }
     }
   }
   va_end(args);
