@@ -19,8 +19,15 @@ def test(prog):
     if status:
         print("Command failed (status {}).".format(status))
         success = False
-    with open(prog + ".gh") as actual, open(prog + ".expected") as expected:
-        actual_text, expected_text = actual.read(), expected.read()
+    try:
+        with open(prog + ".gh") as actual, open(prog + ".expected") as expected:
+            actual_text, expected_text = actual.read(), expected.read()
+    except:
+        print("Cannot find output file {}!".format(prog + ".gh"),
+              "stdout::", stdout.decode('utf-8'),
+              "stderr::", stderr.decode('utf-8'),
+              sep="\n")
+        return False
     if compare_results(actual_text, expected_text):
         print("Outputs match.")
         return True
