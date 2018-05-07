@@ -952,7 +952,7 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
     }
     return buf;
   }
-  VG_(printf)("Converting expression %p to string.\n");
+  VG_(printf)("Converting expression %p to string.\n", expr);
   if (expr->type == Node_Leaf){
     VG_(printf)("It's already a leaf! Doing leaf things...\n");
     if (expr->isConst){
