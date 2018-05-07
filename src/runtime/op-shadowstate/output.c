@@ -320,6 +320,8 @@ void writeInfluences(Int fileD, InfluenceList influences){
     char startparen[] = "    (\n";
     VG_(write)(fileD, startparen, sizeof(startparen) - 1);
   }
+  VG_(printf)("Iterating over influences %p, data %p, length %d\n",
+              influences, influences->data, influences->length);
   for(int j = 0; influences != NULL && j < influences->length; ++j){
     ShadowOpInfo* opinfo = influences->data[j];
     VG_(printf)("Writing influence %p\n", opinfo);
