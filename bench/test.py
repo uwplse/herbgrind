@@ -39,8 +39,11 @@ def test(prog):
         print("Outputs do not match!")
         print("Actual::", actual_text, sep="\n")
         print("Expected::", expected_text, sep="\n")
+        full_stderr = stderr.decode('utf-8')
+        stderr_lines = full_stderr.splitlines()
+        last_stderr = stderr_lines[-200:].join("\n")
         print("stdout::", stdout.decode('utf-8'), sep="\n")
-        print("stderr::", stderr.decode('utf-8'), sep="\n")
+        print("stderr::", last_stderr, sep="\n")
         return False
 
 if __name__ == "__main__":
