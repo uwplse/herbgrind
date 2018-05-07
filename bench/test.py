@@ -16,6 +16,9 @@ def test(prog):
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = proc.communicate()
     status = proc.poll()
+    full_stderr = stderr.decode('utf-8')
+    stderr_lines = full_stderr.splitlines()
+    last_stderr = stderr_lines[-200:].join("\n")
     if status:
         print("Command failed (status {}).".format(status))
         success = False
@@ -25,7 +28,7 @@ def test(prog):
     except:
         print("Cannot find output file {}!".format(prog + ".gh"),
               "stdout::", stdout.decode('utf-8'),
-              "stderr::", stderr.decode('utf-8'),
+              "stderr::", last_stderr,
               sep="\n")
         return False
     if compare_results(actual_text, expected_text):
@@ -39,9 +42,6 @@ def test(prog):
         print("Outputs do not match!")
         print("Actual::", actual_text, sep="\n")
         print("Expected::", expected_text, sep="\n")
-        full_stderr = stderr.decode('utf-8')
-        stderr_lines = full_stderr.splitlines()
-        last_stderr = stderr_lines[-200:].join("\n")
         print("stdout::", stdout.decode('utf-8'), sep="\n")
         print("stderr::", last_stderr, sep="\n")
         return False
