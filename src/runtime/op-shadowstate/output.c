@@ -44,7 +44,6 @@
 #define ENTRY_BUFFER_SIZE 2048000
 
 void writeOutput(void){
-  VG_(printf)("Writing output to %s\n", getOutputFilename());
   SysRes fileResult =
     VG_(open)(getOutputFilename(),
               VKI_O_CREAT | VKI_O_TRUNC | VKI_O_WRONLY,
@@ -68,13 +67,11 @@ void writeOutput(void){
   VG_(HT_ResetIter)(markMap);
   for(MarkInfoArray* markInfoArray = VG_(HT_Next)(markMap);
       markInfoArray != NULL; markInfoArray = VG_(HT_Next)(markMap)){
-    VG_(printf)("Looking at mark array %p\n", markInfoArray);
     const char* src_filename;
     const char* fnname;
     unsigned int src_line;
     for(int argIdx = 0; argIdx < markInfoArray->nmarks; ++argIdx){
       MarkInfo* markInfo = &(markInfoArray->marks[argIdx]);
-      VG_(printf)("Looking at mark info %p\n", markInfo);
       if (markInfo->eagg.num_evals == 0){
         continue;
       }
@@ -177,7 +174,6 @@ void writeOutput(void){
   VG_(HT_ResetIter)(intMarkMap);
   for(IntMarkInfo* intMarkInfo = VG_(HT_Next)(intMarkMap);
       intMarkInfo != NULL; intMarkInfo = VG_(HT_Next)(intMarkMap)){
-    VG_(printf)("Looking at int mark info %p\n", intMarkInfo);
     if (intMarkInfo->num_mismatches == 0) continue;
     const char* src_filename;
     const char* fnname = getFnName(intMarkInfo->addr);
@@ -320,11 +316,8 @@ void writeInfluences(Int fileD, InfluenceList influences){
     char startparen[] = "    (\n";
     VG_(write)(fileD, startparen, sizeof(startparen) - 1);
   }
-  VG_(printf)("Iterating over influences %p, data %p, length %d\n",
-              influences, influences->data, influences->length);
   for(int j = 0; influences != NULL && j < influences->length; ++j){
     ShadowOpInfo* opinfo = influences->data[j];
-    VG_(printf)("Writing influence %p\n", opinfo);
 
     int numVars;
     char* exprString = NULL;
@@ -336,14 +329,10 @@ void writeInfluences(Int fileD, InfluenceList influences){
       if (var_swallow){
         opinfo->expr = varSwallow(opinfo->expr);
       }
-      VG_(printf)("Swallowed vars.\n");
       exprString = symbExprToString(opinfo->expr, &numVars);
-      VG_(printf)("Converted body to string.\n");
       getRangesAndExample(&totalRanges, &problematicRanges, &exampleProblematicArgs,
                           opinfo->expr, numVars);
-      VG_(printf)("Got ranges and example.\n");
       varString = symbExprVarString(numVars);
-      VG_(printf)("Made binder string.\n");
     }
 
     if (!VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
@@ -351,14 +340,11 @@ void writeInfluences(Int fileD, InfluenceList influences){
       src_line = -1;
       src_filename = "Unknown";
     }
-    VG_(printf)("Getting function name...\n");
     const char* fnname = getFnName(opinfo->op_addr);
-    VG_(printf)("Done.\n");
     if (!VG_(get_objname)(opinfo->op_addr, &objname)){
       objname = "Unknown object";
     }
 
-    VG_(printf)("Writing out influence.\n");
     BBuf* buf = mkBBuf(ENTRY_BUFFER_SIZE, _buf);
     if (output_sexp){
       printBBuf(buf,
@@ -386,7 +372,6 @@ void writeInfluences(Int fileD, InfluenceList influences){
           }
           for(int i = 0; i < numVars; ++i){
             if (nonTrivialRange(&(preconditionRanges[i]))){
-              VG_(printf)("Printing ranges...\n");
               printRangeAsPreconditionToBBuf(getVar(i), &(preconditionRanges[i]), buf);
             }
           }
@@ -407,7 +392,6 @@ void writeInfluences(Int fileD, InfluenceList influences){
             writeRanges(buf, numVars, totalRanges);
           }
         }
-        VG_(printf)("Writing example.\n");
         writeExample(buf, numVars, exampleProblematicArgs);
       }
       printBBuf(buf,
@@ -504,12 +488,10 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 local_error.max_error,
                 global_error.num_evals);
     }
-    VG_(printf)("Writing to file.\n");
     unsigned int entryLen = ENTRY_BUFFER_SIZE - buf->bound;
     VG_(free)(exprString);
     VG_(free)(varString);
     VG_(write)(fileD, _buf, entryLen);
-    VG_(printf)("Finished writing influence.\n");
   }
   if (output_sexp){
     char endparen[] = "    )\n";

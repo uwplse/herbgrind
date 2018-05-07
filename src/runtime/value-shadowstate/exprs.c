@@ -952,9 +952,7 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
     }
     return buf;
   }
-  VG_(printf)("Converting expression %p to string.\n", expr);
   if (expr->type == Node_Leaf){
-    VG_(printf)("It's already a leaf! Doing leaf things...\n");
     if (expr->isConst){
       char* _buf = VG_(malloc)("buffer data", MAX_EXPR_LEN);
       BBuf* bbuf = mkBBuf(MAX_EXPR_LEN, _buf);
@@ -972,28 +970,21 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
       return buf;
     }
   } else {
-    VG_(printf)("It's a branch! Making var map\n");
     VarMap* varMap =
       mkVarMap(groupsWithoutNonVars(expr, expr->branch.groups, MAX_FOLD_DEPTH));
-    VG_(printf)("Getting function name for coloring.\n");
     const char* toplevel_func;
     if (!VG_(get_fnname)(expr->branch.op->op_addr, &toplevel_func)){
       toplevel_func = "none";
     }
-    VG_(printf)("Allocating buffer data.\n");
     char* _buf = VG_(malloc)("buffer data", MAX_EXPR_LEN);
-    VG_(printf)("Allocated %p. Making bbuf structure _buf\n");
     BBuf* bbuf = mkBBuf(MAX_EXPR_LEN, _buf);
-    VG_(printf)("Expr colors?\n");
     if (expr_colors){
       printColorCode(bbuf, COLOR_BLUE);
     }
-    VG_(printf)("Starting recursive decent\n");
     recursivelyToString(expr, bbuf, varMap,
                         toplevel_func, COLOR_BLUE,
                         null_pos,
                         MAX_FOLD_DEPTH);
-    VG_(printf)("Done recursive decent.\n");
     if (expr_colors){
       printBBuf(bbuf, "\033[0m");
     }
@@ -1011,9 +1002,6 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
 void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
                          const char* parent_func, Color curColor,
                          NodePos curPos, int max_depth){
-  VG_(printf)("Recursing on expr %p at ", expr);
-  ppNodePos(curPos);
-  VG_(printf)("\n");
   if (max_depth == 0 || expr->type == Node_Leaf){
     if (expr->isConst){
       printBBuf(buf, " ");
