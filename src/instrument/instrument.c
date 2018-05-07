@@ -82,6 +82,9 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
         addPrint2("Running instruction at %lX\n", mkU64(curAddr));
       }
     }
+    if (print_run_stmts){
+      addPrint2("Running statement %d\n", mkU64(i));
+    }
     if (curAddr){
       preInstrumentStatement(sbOut, stmt, curAddr, prevAddr);
     }
@@ -90,6 +93,9 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
       instrumentStatement(sbOut, stmt,
                           curAddr, closure->readdr,
                           i, sbIn->stmts_used);
+    if (print_run_stmts){
+      addPrint2("Finished running statement %d\n", mkU64(i));
+    }
   }
   finishInstrumentingBlock(sbOut);
   if (PRINT_BLOCK_BOUNDRIES){
