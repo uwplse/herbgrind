@@ -981,10 +981,12 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
     if (expr_colors){
       printColorCode(bbuf, COLOR_BLUE);
     }
+    VG_(printf)("Starting recursive decent\n");
     recursivelyToString(expr, bbuf, varMap,
                         toplevel_func, COLOR_BLUE,
                         null_pos,
                         MAX_FOLD_DEPTH);
+    VG_(printf)("Done recursive decent.\n");
     if (expr_colors){
       printBBuf(bbuf, "\033[0m");
     }
@@ -1002,6 +1004,9 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
 void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
                          const char* parent_func, Color curColor,
                          NodePos curPos, int max_depth){
+  VG_(printf)("Recursing on expr %p at ", expr);
+  ppNodePos(curPos);
+  VG_(printf)("\n");
   if (max_depth == 0 || expr->type == Node_Leaf){
     if (expr->isConst){
       printBBuf(buf, " ");
