@@ -982,7 +982,9 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
     }
     VG_(printf)("Allocating buffer data.\n");
     char* _buf = VG_(malloc)("buffer data", MAX_EXPR_LEN);
+    VG_(printf)("Allocated %p. Making bbuf structure _buf\n");
     BBuf* bbuf = mkBBuf(MAX_EXPR_LEN, _buf);
+    VG_(printf)("Expr colors?\n");
     if (expr_colors){
       printColorCode(bbuf, COLOR_BLUE);
     }
