@@ -18,7 +18,7 @@ def test(prog):
     status = proc.poll()
     full_stderr = stderr.decode('utf-8')
     stderr_lines = full_stderr.splitlines()
-    last_stderr = stderr_lines[-200:].join("\n")
+    last_stderr = "\n".join(stderr_lines[-200:])
     if status:
         print("Command failed (status {}).".format(status))
         success = False
