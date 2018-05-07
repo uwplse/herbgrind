@@ -336,10 +336,14 @@ void writeInfluences(Int fileD, InfluenceList influences){
       if (var_swallow){
         opinfo->expr = varSwallow(opinfo->expr);
       }
+      VG_(printf)("Swallowed vars.\n");
       exprString = symbExprToString(opinfo->expr, &numVars);
+      VG_(printf)("Converted body to string.\n");
       getRangesAndExample(&totalRanges, &problematicRanges, &exampleProblematicArgs,
                           opinfo->expr, numVars);
+      VG_(printf)("Got ranges and example.\n");
       varString = symbExprVarString(numVars);
+      VG_(printf)("Made binder string.\n");
     }
 
     if (!VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
@@ -347,11 +351,14 @@ void writeInfluences(Int fileD, InfluenceList influences){
       src_line = -1;
       src_filename = "Unknown";
     }
+    VG_(printf)("Getting function name...\n");
     const char* fnname = getFnName(opinfo->op_addr);
+    VG_(printf)("Done.\n");
     if (!VG_(get_objname)(opinfo->op_addr, &objname)){
       objname = "Unknown object";
     }
 
+    VG_(printf)("Writing out influence.\n");
     BBuf* buf = mkBBuf(ENTRY_BUFFER_SIZE, _buf);
     if (output_sexp){
       printBBuf(buf,
@@ -379,6 +386,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
           }
           for(int i = 0; i < numVars; ++i){
             if (nonTrivialRange(&(preconditionRanges[i]))){
+              VG_(printf)("Printing ranges...\n");
               printRangeAsPreconditionToBBuf(getVar(i), &(preconditionRanges[i]), buf);
             }
           }
@@ -399,6 +407,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
             writeRanges(buf, numVars, totalRanges);
           }
         }
+        VG_(printf)("Writing example.\n");
         writeExample(buf, numVars, exampleProblematicArgs);
       }
       printBBuf(buf,
@@ -495,6 +504,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
                 local_error.max_error,
                 global_error.num_evals);
     }
+    VG_(printf)("Writing to file.\n");
     unsigned int entryLen = ENTRY_BUFFER_SIZE - buf->bound;
     VG_(free)(exprString);
     VG_(free)(varString);
