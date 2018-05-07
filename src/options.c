@@ -42,6 +42,7 @@ Bool print_in_blocks = False;
 Bool print_out_blocks = False;
 Bool print_block_boundries = False;
 Bool print_run_blocks = False;
+Bool print_run_instrs = False;
 
 Bool print_temp_moves = False;
 Bool print_value_moves = False;
@@ -99,6 +100,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-out-blocks", print_out_blocks, True) {}
   else if VG_XACT_CLO(arg, "--print-block-boundries", print_block_boundries, True) {}
   else if VG_XACT_CLO(arg, "--print-run-blocks", print_run_blocks, True) {}
+  else if VG_XACT_CLO(arg, "--print-run-instrs", print_run_instrs, True) {}
   else if VG_XACT_CLO(arg, "--print-temp-moves", print_temp_moves, True) {}
   else if VG_XACT_CLO(arg, "--print-value-moves", print_value_moves, True) {}
   else if VG_XACT_CLO(arg, "--print-expr-refs", print_expr_refs, True) {}

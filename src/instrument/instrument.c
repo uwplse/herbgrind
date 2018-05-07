@@ -78,6 +78,9 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
     if (stmt->tag == Ist_IMark){
       prevAddr = curAddr;
       curAddr = stmt->Ist.IMark.addr;
+      if (print_run_instrs){
+        addPrint2("Running instruction at %lX\n", mkU64(curAddr));
+      }
     }
     if (curAddr){
       preInstrumentStatement(sbOut, stmt, curAddr, prevAddr);
