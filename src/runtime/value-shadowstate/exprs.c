@@ -952,7 +952,9 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
     }
     return buf;
   }
+  VG_(printf)("Converting expression %p to string.\n");
   if (expr->type == Node_Leaf){
+    VG_(printf)("It's already a leaf! Doing leaf things...\n");
     if (expr->isConst){
       char* _buf = VG_(malloc)("buffer data", MAX_EXPR_LEN);
       BBuf* bbuf = mkBBuf(MAX_EXPR_LEN, _buf);
@@ -970,12 +972,15 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
       return buf;
     }
   } else {
+    VG_(printf)("It's a branch! Making var map\n");
     VarMap* varMap =
       mkVarMap(groupsWithoutNonVars(expr, expr->branch.groups, MAX_FOLD_DEPTH));
+    VG_(printf)("Getting function name for coloring.\n");
     const char* toplevel_func;
     if (!VG_(get_fnname)(expr->branch.op->op_addr, &toplevel_func)){
       toplevel_func = "none";
     }
+    VG_(printf)("Allocating buffer data.\n");
     char* _buf = VG_(malloc)("buffer data", MAX_EXPR_LEN);
     BBuf* bbuf = mkBBuf(MAX_EXPR_LEN, _buf);
     if (expr_colors){
