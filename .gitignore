@@ -14,3 +14,7 @@ bench/herbie-crosseval/*.c
 vgcore*
 *.swp
 *#*#
+bench/*.cmi
+bench/*.cmo
+bench/*.cmx
+bench/*.o

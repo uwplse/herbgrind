@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- Herbgrind: a valgrind tool for Herbie           instrument.h ---*/
+/*--- Herbgrind: a valgrind tool for Herbie      intercept-block.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,22 +27,11 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
+#ifndef _INTERCEPT_BLOCK_H
+#define _INTERCEPT_BLOCK_H
+
 #include "pub_tool_tooliface.h"
 
-IRSB* hg_instrument(VgCallbackClosure* closure,
-                    IRSB* sbIn,
-                    const VexGuestLayout* layout,
-                    const VexGuestExtents* vge,
-                    const VexArchInfo* archinfo_host,
-                    IRType gWordTy, IRType hWordTy);
+void maybeInterceptBlock(IRSB* sbOut, void* blockAddr, void* srcAddr);
 
-void init_instrumentation(void);
-
-void finish_instrumentation(void);
-
-void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
-                         Addr stAddr, Addr block_addr,
-                         int stIdx, int numStmtsIn);
-void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr, Addr prevAddr);
-
-void printSuperBlock(IRSB* superblock);
+#endif

@@ -2,7 +2,7 @@
 #include <math.h>
 
 int main() {
-  double x,y;
+  volatile double x,y;
   x = 1e16;
   y = sqrt(x + 1) - sqrt(x);
   printf("%e\n", y);

@@ -1,0 +1,33 @@
+(output
+  (argIdx 0)
+  (function "Diff_roots.diff_root")
+  (filename "diff_roots.ml")
+  (line-num 6)
+  (instr-addr 41DAFB)
+  (avg-error 61.959049)
+  (max-error 61.959049)
+  (num-calls 2)
+  (influences
+    (
+    (
+     (expr
+       (FPCore (x)
+      :pre (and (<= 3.416386e-1 x) (<= x 9.260389e-1))
+          (- (sqrt (+ (- (+ 1.000000e16 x) x) 1.000000)) (sqrt 1.000000e16))))
+     (var-problematic-ranges
+       (x
+         (range-min 3.416386e-1)
+         (range-max 9.260389e-1)))
+     (example problematic input (9.260389e-1))
+     (function "Diff_roots.diff_root")
+     (filename "diff_roots.ml")
+     (line-num 5)
+     (instr-addr 41DAE4)
+     (avg-error 61.959049)
+     (max-error 61.959049)
+     (avg-local-error 61.959049)
+     (max-local-error 61.959049)
+     (num-calls 2))
+    )
+  )
+)

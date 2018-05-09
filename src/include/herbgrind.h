@@ -47,6 +47,7 @@ typedef enum {
   VG_USERREQ__FORCE_TRACKF,
   VG_USERREQ__MARK_IMPORTANT,
   VG_USERREQ__MAYBE_MARK_IMPORTANT,
+  VG_USERREQ__MAYBE_MARK_IMPORTANT_WITH_INDEX,
 } Vg_HerbgrindClientRequests;
 
 typedef enum {
@@ -131,6 +132,13 @@ typedef enum {
       VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,                   \
                                  VG_USERREQ__MAYBE_MARK_IMPORTANT,    \
                                  &(_qzz_var), 0, 0, 0, 0);      \
+      _qzz_res;                                                 \
+    }))
+#define HERBGRIND_MAYBE_MARK_IMPORTANT_WITH_INDEX(_qzz_var, argIdx, nargs)    \
+  (__extension__({unsigned long _qzz_res;                       \
+      VALGRIND_DO_CLIENT_REQUEST(_qzz_res, 0,                   \
+                                 VG_USERREQ__MAYBE_MARK_IMPORTANT_WITH_INDEX,    \
+                                 &(_qzz_var), argIdx, nargs, 0, 0);      \
       _qzz_res;                                                 \
     }))
 #endif

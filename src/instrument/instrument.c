@@ -44,6 +44,7 @@
 
 #include "../helper/instrument-util.h"
 #include "../helper/debug.h"
+#include "intercept-block.h"
 
 // This is where the magic happens. This function gets called to
 // instrument every superblock.
@@ -65,24 +66,36 @@ IRSB* hg_instrument (VgCallbackClosure* closure,
     VG_(snprintf)(blockMessage, 35,
                   "Running block at %p\n", (void*)closure->readdr);
     addPrint(blockMessage);
-    IRExpr* blockStateDirtyExpr = runLoad64C(sbOut, &blockStateDirty);
-    addAssertEQ(sbOut, "Uncleaned block!\n", blockStateDirtyExpr, mkU64(0));
-    addStoreC(sbOut, mkU64(1), &blockStateDirty);
   }
+  IRExpr* blockStateDirtyExpr = runLoad64C(sbOut, &blockStateDirty);
+  addAssertEQ(sbOut, "Uncleaned block!\n", blockStateDirtyExpr, mkU64(0));
+  addStoreC(sbOut, mkU64(1), &blockStateDirty);
 
   Addr curAddr = 0;
+  Addr prevAddr = -1;
   for(int i = 0; i < sbIn->stmts_used; ++i){
     IRStmt* stmt = sbIn->stmts[i];
     if (stmt->tag == Ist_IMark){
+      prevAddr = curAddr;
       curAddr = stmt->Ist.IMark.addr;
+      if (print_run_instrs){
+        addPrint2("Running instruction at %lX\n", mkU64(curAddr));
+      }
+    }
+    if (print_run_stmts){
+      addPrint2("Running statement %d\n", mkU64(i));
     }
     if (curAddr){
-      preInstrumentStatement(sbOut, stmt, curAddr);
+      preInstrumentStatement(sbOut, stmt, curAddr, prevAddr);
     }
     addStmtToIRSB(sbOut, stmt);
     if (curAddr)
-      instrumentStatement(sbOut, stmt, curAddr, closure->readdr,
+      instrumentStatement(sbOut, stmt,
+                          curAddr, closure->readdr,
                           i, sbIn->stmts_used);
+    if (print_run_stmts){
+      addPrint2("Finished running statement %d\n", mkU64(i));
+    }
   }
   finishInstrumentingBlock(sbOut);
   if (PRINT_BLOCK_BOUNDRIES){
@@ -102,11 +115,19 @@ void init_instrumentation(void){
 void finish_instrumentation(void){
   cleanupTypeState();
 }
-void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr){
+void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr, Addr prevAddr){
   switch(stmt->tag){
   case Ist_Exit:
     addBlockCleanupG(sbOut, stmt->Ist.Exit.guard);
     break;
+  case Ist_AbiHint:
+    if (stmt->Ist.AbiHint.nia->tag == Iex_Const &&
+        stmt->Ist.AbiHint.nia->Iex.Const.con->tag == Ico_U64){
+
+      maybeInterceptBlock(sbOut,
+                          (void*)(uintptr_t)stmt->Ist.AbiHint.nia->Iex.Const.con->Ico.U64,
+                          (void*)prevAddr);
+    }
   default:
     break;
   }

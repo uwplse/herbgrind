@@ -918,7 +918,7 @@ void ppSymbExpr(SymbExpr* expr){
   VG_(printf)("%s", stringRep);
   VG_(free)(stringRep);
 }
-#define MAX_EXPR_LEN 2000000000
+#define MAX_EXPR_LEN 200000
 typedef enum {
   COLOR_RED,
   COLOR_BLUE,

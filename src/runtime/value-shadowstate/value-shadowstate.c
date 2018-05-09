@@ -416,9 +416,9 @@ void ownShadowValue(ShadowValue* val){
   }
 }
 
-VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value){
+VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(UWord value){
   ShadowTemp* result = mkShadowTemp(FB(2));
-  result->values[0] = mkShadowValue(Vt_Double, value);
+  result->values[0] = mkShadowValue(Vt_Double, *(double*)&value);
   result->values[1] = NULL;
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Making value %p as one double temp %p\n",
@@ -426,13 +426,13 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(double value){
   }
   return result;
 }
-VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values){
+VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(UWord* values){
   ShadowTemp* result = mkShadowTemp(FB(4));
   result->values[0] =
-    mkShadowValue(Vt_Double, values[0]);
+    mkShadowValue(Vt_Double, ((double*)values)[0]);
   result->values[1] = NULL;
   result->values[2] =
-    mkShadowValue(Vt_Double, values[1]);
+    mkShadowValue(Vt_Double, ((double*)values)[1]);
   result->values[3] = NULL;
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Making values %p and %p as part of two double temp %p\n",
@@ -440,9 +440,9 @@ VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(double* values){
   }
   return result;
 }
-VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(double value){
+VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(UWord value){
   ShadowTemp* result = mkShadowTemp(FB(1));
-  result->values[0] = mkShadowValue(Vt_Single, value);
+  result->values[0] = mkShadowValue(Vt_Single, *(double*)&value);
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Making value %p as part of one single temp %p\n",
                 result->values[0], result);

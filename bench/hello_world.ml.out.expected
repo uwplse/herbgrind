@@ -1,0 +1,14 @@
+(output
+  (argIdx 0)
+  (function "Hello_world.say_hello")
+  (filename "hello_world.ml")
+  (line-num 4)
+  (instr-addr 41DADB)
+  (avg-error 0.000000)
+  (max-error 0.000000)
+  (num-calls 1)
+  (influences
+    (
+    )
+  )
+)

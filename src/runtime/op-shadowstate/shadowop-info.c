@@ -34,6 +34,7 @@
 #include "pub_tool_libcbase.h"
 #include "../../helper/ir-info.h"
 #include "../../helper/bbuf.h"
+#include "../../helper/runtime-util.h"
 #include "../shadowop/mathreplace.h"
 
 #include <math.h>
@@ -98,7 +99,11 @@ void ppAddr(Addr addr){
     VG_(printf)("%s:%u in %s (addr %lX)",
                 src_filename, src_line, fnname, addr);
   } else {
-    VG_(printf)("addr %lX", addr);
+    if (VG_(get_fnname)(addr, &fnname)){
+      VG_(printf)("%s (addr %lX)", fnname, addr);
+    } else {
+      VG_(printf)("addr %lX", addr);
+    }
   }
   if (print_object_files){
     const HChar* objname;
@@ -118,7 +123,7 @@ char* getAddrString(Addr addr){
 
   if (VG_(get_filename_linenum)(addr, &src_filename,
                                 NULL, &src_line)){
-    VG_(get_fnname)(addr, &fnname);
+    fnname = getFnName(addr);
     printBBuf(buf, "%s:%u in %s (addr %lX)",
               src_filename, src_line, fnname, addr);
   } else {
@@ -158,6 +163,39 @@ int numFloatArgs(ShadowOpInfo* opinfo){
   } else {
     return getNativeNumFloatArgs(opinfo->op_code);
   }
+}
+
+// WARNING: this function never frees its result, call sparingly
+const char* getFnName(Addr addr){
+  const char* fnname;
+  VG_(get_fnname)(addr, &fnname);
+  if (isPrefix("caml", fnname)){
+    char* demangledFnname = VG_(perm_malloc)(sizeof(char) * VG_(strlen)(fnname), 1);
+    int n = 0;
+    for(const char* p = fnname + 4; *p != '\0'; ++p){
+      if (p[0] == '_' && p[1] == '_'){
+        demangledFnname[n++] = '.';
+        p++;
+        continue;
+      }
+      if (p[0] == '_'){
+        Bool restIsTag = True;
+        for (const char* q = p + 1; *q != '\0'; ++q){
+          if (!VG_(isdigit)(*q)){
+            restIsTag = False;
+            break;
+          }
+        }
+        if (restIsTag){
+          demangledFnname[n++] = '\0';
+          break;
+        }
+      }
+      demangledFnname[n++] = *p;
+    }
+    return demangledFnname;
+  }
+  return fnname;
 }
 
 int cmpInfo(ShadowOpInfo* info1, ShadowOpInfo* info2){

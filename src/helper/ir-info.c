@@ -921,6 +921,7 @@ Bool isConversionOp(IROp op_code){
   case Iop_F64HLtoF128:
   case Iop_F64toF32:
   case Iop_ReinterpF64asI64:
+  case Iop_ReinterpI64asF64:
     return True;
   default:
     return False;
@@ -1026,6 +1027,7 @@ Bool isFloatOp(IROp op_code){
   case Iop_AbsF64:
   case Iop_Sqrt64F0x2:
   case Iop_ReinterpF64asI64:
+  case Iop_ReinterpI64asF64:
     // Binary Ops
   case Iop_RecipStep32Fx4:
   case Iop_RSqrtStep32Fx4:

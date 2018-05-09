@@ -32,15 +32,73 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <assert.h>
+#include <regex.h>
+
+int isFloatPrintfSpecifier(const char* str);
+int isFloatPrintfSpecifier(const char* str){
+  regex_t regex;
+  int reti;
+
+  reti = regcomp(&regex,
+                 "%[-+ #0]*[[:digit:]]*\\*\\{0,1\\}\\(\\.[[:digit:]]\\{1,\\}\\)\\{0,1\\}[gfeaGFEA].*",
+                 0);
+  assert(reti == 0);
+  reti = regexec(&regex, str, 0, NULL, 0);
+  regfree(&regex);
+  if (reti == 0){
+    return 1;
+  } else if (reti == REG_NOMATCH){
+    return 0;
+  }
+  assert(0);
+  return 0;
+}
+int isPointerPrintfSpecifier(const char* str);
+int isPointerPrintfSpecifier(const char* str){
+  regex_t regex;
+  int reti;
+  char msgbuf[100];
+
+  reti = regcomp(&regex,
+                 "%[-+ #0]*[[:digit:]]*\\*\\{0,1\\}\\(\\.[[:digit:]]\\{1,\\}\\)\\{0,1\\}[ps].*",
+                 0);
+  assert(reti == 0);
+  reti = regexec(&regex, str, 0, NULL, 0);
+  regfree(&regex);
+  if (reti == 0){
+    return 1;
+  } else if (reti == REG_NOMATCH){
+    return 0;
+  }
+  assert(0);
+  return 0;
+}
 
 int VG_REPLACE_FUNCTION_ZU(VG_Z_LIBC_SONAME, printf)(const char* format, ...);
 int VG_REPLACE_FUNCTION_ZU(VG_Z_LIBC_SONAME, printf)(const char* format, ...){
   va_list args;
   va_start(args, format);
-  for (const char* c = format; *c != '\0'; c++){
-    if (*c == '%'){
-      double d = va_arg(args, double);
-      HERBGRIND_MAYBE_MARK_IMPORTANT(d);
+  int numFloatArgs = 0;
+  for (const char* p = format; *p != '\0'; p++){
+    if (*p == '%'){
+      if (isFloatPrintfSpecifier(p)){
+        numFloatArgs += 1;
+      }
+    }
+  }
+  int fArgIdx = 0;
+  for (const char* p = format; *p != '\0'; p++){
+    if (*p == '%'){
+      if (isFloatPrintfSpecifier(p)){
+        double arg = va_arg(args, double);
+        HERBGRIND_MAYBE_MARK_IMPORTANT_WITH_INDEX(arg, fArgIdx, numFloatArgs);
+        fArgIdx += 1;
+      } else if (isPointerPrintfSpecifier(p)){
+        va_arg(args, void*);
+      } else {
+        va_arg(args, int);
+      }
     }
   }
   va_end(args);

@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*/
-/*--- Herbgrind: a valgrind tool for Herbie           instrument.h ---*/
+/*--- Herbgrind: a valgrind tool for Herbie     printf-intercept.h ---*/
 /*--------------------------------------------------------------------*/
 
 /*
@@ -27,22 +27,22 @@
    The GNU General Public License is contained in the file COPYING.
 */
 
-#include "pub_tool_tooliface.h"
+#ifndef _PRINTF_INTERCEPT_H
+#define _PRINTF_INTERCEPT_H
 
-IRSB* hg_instrument(VgCallbackClosure* closure,
-                    IRSB* sbIn,
-                    const VexGuestLayout* layout,
-                    const VexGuestExtents* vge,
-                    const VexArchInfo* archinfo_host,
-                    IRType gWordTy, IRType hWordTy);
+#include "pub_tool_basics.h"
 
-void init_instrumentation(void);
+#define MAX_THREADSTATE_FLOAT_ARGS 8
 
-void finish_instrumentation(void);
+extern double doubleArgs[MAX_THREADSTATE_FLOAT_ARGS];
 
-void instrumentStatement(IRSB* sbOut, IRStmt* stmt,
-                         Addr stAddr, Addr block_addr,
-                         int stIdx, int numStmtsIn);
-void preInstrumentStatement(IRSB* sbOut, IRStmt* stmt, Addr stAddr, Addr prevAddr);
+typedef struct {
+  void* metadata;
+  char* string;
+} ocamlFString;
 
-void printSuperBlock(IRSB* superblock);
+VG_REGPARM(2)
+void interceptPrintf(Addr address, void* stackFrame,
+                     ocamlFString* formatStringObject);
+
+#endif

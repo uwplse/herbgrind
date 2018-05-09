@@ -37,14 +37,20 @@
 #include "../value-shadowstate/shadowval.h"
 
 typedef struct _markInfo {
-  // So we can store it in a hash table easily.
-  struct _markInfo* next;
-
   Addr addr;
+  const char* markType;
   InfluenceList influences;
   ErrorAggregate eagg;
   SymbExpr* expr;
 } MarkInfo;
+
+typedef struct _markInfoArray {
+  // So we can store it in a hash table easily.
+  struct _markInfoArray* next;
+  Addr addr;
+  int nmarks;
+  MarkInfo* marks;
+} MarkInfoArray;
 
 typedef struct _intMarkInfo {
   struct _intMarkInfo* next;
@@ -58,13 +64,15 @@ typedef struct _intMarkInfo {
   SymbExpr** exprs;
 } IntMarkInfo;
 
-void maybeMarkImportant(Addr varAddr);
-void markImportant(Addr varAddr);
+void maybeMarkImportant(ShadowValue* val, double clientVal, int argIdx, int nargs);
+void maybeMarkImportantAtAddr(ShadowValue* val, double clientValue, int argIdx, int nargs,
+                              Addr callAddr);
+void markImportant(ShadowValue* val, double clientVal, int argIdx, int nargs);
 void markEscapeFromFloat(const char* markType,
                          int mismatch,
                          int numVals, ShadowValue** values);
 IntMarkInfo* getIntMarkInfo(Addr callAddr, const char* markType);
-MarkInfo* getMarkInfo(Addr callAddr);
+MarkInfo* getMarkInfo(Addr callAddr, int argIdx, int nargs);
 void printMarkInfo(MarkInfo* info);
 int isSubexpr(SymbExpr* needle, SymbExpr* haystack, int depth);
 InfluenceList filterInfluenceSubexprs(InfluenceList influences);
