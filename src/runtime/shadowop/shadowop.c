@@ -50,6 +50,7 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
 
   // Create a shadow temp for the result.
   FloatBlocks numBlocks = numOpBlocks(opInfo->op_code);
+  FloatBlocks numArgBlocks = numOpArgBlocks(opInfo->op_code);
   ShadowTemp* result = mkShadowTemp(numBlocks);
 
   // Get the computed and shadow arguments.
@@ -61,7 +62,9 @@ VG_REGPARM(1) ShadowTemp* executeShadowOp(ShadowOpInfoInstance* infoInstance){
   double clientArgs[4][MAX_TEMP_BLOCKS];
   for(int i = 0; i < nargs; ++i){
     args[i] = getArg(i, opInfo->op_code, infoInstance->argTemps[i]);
-    tl_assert(INT(args[i]->num_blocks) == INT(numBlocks));
+    tl_assert2(INT(args[i]->num_blocks) == INT(numArgBlocks),
+               "Arg has %d blocks, but op blocks is %d\n",
+               INT(args[i]->num_blocks), INT(numArgBlocks));
     for (int j = 0; j < numChannels; ++j){
       ValueType argPrecision = opBlockArgPrecision(opInfo->op_code, j / 2);
       clientArgs[j][i] = argPrecision == Vt_Double ?
@@ -347,6 +350,9 @@ FloatBlocks numOpArgBlocks(IROp_Extended op){
     IRType argTypes[4];
     typeOfPrimop(op, &destType,
                  &(argTypes[0]), &(argTypes[1]), &(argTypes[2]), &(argTypes[3]));
+    if (argTypes[1] == Ity_F64 || argTypes[1] == Ity_F32){
+      return typeSize(argTypes[1]);
+    }
     return typeSize(argTypes[0]);
   }
 }
