@@ -79,7 +79,7 @@ def write_mathreplace_funcs(ops, fname):
                 f.write("  OP_{}, \\\n".format(op.func.upper()))
         f.write("\n")
 
-        f.write("// A list of all the binary ops comma seperated, for the enum\n")
+        f.write("// A list of all the ternary ops comma seperated, for the enum\n")
         f.write("// definition farther down in the file.\n")
         f.write("#define TERNARY_OPS_LIST \\\n")
         for op in ops:
