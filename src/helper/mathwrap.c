@@ -241,7 +241,42 @@ complex float VG_REPLACE_FUNCTION_ZU(LIBM, __divsc3)(complex float x, complex fl
 }
 complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divdc3)(complex double x, complex double y);
 complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divdc3)(complex double x, complex double y){
-  return x / y;
+  double rResult, iResult;
+  double args[4];
+  args[0] = creal(x);
+  args[1] = cimag(x);
+  args[2] = creal(y);
+  args[3] = cimag(y);
+  printf("Getting here?\n");
+  HERBGRIND_PERFORM_OP(OP_CDIVR, &rResult, args);
+  HERBGRIND_PERFORM_OP(OP_CDIVI, &iResult, args);
+  return rResult + iResult * I;
+}
+complex double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, __divdc3)(complex double x, complex double y);
+complex double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, __divdc3)(complex double x, complex double y){
+  double rResult, iResult;
+  double args[4];
+  args[0] = creal(x);
+  args[1] = cimag(x);
+  args[2] = creal(y);
+  args[3] = cimag(y);
+  printf("Getting here?\n");
+  HERBGRIND_PERFORM_OP(OP_CDIVR, &rResult, args);
+  HERBGRIND_PERFORM_OP(OP_CDIVI, &iResult, args);
+  return rResult + iResult * I;
+}
+complex double VG_REPLACE_FUNCTION_ZU(NONE, __divdc3)(complex double x, complex double y);
+complex double VG_REPLACE_FUNCTION_ZU(NONE, __divdc3)(complex double x, complex double y){
+  double rResult, iResult;
+  double args[4];
+  args[0] = creal(x);
+  args[1] = cimag(x);
+  args[2] = creal(y);
+  args[3] = cimag(y);
+  printf("Getting here?\n");
+  HERBGRIND_PERFORM_OP(OP_CDIVR, &rResult, args);
+  HERBGRIND_PERFORM_OP(OP_CDIVI, &iResult, args);
+  return rResult + iResult * I;
 }
 complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divtc3)(complex double x, complex double y);
 complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divtc3)(complex double x, complex double y){

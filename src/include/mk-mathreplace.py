@@ -42,7 +42,7 @@ class Op(object):
             self.mpfr_func = mpfr_func
         self.native_func = native_func
 
-def write_mathreplace_funcs(ops, fname):
+def write_mathreplace_funcs(ops, extra_ops, fname):
     with open(fname, "w") as f:
         f.write("#ifndef _MATHREPLACE_FUNCS_H\n")
         f.write("#define _MATHREPLACE_FUNCS_H\n")
@@ -86,6 +86,12 @@ def write_mathreplace_funcs(ops, fname):
             if (op.nargs == 3):
                 f.write("   OP_{}, \\\n".format(op.func.upper()))
         f.write("\n")
+
+        f.write("// A list of all the extra ops comma seperated, for the enum\n")
+        f.write("// definition farther down in the file.\n")
+        f.write("#define EXTRA_OPS_LIST \\\n")
+        for op in extra_ops:
+            f.write("    OP_{}, \\\n".format(op.upper()))
 
         f.write("// A bunch of case statements for each unary op whose mpfr function\n"
                 "// doesn't need a rounding mode, used in runtime/hg_mathreplace.c\n")
@@ -188,12 +194,18 @@ def write_mathreplace_funcs(ops, fname):
         f.write("  BINARY_OPS_LIST\n")
         f.write("  // Ternary\n")
         f.write("  TERNARY_OPS_LIST\n")
+        f.write("  // Extra\n")
+        f.write("  EXTRA_OPS_LIST\n")
         f.write("} OpType;\n")
         f.write("\n")
 
         f.write("#endif\n")
 
 ops = []
+extra_ops = []
+
+def addExtraOp(name):
+    extra_ops.append(name)
 
 def addOp(name, plain_name, nargs,
           hasfloat=True, needsRound=True,
@@ -372,4 +384,7 @@ addOp("remainder", "remainder", 2)
 
 addOp("fma", "fused multiply-add", 3)
 
-write_mathreplace_funcs(ops, "mathreplace-funcs.h")
+addExtraOp("cdivr")
+addExtraOp("cdivi")
+
+write_mathreplace_funcs(ops, extra_ops, "mathreplace-funcs.h")

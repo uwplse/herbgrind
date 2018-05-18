@@ -45,6 +45,8 @@
 #include "local-op.h"
 #include <math.h>
 #include <inttypes.h>
+#include <complex.h>
+#include "mpc.h"
 
 #define NCALLFRAMES 5
 #define MAX_WRAPPED_ARGS 3
@@ -152,6 +154,9 @@ ShadowOpInfo* getWrappedOpInfo(Addr callAddr, OpType opType, int nargs){
 
 int getWrappedNumArgs(OpType type){
   switch(type){
+  case OP_CDIVR:
+  case OP_CDIVI:
+    return 4;
   case UNARY_OPS_CASES:
     return 1;
   case BINARY_OPS_CASES:
@@ -166,6 +171,9 @@ int getWrappedNumArgs(OpType type){
 
 ValueType getWrappedPrecision(OpType type){
   switch(type){
+  case OP_CDIVR:
+  case OP_CDIVI:
+    return Vt_Double;
   case SINGLE_CASES:
     return Vt_Single;
   case DOUBLE_CASES:
@@ -178,14 +186,49 @@ ValueType getWrappedPrecision(OpType type){
 
 const char* getWrappedName(OpType type){
   const char* namevar;
-  GET_OP_NAMES(namevar, type);
-  return namevar;
+  switch(type){
+  case OP_CDIVR:
+    return "cdiv-real";
+  case OP_CDIVI:
+    return "cdiv-imag";
+  default:
+    GET_OP_NAMES(namevar, type);
+    return namevar;
+  }
 }
 
 ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs){
   ShadowValue* result = mkShadowValueBare(getWrappedPrecision(type));
   if (no_reals) return result;
   switch(type){
+  case OP_CDIVR:
+  case OP_CDIVI:
+    {
+      mpc_t arg1;
+      mpc_t arg2;
+      mpc_t resultComplex;
+      mpc_init2(arg1, precision);
+      mpc_init2(arg2, precision);
+      mpc_set_fr_fr(arg1, shadowArgs[0]->real->RVAL, shadowArgs[1]->real->RVAL,
+                    MPC_RNDNN);
+      mpc_set_fr_fr(arg2, shadowArgs[2]->real->RVAL, shadowArgs[3]->real->RVAL,
+                    MPC_RNDNN);
+      mpc_div(resultComplex, arg1, arg2, MPC_RNDNN);
+      switch(type){
+      case OP_CDIVR:
+        mpc_real(result->real->RVAL, resultComplex, MPFR_RNDN);
+        break;
+      case OP_CDIVI:
+        mpc_imag(result->real->RVAL, resultComplex, MPFR_RNDN);
+        break;
+      default:
+        break;
+      }
+      mpc_clear(arg1);
+      mpc_clear(arg2);
+      mpc_clear(resultComplex);
+    }
+    break;
   case UNARY_OPS_ROUND_CASES:
     {
       int (*mpfr_func)(mpfr_t, mpfr_srcptr, mpfr_rnd_t);
@@ -235,8 +278,15 @@ ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs){
 
 double runEmulatedWrappedOp(OpType type, double* args){
   double result;
-  RUN(result, type, args);
-  return result;
+  switch(type){
+  case OP_CDIVR:
+    return creal((args[0] + args[1] * I) / (args[2] + args[3] * I));
+  case OP_CDIVI:
+    return cimag((args[0] + args[1] * I) / (args[2] + args[3] * I));
+  default:
+    RUN(result, type, args);
+    return result;
+  }
 }
 
 Word cmp_op_entry_by_type(const void* node1, const void* node2){
