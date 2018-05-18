@@ -182,7 +182,6 @@ deps/mpc-%/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a: setup/mpc-$(MPC_VERSION).tar.g
 	tar xf setup/mpc-$(MPC_VERSION).tar.gz
 	mkdir -p deps
 	mv mpc-$(MPC_VERSION) deps/mpc-$*
-	touch deps/mpc-$(MPC_VERSION)/README
 	cd deps/mpc-$*/ && \
 		CFLAGS="-fno-stack-protector" \
 		OBJECT_MODE=64 \
