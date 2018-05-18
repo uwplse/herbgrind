@@ -58,7 +58,6 @@ int isPointerPrintfSpecifier(const char* str);
 int isPointerPrintfSpecifier(const char* str){
   regex_t regex;
   int reti;
-  char msgbuf[100];
 
   reti = regcomp(&regex,
                  "%[-+ #0]*[[:digit:]]*\\*\\{0,1\\}\\(\\.[[:digit:]]\\{1,\\}\\)\\{0,1\\}[ps].*",
