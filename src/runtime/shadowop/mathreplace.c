@@ -99,6 +99,18 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
     execLocalOp(info, shadowResult->real, shadowResult, shadowArgs);
   execInfluencesOp(info, &(shadowResult->influences), shadowArgs,
                    bitsLocalError >= error_threshold);
+  if (print_influences){
+    VG_(printf)("Propagating influences for op ");
+    printOpInfo(info);
+    VG_(printf)(":\n");
+    for(int i = 0; i < nargs; ++i){
+      VG_(printf)("Arg %p has influences:\n", shadowArgs[i]);
+      ppInfluences(shadowArgs[i]->influences);
+    }
+    VG_(printf)("Value %p gets influences:\n", shadowResult);
+    ppInfluences(shadowResult->influences);
+    VG_(printf)("\n");
+  }
   if (print_semantic_ops){
     VG_(printf)("%p = %s", shadowResult, getWrappedName(type));
     switch(nargs){

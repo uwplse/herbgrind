@@ -332,6 +332,14 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
   }
   execInfluencesOp(opinfo, &(result->influences), args,
                    bitsLocalError >= error_threshold);
+  if (print_influences){
+    VG_(printf)("Propagating influences for op ");
+    printOpInfo(opinfo);
+    VG_(printf)(":\n");
+    VG_(printf)("Value %p gets influences:\n", result);
+    ppInfluences(result->influences);
+    VG_(printf)("\n");
+  }
   return result;
 }
 

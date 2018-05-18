@@ -42,5 +42,6 @@ InfluenceList mkInfluenceList(void);
 void freeInfluenceList(InfluenceList il);
 InfluenceList mergeInfluences(InfluenceList il1, InfluenceList il2,
                               ShadowOpInfo* extra);
+void ppInfluences(InfluenceList influences);
 
 #endif

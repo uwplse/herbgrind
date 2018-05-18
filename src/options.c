@@ -57,6 +57,7 @@ Bool print_errors_long = False;
 Bool print_inputs = False;
 Bool print_expr_updates = False;
 Bool print_flagged = False;
+Bool print_influences = False;
 Bool print_compares = False;
 Bool print_type_inference = False;
 Bool print_inferred_types = False;
@@ -115,6 +116,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-inputs", print_inputs, True) {}
   else if VG_XACT_CLO(arg, "--print-expr-updates", print_expr_updates, True) {}
   else if VG_XACT_CLO(arg, "--print-flagged", print_flagged, True) {}
+  else if VG_XACT_CLO(arg, "--print-influences", print_influences, True) {}
   else if VG_XACT_CLO(arg, "--print-object-files", print_object_files, True) {}
   else if VG_XACT_CLO(arg, "--print-compares", print_compares, True) {}
   else if VG_XACT_CLO(arg, "--print-type-inference", print_type_inference, True) {}
