@@ -179,7 +179,7 @@ deps/gmp-%/$(HG_LOCAL_INSTALL_NAME)/lib/libgmp.a: setup/gmp-$(GMP_VERSION).tar.x
 	$(MAKE) -C deps/gmp-$* install
 
 deps/mpc-%/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a: setup/mpc-$(MPC_VERSION).tar.gz
-	tar xf setup/mpc-$(MPC_VERSSION).tar.gz
+	tar xf setup/mpc-$(MPC_VERSION).tar.gz
 	mkdir -p deps
 	mv mpc-$(MPC_VERSION) deps/mpc-$*
 	touch deps/mpc-$(MPC_VERSION)/README
