@@ -182,13 +182,15 @@ deps/mpc-%/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a: setup/mpc-$(MPC_VERSION).tar.g
 	tar xf setup/mpc-$(MPC_VERSION).tar.gz
 	mkdir -p deps
 	mv mpc-$(MPC_VERSION) deps/mpc-$*
+	cd setup && ./patch_mpc.sh $*
+	cd deps/mpc-$*/ && autoconf
 	cd deps/mpc-$*/ && \
-		CFLAGS="-fno-stack-protector" \
+		CFLAGS="-fno-stack-protector -DNDEBUG" \
 		OBJECT_MODE=64 \
 		./configure \
 		--prefix=$(shell pwd)/deps/mpc-64/$(HG_LOCAL_INSTALL_NAME) \
 		--with-gmp=$(shell pwd)/deps/gmp-64 \
-		--with-mpfr=$(shell pwd)/deps/mpfr-64
+		--with-mpfr=$(shell pwd)/deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME)
 	$(MAKE) -C deps/mpc-$*
 	$(MAKE) -C deps/mpc-$* install
 
@@ -211,7 +213,7 @@ MPFR_CONFIGURE_FLAGS = --disable-thread-safe
 
 configure-mpfr-32:
 	cd deps/mpfr-32/ && \
-		CFLAGS="-fno-stack-protector" \
+		CFLAGS="-fno-stack-protector -fPIC" \
 		./configure --prefix=$(shell pwd)/deps/mpfr-32/$(HG_LOCAL_INSTALL_NAME) \
 		            --with-gmp-build=$(shell pwd)/deps/gmp-32 \
 		            --build=i386 \
@@ -220,7 +222,7 @@ configure-mpfr-32:
 
 configure-mpfr-64:
 	cd deps/mpfr-64/ && \
-		CFLAGS="-fno-stack-protector" \
+		CFLAGS="-fno-stack-protector -fPIC" \
 		./configure --prefix=$(shell pwd)/deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME) \
 		            --with-gmp-build=$(shell pwd)/deps/gmp-64 \
 		            --build=amd64 \

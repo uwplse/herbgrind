@@ -1,16 +1,16 @@
 include ../../Makefile.common
 
 extra_deps_amd64 = \
+	$(top_builddir)/../deps/mpc-64/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a \
 	$(top_builddir)/../deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME)/lib/libmpfr.a \
 	$(top_builddir)/../deps/gmp-64/$(HG_LOCAL_INSTALL_NAME)/lib/libgmp.a \
-	$(top_builddir)/../deps/openlibm-64/libopenlibm.a \
-	$(top_builddir)/../deps/mpc-64/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a
+	$(top_builddir)/../deps/openlibm-64/libopenlibm.a
 
 extra_deps_i386 = \
+	$(top_builddir)/../deps/mpc-32/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a \
 	$(top_builddir)/../deps/mpfr-32/$(HG_LOCAL_INSTALL_NAME)/lib/libmpfr.a \
 	$(top_builddir)/../deps/gmp-32/$(HG_LOCAL_INSTALL_NAME)/lib/libgmp.a
-	$(top_builddir)/../deps/openlibm-32/libopenlibm.a \
-	$(top_builddir)/../deps/mpc-32/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a
+	$(top_builddir)/../deps/openlibm-32/libopenlibm.a
 
 include $(top_srcdir)/Makefile.tool.am
 
