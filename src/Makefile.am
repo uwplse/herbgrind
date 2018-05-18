@@ -3,11 +3,14 @@ include ../../Makefile.common
 extra_deps_amd64 = \
 	$(top_builddir)/../deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME)/lib/libmpfr.a \
 	$(top_builddir)/../deps/gmp-64/$(HG_LOCAL_INSTALL_NAME)/lib/libgmp.a \
-	$(top_builddir)/../deps/openlibm-64/libopenlibm.a
+	$(top_builddir)/../deps/openlibm-64/libopenlibm.a \
+	$(top_builddir)/../deps/mpc-64/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a
 
 extra_deps_i386 = \
 	$(top_builddir)/../deps/mpfr-32/$(HG_LOCAL_INSTALL_NAME)/lib/libmpfr.a \
 	$(top_builddir)/../deps/gmp-32/$(HG_LOCAL_INSTALL_NAME)/lib/libgmp.a
+	$(top_builddir)/../deps/openlibm-32/libopenlibm.a \
+	$(top_builddir)/../deps/mpc-32/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a
 
 include $(top_srcdir)/Makefile.tool.am
 
@@ -51,7 +54,8 @@ herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CFLAGS       = \
 	$(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@) \
 	-g -O2 -Werror -Wall \
 	-I$(top_srcdir)/../deps/gmp-64/$(HG_LOCAL_INSTALL_NAME)/include/ \
-	-I$(top_srcdir)/../deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME)/include/
+	-I$(top_srcdir)/../deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME)/include/ \
+	-I$(top_srcdir)/../deps/mpc-64/$(HG_LOCAL_INSTALL_NAME)/include/
 herbgrind_@VGCONF_ARCH_PRI@_@VGCONF_OS@_DEPENDENCIES = \
 	$(TOOL_DEPENDENCIES_@VGCONF_PLATFORM_PRI_CAPS@) \
 	$(extra_deps_amd64)
