@@ -44,11 +44,9 @@ InfluenceList mkInfluenceList(void){
       VG_(malloc)("influence list", sizeof(struct _influenceList));
     result->data =
       VG_(malloc)("influence list data", sizeof(ShadowOpInfo*) * max_influences);
-    /* VG_(printf)("Allocating new influence list.\n"); */
   } else {
     result = pool;
     pool = pool->next;
-    /* VG_(printf)("Reusing influence list.\n"); */
   }
   result->next = NULL;
   result->length = 0;
@@ -117,4 +115,15 @@ InfluenceList mergeInfluences(InfluenceList il1, InfluenceList il2,
     }
   }
   return result;
+}
+
+void ppInfluences(InfluenceList influences){
+  if (influences == NULL){
+    return;
+  }
+  for(int i = 0; i < influences->length; ++i){
+    VG_(printf)("* ");
+    printOpInfo(influences->data[i]);
+    VG_(printf)("\n");
+  }
 }

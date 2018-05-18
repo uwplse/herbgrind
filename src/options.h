@@ -58,6 +58,7 @@ extern Bool print_errors_long;
 extern Bool print_inputs;
 extern Bool print_expr_updates;
 extern Bool print_flagged;
+extern Bool print_influences;
 extern Bool print_compares;
 extern Bool print_type_inference;
 extern Bool print_inferred_types;
