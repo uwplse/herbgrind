@@ -136,15 +136,15 @@ void instrumentPossibleNegate(IRSB* sbOut,
                               IRExpr** argExprs, IRTemp dest,
                               Addr curAddr, Addr blockAddr){
   IRExpr* isSingleNegate =
-    runAnd(sbOut,
-           runBinop(sbOut, Iop_CmpEQ64,
-                    runUnop(sbOut, Iop_V128to64,
-                            argExprs[0]),
-                    mkU64(0x80000000)),
-           runBinop(sbOut, Iop_CmpEQ64,
-                    runUnop(sbOut, Iop_V128HIto64,
-                            argExprs[0]),
-                    mkU64(0)));
+    runOr(sbOut,
+          runBinop(sbOut, Iop_CmpEQ64,
+                   runUnop(sbOut, Iop_V128to64,
+                           argExprs[0]),
+                   mkU64(0x80000000)),
+          runBinop(sbOut, Iop_CmpEQ64,
+                   runUnop(sbOut, Iop_V128to64,
+                           argExprs[1]),
+                   mkU64(0x80000000)));
   IRExpr* shadowSingleNegateOutput =
     runShadowOp(sbOut, isSingleNegate,
                 IEop_Neg32F0x4,
@@ -153,15 +153,15 @@ void instrumentPossibleNegate(IRSB* sbOut,
                 IRExpr_RdTmp(dest));
   addStoreTempG(sbOut, isSingleNegate, shadowSingleNegateOutput, dest);
   IRExpr* isDoubleNegate =
-    runAnd(sbOut,
-           runBinop(sbOut, Iop_CmpEQ64,
-                    runUnop(sbOut, Iop_V128to64,
-                            argExprs[0]),
-                    mkU64(0x8000000000000000)),
-           runBinop(sbOut, Iop_CmpEQ64,
-                    runUnop(sbOut, Iop_V128HIto64,
-                            argExprs[0]),
-                    mkU64(0)));
+    runOr(sbOut,
+          runBinop(sbOut, Iop_CmpEQ64,
+                   runUnop(sbOut, Iop_V128to64,
+                           argExprs[0]),
+                   mkU64(0x8000000000000000)),
+          runBinop(sbOut, Iop_CmpEQ64,
+                   runUnop(sbOut, Iop_V128to64,
+                           argExprs[1]),
+                   mkU64(0x8000000000000000)));
   IRExpr* shadowDoubleNegateOutput =
     runShadowOp(sbOut, isDoubleNegate,
                 IEop_Neg64F0x2,
