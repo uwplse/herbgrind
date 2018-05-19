@@ -336,6 +336,10 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
     VG_(printf)("Propagating influences for op ");
     printOpInfo(opinfo);
     VG_(printf)(":\n");
+    for(int i = 0; i < nargs; ++i){
+      VG_(printf)("Arg %p has influences:\n", args[i]);
+      ppInfluences(args[i]->influences);
+    }
     VG_(printf)("Value %p gets influences:\n", result);
     ppInfluences(result->influences);
     VG_(printf)("\n");
