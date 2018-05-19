@@ -162,6 +162,9 @@ int getNativeNumFloatArgs(IROp_Extended op_code){
   case Iop_SubF64r32:
   case Iop_MulF64r32:
   case Iop_DivF64r32:
+  case Iop_AndV128:
+  case Iop_OrV128:
+  case Iop_NotV128:
     return 2;
     // Ternary Ops
   case Iop_MAddF32:
