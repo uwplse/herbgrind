@@ -160,23 +160,13 @@ complex double VG_REPLACE_FUNCTION_ZU(LIBM, cexp)(complex double x){
 }
 complex double VG_REPLACE_FUNCTION_ZU(LIBM, clog)(complex double x);
 complex double VG_REPLACE_FUNCTION_ZU(LIBM, clog)(complex double x){
-  double sqrtArgs[1];
-  double logArgs[1];
-  double atan2Args[2];
-  double sqrtResult, logResult, atan2Result;
-
-  // Real part
-  sqrtArgs[0] = creal(x) * creal(x) + cimag(x) * cimag(x);
-  HERBGRIND_PERFORM_OP(OP_SQRT, &sqrtResult, sqrtArgs);
-  logArgs[0] = sqrtResult;
-  HERBGRIND_PERFORM_OP(OP_LOG, &logResult, logArgs);
-
-  // Imaginary part
-  atan2Args[0] = cimag(x);
-  atan2Args[1] = creal(x);
-  HERBGRIND_PERFORM_OP(OP_ATAN2, &atan2Result, atan2Args);
-
-  return logResult + I * atan2Result;
+  double rResult, iResult;
+  double args[2];
+  args[0] = creal(x);
+  args[1] = cimag(x);
+  HERBGRIND_PERFORM_OP(OP_CLOGR, args, &rResult);
+  HERBGRIND_PERFORM_OP(OP_CLOGI, args, &iResult);
+  return rResult + iResult * I;
 }
 
 complex float VG_REPLACE_FUNCTION_ZU(LIBM, __mulsc3)(complex float x, complex float y);

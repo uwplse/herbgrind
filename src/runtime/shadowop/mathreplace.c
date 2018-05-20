@@ -157,6 +157,9 @@ int getWrappedNumArgs(OpType type){
   case OP_CDIVR:
   case OP_CDIVI:
     return 4;
+  case OP_CLOGR:
+  case OP_CLOGI:
+    return 2;
   case UNARY_OPS_CASES:
     return 1;
   case BINARY_OPS_CASES:
@@ -173,6 +176,8 @@ ValueType getWrappedPrecision(OpType type){
   switch(type){
   case OP_CDIVR:
   case OP_CDIVI:
+  case OP_CLOGR:
+  case OP_CLOGI:
     return Vt_Double;
   case SINGLE_CASES:
     return Vt_Single;
@@ -191,6 +196,10 @@ const char* getWrappedName(OpType type){
     return "cdiv-real";
   case OP_CDIVI:
     return "cdiv-imag";
+  case OP_CLOGR:
+    return "clog-real";
+  case OP_CLOGI:
+    return "clog-imag";
   default:
     GET_OP_NAMES(namevar, type);
     return namevar;
@@ -227,6 +236,30 @@ ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs){
       }
       mpc_clear(arg1);
       mpc_clear(arg2);
+      mpc_clear(resultComplex);
+    }
+    break;
+  case OP_CLOGR:
+  case OP_CLOGI:
+    {
+      mpc_t arg1;
+      mpc_t resultComplex;
+      mpc_init2(arg1, precision);
+      mpc_init2(resultComplex, precision);
+      mpc_set_fr_fr(arg1, shadowArgs[0]->real->RVAL, shadowArgs[1]->real->RVAL,
+                    MPC_RNDNN);
+      mpc_log(resultComplex, arg1, MPC_RNDNN);
+      switch(type){
+      case OP_CDIVR:
+        mpc_real(result->real->RVAL, resultComplex, MPFR_RNDN);
+        break;
+      case OP_CDIVI:
+        mpc_imag(result->real->RVAL, resultComplex, MPFR_RNDN);
+        break;
+      default:
+        break;
+      }
+      mpc_clear(arg1);
       mpc_clear(resultComplex);
     }
     break;
@@ -284,6 +317,10 @@ double runEmulatedWrappedOp(OpType type, double* args){
     return creal((args[0] + args[1] * I) / (args[2] + args[3] * I));
   case OP_CDIVI:
     return cimag((args[0] + args[1] * I) / (args[2] + args[3] * I));
+  case OP_CLOGR:
+    return creal(log(args[0] + args[1] * I));
+  case OP_CLOGI:
+    return cimag(log(args[0] + args[1] * I));
   default:
     RUN(result, type, args);
     return result;

@@ -386,5 +386,7 @@ addOp("fma", "fused multiply-add", 3)
 
 addExtraOp("cdivr")
 addExtraOp("cdivi")
+addExtraOp("clogr")
+addExtraOp("clogi")
 
 write_mathreplace_funcs(ops, extra_ops, "mathreplace-funcs.h")
