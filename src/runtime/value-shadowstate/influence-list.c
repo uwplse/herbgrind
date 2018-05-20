@@ -127,3 +127,47 @@ void ppInfluences(InfluenceList influences){
     VG_(printf)("\n");
   }
 }
+
+void assertNoDropInfluences(InfluenceList influences1,
+                            InfluenceList influences2,
+                            InfluenceList merged){
+  if (influences1 != NULL){
+    for(int i = 0; i < influences1->length; ++i){
+      Bool mergedHasAllFromFirstArg =
+        hasInfluence(merged, influences1->data[i]);
+      if (!mergedHasAllFromFirstArg){
+        VG_(printf)("Tried to merge:\n");
+        ppInfluences(influences1);
+        VG_(printf)("And:\n");
+        ppInfluences(influences2);
+        VG_(printf)("But got:\n");
+        ppInfluences(merged);
+      }
+      tl_assert(mergedHasAllFromFirstArg);
+    }
+  }
+  if (influences2 != NULL){
+    for(int i = 0; i < influences2->length; ++i){
+      Bool mergedHasAllFromSecondArg =
+        hasInfluence(merged, influences2->data[i]);
+      if (!mergedHasAllFromSecondArg){
+        VG_(printf)("Tried to merge:\n");
+        ppInfluences(influences1);
+        VG_(printf)("And:\n");
+        ppInfluences(influences2);
+        VG_(printf)("But got:\n");
+        ppInfluences(merged);
+      }
+      tl_assert(mergedHasAllFromSecondArg);
+    }
+  }
+}
+
+Bool hasInfluence(InfluenceList list, ShadowOpInfo* influence){
+  for(int i = 0; i < list->length; ++i){
+    if (list->data[i] == influence){
+      return True;
+    }
+  }
+  return False;
+}

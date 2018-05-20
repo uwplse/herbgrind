@@ -43,5 +43,9 @@ void freeInfluenceList(InfluenceList il);
 InfluenceList mergeInfluences(InfluenceList il1, InfluenceList il2,
                               ShadowOpInfo* extra);
 void ppInfluences(InfluenceList influences);
+void assertNoDropInfluences(InfluenceList influences1,
+                            InfluenceList influences2,
+                            InfluenceList merged);
+Bool hasInfluence(InfluenceList list, ShadowOpInfo* influence);
 
 #endif
