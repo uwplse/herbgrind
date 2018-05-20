@@ -209,6 +209,7 @@ ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs){
       mpc_t resultComplex;
       mpc_init2(arg1, precision);
       mpc_init2(arg2, precision);
+      mpc_init2(resultComplex, precision);
       mpc_set_fr_fr(arg1, shadowArgs[0]->real->RVAL, shadowArgs[1]->real->RVAL,
                     MPC_RNDNN);
       mpc_set_fr_fr(arg2, shadowArgs[2]->real->RVAL, shadowArgs[3]->real->RVAL,

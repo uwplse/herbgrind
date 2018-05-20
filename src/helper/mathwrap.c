@@ -38,6 +38,7 @@
 
 #define LIBM libmZdsoZa
 #define LIBM_CPP libmZhZaZdsoZa
+#define LIBGCC libgccZa
 
 // This file instructs valgrind to capture calls to the math functions
 // listed in hg_mathreplace_funcs.h, and redirect them to the
@@ -239,47 +240,22 @@ complex float VG_REPLACE_FUNCTION_ZU(LIBM, __divsc3)(complex float x, complex fl
 complex float VG_REPLACE_FUNCTION_ZU(LIBM, __divsc3)(complex float x, complex float y){
   return x / y;
 }
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divdc3)(complex double x, complex double y);
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divdc3)(complex double x, complex double y){
+complex double VG_REPLACE_FUNCTION_ZU(LIBGCC, __divdc3)(complex double x,
+                                                        complex double y);
+complex double VG_REPLACE_FUNCTION_ZU(LIBGCC, __divdc3)(complex double x,
+                                                        complex double y){
   double rResult, iResult;
   double args[4];
   args[0] = creal(x);
   args[1] = cimag(x);
   args[2] = creal(y);
   args[3] = cimag(y);
-  printf("Getting here?\n");
   HERBGRIND_PERFORM_OP(OP_CDIVR, &rResult, args);
   HERBGRIND_PERFORM_OP(OP_CDIVI, &iResult, args);
   return rResult + iResult * I;
 }
-complex double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, __divdc3)(complex double x, complex double y);
-complex double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, __divdc3)(complex double x, complex double y){
-  double rResult, iResult;
-  double args[4];
-  args[0] = creal(x);
-  args[1] = cimag(x);
-  args[2] = creal(y);
-  args[3] = cimag(y);
-  printf("Getting here?\n");
-  HERBGRIND_PERFORM_OP(OP_CDIVR, &rResult, args);
-  HERBGRIND_PERFORM_OP(OP_CDIVI, &iResult, args);
-  return rResult + iResult * I;
-}
-complex double VG_REPLACE_FUNCTION_ZU(NONE, __divdc3)(complex double x, complex double y);
-complex double VG_REPLACE_FUNCTION_ZU(NONE, __divdc3)(complex double x, complex double y){
-  double rResult, iResult;
-  double args[4];
-  args[0] = creal(x);
-  args[1] = cimag(x);
-  args[2] = creal(y);
-  args[3] = cimag(y);
-  printf("Getting here?\n");
-  HERBGRIND_PERFORM_OP(OP_CDIVR, &rResult, args);
-  HERBGRIND_PERFORM_OP(OP_CDIVI, &iResult, args);
-  return rResult + iResult * I;
-}
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divtc3)(complex double x, complex double y);
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divtc3)(complex double x, complex double y){
+complex double VG_REPLACE_FUNCTION_ZU(LIBGCC, __divtc3)(complex double x, complex double y);
+complex double VG_REPLACE_FUNCTION_ZU(LIBGCC, __divtc3)(complex double x, complex double y){
   return x / y;
 }
 complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divxc3)(complex double x, complex double y);
