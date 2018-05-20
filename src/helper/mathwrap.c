@@ -55,31 +55,20 @@
 ====== Unary Ops =============
 ----------------------------*/
 
-#define WRAP_UNARY(fnname, opname)                         \
-  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x);   \
-  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x){   \
-    double result;                                         \
-    double args[1];                                        \
-    args[0] = x;                                           \
-    HERBGRIND_PERFORM_OP(opname, &result, args);           \
-    return result;                                         \
-  }                                                        \
-  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x);    \
-  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x){    \
-    double result;                                         \
-    double args[1];                                        \
-    args[0] = x;                                           \
-    HERBGRIND_PERFORM_OP(opname, &result, args);           \
-    return result;                                         \
-  }                                                             \
-  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x);    \
-  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x){    \
+#define WRAP_UNARY_SINGLE(soname, fnname, opname) \
+  double VG_REPLACE_FUNCTION_ZU(soname, fnname)(double x);   \
+  double VG_REPLACE_FUNCTION_ZU(soname, fnname)(double x){   \
     double result;                                         \
     double args[1];                                        \
     args[0] = x;                                           \
     HERBGRIND_PERFORM_OP(opname, &result, args);           \
     return result;                                         \
   }
+
+#define WRAP_UNARY(fnname, opname)               \
+  WRAP_UNARY_SINGLE(LIBM, fnname, opname)        \
+  WRAP_UNARY_SINGLE(LIBM_CPP, fnname, opname)    \
+  WRAP_UNARY_SINGLE(NONE, fnname, opname)
 
 // This macro is defined in include/hg_mathreplace_funcs.h, and
 // invokes the above macro for each unary operation that needs to be
@@ -92,27 +81,9 @@ WRAP_UNARY_OPS
 ====== Binary Ops ============
 ----------------------------*/
 
-#define WRAP_BINARY(fnname, opname)                             \
-  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y);  \
-  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y){  \
-    double result;                                               \
-    double args[2];                                              \
-    args[0] = x;                                                 \
-    args[1] = y;                                                 \
-    HERBGRIND_PERFORM_OP(opname, &result, args);                 \
-    return result;                                               \
-  }                                                                     \
-  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y);  \
-  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y){  \
-    double result;                                               \
-    double args[2];                                              \
-    args[0] = x;                                                 \
-    args[1] = y;                                                 \
-    HERBGRIND_PERFORM_OP(opname, &result, args);                 \
-    return result;                                               \
-  }                                                                 \
-  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x, double y);  \
-  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x, double y){  \
+#define WRAP_BINARY_SINGLE(soname, fnname, opname)                    \
+  double VG_REPLACE_FUNCTION_ZU(soname, fnname)(double x, double y);  \
+  double VG_REPLACE_FUNCTION_ZU(soname, fnname)(double x, double y){  \
     double result;                                               \
     double args[2];                                              \
     args[0] = x;                                                 \
@@ -121,6 +92,10 @@ WRAP_UNARY_OPS
     return result;                                               \
   }
 
+#define WRAP_BINARY(fnname, opname)                                     \
+  WRAP_BINARY_SINGLE(LIBM, fnname, opname)                              \
+  WRAP_BINARY_SINGLE(LIBM_CPP, fnname, opname)                          \
+  WRAP_BINARY_SINGLE(NONE, fnname, opname)
 // This macro is defined in include/hg_mathreplace_funcs.h, and
 // invokes the above macro for each binary operation that needs to be
 // wrapped.
@@ -132,37 +107,22 @@ WRAP_BINARY_OPS
 ====== Ternary Ops ===========
 ----------------------------*/
 
-#define WRAP_TERNARY(fnname, opname)                                    \
-  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y, double z); \
-  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y, double z){ \
-    double result;                                                      \
-    double args[3];                                                     \
-    args[0] = x;                                                        \
-    args[1] = y;                                                        \
-    args[2] = z;                                                        \
-    HERBGRIND_PERFORM_OP(opname, &result, args);                        \
-    return result;                                                      \
-  }                                                                     \
-  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y, double z); \
-  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y, double z){ \
-    double result;                                                      \
-    double args[3];                                                     \
-    args[0] = x;                                                        \
-    args[1] = y;                                                        \
-    args[2] = z;                                                        \
-    HERBGRIND_PERFORM_OP(opname, &result, args);                        \
-    return result;                                                      \
-  }                                                                     \
-  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x, double y, double z); \
-  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x, double y, double z){ \
-    double result;                                                      \
-    double args[3];                                                     \
-    args[0] = x;                                                        \
-    args[1] = y;                                                        \
-    args[2] = z;                                                        \
-    HERBGRIND_PERFORM_OP(opname, &result, args);                        \
-    return result;                                                      \
+#define WRAP_TERNARY_SINGLE(soname, fnname, opname)                    \
+  double VG_REPLACE_FUNCTION_ZU(soname, fnname)(double x, double y, double z);  \
+  double VG_REPLACE_FUNCTION_ZU(soname, fnname)(double x, double y, double z){   \
+    double result;                                               \
+    double args[3];                                              \
+    args[0] = x;                                                 \
+    args[1] = y;                                                 \
+    args[2] = z;                                                 \
+    HERBGRIND_PERFORM_OP(opname, &result, args);                 \
+    return result;                                               \
   }
+
+#define WRAP_TERNARY(fnname, opname)                                     \
+  WRAP_TERNARY_SINGLE(LIBM, fnname, opname)                              \
+  WRAP_TERNARY_SINGLE(LIBM_CPP, fnname, opname)                          \
+  WRAP_TERNARY_SINGLE(NONE, fnname, opname)
 
 // This macro is defined in include/hg_mathreplace_funcs.h, and
 // invokes the above macro for each ternary operation that needs to be
