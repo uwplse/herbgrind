@@ -168,26 +168,29 @@ def write_mathreplace_funcs(ops, extra_ops, fname):
         f.write("#define WRAP_UNARY_OPS \\\n")
         for op in ops:
             if (op.nargs == 1):
-                f.write("  WRAP_UNARY({}, OP_{}); \\\n".format(op.func, op.func.upper()))
+                f.write("  WRAP_UNARY_{}({}, OP_{}); \\\n"
+                        .format(op.precision, op.func, op.func.upper()))
         f.write("\n")
 
         f.write("// Same for binary ops.\n")
         f.write("#define WRAP_BINARY_OPS \\\n")
         for op in ops:
             if (op.nargs == 2):
-                f.write("  WRAP_BINARY({}, OP_{}); \\\n".format(op.func, op.func.upper()))
+                f.write("  WRAP_BINARY_{}({}, OP_{}); \\\n"
+                        .format(op.precision, op.func, op.func.upper()))
         f.write("\n")
 
         f.write("// Same for binary ops.\n")
         f.write("#define WRAP_TERNARY_OPS \\\n")
         for op in ops:
             if (op.nargs == 3):
-                f.write("  WRAP_TERNARY({}, OP_{}); \\\n".format(op.func, op.func.upper()))
+                f.write("  WRAP_TERNARY_{}({}, OP_{}); \\\n"
+                        .format(op.precision, op.func, op.func.upper()))
         f.write("\n")
 
         f.write("// Finally, define an enum for the operations we support.\n")
         f.write("typedef enum {\n")
-        f.write("  OP_INVALID,\n");
+        f.write("  OP_INVALID,\n")
         f.write("  // Unary functions\n")
         f.write("  UNARY_OPS_LIST\n")
         f.write("  // Binary\n")
