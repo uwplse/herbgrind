@@ -204,9 +204,19 @@ complex double VG_REPLACE_FUNCTION_ZU(LIBGCC, __divdc3)(complex double x,
   HERBGRIND_PERFORM_OP(OP_CDIVI, &iResult, args);
   return rResult + iResult * I;
 }
-complex double VG_REPLACE_FUNCTION_ZU(LIBGCC, __divtc3)(complex double x, complex double y);
-complex double VG_REPLACE_FUNCTION_ZU(LIBGCC, __divtc3)(complex double x, complex double y){
-  return x / y;
+complex double VG_REPLACE_FUNCTION_ZU(LIBGCC, __divtc3)(complex double x,
+                                                        complex double y);
+complex double VG_REPLACE_FUNCTION_ZU(LIBGCC, __divtc3)(complex double x,
+                                                        complex double y){
+  double rResult, iResult;
+  double args[4];
+  args[0] = creal(x);
+  args[1] = cimag(x);
+  args[2] = creal(y);
+  args[3] = cimag(y);
+  HERBGRIND_PERFORM_OP(OP_CDIVR, &rResult, args);
+  HERBGRIND_PERFORM_OP(OP_CDIVI, &iResult, args);
+  return rResult + iResult * I;
 }
 complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divxc3)(complex double x, complex double y);
 complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divxc3)(complex double x, complex double y){
