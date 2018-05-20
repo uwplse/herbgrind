@@ -85,7 +85,7 @@ InfluenceList mergeInfluences(InfluenceList il1, InfluenceList il2,
                 cmpInfo(il2->data[j], il1->data[i]) >= 0) &&
                (extra == NULL || cmpInfo(il2->data[j], extra) >= 0)){
       if (result->length == 0 || result->data[result->length-1] != il2->data[j]){
-        result->data[result->length++] = il2->data[j++];
+        result->data[result->length++] = il2->data[j];
       }
       j++;
     } else if (extra != NULL &&
