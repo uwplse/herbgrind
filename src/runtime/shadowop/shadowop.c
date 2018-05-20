@@ -228,6 +228,17 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
     case Iop_MulF64r32:
       if ((getDouble(args[0]->real) == 0 && !isNaN(args[1]->real)) ||
           (getDouble(args[1]->real) == 0 && !isNaN(args[0]->real))){
+        if (print_influences){
+          if (getDouble(args[0]->real) == 0 && !isNaN(args[1]->real)){
+            VG_(printf)("Not propagating influences because arg 0 is zero (client val ");
+            ppFloat(clientArgs[0]);
+            VG_(printf)(")\n");
+          } else {
+            VG_(printf)("Not propagating influences because arg 1 is zero (client val ");
+            ppFloat(clientArgs[1]);
+            VG_(printf)(")\n");
+          }
+        }
         ShadowValue* result =
           mkShadowValue(argPrecision, clientResult);
         if (use_ranges){
