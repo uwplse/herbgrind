@@ -128,6 +128,23 @@ void ppInfluences(InfluenceList influences){
   }
 }
 
+void assertNoDups(InfluenceList influences){
+  for(int i = 0; i < influences->length; ++i){
+    for(int j = i+1; j < influences->length; ++j){
+      if (influences->data[i] == influences->data[j]){
+        VG_(printf)("Influence #%d (", i);
+        printOpInfo(influences->data[i]);
+        VG_(printf)(") and influence #%d (", j);
+        printOpInfo(influences->data[j]);
+        VG_(printf)(" are the same!\n");
+        VG_(printf)("In list:\n");
+        ppInfluences(influences);
+      }
+      tl_assert(influences->data[i] != influences->data[j]);
+    }
+  }
+}
+
 void assertNoDropInfluences(InfluenceList influences1,
                             InfluenceList influences2,
                             InfluenceList merged){

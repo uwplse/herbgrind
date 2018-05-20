@@ -47,5 +47,6 @@ void assertNoDropInfluences(InfluenceList influences1,
                             InfluenceList influences2,
                             InfluenceList merged);
 Bool hasInfluence(InfluenceList list, ShadowOpInfo* influence);
+void assertNoDups(InfluenceList influences);
 
 #endif
