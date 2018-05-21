@@ -85,7 +85,7 @@ InfluenceList mergeInfluences(InfluenceList il1, InfluenceList il2,
                 cmpInfo(il2->data[j], il1->data[i]) >= 0) &&
                (extra == NULL || cmpInfo(il2->data[j], extra) >= 0)){
       if (result->length == 0 || result->data[result->length-1] != il2->data[j]){
-        result->data[result->length++] = il2->data[j++];
+        result->data[result->length++] = il2->data[j];
       }
       j++;
     } else if (extra != NULL &&
@@ -126,4 +126,65 @@ void ppInfluences(InfluenceList influences){
     printOpInfo(influences->data[i]);
     VG_(printf)("\n");
   }
+}
+
+void assertNoDups(InfluenceList influences){
+  for(int i = 0; i < influences->length; ++i){
+    for(int j = i+1; j < influences->length; ++j){
+      if (influences->data[i] == influences->data[j]){
+        VG_(printf)("Influence #%d (", i);
+        printOpInfo(influences->data[i]);
+        VG_(printf)(") and influence #%d (", j);
+        printOpInfo(influences->data[j]);
+        VG_(printf)(" are the same!\n");
+        VG_(printf)("In list:\n");
+        ppInfluences(influences);
+      }
+      tl_assert(influences->data[i] != influences->data[j]);
+    }
+  }
+}
+
+void assertNoDropInfluences(InfluenceList influences1,
+                            InfluenceList influences2,
+                            InfluenceList merged){
+  if (influences1 != NULL){
+    for(int i = 0; i < influences1->length; ++i){
+      Bool mergedHasAllFromFirstArg =
+        hasInfluence(merged, influences1->data[i]);
+      if (!mergedHasAllFromFirstArg){
+        VG_(printf)("Tried to merge:\n");
+        ppInfluences(influences1);
+        VG_(printf)("And:\n");
+        ppInfluences(influences2);
+        VG_(printf)("But got:\n");
+        ppInfluences(merged);
+      }
+      tl_assert(mergedHasAllFromFirstArg);
+    }
+  }
+  if (influences2 != NULL){
+    for(int i = 0; i < influences2->length; ++i){
+      Bool mergedHasAllFromSecondArg =
+        hasInfluence(merged, influences2->data[i]);
+      if (!mergedHasAllFromSecondArg){
+        VG_(printf)("Tried to merge:\n");
+        ppInfluences(influences1);
+        VG_(printf)("And:\n");
+        ppInfluences(influences2);
+        VG_(printf)("But got:\n");
+        ppInfluences(merged);
+      }
+      tl_assert(mergedHasAllFromSecondArg);
+    }
+  }
+}
+
+Bool hasInfluence(InfluenceList list, ShadowOpInfo* influence){
+  for(int i = 0; i < list->length; ++i){
+    if (list->data[i] == influence){
+      return True;
+    }
+  }
+  return False;
 }

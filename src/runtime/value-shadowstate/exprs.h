@@ -144,5 +144,5 @@ void writeSymbExprToStringNoVars(int buflen, char* buf, SymbExpr* expr);
 
 
 int floatPrintLen(double f);
-#define MAX_BRANCH_ARGS 3
+#define MAX_BRANCH_ARGS 4
 #endif

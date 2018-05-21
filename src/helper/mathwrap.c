@@ -38,6 +38,7 @@
 
 #define LIBM libmZdsoZa
 #define LIBM_CPP libmZhZaZdsoZa
+#define LIBGCC libgccZa
 
 // This file instructs valgrind to capture calls to the math functions
 // listed in hg_mathreplace_funcs.h, and redirect them to the
@@ -54,31 +55,52 @@
 ====== Unary Ops =============
 ----------------------------*/
 
-#define WRAP_UNARY(fnname, opname)                         \
-  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x);   \
-  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x){   \
-    double result;                                         \
-    double args[1];                                        \
-    args[0] = x;                                           \
-    HERBGRIND_PERFORM_OP(opname, &result, args);           \
-    return result;                                         \
-  }                                                        \
-  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x);    \
-  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x){    \
-    double result;                                         \
-    double args[1];                                        \
-    args[0] = x;                                           \
-    HERBGRIND_PERFORM_OP(opname, &result, args);           \
-    return result;                                         \
-  }                                                             \
-  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x);    \
-  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x){    \
-    double result;                                         \
-    double args[1];                                        \
-    args[0] = x;                                           \
-    HERBGRIND_PERFORM_OP(opname, &result, args);           \
-    return result;                                         \
+#define WRAP_UNARY_(prec, soname, fnname, opname)             \
+  prec VG_REPLACE_FUNCTION_ZU(soname, fnname)(prec x);        \
+  prec VG_REPLACE_FUNCTION_ZU(soname, fnname)(prec x){        \
+    prec result;                                              \
+    prec args[1];                                             \
+    args[0] = x;                                              \
+    HERBGRIND_PERFORM_OP(opname, &result, args);              \
+    return result;                                            \
   }
+#define WRAP_UNARY_64_(soname, fnname, opname) WRAP_UNARY_(double, soname, fnname, opname)
+#define WRAP_UNARY_32_(soname, fnname, opname) WRAP_UNARY_(float, soname, fnname, opname)
+
+#define WRAP_UNARY_64(fnname, opname)         \
+  WRAP_UNARY_64_(LIBM, fnname, opname)        \
+  WRAP_UNARY_64_(LIBM_CPP, fnname, opname)    \
+  WRAP_UNARY_64_(NONE, fnname, opname)
+#define WRAP_UNARY_32(fnname, opname)         \
+  WRAP_UNARY_32_(LIBM, fnname, opname)        \
+  WRAP_UNARY_32_(LIBM_CPP, fnname, opname)    \
+  WRAP_UNARY_32_(NONE, fnname, opname)
+
+#define WRAP_UNARY_COMPLEX_(prec, soname, fnname, opname)              \
+  complex prec VG_REPLACE_FUNCTION_ZU(soname, fnname)(complex prec x); \
+  complex prec VG_REPLACE_FUNCTION_ZU(soname, fnname)(complex prec x){ \
+    prec rResult, iResult;                                             \
+    prec args[2];                                                       \
+    args[0] = creal(x);                                                 \
+    args[1] = cimag(x);                                                 \
+    HERBGRIND_PERFORM_OP(opname##R, &rResult, args);                    \
+    HERBGRIND_PERFORM_OP(opname##I, &iResult, args);                    \
+    return rResult + iResult * I;                                       \
+  }
+
+#define WRAP_UNARY_COMPLEX_64_(soname, fnname, opname) \
+  WRAP_UNARY_COMPLEX_(double, soname, fnname, opname);
+#define WRAP_UNARY_COMPLEX_32_(soname, fnname, opname) \
+  WRAP_UNARY_COMPLEX_(float, soname, fnname, opname);
+
+#define WRAP_UNARY_COMPLEX_64(fnname, opname)      \
+  WRAP_UNARY_COMPLEX_64_(LIBM, fnname, opname)
+#define WRAP_UNARY_COMPLEX_64_BUILTIN(fnname, opname)   \
+  WRAP_UNARY_COMPLEX_64_(LIBGCC, fnname, opname)
+#define WRAP_UNARY_COMPLEX_32(fnname, opname)      \
+  WRAP_UNARY_COMPLEX_32_(LIBM, fnname, opname)
+#define WRAP_UNARY_COMPLEX_32_BUILTIN(fnname, opname)   \
+  WRAP_UNARY_COMPLEX_32_(LIBGCC, fnname, opname)
 
 // This macro is defined in include/hg_mathreplace_funcs.h, and
 // invokes the above macro for each unary operation that needs to be
@@ -91,35 +113,58 @@ WRAP_UNARY_OPS
 ====== Binary Ops ============
 ----------------------------*/
 
-#define WRAP_BINARY(fnname, opname)                             \
-  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y);  \
-  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y){  \
-    double result;                                               \
-    double args[2];                                              \
-    args[0] = x;                                                 \
-    args[1] = y;                                                 \
-    HERBGRIND_PERFORM_OP(opname, &result, args);                 \
-    return result;                                               \
-  }                                                                     \
-  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y);  \
-  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y){  \
-    double result;                                               \
-    double args[2];                                              \
-    args[0] = x;                                                 \
-    args[1] = y;                                                 \
-    HERBGRIND_PERFORM_OP(opname, &result, args);                 \
-    return result;                                               \
-  }                                                                 \
-  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x, double y);  \
-  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x, double y){  \
-    double result;                                               \
-    double args[2];                                              \
+#define WRAP_BINARY_(prec, soname, fnname, opname)                    \
+  prec VG_REPLACE_FUNCTION_ZU(soname, fnname)(prec x, prec y);  \
+  prec VG_REPLACE_FUNCTION_ZU(soname, fnname)(prec x, prec y){  \
+    prec result;                                               \
+    prec args[2];                                              \
     args[0] = x;                                                 \
     args[1] = y;                                                 \
     HERBGRIND_PERFORM_OP(opname, &result, args);                 \
     return result;                                               \
   }
+#define WRAP_BINARY_64_(soname, fnname, opname) \
+  WRAP_BINARY_(double, soname, fnname, opname)
+#define WRAP_BINARY_32_(soname, fnname, opname) \
+  WRAP_BINARY_(float, soname, fnname, opname)
 
+#define WRAP_BINARY_64(fnname, opname)                               \
+  WRAP_BINARY_64_(LIBM, fnname, opname)                              \
+  WRAP_BINARY_64_(LIBM_CPP, fnname, opname)                          \
+  WRAP_BINARY_64_(NONE, fnname, opname)
+#define WRAP_BINARY_32(fnname, opname)                               \
+  WRAP_BINARY_32_(LIBM, fnname, opname)                              \
+  WRAP_BINARY_32_(LIBM_CPP, fnname, opname)                          \
+  WRAP_BINARY_32_(NONE, fnname, opname)
+
+#define WRAP_BINARY_COMPLEX_(prec, soname, fnname, opname)              \
+  complex prec VG_REPLACE_FUNCTION_ZU(soname, fnname)(complex prec x,   \
+                                                      complex prec y);  \
+  complex prec VG_REPLACE_FUNCTION_ZU(soname, fnname)(complex prec x,   \
+                                                      complex prec y){  \
+    prec rResult, iResult;                                              \
+    prec args[4];                                                       \
+    args[0] = creal(x);                                                 \
+    args[1] = cimag(x);                                                 \
+    args[2] = creal(y);                                                 \
+    args[3] = cimag(y);                                                 \
+    HERBGRIND_PERFORM_OP(opname##R, &rResult, args);                    \
+    HERBGRIND_PERFORM_OP(opname##I, &iResult, args);                    \
+    return rResult + iResult * I;                                       \
+  }
+#define WRAP_BINARY_COMPLEX_64_(soname, fnname, opname) \
+  WRAP_BINARY_COMPLEX_(double, soname, fnname, opname);
+#define WRAP_BINARY_COMPLEX_32_(soname, fnname, opname) \
+  WRAP_BINARY_COMPLEX_(float, soname, fnname, opname);
+
+#define WRAP_BINARY_COMPLEX_64(fnname, opname)             \
+  WRAP_BINARY_COMPLEX_64_(LIBM, fnname, opname)
+#define WRAP_BINARY_COMPLEX_64_BUILTIN(fnname, opname)      \
+  WRAP_BINARY_COMPLEX_64_(LIBGCC, fnname, opname)
+#define WRAP_BINARY_COMPLEX_32(fnname, opname)             \
+  WRAP_BINARY_COMPLEX_32_(LIBM, fnname, opname)
+#define WRAP_BINARY_COMPLEX_32_BUILTIN(fnname, opname)      \
+  WRAP_BINARY_COMPLEX_32_(LIBGCC, fnname, opname)
 // This macro is defined in include/hg_mathreplace_funcs.h, and
 // invokes the above macro for each binary operation that needs to be
 // wrapped.
@@ -131,38 +176,64 @@ WRAP_BINARY_OPS
 ====== Ternary Ops ===========
 ----------------------------*/
 
-#define WRAP_TERNARY(fnname, opname)                                    \
-  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y, double z); \
-  double VG_REPLACE_FUNCTION_ZU(LIBM, fnname)(double x, double y, double z){ \
-    double result;                                                      \
-    double args[3];                                                     \
-    args[0] = x;                                                        \
-    args[1] = y;                                                        \
-    args[2] = z;                                                        \
-    HERBGRIND_PERFORM_OP(opname, &result, args);                        \
-    return result;                                                      \
-  }                                                                     \
-  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y, double z); \
-  double VG_REPLACE_FUNCTION_ZU(LIBM_CPP, fnname)(double x, double y, double z){ \
-    double result;                                                      \
-    double args[3];                                                     \
-    args[0] = x;                                                        \
-    args[1] = y;                                                        \
-    args[2] = z;                                                        \
-    HERBGRIND_PERFORM_OP(opname, &result, args);                        \
-    return result;                                                      \
-  }                                                                     \
-  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x, double y, double z); \
-  double VG_REPLACE_FUNCTION_ZU(NONE, fnname)(double x, double y, double z){ \
-    double result;                                                      \
-    double args[3];                                                     \
+#define WRAP_TERNARY_(prec, soname, fnname, opname)                     \
+  prec VG_REPLACE_FUNCTION_ZU(soname, fnname)(prec x, prec y, prec z);  \
+  prec VG_REPLACE_FUNCTION_ZU(soname, fnname)(prec x, prec y, prec z){  \
+    prec result;                                                        \
+    prec args[3];                                                       \
     args[0] = x;                                                        \
     args[1] = y;                                                        \
     args[2] = z;                                                        \
     HERBGRIND_PERFORM_OP(opname, &result, args);                        \
     return result;                                                      \
   }
+#define WRAP_TERNARY_64_(soname, fnname, opname) \
+  WRAP_TERNARY_(double, soname, fnname, opname)
+#define WRAP_TERNARY_32_(soname, fnname, opname) \
+  WRAP_TERNARY_(float, soname, fnname, opname)
 
+#define WRAP_TERNARY_64(fnname, opname)         \
+  WRAP_TERNARY_64_(LIBM, fnname, opname)        \
+  WRAP_TERNARY_64_(LIBM_CPP, fnname, opname)    \
+  WRAP_TERNARY_64_(NONE, fnname, opname)
+#define WRAP_TERNARY_32(fnname, opname)         \
+  WRAP_TERNARY_32_(LIBM, fnname, opname)        \
+  WRAP_TERNARY_32_(LIBM_CPP, fnname, opname)    \
+  WRAP_TERNARY_32_(NONE, fnname, opname)
+
+#define WRAP_TERNARY_COMPLEX_(prec, soname, fnname, opname)              \
+  complex prec VG_REPLACE_FUNCTION_ZU(soname, fnname)(complex prec x,   \
+                                                      complex prec y,   \
+                                                      complex prec z);  \
+  complex prec VG_REPLACE_FUNCTION_ZU(soname, fnname)(complex prec x,   \
+                                                      complex prec y,   \
+                                                      complex prec z){  \
+    prec rResult, iResult;                                              \
+    prec args[6];                                                       \
+    args[0] = creal(x);                                                 \
+    args[1] = cimag(x);                                                 \
+    args[2] = creal(x);                                                 \
+    args[3] = cimag(x);                                                 \
+    args[4] = creal(x);                                                 \
+    args[5] = cimag(x);                                                 \
+    HERBGRIND_PERFORM_OP(opname##R, &rResult, args);                    \
+    HERBGRIND_PERFORM_OP(opname##I, &iResult, args);                    \
+    return rResult + iResult * I;                                       \
+  }
+
+#define WRAP_TERNARY_COMPLEX_64_(soname, fnname, opname) \
+  WRAP_TERNARY_COMPLEX_(double, soname, fnname, opname);
+#define WRAP_TERNARY_COMPLEX_32_(soname, fnname, opname) \
+  WRAP_TERNARY_COMPLEX_(float, soname, fnname, opname);
+
+#define WRAP_TERNARY_COMPLEX_64(fnname, opname)      \
+  WRAP_TERNARY_COMPLEX_64_(LIBM, fnname, opname)
+#define WRAP_TERNARY_COMPLEX_64_BUILTIN(fnname, opname)   \
+  WRAP_TERNARY_COMPLEX_64_(LIBGCC, fnname, opname)
+#define WRAP_TERNARY_COMPLEX_32(fnname, opname)      \
+  WRAP_TERNARY_COMPLEX_32_(LIBM, fnname, opname)
+#define WRAP_TERNARY_COMPLEX_32_BUILTIN(fnname, opname)   \
+  WRAP_TERNARY_COMPLEX_32_(LIBGCC, fnname, opname)
 // This macro is defined in include/hg_mathreplace_funcs.h, and
 // invokes the above macro for each ternary operation that needs to be
 // wrapped.
@@ -183,39 +254,6 @@ void VG_REPLACE_FUNCTION_ZU(LIBM, sincos)(double x, double* p_sin, double* p_cos
   double args[1];
   args[0] = x;
   HERBGRIND_PERFORM_SPECIAL_OP(OP_SINCOS, args, p_sin, p_cos);
-}
-
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, cexp)(complex double x);
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, cexp)(complex double x){
-  double sinCosArgs[1];
-  double expArgs[1];
-  sinCosArgs[0] = cimag(x);
-  expArgs[0] = creal(x);
-  double sinResult, cosResult, expResult;
-  HERBGRIND_PERFORM_OP(OP_SIN, &sinResult, sinCosArgs);
-  HERBGRIND_PERFORM_OP(OP_COS, &cosResult, sinCosArgs);
-  HERBGRIND_PERFORM_OP(OP_EXP, &expResult, expArgs);
-  return (expResult * cosResult) + (expResult * sinResult * I);
-}
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, clog)(complex double x);
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, clog)(complex double x){
-  double sqrtArgs[1];
-  double logArgs[1];
-  double atan2Args[2];
-  double sqrtResult, logResult, atan2Result;
-
-  // Real part
-  sqrtArgs[0] = creal(x) * creal(x) + cimag(x) * cimag(x);
-  HERBGRIND_PERFORM_OP(OP_SQRT, &sqrtResult, sqrtArgs);
-  logArgs[0] = sqrtResult;
-  HERBGRIND_PERFORM_OP(OP_LOG, &logResult, logArgs);
-
-  // Imaginary part
-  atan2Args[0] = cimag(x);
-  atan2Args[1] = creal(x);
-  HERBGRIND_PERFORM_OP(OP_ATAN2, &atan2Result, atan2Args);
-
-  return logResult + I * atan2Result;
 }
 
 complex float VG_REPLACE_FUNCTION_ZU(LIBM, __mulsc3)(complex float x, complex float y);
@@ -239,17 +277,8 @@ complex float VG_REPLACE_FUNCTION_ZU(LIBM, __divsc3)(complex float x, complex fl
 complex float VG_REPLACE_FUNCTION_ZU(LIBM, __divsc3)(complex float x, complex float y){
   return x / y;
 }
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divdc3)(complex double x, complex double y);
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divdc3)(complex double x, complex double y){
-  return x / y;
-}
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divtc3)(complex double x, complex double y);
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divtc3)(complex double x, complex double y){
-  return x / y;
-}
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divxc3)(complex double x, complex double y);
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __divxc3)(complex double x, complex double y){
-  return x / y;
-}
+WRAP_BINARY_COMPLEX_64_BUILTIN(__divdc3, OP_CDIV);
+WRAP_BINARY_COMPLEX_64_BUILTIN(__divtc3, OP_CDIV);
+WRAP_BINARY_COMPLEX_64_BUILTIN(__divxc3, OP_CDIV);
 
 #endif

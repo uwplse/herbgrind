@@ -199,19 +199,19 @@ const char* getFnName(Addr addr){
 }
 
 int cmpInfo(ShadowOpInfo* info1, ShadowOpInfo* info2){
-  if (info1->agg.local_error.max_error >
-      info2->agg.local_error.max_error){
-    return 1;
-  } else if (info1->agg.local_error.max_error <
-             info2->agg.local_error.max_error){
-    return -1;
-  } else if (info1->agg.local_error.total_error / info1->agg.local_error.num_evals >
-             info2->agg.local_error.total_error / info2->agg.local_error.num_evals){
-    return 1;
-  } else if (info1->agg.local_error.total_error / info1->agg.local_error.num_evals >
-             info2->agg.local_error.total_error / info2->agg.local_error.num_evals){
-    return -1;
-  } else if ((uintptr_t)info1 > (uintptr_t)info2){
+  /* if (info1->agg.local_error.max_error > */
+  /*     info2->agg.local_error.max_error){ */
+  /*   return 1; */
+  /* } else if (info1->agg.local_error.max_error < */
+  /*            info2->agg.local_error.max_error){ */
+  /*   return -1; */
+  /* } else if (info1->agg.local_error.total_error / info1->agg.local_error.num_evals > */
+  /*            info2->agg.local_error.total_error / info2->agg.local_error.num_evals){ */
+  /*   return 1; */
+  /* } else if (info1->agg.local_error.total_error / info1->agg.local_error.num_evals > */
+  /*            info2->agg.local_error.total_error / info2->agg.local_error.num_evals){ */
+  /*   return -1; */
+  /* } else */ if ((uintptr_t)info1 > (uintptr_t)info2){
     return 1;
   } else if ((uintptr_t)info1 < (uintptr_t)info2){
     return -1;

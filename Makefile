@@ -6,6 +6,7 @@ SHELL=/bin/bash
 GMP_VERSION=6.1.0
 MPFR_VERSION=3.1.3
 OPENLIBM_VERSION=0.4.1
+MPC_VERSION=1.1.0
 # The repo to clone valgrind from.
 VALGRIND_REPO_LOCATION=svn://svn.valgrind.org/valgrind/trunk
 VALGRIND_REVISION=15800
@@ -18,10 +19,20 @@ ARCH_PRI=amd64
 ARCH_SEC=
 
 ifdef ARCH_SEC
-DEPS = deps/gmp-64/README deps/mpfr-64/README deps/gmp-32/README deps/mpfr-32/README
+DEPS = \
+deps/gmp-64/$(HG_LOCAL_INSTALL_NAME)/lib/libgmp.a \
+deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME)/lib/libmpfr.a \
+deps/mpc-64/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a \
+deps/openlibm-64/libopenlibm.a \
+deps/gmp-32/$(HG_LOCAL_INSTALL_NAME)/lib/libgmp.a \
+deps/mpfr-32/$(HG_LOCAL_INSTALL_NAME)/lib/libmpfr.a \
+deps/mpc-32/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a \
+deps/openlibm-32/libopenlibm.a
 else
-DEPS = deps/gmp-64/herbgrind-install/lib/libgmp.a	\
-deps/mpfr-64/herbgrind-install/lib/libmpfr.a		\
+DEPS = \
+deps/gmp-64/$(HG_LOCAL_INSTALL_NAME)/lib/libgmp.a \
+deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME)/lib/libmpfr.a \
+deps/mpc-64/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a \
 deps/openlibm-64/libopenlibm.a
 endif
 
@@ -145,7 +156,7 @@ endif
 compile: valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT)
 
 # Use the gmp README to tell if gmp has been extracted yet.
-deps/gmp-%/herbgrind-install/lib/libgmp.a: setup/gmp-$(GMP_VERSION).tar.xz setup/patch_gmp.sh
+deps/gmp-%/$(HG_LOCAL_INSTALL_NAME)/lib/libgmp.a: setup/gmp-$(GMP_VERSION).tar.xz setup/patch_gmp.sh
 # Extract gmp, and rename its folder so we don't have to use the
 # version number all over the place.
 	tar xf setup/gmp-$(GMP_VERSION).tar.xz
@@ -167,6 +178,22 @@ deps/gmp-%/herbgrind-install/lib/libgmp.a: setup/gmp-$(GMP_VERSION).tar.xz setup
 	$(MAKE) -C deps/gmp-$*
 	$(MAKE) -C deps/gmp-$* install
 
+deps/mpc-%/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a: setup/mpc-$(MPC_VERSION).tar.gz
+	tar xf setup/mpc-$(MPC_VERSION).tar.gz
+	mkdir -p deps
+	mv mpc-$(MPC_VERSION) deps/mpc-$*
+	cd setup && ./patch_mpc.sh $*
+	cd deps/mpc-$*/ && autoconf
+	cd deps/mpc-$*/ && \
+		CFLAGS="-fno-stack-protector -DNDEBUG" \
+		OBJECT_MODE=64 \
+		./configure \
+		--prefix=$(shell pwd)/deps/mpc-64/$(HG_LOCAL_INSTALL_NAME) \
+		--with-gmp=$(shell pwd)/deps/gmp-64 \
+		--with-mpfr=$(shell pwd)/deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME)
+	$(MAKE) -C deps/mpc-$*
+	$(MAKE) -C deps/mpc-$* install
+
 deps/openlibm-%/libopenlibm.a: setup/openlibm-$(OPENLIBM_VERSION).tar.gz
 	tar xf setup/openlibm-$(OPENLIBM_VERSION).tar.gz
 	mkdir -p deps
@@ -186,7 +213,7 @@ MPFR_CONFIGURE_FLAGS = --disable-thread-safe
 
 configure-mpfr-32:
 	cd deps/mpfr-32/ && \
-		CFLAGS="-fno-stack-protector" \
+		CFLAGS="-fno-stack-protector -fPIC" \
 		./configure --prefix=$(shell pwd)/deps/mpfr-32/$(HG_LOCAL_INSTALL_NAME) \
 		            --with-gmp-build=$(shell pwd)/deps/gmp-32 \
 		            --build=i386 \
@@ -195,7 +222,7 @@ configure-mpfr-32:
 
 configure-mpfr-64:
 	cd deps/mpfr-64/ && \
-		CFLAGS="-fno-stack-protector" \
+		CFLAGS="-fno-stack-protector -fPIC" \
 		./configure --prefix=$(shell pwd)/deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME) \
 		            --with-gmp-build=$(shell pwd)/deps/gmp-64 \
 		            --build=amd64 \
