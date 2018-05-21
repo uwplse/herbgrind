@@ -304,14 +304,30 @@ void handleSpecialOp(IRSB* sbOut, IROp op_code,
                      IRExpr** argExprs, IRTemp dest,
                      Addr curAddr, Addr block_addr){
   switch(op_code){
+  case Iop_I32StoF64:
+  case Iop_I64StoF64:
+    tempShadowStatus[dest] = Ss_Unshadowed;
+    break;
   case Iop_AndV128:
   case Iop_OrV128:
   case Iop_NotV128:
   /* case Iop_Shr64: */
   /* case Iop_Shl64: */
   /* case Iop_Sar64: */
-  case Iop_I32StoF64:
-  case Iop_I64StoF64:
+    if (print_bit_twiddles){
+      for(int i = 0; i < getNativeNumFloatArgs(op_code); ++i){
+        if (argExprs[i]->tag != Iex_RdTmp){
+          continue;
+        }
+        IRExpr* st = runLoadTemp(sbOut, argExprs[i]->Iex.RdTmp.tmp);
+        IRExpr* tempExists = runNonZeroCheck64(sbOut, st);
+        addPrintG(tempExists, "Non zero shadow flowing into op ");
+        addPrintOpG(tempExists, op_code);
+        addPrintG(tempExists, " at ");
+        addPrintAddrG(tempExists, curAddr);
+        addPrintG(tempExists, "\n");
+      }
+    }
     tempShadowStatus[dest] = Ss_Unshadowed;
     break;
   case Iop_XorV128:

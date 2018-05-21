@@ -135,40 +135,54 @@ IRExpr* runShadowOp(IRSB* sbOut, IRExpr* guard,
 void instrumentPossibleNegate(IRSB* sbOut,
                               IRExpr** argExprs, IRTemp dest,
                               Addr curAddr, Addr blockAddr){
-  IRExpr* isSingleNegate =
-    runOr(sbOut,
-          runBinop(sbOut, Iop_CmpEQ64,
-                   runUnop(sbOut, Iop_V128to64,
-                           argExprs[0]),
-                   mkU64(0x80000000)),
-          runBinop(sbOut, Iop_CmpEQ64,
-                   runUnop(sbOut, Iop_V128to64,
-                           argExprs[1]),
-                   mkU64(0x80000000)));
-  IRExpr* shadowSingleNegateOutput =
-    runShadowOp(sbOut, isSingleNegate,
+  IRExpr* isSingleNegateFirstArg =
+    runBinop(sbOut, Iop_CmpEQ64,
+             runUnop(sbOut, Iop_V128to64,
+                     argExprs[1]),
+             mkU64(0x80000000));
+  IRExpr* isSingleNegateSecondArg =
+    runBinop(sbOut, Iop_CmpEQ64,
+             runUnop(sbOut, Iop_V128to64,
+                     argExprs[0]),
+             mkU64(0x80000000));
+  IRExpr* shadowSingleNegateFirstArgOutput =
+    runShadowOp(sbOut, isSingleNegateFirstArg,
                 IEop_Neg32F0x4,
                 curAddr, blockAddr,
-                1, argExprs + 1,
+                1, &(argExprs[0]),
                 IRExpr_RdTmp(dest));
-  addStoreTempG(sbOut, isSingleNegate, shadowSingleNegateOutput, dest);
-  IRExpr* isDoubleNegate =
-    runOr(sbOut,
-          runBinop(sbOut, Iop_CmpEQ64,
-                   runUnop(sbOut, Iop_V128to64,
-                           argExprs[0]),
-                   mkU64(0x8000000000000000)),
-          runBinop(sbOut, Iop_CmpEQ64,
-                   runUnop(sbOut, Iop_V128to64,
-                           argExprs[1]),
-                   mkU64(0x8000000000000000)));
-  IRExpr* shadowDoubleNegateOutput =
-    runShadowOp(sbOut, isDoubleNegate,
+  IRExpr* shadowSingleNegateSecondArgOutput =
+    runShadowOp(sbOut, isSingleNegateSecondArg,
+                IEop_Neg32F0x4,
+                curAddr, blockAddr,
+                1, &(argExprs[1]),
+                IRExpr_RdTmp(dest));
+  addStoreTempG(sbOut, isSingleNegateFirstArg, shadowSingleNegateFirstArgOutput, dest);
+  addStoreTempG(sbOut, isSingleNegateSecondArg, shadowSingleNegateSecondArgOutput, dest);
+  IRExpr* isDoubleNegateFirstArg =
+    runBinop(sbOut, Iop_CmpEQ64,
+             runUnop(sbOut, Iop_V128to64,
+                     argExprs[1]),
+             mkU64(0x8000000000000000));
+  IRExpr* isDoubleNegateSecondArg =
+    runBinop(sbOut, Iop_CmpEQ64,
+             runUnop(sbOut, Iop_V128to64,
+                     argExprs[0]),
+             mkU64(0x8000000000000000));
+  IRExpr* shadowDoubleNegateFirstArgOutput =
+    runShadowOp(sbOut, isDoubleNegateFirstArg,
                 IEop_Neg64F0x2,
                 curAddr, blockAddr,
-                1, argExprs + 1,
+                1, &(argExprs[0]),
                 IRExpr_RdTmp(dest));
-  addStoreTempG(sbOut, isDoubleNegate, shadowDoubleNegateOutput, dest);
+  IRExpr* shadowDoubleNegateSecondArgOutput =
+    runShadowOp(sbOut, isDoubleNegateSecondArg,
+                IEop_Neg64F0x2,
+                curAddr, blockAddr,
+                1, &(argExprs[1]),
+                IRExpr_RdTmp(dest));
+  addStoreTempG(sbOut, isDoubleNegateFirstArg, shadowDoubleNegateFirstArgOutput, dest);
+  addStoreTempG(sbOut, isDoubleNegateSecondArg, shadowDoubleNegateSecondArgOutput, dest);
 }
 
 ShadowOpInfoInstance* getSemanticOpInfoInstance(Addr callAddr, Addr block_addr,

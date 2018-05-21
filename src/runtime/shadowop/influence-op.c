@@ -49,8 +49,7 @@ void execInfluencesOp(ShadowOpInfo* info,
   } else if (numFloatArgs(info) == 2){
     *res = mergeInfluences(args[0]->influences, args[1]->influences,
                            flagged ? info : NULL);
-  } else {
-    tl_assert(numFloatArgs(info) == 3);
+  } else if (numFloatArgs(info) == 3){
     InfluenceList intermediary = mergeInfluences(args[0]->influences,
                                                  args[1]->influences,
                                                  flagged ? info : NULL);
@@ -58,6 +57,21 @@ void execInfluencesOp(ShadowOpInfo* info,
     *res = mergeInfluences(intermediary, args[2]->influences, NULL);
     if (intermediary != NULL){
       freeInfluenceList(intermediary);
+    }
+  } else {
+    tl_assert(numFloatArgs(info) == 4);
+    InfluenceList intermediary1 = mergeInfluences(args[0]->influences,
+                                                  args[1]->influences,
+                                                  flagged ? info : NULL);
+    InfluenceList intermediary2 = mergeInfluences(args[2]->influences,
+                                                  args[3]->influences,
+                                                  NULL);
+    *res = mergeInfluences(intermediary1, intermediary2, NULL);
+    if (intermediary1 != NULL){
+      freeInfluenceList(intermediary1);
+    }
+    if (intermediary2 != NULL){
+      freeInfluenceList(intermediary2);
     }
   }
 }

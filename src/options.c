@@ -62,6 +62,7 @@ Bool print_compares = False;
 Bool print_type_inference = False;
 Bool print_inferred_types = False;
 Bool print_statement_numbers = False;
+Bool print_bit_twiddles = False;
 Int longprint_len = 15;
 
 Bool dont_ignore_pure_zeroes = False;
@@ -122,6 +123,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--print-type-inference", print_type_inference, True) {}
   else if VG_XACT_CLO(arg, "--print-inferred-types", print_inferred_types, True) {}
   else if VG_XACT_CLO(arg, "--print-statement-numbers", print_statement_numbers, True) {}
+  else if VG_XACT_CLO(arg, "--print-bit-twiddles", print_bit_twiddles, True) {}
   else if VG_XACT_CLO(arg, "--output-subexpr-sources", print_subexpr_locations, True) {}
   else if VG_XACT_CLO(arg, "--dont-ignore-pure-zeroes", dont_ignore_pure_zeroes, True) {}
   else if VG_XACT_CLO(arg, "--no-sound-simplify", sound_simplify, False) {}

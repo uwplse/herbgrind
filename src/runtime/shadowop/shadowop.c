@@ -226,8 +226,19 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
     case Iop_MulF128:
     case Iop_MulF32:
     case Iop_MulF64r32:
-      if ((getDouble(args[0]->real) == 0 && !isNaN(args[1]->real)) ||
-          (getDouble(args[1]->real) == 0 && !isNaN(args[0]->real))){
+      if ((clientArgs[0] == 0 && !isNaN(args[1]->real)) ||
+          (clientArgs[1] == 0 && !isNaN(args[0]->real))){
+        if (print_influences){
+          if (clientArgs[0] == 0 && !isNaN(args[1]->real)){
+            VG_(printf)("Not propagating influences because arg 0 is zero (client val ");
+            ppFloat(clientArgs[0]);
+            VG_(printf)(")\n");
+          } else {
+            VG_(printf)("Not propagating influences because arg 1 is zero (client val ");
+            ppFloat(clientArgs[1]);
+            VG_(printf)(")\n");
+          }
+        }
         ShadowValue* result =
           mkShadowValue(argPrecision, clientResult);
         if (use_ranges){
@@ -336,6 +347,10 @@ ShadowValue* executeChannelShadowOp(ShadowOpInfo* opinfo,
     VG_(printf)("Propagating influences for op ");
     printOpInfo(opinfo);
     VG_(printf)(":\n");
+    for(int i = 0; i < nargs; ++i){
+      VG_(printf)("Arg %p has influences:\n", args[i]);
+      ppInfluences(args[i]->influences);
+    }
     VG_(printf)("Value %p gets influences:\n", result);
     ppInfluences(result->influences);
     VG_(printf)("\n");
