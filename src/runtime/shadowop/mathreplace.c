@@ -157,9 +157,12 @@ int getWrappedNumArgs(OpType type){
   case OP_CDIVR:
   case OP_CDIVI:
     return 4;
-  case OP_CLOGR:
-  case OP_CLOGI:
+  case UNARY_COMPLEX_OPS_CASES:
     return 2;
+  case BINARY_COMPLEX_OPS_CASES:
+    return 4;
+  case TERNARY_COMPLEX_OPS_CASES:
+    return 6;
   case UNARY_OPS_CASES:
     return 1;
   case BINARY_OPS_CASES:
@@ -176,9 +179,6 @@ ValueType getWrappedPrecision(OpType type){
   switch(type){
   case OP_CDIVR:
   case OP_CDIVI:
-  case OP_CLOGR:
-  case OP_CLOGI:
-    return Vt_Double;
   case SINGLE_CASES:
     return Vt_Single;
   case DOUBLE_CASES:
@@ -196,10 +196,6 @@ const char* getWrappedName(OpType type){
     return "cdiv-real";
   case OP_CDIVI:
     return "cdiv-imag";
-  case OP_CLOGR:
-    return "clog-real";
-  case OP_CLOGI:
-    return "clog-imag";
   default:
     GET_OP_NAMES(namevar, type);
     return namevar;
@@ -232,6 +228,7 @@ ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs){
         mpc_imag(result->real->RVAL, resultComplex, MPFR_RNDN);
         break;
       default:
+        tl_assert(0);
         break;
       }
       mpc_clear(arg1);
@@ -239,27 +236,99 @@ ShadowValue* runWrappedShadowOp(OpType type, ShadowValue** shadowArgs){
       mpc_clear(resultComplex);
     }
     break;
-  case OP_CLOGR:
-  case OP_CLOGI:
+  case UNARY_COMPLEX_OPS_CASES:
     {
-      mpc_t arg1;
+      int (*mpc_func)(mpc_t, mpc_srcptr, mpc_rnd_t);
+      GET_UNARY_COMPLEX_OPS_F(mpc_func, type);
+
+      mpc_t arg;
       mpc_t resultComplex;
-      mpc_init2(arg1, precision);
+      mpc_init2(arg, precision);
       mpc_init2(resultComplex, precision);
-      mpc_set_fr_fr(arg1, shadowArgs[0]->real->RVAL, shadowArgs[1]->real->RVAL,
+      mpc_set_fr_fr(arg, shadowArgs[0]->real->RVAL, shadowArgs[1]->real->RVAL,
                     MPC_RNDNN);
-      mpc_log(resultComplex, arg1, MPC_RNDNN);
+      mpc_func(resultComplex, arg, MPC_RNDNN);
       switch(type){
-      case OP_CDIVR:
+      case UNARY_COMPLEX_OPS_CASES_R:
         mpc_real(result->real->RVAL, resultComplex, MPFR_RNDN);
         break;
-      case OP_CDIVI:
+      case UNARY_COMPLEX_OPS_CASES_I:
         mpc_imag(result->real->RVAL, resultComplex, MPFR_RNDN);
         break;
       default:
+        tl_assert(0);
+        break;
+      }
+      mpc_clear(arg);
+      mpc_clear(resultComplex);
+    }
+    break;
+  case BINARY_COMPLEX_OPS_CASES:
+    {
+      int (*mpc_func)(mpc_t, mpc_srcptr, mpc_srcptr, mpc_rnd_t);
+      GET_BINARY_COMPLEX_OPS_F(mpc_func, type);
+
+      mpc_t arg1;
+      mpc_t arg2;
+      mpc_t resultComplex;
+      mpc_init2(arg1, precision);
+      mpc_init2(arg2, precision);
+      mpc_init2(resultComplex, precision);
+      mpc_set_fr_fr(arg1, shadowArgs[0]->real->RVAL, shadowArgs[1]->real->RVAL,
+                    MPC_RNDNN);
+      mpc_set_fr_fr(arg2, shadowArgs[2]->real->RVAL, shadowArgs[3]->real->RVAL,
+                    MPC_RNDNN);
+      mpc_func(resultComplex, arg1, arg2, MPC_RNDNN);
+      switch(type){
+      case BINARY_COMPLEX_OPS_CASES_R:
+        mpc_real(result->real->RVAL, resultComplex, MPFR_RNDN);
+        break;
+      case BINARY_COMPLEX_OPS_CASES_I:
+        mpc_imag(result->real->RVAL, resultComplex, MPFR_RNDN);
+        break;
+      default:
+        tl_assert(0);
         break;
       }
       mpc_clear(arg1);
+      mpc_clear(arg2);
+      mpc_clear(resultComplex);
+    }
+    break;
+  case TERNARY_COMPLEX_OPS_CASES:
+    {
+      int (*mpc_func)(mpc_t, mpc_srcptr, mpc_srcptr, mpc_srcptr, mpc_rnd_t);
+      GET_TERNARY_COMPLEX_OPS_F(mpc_func, type);
+
+      mpc_t arg1;
+      mpc_t arg2;
+      mpc_t arg3;
+      mpc_t resultComplex;
+      mpc_init2(arg1, precision);
+      mpc_init2(arg2, precision);
+      mpc_init2(arg3, precision);
+      mpc_init2(resultComplex, precision);
+      mpc_set_fr_fr(arg1, shadowArgs[0]->real->RVAL, shadowArgs[1]->real->RVAL,
+                    MPC_RNDNN);
+      mpc_set_fr_fr(arg2, shadowArgs[2]->real->RVAL, shadowArgs[3]->real->RVAL,
+                    MPC_RNDNN);
+      mpc_set_fr_fr(arg3, shadowArgs[4]->real->RVAL, shadowArgs[5]->real->RVAL,
+                    MPC_RNDNN);
+      mpc_func(resultComplex, arg1, arg2, arg3, MPC_RNDNN);
+      switch(type){
+      case TERNARY_COMPLEX_OPS_CASES_R:
+        mpc_real(result->real->RVAL, resultComplex, MPFR_RNDN);
+        break;
+      case TERNARY_COMPLEX_OPS_CASES_I:
+        mpc_imag(result->real->RVAL, resultComplex, MPFR_RNDN);
+        break;
+      default:
+        tl_assert(0);
+        break;
+      }
+      mpc_clear(arg1);
+      mpc_clear(arg2);
+      mpc_clear(arg3);
       mpc_clear(resultComplex);
     }
     break;
@@ -317,10 +386,6 @@ double runEmulatedWrappedOp(OpType type, double* args){
     return creal((args[0] + args[1] * I) / (args[2] + args[3] * I));
   case OP_CDIVI:
     return cimag((args[0] + args[1] * I) / (args[2] + args[3] * I));
-  case OP_CLOGR:
-    return creal(log(args[0] + args[1] * I));
-  case OP_CLOGI:
-    return cimag(log(args[0] + args[1] * I));
   default:
     RUN(result, type, args);
     return result;

@@ -256,20 +256,6 @@ void VG_REPLACE_FUNCTION_ZU(LIBM, sincos)(double x, double* p_sin, double* p_cos
   HERBGRIND_PERFORM_SPECIAL_OP(OP_SINCOS, args, p_sin, p_cos);
 }
 
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, cexp)(complex double x);
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, cexp)(complex double x){
-  double sinCosArgs[1];
-  double expArgs[1];
-  sinCosArgs[0] = cimag(x);
-  expArgs[0] = creal(x);
-  double sinResult, cosResult, expResult;
-  HERBGRIND_PERFORM_OP(OP_SIN, &sinResult, sinCosArgs);
-  HERBGRIND_PERFORM_OP(OP_COS, &cosResult, sinCosArgs);
-  HERBGRIND_PERFORM_OP(OP_EXP, &expResult, expArgs);
-  return (expResult * cosResult) + (expResult * sinResult * I);
-}
-WRAP_UNARY_COMPLEX_64(clog, OP_CLOG);
-
 complex float VG_REPLACE_FUNCTION_ZU(LIBM, __mulsc3)(complex float x, complex float y);
 complex float VG_REPLACE_FUNCTION_ZU(LIBM, __mulsc3)(complex float x, complex float y){
   return x * y;
