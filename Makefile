@@ -137,7 +137,7 @@ setup: valgrind/Makefile $(DEPS)
 
 # This is the target we call to actually get the executable built so
 # we can run herbgrind.
-valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) valgrind/Makefile src/Makefile.am setup
+valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) valgrind/Makefile src/Makefile.am setup $(DEPS)
 # Then, let's run the python script to generate the mathreplace header
 # in src/
 	rm -rf src/include/mathreplace-funcs.h
@@ -161,6 +161,7 @@ deps/gmp-%/$(HG_LOCAL_INSTALL_NAME)/lib/libgmp.a: setup/gmp-$(GMP_VERSION).tar.x
 # version number all over the place.
 	tar xf setup/gmp-$(GMP_VERSION).tar.xz
 	mkdir -p deps
+	rm -rf deps/gmp-$*
 	mv gmp-$(GMP_VERSION) deps/gmp-$*
 # Touch the README to update its timestamp so that we don't build it
 # again next time unless the archive changes.
@@ -181,6 +182,7 @@ deps/gmp-%/$(HG_LOCAL_INSTALL_NAME)/lib/libgmp.a: setup/gmp-$(GMP_VERSION).tar.x
 deps/mpc-%/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a: setup/mpc-$(MPC_VERSION).tar.gz
 	tar xf setup/mpc-$(MPC_VERSION).tar.gz
 	mkdir -p deps
+	rm -rf deps/mpc-$*
 	mv mpc-$(MPC_VERSION) deps/mpc-$*
 	cd setup && ./patch_mpc.sh $*
 	cd deps/mpc-$*/ && autoconf
@@ -197,6 +199,7 @@ deps/mpc-%/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a: setup/mpc-$(MPC_VERSION).tar.g
 deps/openlibm-%/libopenlibm.a: setup/openlibm-$(OPENLIBM_VERSION).tar.gz
 	tar xf setup/openlibm-$(OPENLIBM_VERSION).tar.gz
 	mkdir -p deps
+	rm -rf deps/openlibm-$*
 	mv openlibm-$(OPENLIBM_VERSION) deps/openlibm-$*
 	touch deps/openlibm-$*/README.md
 	CFLAGS+="-fno-stack-protector" \
