@@ -41,7 +41,7 @@ int isFloatPrintfSpecifier(const char* str){
   int reti;
 
   reti = regcomp(&regex,
-                 "%[-+ #0]*[[:digit:]]*\\*\\{0,1\\}\\(\\.[[:digit:]]\\{1,\\}\\)\\{0,1\\}[gfeaGFEA].*",
+                 "%[-+ #0]*[[:digit:]]*\\*\\{0,1\\}\\(\\.[[:digit:]]\\{1,\\}\\)\\{0,1\\}l\\{0,1\\}[gfeaGFEA].*",
                  0);
   assert(reti == 0);
   reti = regexec(&regex, str, 0, NULL, 0);
