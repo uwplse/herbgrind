@@ -35,6 +35,15 @@
 #include <assert.h>
 #include <regex.h>
 
+int uninterceptedPrintf(const char* format, ...);
+int uninterceptedPrintf(const char* format, ...){
+  va_list args;
+  va_start(args, format);
+  int result = vprintf(format, args);
+  va_end(args);
+  return result;
+}
+
 int isFloatPrintfSpecifier(const char* str);
 int isFloatPrintfSpecifier(const char* str){
   regex_t regex;
