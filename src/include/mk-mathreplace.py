@@ -28,6 +28,8 @@
 
    # The GNU General Public License is contained in the file COPYING.
 
+import re
+
 
 class Op(object):
     def __init__(self, func, plain_name, nargs,
@@ -45,6 +47,14 @@ class Op(object):
         else:
             self.exact_func = exact_func
         self.native_func = native_func
+    def enum(self):
+        return "OP_{}".format(zEncode(self.func).upper())
+    def enumR(self):
+        assert self.isComplex
+        return "OP_{}R".format(zEncode(self.func).upper())
+    def enumI(self):
+        assert self.isComplex
+        return "OP_{}I".format(zEncode(self.func).upper())
 
 def write_mathreplace_funcs(ops, extra_ops, fname):
     with open(fname, "w") as f:
@@ -73,10 +83,10 @@ def write_mathreplace_funcs(ops, extra_ops, fname):
         for op in ops:
             if (op.nargs == 1):
                 if op.isComplex:
-                    f.write("  OP_{}R, \\\n".format(op.func.upper()))
-                    f.write("  OP_{}I, \\\n".format(op.func.upper()))
+                    f.write("  {}, \\\n".format(op.enumR()))
+                    f.write("  {}, \\\n".format(op.enumI()))
                 else:
-                    f.write("  OP_{}, \\\n".format(op.func.upper()))
+                    f.write("  {}, \\\n".format(op.enum()))
         f.write("\n")
 
         f.write("// A list of all the binary ops comma seperated, for the enum\n")
@@ -85,10 +95,10 @@ def write_mathreplace_funcs(ops, extra_ops, fname):
         for op in ops:
             if (op.nargs == 2):
                 if op.isComplex:
-                    f.write("  OP_{}R, \\\n".format(op.func.upper()))
-                    f.write("  OP_{}I, \\\n".format(op.func.upper()))
+                    f.write("  {}, \\\n".format(op.enumR()))
+                    f.write("  {}, \\\n".format(op.enumI()))
                 else:
-                    f.write("  OP_{}, \\\n".format(op.func.upper()))
+                    f.write("  {}, \\\n".format(op.enum()))
         f.write("\n")
 
         f.write("// A list of all the ternary ops comma seperated, for the enum\n")
@@ -97,17 +107,17 @@ def write_mathreplace_funcs(ops, extra_ops, fname):
         for op in ops:
             if (op.nargs == 3):
                 if op.isComplex:
-                    f.write("  OP_{}R, \\\n".format(op.func.upper()))
-                    f.write("  OP_{}I, \\\n".format(op.func.upper()))
+                    f.write("  {}, \\\n".format(op.enumR()))
+                    f.write("  {}, \\\n".format(op.enumI()))
                 else:
-                    f.write("  OP_{}, \\\n".format(op.func.upper()))
+                    f.write("  {}, \\\n".format(op.enum()))
         f.write("\n")
 
         f.write("// A list of all the extra ops comma seperated, for the enum\n")
         f.write("// definition farther down in the file.\n")
         f.write("#define EXTRA_OPS_LIST \\\n")
         for op in extra_ops:
-            f.write("    OP_{}, \\\n".format(op.upper()))
+            f.write("    OP_{}, \\\n".format(zEncode(op.upper())))
 
         f.write("// A bunch of case statements for each unary op whose mpfr function\n"
                 "// doesn't need a rounding mode, used in runtime/hg_mathreplace.c\n")
@@ -230,11 +240,11 @@ def write_mathreplace_funcs(ops, extra_ops, fname):
         for op in ops:
             if (op.nargs == 1):
                 if op.isComplex:
-                    f.write("  WRAP_UNARY_COMPLEX_{}({}, OP_{}); \\\n"
-                            .format(op.precision, op.func, op.func.upper()))
+                    f.write("  WRAP_UNARY_COMPLEX_{}({}, {}); \\\n"
+                            .format(op.precision, op.func, op.enum()))
                 else:
-                    f.write("  WRAP_UNARY_{}({}, OP_{}); \\\n"
-                            .format(op.precision, op.func, op.func.upper()))
+                    f.write("  WRAP_UNARY_{}({}, {}); \\\n"
+                            .format(op.precision, op.func, op.enum()))
         f.write("\n")
 
         f.write("// Same for binary ops.\n")
@@ -242,11 +252,11 @@ def write_mathreplace_funcs(ops, extra_ops, fname):
         for op in ops:
             if (op.nargs == 2):
                 if op.isComplex:
-                    f.write("  WRAP_BINARY_COMPLEX_{}({}, OP_{}); \\\n"
-                            .format(op.precision, op.func, op.func.upper()))
+                    f.write("  WRAP_BINARY_COMPLEX_{}({}, {}); \\\n"
+                            .format(op.precision, op.func, op.enum()))
                 else:
-                    f.write("  WRAP_BINARY_{}({}, OP_{}); \\\n"
-                            .format(op.precision, op.func, op.func.upper()))
+                    f.write("  WRAP_BINARY_{}({}, {}); \\\n"
+                            .format(op.precision, op.func, op.enum()))
         f.write("\n")
 
         f.write("// Same for binary ops.\n")
@@ -254,11 +264,11 @@ def write_mathreplace_funcs(ops, extra_ops, fname):
         for op in ops:
             if (op.nargs == 3):
                 if op.isComplex:
-                    f.write("  WRAP_TERNARY_COMPLEX_{}({}, OP_{}); \\\n"
-                            .format(op.precision, op.func, op.func.upper()))
+                    f.write("  WRAP_TERNARY_COMPLEX_{}({}, {}); \\\n"
+                            .format(op.precision, op.func, op.enum()))
                 else:
-                    f.write("  WRAP_TERNARY_{}({}, OP_{}); \\\n"
-                            .format(op.precision, op.func, op.func.upper()))
+                    f.write("  WRAP_TERNARY_{}({}, {}); \\\n"
+                            .format(op.precision, op.func, op.enum()))
         f.write("\n")
 
         f.write("// Finally, define an enum for the operations we support.\n")
@@ -325,31 +335,31 @@ def addOp(name, plain_name, nargs,
                   exact_func=mpfr_fn,
                   needsround=needsRound,
                   native_func=native_func))
-    ops.append(Op("ZuZu"+name, plain_name, nargs,
+    ops.append(Op("__"+name, plain_name, nargs,
                   exact_func=mpfr_fn,
                   needsround=needsRound,
                   native_func=native_func))
-    ops.append(Op("ZuZu"+name+"Zuavx", plain_name, nargs,
+    ops.append(Op("__"+name+"_avx", plain_name, nargs,
                   exact_func=mpfr_fn,
                   needsround=needsRound,
                   native_func=native_func))
-    ops.append(Op("ZuZu"+name+"Zufma4", plain_name, nargs,
+    ops.append(Op("__"+name+"_fma4", plain_name, nargs,
                   exact_func=mpfr_fn,
                   needsround=needsRound,
                   native_func=native_func))
-    ops.append(Op("ZuZuieee754Zu"+name, plain_name, nargs,
+    ops.append(Op("__ieee754_"+name, plain_name, nargs,
                   exact_func=mpfr_fn,
                   needsround=needsRound,
                   native_func=native_func))
-    ops.append(Op("ZuZuieee754Zu"+name+"Zuavx", plain_name, nargs,
+    ops.append(Op("__ieee754_"+name+"_avx", plain_name, nargs,
                   exact_func=mpfr_fn,
                   needsround=needsRound,
                   native_func=native_func))
-    ops.append(Op("ZuZuieee754Zu"+name+"Zusse2", plain_name, nargs,
+    ops.append(Op("__ieee754_"+name+"_sse2", plain_name, nargs,
                   exact_func=mpfr_fn,
                   needsround=needsRound,
                   native_func=native_func))
-    ops.append(Op("ZuZuieee754Zu"+name+"Zufma4", plain_name, nargs,
+    ops.append(Op("__ieee754_"+name+"_fma4", plain_name, nargs,
                   exact_func=mpfr_fn,
                   needsround=needsRound,
                   native_func=native_func))
@@ -367,43 +377,46 @@ def addOp(name, plain_name, nargs,
                       precision=32,
                       native_func=native_fn_f))
 
+def zEncode(s):
+    return re.sub("_", "Zu", re.sub("Z", "ZZ", s))
+
 def write_labels_complex_split(f, l, suffix):
     for i, op in enumerate(l):
         if i == 0:
-            f.write("       OP_{}{}: \\\n".format(op.func.upper(), suffix))
+            f.write("       {}{}: \\\n".format(op.enum(), suffix))
         elif i < len(l) - 1:
-            f.write("  case OP_{}{}: \\\n".format(op.func.upper(), suffix))
+            f.write("  case {}{}: \\\n".format(op.enum(), suffix))
         else:
-            f.write("  case OP_{}{}".format(op.func.upper(), suffix))
+            f.write("  case {}{}".format(op.enum(), suffix))
     f.write("\n")
 
 def write_labels(f, l):
     for i, op in enumerate(l):
         if i == 0:
            if op.isComplex:
-               f.write("       OP_{}R: \\\n".format(op.func.upper()))
-               f.write("  case OP_{}I: \\\n".format(op.func.upper()))
+               f.write("       {}: \\\n".format(op.enumR()))
+               f.write("  case {}: \\\n".format(op.enumI()))
            else:
-               f.write("       OP_{}: \\\n".format(op.func.upper()))
+               f.write("       {}: \\\n".format(op.enum()))
         elif i != len(l) - 1:
            if op.isComplex:
-               f.write("  case OP_{}R: \\\n".format(op.func.upper()))
-               f.write("  case OP_{}I: \\\n".format(op.func.upper()))
+               f.write("  case {}: \\\n".format(op.enumR()))
+               f.write("  case {}: \\\n".format(op.enumI()))
            else:
-               f.write("  case OP_{}: \\\n".format(op.func.upper()))
+               f.write("  case {}: \\\n".format(op.enum()))
         else:
            if op.isComplex:
-               f.write("  case OP_{}R: \\\n".format(op.func.upper()))
-               f.write("  case OP_{}I".format(op.func.upper()))
+               f.write("  case {}: \\\n".format(op.enumR()))
+               f.write("  case {}".format(op.enumI()))
            else:
-               f.write("  case OP_{}".format(op.func.upper()))
+               f.write("  case {}".format(op.enum()))
     f.write("\n")
 
 def write_switch_run(f, l):
     f.write("  switch(op){ \\\n")
     for op in l:
         if op.isComplex:
-           f.write("  case OP_{}R: \\\n".format(op.func.upper()))
+           f.write("  case {}: \\\n".format(op.enumR()))
            if op.nargs == 1:
                f.write("    result = creal({}(args[0] + args[1] * I)); \\\n"
                        .format(op.native_func))
@@ -414,7 +427,7 @@ def write_switch_run(f, l):
                f.write("    result = creal({}(args[0] + args[1] * I, args[2] + args[3] * I, args[4] + args[5] * I)); \\\n"
                        .format(op.native_func))
            f.write("    break;\\\n")
-           f.write("  case OP_{}I: \\\n".format(op.func.upper()))
+           f.write("  case {}: \\\n".format(op.enumI()))
            if op.nargs == 1:
                f.write("    result = cimag({}(args[0] + args[1] * I)); \\\n"
                        .format(op.native_func))
@@ -425,7 +438,7 @@ def write_switch_run(f, l):
                f.write("    result = cimag({}(args[0] + args[1] * I, args[2] + args[3] * I, args[4] + args[5] * I)); \\\n"
                        .format(op.native_func))
         else:
-            f.write("  case OP_{}: \\\n".format(op.func.upper()))
+            f.write("  case {}: \\\n".format(op.enum()))
             if op.nargs == 1:
                 f.write("    result = {}(args[0]); \\\n".format(op.native_func))
             elif op.nargs == 2:
@@ -443,10 +456,10 @@ def write_switch_funcs(f, l):
     f.write("  switch(op){ \\\n")
     for op in l:
         if op.isComplex:
-            f.write("  case OP_{}R: \\\n".format(op.func.upper()))
-            f.write("  case OP_{}I: \\\n".format(op.func.upper()))
+            f.write("  case {}: \\\n".format(op.enumR()))
+            f.write("  case {}: \\\n".format(op.enumI()))
         else:
-            f.write("  case OP_{}: \\\n".format(op.func.upper()))
+            f.write("  case {}: \\\n".format(op.enum()))
         f.write("    fvar = {}; \\\n".format(op.exact_func))
         f.write("    break; \\\n")
     f.write("  default: \\\n")
@@ -461,15 +474,15 @@ def write_switch_names(f, l):
     f.write("    break;\\\n")
     for op in l:
         if op.isComplex:
-            f.write("  case OP_{}R: \\\n".format(op.func.upper()))
+            f.write("  case {}: \\\n".format(op.enumR()))
             f.write("  namevar = \"{}-real\"; \\\n".format(op.func))
             f.write("  break;\\\n")
 
-            f.write("  case OP_{}I: \\\n".format(op.func.upper()))
+            f.write("  case {}: \\\n".format(op.enumI()))
             f.write("  namevar = \"{}-imag\"; \\\n".format(op.func))
             f.write("  break;\\\n")
         else:
-            f.write("  case OP_{}: \\\n".format(op.func.upper()))
+            f.write("  case {}: \\\n".format(op.enum()))
             f.write("    namevar = \"{}\"; \\\n".format(op.native_func))
             f.write("    break;\\\n")
     f.write("  default: \\\n"
@@ -490,18 +503,18 @@ addOp("round", "round", 1, needsRound=False)
 addOp("trunc", "truncate", 1, needsRound=False)
 
 addOp("exp", "exponentiate", 1)
-addOp("ZuZuexp1", "exponentiate", 1,
+addOp("__exp1", "exponentiate", 1,
       mpfr_func="mpfr_exp", native_func="exp")
 
 addOp("exp2", "base-two exponentiate", 1)
 addOp("expm1", "exponentiate minus one", 1)
 
 addOp("log", "log", 1)
-addOp("ZuZulogZufinite", "log", 1,
+addOp("__log_finite", "log", 1,
       mpfr_func="mpfr_log", native_func="log")
 
 addOp("log10", "log base ten", 1)
-addOp("ZuZulog10Zufinite", "log", 1,
+addOp("__log10_finite", "log", 1,
       mpfr_func="mpfr_log10", native_func="log10")
 
 addOp("log1p", "plus one log", 1)
@@ -534,7 +547,7 @@ addOp("atan2", "arc tangent (two arguments)", 2)
 addOp("hypot", "hypotenuse", 2)
 
 addOp("pow", "power", 2)
-addOp("ZuZupowZufinite", "power", 2,
+addOp("__pow_finite", "power", 2,
       mpfr_func="mpfr_pow", native_func="pow")
 addOp("slowpow", "power", 2,
       mpfr_func="mpfr_pow", native_func="pow")
