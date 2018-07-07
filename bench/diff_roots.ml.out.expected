@@ -2,7 +2,7 @@
   (argIdx 0)
   (function "Diff_roots.diff_root")
   (filename "diff_roots.ml")
-  (line-num 5)
+  (line-num 6)
   (instr-addr 41DAFB)
   (avg-error 61.959049)
   (max-error 61.959049)
