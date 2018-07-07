@@ -199,7 +199,7 @@ ShadowOpInfoInstance* getSemanticOpInfoInstance(Addr callAddr, Addr block_addr,
     entry->call_addr = callAddr;
     entry->info = callInfo;
     entry->op_code = op_code;
-    VG_(HT_add_node)(mathreplaceOpInfoMap, entry);
+    VG_(HT_add_node)(semanticOpInfoMap, entry);
   }
   ShadowOpInfoInstance* instance = VG_(perm_malloc)(sizeof(ShadowOpInfoInstance),
                                                     vg_alignof(ShadowOpInfoInstance));

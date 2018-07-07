@@ -19,6 +19,9 @@ plotter.good: main.cpp EasyBMP/EasyBMP.o
 plotter.bad: main.cpp EasyBMP/EasyBMP.o
 	$(CXX) -O3 -g $^ -DSQRT=badsqrt -o $@
 
+plotter.bad.s: main.cpp EasyBMP/EasyBMP.o
+	$(CXX) -O0 -g -S -o $@ $^ -DSQRT=badsqrt
+
 %.bmp: plotter.%
 	./$< 1000 $@
 

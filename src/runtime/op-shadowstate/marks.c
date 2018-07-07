@@ -53,7 +53,7 @@ void maybeMarkImportantAtAddr(ShadowValue* val, double clientValue,
   if (thisError >= error_threshold){
     inPlaceMergeInfluences(&(info->influences), val->influences);
   }
-  if (!no_exprs){
+  if (!no_exprs && output_mark_exprs){
     tl_assert(val->expr != NULL);
     generalizeSymbolicExpr(&(info->expr), val->expr);
   }
@@ -77,7 +77,7 @@ void markImportant(ShadowValue* val, double clientValue, int argIdx, int nargs){
   if (thisError >= error_threshold){
     inPlaceMergeInfluences(&(info->influences), val->influences);
   }
-  if (!no_exprs){
+  if (!no_exprs && output_mark_exprs){
     tl_assert(val->expr != NULL);
     generalizeSymbolicExpr(&(info->expr), val->expr);
   }
@@ -99,7 +99,7 @@ void markEscapeFromFloat(const char* markType,
     if (mismatch){
       inPlaceMergeInfluences(&(info->influences), values[i]->influences);
     }
-    if (!no_exprs){
+    if (!no_exprs && output_mark_exprs){
       tl_assert(values[i]->expr != NULL);
       generalizeSymbolicExpr(&(info->exprs[i]), values[i]->expr);
     }
