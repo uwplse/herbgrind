@@ -435,15 +435,15 @@ def write_switch_run(f, l):
     for op in l:
         argsString = "((float*)args)" if op.precision == 32 else "args"
         if op.isComplex:
-            f.write("  case OP_{}R: \\\n".format(op.func.upper()))
+            f.write("  case {}: \\\n".format(op.enumR()))
             f.write("    result = creal({}({}));\\\n"
                     .format(op.native_func, complexArgsList(op.nargs, argsString)))
             f.write("    break;\\\n")
-            f.write("  case OP_{}I: \\\n".format(op.func.upper()))
+            f.write("  case {}: \\\n".format(op.enumI()))
             f.write("    result = cimag({}({}));\\\n"
                    .format(op.native_func, complexArgsList(op.nargs, argsString)))
         else:
-            f.write("  case OP_{}: \\\n".format(op.func.upper()))
+            f.write("  case {}: \\\n".format(op.enum()))
             f.write("    result = {}({});\\\n"
                     .format(op.native_func,
                             realArgsList(op.nargs, argsString)))
