@@ -135,13 +135,15 @@ valgrind/Makefile: valgrind/README
 # initially copied over.
 setup: valgrind/Makefile $(DEPS)
 
-# This is the target we call to actually get the executable built so
-# we can run herbgrind.
-valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) valgrind/Makefile src/Makefile.am setup $(DEPS)
+src/include/mathreplace-funcs.h: src/include/mk-mathreplace.py
 # Then, let's run the python script to generate the mathreplace header
 # in src/
 	rm -rf src/include/mathreplace-funcs.h
 	cd src/include/ && python mk-mathreplace.py
+
+# This is the target we call to actually get the executable built so
+# we can run herbgrind.
+valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) valgrind/Makefile src/Makefile.am setup $(DEPS) src/include/mathreplace-funcs.h
 # Copy over the herbgrind sources again, because why the hell not.
 	cp -r src/* valgrind/herbgrind
 # Run make install to build the binaries and put them in the right
