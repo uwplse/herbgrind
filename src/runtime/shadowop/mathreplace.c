@@ -82,7 +82,11 @@ void performWrappedOp(OpType type, double* resLoc, double* args){
     }
   }
   ShadowValue* shadowResult = runWrappedShadowOp(type, shadowArgs);
-  *resLoc = runEmulatedWrappedOp(type, args);
+  if (op_precision == Vt_Single){
+    *(float*)resLoc = runEmulatedWrappedOp(type, args);
+  } else {
+    *resLoc = runEmulatedWrappedOp(type, args);
+  }
   removeMemShadow((UWord)(uintptr_t)resLoc);
   addMemShadow((UWord)(uintptr_t)resLoc, shadowResult);
 

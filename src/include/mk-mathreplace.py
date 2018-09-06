@@ -412,39 +412,41 @@ def write_labels(f, l):
                f.write("  case {}".format(op.enum()))
     f.write("\n")
 
+def complexArgsList(i, argsString):
+    if i == 1:
+        return "{0}[0] + {0}[1] * I".format(argsString)
+    elif i == 2:
+        return "{0}, {1}[2] + {1}[3] * I"\
+            .format(complexArgsList(1, argsString), argsString)
+    elif i == 3:
+        return "{0}, {1}[4] + {1}[5] * I"\
+            .format(complexArgsList(2, argsString), argsString)
+
+def realArgsList(i, argsString):
+    if i == 1:
+        return "{}[0]".format(argsString)
+    elif i == 2:
+        return "{}, {}[1]".format(realArgsList(1, argsString), argsString)
+    elif i == 3:
+        return "{}, {}[2]".format(realArgsList(2, argsString), argsString)
+
 def write_switch_run(f, l):
     f.write("  switch(op){ \\\n")
     for op in l:
+        argsString = "((float*)args)" if op.precision == 32 else "args"
         if op.isComplex:
-           f.write("  case {}: \\\n".format(op.enumR()))
-           if op.nargs == 1:
-               f.write("    result = creal({}(args[0] + args[1] * I)); \\\n"
-                       .format(op.native_func))
-           elif op.nargs == 2:
-               f.write("    result = creal({}(args[0] + args[1] * I, args[2] + args[3] * I)); \\\n"
-                       .format(op.native_func))
-           elif op.nargs == 3:
-               f.write("    result = creal({}(args[0] + args[1] * I, args[2] + args[3] * I, args[4] + args[5] * I)); \\\n"
-                       .format(op.native_func))
-           f.write("    break;\\\n")
-           f.write("  case {}: \\\n".format(op.enumI()))
-           if op.nargs == 1:
-               f.write("    result = cimag({}(args[0] + args[1] * I)); \\\n"
-                       .format(op.native_func))
-           elif op.nargs == 2:
-               f.write("    result = cimag({}(args[0] + args[1] * I, args[2] + args[3] * I)); \\\n"
-                       .format(op.native_func))
-           elif op.nargs == 3:
-               f.write("    result = cimag({}(args[0] + args[1] * I, args[2] + args[3] * I, args[4] + args[5] * I)); \\\n"
-                       .format(op.native_func))
+            f.write("  case {}: \\\n".format(op.enumR()))
+            f.write("    result = creal({}({}));\\\n"
+                    .format(op.native_func, complexArgsList(op.nargs, argsString)))
+            f.write("    break;\\\n")
+            f.write("  case {}: \\\n".format(op.enumI()))
+            f.write("    result = cimag({}({}));\\\n"
+                   .format(op.native_func, complexArgsList(op.nargs, argsString)))
         else:
             f.write("  case {}: \\\n".format(op.enum()))
-            if op.nargs == 1:
-                f.write("    result = {}(args[0]); \\\n".format(op.native_func))
-            elif op.nargs == 2:
-                f.write("    result = {}(args[0], args[1]); \\\n".format(op.native_func))
-            elif op.nargs == 3:
-                f.write("    result = {}(args[0], args[1], args[2]); \\\n".format(op.native_func))
+            f.write("    result = {}({});\\\n"
+                    .format(op.native_func,
+                            realArgsList(op.nargs, argsString)))
         f.write("    break; \\\n");
     f.write("  default: \\\n")
     f.write("    result = 0.0; \\\n")
