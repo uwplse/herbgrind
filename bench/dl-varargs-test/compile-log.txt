@@ -1,0 +1,959 @@
+make: Entering directory '/home/alex/research/herbgrind'
+rm -rf src/include/mathreplace-funcs.h
+cd src/include/ && python mk-mathreplace.py
+cp -r src/* valgrind/herbgrind
+make -C valgrind/ install
+make[1]: Entering directory '/home/alex/research/herbgrind/valgrind'
+make  install-recursive
+make[2]: Entering directory '/home/alex/research/herbgrind/valgrind'
+Making install in include
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/include'
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/include'
+make[4]: Nothing to be done for 'install-exec-am'.
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind'
+ /usr/bin/install -c -m 644  pub_tool_basics.h pub_tool_basics_asm.h pub_tool_addrinfo.h pub_tool_aspacehl.h pub_tool_aspacemgr.h pub_tool_clientstate.h pub_tool_clreq.h pub_tool_deduppoolalloc.h pub_tool_debuginfo.h pub_tool_errormgr.h pub_tool_execontext.h pub_tool_gdbserver.h pub_tool_guest.h pub_tool_poolalloc.h pub_tool_hashtable.h pub_tool_libcbase.h pub_tool_libcassert.h pub_tool_libcfile.h pub_tool_libcprint.h pub_tool_libcproc.h pub_tool_libcsetjmp.h pub_tool_libcsignal.h pub_tool_machine.h pub_tool_mallocfree.h pub_tool_options.h pub_tool_oset.h pub_tool_rangemap.h pub_tool_redir.h pub_tool_replacemalloc.h pub_tool_seqmatch.h pub_tool_signals.h pub_tool_sparsewa.h pub_tool_stacktrace.h pub_tool_threadstate.h pub_tool_tooliface.h pub_tool_transtab.h pub_tool_vki.h pub_tool_vkiscnums.h pub_tool_vkiscnums_asm.h pub_tool_wordfm.h '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind/.'
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind/vki'
+ /usr/bin/install -c -m 644  vki/vki-linux.h vki/vki-darwin.h vki/vki-solaris.h vki/vki-solaris-repcache.h vki/vki-posixtypes-amd64-linux.h vki/vki-posixtypes-arm64-linux.h vki/vki-posixtypes-ppc32-linux.h vki/vki-posixtypes-ppc64-linux.h vki/vki-posixtypes-x86-linux.h vki/vki-posixtypes-arm-linux.h vki/vki-posixtypes-s390x-linux.h vki/vki-posixtypes-mips32-linux.h vki/vki-posixtypes-mips64-linux.h vki/vki-amd64-linux.h vki/vki-arm64-linux.h vki/vki-ppc32-linux.h vki/vki-ppc64-linux.h vki/vki-x86-linux.h vki/vki-arm-linux.h vki/vki-s390x-linux.h vki/vki-mips32-linux.h vki/vki-mips64-linux.h vki/vki-scnums-amd64-linux.h vki/vki-scnums-arm64-linux.h vki/vki-scnums-ppc32-linux.h vki/vki-scnums-ppc64-linux.h vki/vki-scnums-x86-linux.h vki/vki-scnums-arm-linux.h vki/vki-scnums-s390x-linux.h vki/vki-scnums-mips32-linux.h vki/vki-scnums-mips64-linux.h vki/vki-scnums-darwin.h vki/vki-scnums-solaris.h vki/vki-xen.h vki/vki-xen-domctl.h vki/vki-xen-evtchn.h vki/vki-xen-gnttab.h vki/vki-xen-hvm.h vki/vki-xen-memory.h vki/vki-xen-mmuext.h '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind/vki'
+ /usr/bin/install -c -m 644  pub_tool_xarray.h valgrind.h '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind/.'
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind/vki'
+ /usr/bin/install -c -m 644  vki/vki-xen-physdev.h vki/vki-xen-schedop.h vki/vki-xen-sysctl.h vki/vki-xen-tmem.h vki/vki-xen-version.h vki/vki-xen-xsm.h vki/vki-xen-x86.h vki/vki-linux-drm.h '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind/vki'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/include'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/include'
+Making install in VEX
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/VEX'
+make  install-am
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/VEX'
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/VEX'
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind'
+ /usr/bin/install -c -m 644  libvex-amd64-linux.a libvexmultiarch-amd64-linux.a '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind'
+ ( cd '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind' && ranlib libvex-amd64-linux.a )
+ ( cd '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind' && ranlib libvexmultiarch-amd64-linux.a )
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind'
+ /usr/bin/install -c -m 644 pub/libvex.h pub/libvex_basictypes.h pub/libvex_emnote.h pub/libvex_guest_offsets.h pub/libvex_guest_x86.h pub/libvex_guest_amd64.h pub/libvex_guest_ppc32.h pub/libvex_guest_ppc64.h pub/libvex_guest_arm.h pub/libvex_guest_arm64.h pub/libvex_guest_s390x.h pub/libvex_guest_mips32.h pub/libvex_guest_mips64.h pub/libvex_guest_tilegx.h pub/libvex_s390x_common.h pub/libvex_ir.h pub/libvex_trc_values.h '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/VEX'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/VEX'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/VEX'
+Making install in coregrind
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/coregrind'
+make  install-am
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/coregrind'
+mkdir -p ../.in_place; \
+for f in vgpreload_core-amd64-linux.so  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../coregrind/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../coregrind/$f.dSYM ../.in_place; \
+done
+mkdir -p ../.in_place; \
+for f in m_gdbserver/32bit-core-valgrind-s1.xml m_gdbserver/32bit-core-valgrind-s2.xml m_gdbserver/32bit-core.xml m_gdbserver/32bit-linux-valgrind-s1.xml m_gdbserver/32bit-linux-valgrind-s2.xml m_gdbserver/32bit-linux.xml m_gdbserver/32bit-sse-valgrind-s1.xml m_gdbserver/32bit-sse-valgrind-s2.xml m_gdbserver/32bit-sse.xml m_gdbserver/64bit-avx-valgrind-s2.xml m_gdbserver/64bit-avx-valgrind-s1.xml m_gdbserver/64bit-avx.xml m_gdbserver/64bit-core-valgrind-s1.xml m_gdbserver/64bit-core-valgrind-s2.xml m_gdbserver/64bit-core.xml m_gdbserver/64bit-linux-valgrind-s1.xml m_gdbserver/64bit-linux-valgrind-s2.xml m_gdbserver/64bit-linux.xml m_gdbserver/64bit-sse-valgrind-s1.xml m_gdbserver/64bit-sse-valgrind-s2.xml m_gdbserver/64bit-sse.xml m_gdbserver/amd64-avx-coresse-valgrind.xml m_gdbserver/amd64-avx-coresse.xml m_gdbserver/amd64-avx-linux-valgrind.xml m_gdbserver/amd64-avx-linux.xml m_gdbserver/amd64-coresse-valgrind.xml m_gdbserver/amd64-linux-valgrind.xml m_gdbserver/arm-core-valgrind-s1.xml m_gdbserver/arm-core-valgrind-s2.xml m_gdbserver/arm-core.xml m_gdbserver/arm-vfpv3-valgrind-s1.xml m_gdbserver/arm-vfpv3-valgrind-s2.xml m_gdbserver/arm-vfpv3.xml m_gdbserver/arm-with-vfpv3-valgrind.xml m_gdbserver/arm-with-vfpv3.xml m_gdbserver/i386-coresse-valgrind.xml m_gdbserver/i386-linux-valgrind.xml m_gdbserver/power64-core-valgrind-s1.xml m_gdbserver/power64-core-valgrind-s2.xml m_gdbserver/power64-core.xml m_gdbserver/power64-linux-valgrind-s1.xml m_gdbserver/power64-linux-valgrind-s2.xml m_gdbserver/power64-linux.xml m_gdbserver/power-altivec-valgrind-s1.xml m_gdbserver/power-altivec-valgrind-s2.xml m_gdbserver/power-altivec.xml m_gdbserver/power-core-valgrind-s1.xml m_gdbserver/power-core-valgrind-s2.xml m_gdbserver/power-core.xml m_gdbserver/power-fpu-valgrind-s1.xml m_gdbserver/power-fpu-valgrind-s2.xml m_gdbserver/power-fpu.xml m_gdbserver/power-linux-valgrind-s1.xml m_gdbserver/power-linux-valgrind-s2.xml m_gdbserver/power-linux.xml m_gdbserver/powerpc-altivec32l-valgrind.xml m_gdbserver/powerpc-altivec32l.xml m_gdbserver/powerpc-altivec64l-valgrind.xml m_gdbserver/powerpc-altivec64l.xml m_gdbserver/s390-acr-valgrind-s1.xml m_gdbserver/s390-acr-valgrind-s2.xml m_gdbserver/s390-acr.xml m_gdbserver/s390-fpr-valgrind-s1.xml m_gdbserver/s390-fpr-valgrind-s2.xml m_gdbserver/s390-fpr.xml m_gdbserver/s390x-core64-valgrind-s1.xml m_gdbserver/s390x-core64-valgrind-s2.xml m_gdbserver/s390x-core64.xml m_gdbserver/s390x-generic-valgrind.xml m_gdbserver/s390x-generic.xml m_gdbserver/s390x-linux64-valgrind-s1.xml m_gdbserver/s390x-linux64-valgrind-s2.xml m_gdbserver/s390x-linux64.xml m_gdbserver/mips-cp0-valgrind-s1.xml m_gdbserver/mips-cp0-valgrind-s2.xml m_gdbserver/mips-cp0.xml m_gdbserver/mips-cpu-valgrind-s1.xml m_gdbserver/mips-cpu-valgrind-s2.xml m_gdbserver/mips-cpu.xml m_gdbserver/mips-linux.xml m_gdbserver/mips-linux-valgrind.xml m_gdbserver/mips-fpu-valgrind-s1.xml m_gdbserver/mips-fpu-valgrind-s2.xml m_gdbserver/mips-fpu.xml m_gdbserver/mips64-cp0-valgrind-s1.xml m_gdbserver/mips64-cp0-valgrind-s2.xml m_gdbserver/mips64-cp0.xml m_gdbserver/mips64-cpu-valgrind-s1.xml m_gdbserver/mips64-cpu-valgrind-s2.xml m_gdbserver/mips64-cpu.xml m_gdbserver/mips64-linux.xml m_gdbserver/mips64-linux-valgrind.xml m_gdbserver/mips64-fpu-valgrind-s1.xml m_gdbserver/mips64-fpu-valgrind-s2.xml m_gdbserver/mips64-fpu.xml; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../coregrind/$f ../.in_place; \
+done
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/coregrind'
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/bin'
+  /usr/bin/install -c valgrind vgdb '/home/alex/research/herbgrind/valgrind/herbgrind-install/bin'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in vgpreload_core-amd64-linux.so ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind'
+ /usr/bin/install -c -m 644  libcoregrind-amd64-linux.a libreplacemalloc_toolpreload-amd64-linux.a '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind'
+ ( cd '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind' && ranlib libcoregrind-amd64-linux.a )
+ ( cd '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind' && ranlib libreplacemalloc_toolpreload-amd64-linux.a )
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind'
+ /usr/bin/install -c -m 644 m_gdbserver/32bit-core-valgrind-s1.xml m_gdbserver/32bit-core-valgrind-s2.xml m_gdbserver/32bit-core.xml m_gdbserver/32bit-linux-valgrind-s1.xml m_gdbserver/32bit-linux-valgrind-s2.xml m_gdbserver/32bit-linux.xml m_gdbserver/32bit-sse-valgrind-s1.xml m_gdbserver/32bit-sse-valgrind-s2.xml m_gdbserver/32bit-sse.xml m_gdbserver/64bit-avx-valgrind-s2.xml m_gdbserver/64bit-avx-valgrind-s1.xml m_gdbserver/64bit-avx.xml m_gdbserver/64bit-core-valgrind-s1.xml m_gdbserver/64bit-core-valgrind-s2.xml m_gdbserver/64bit-core.xml m_gdbserver/64bit-linux-valgrind-s1.xml m_gdbserver/64bit-linux-valgrind-s2.xml m_gdbserver/64bit-linux.xml m_gdbserver/64bit-sse-valgrind-s1.xml m_gdbserver/64bit-sse-valgrind-s2.xml m_gdbserver/64bit-sse.xml m_gdbserver/amd64-avx-coresse-valgrind.xml m_gdbserver/amd64-avx-coresse.xml m_gdbserver/amd64-avx-linux-valgrind.xml m_gdbserver/amd64-avx-linux.xml m_gdbserver/amd64-coresse-valgrind.xml m_gdbserver/amd64-linux-valgrind.xml m_gdbserver/arm-core-valgrind-s1.xml m_gdbserver/arm-core-valgrind-s2.xml m_gdbserver/arm-core.xml m_gdbserver/arm-vfpv3-valgrind-s1.xml m_gdbserver/arm-vfpv3-valgrind-s2.xml m_gdbserver/arm-vfpv3.xml m_gdbserver/arm-with-vfpv3-valgrind.xml m_gdbserver/arm-with-vfpv3.xml m_gdbserver/i386-coresse-valgrind.xml m_gdbserver/i386-linux-valgrind.xml m_gdbserver/power64-core-valgrind-s1.xml m_gdbserver/power64-core-valgrind-s2.xml m_gdbserver/power64-core.xml '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind'
+ /usr/bin/install -c -m 644 m_gdbserver/power64-linux-valgrind-s1.xml m_gdbserver/power64-linux-valgrind-s2.xml m_gdbserver/power64-linux.xml m_gdbserver/power-altivec-valgrind-s1.xml m_gdbserver/power-altivec-valgrind-s2.xml m_gdbserver/power-altivec.xml m_gdbserver/power-core-valgrind-s1.xml m_gdbserver/power-core-valgrind-s2.xml m_gdbserver/power-core.xml m_gdbserver/power-fpu-valgrind-s1.xml m_gdbserver/power-fpu-valgrind-s2.xml m_gdbserver/power-fpu.xml m_gdbserver/power-linux-valgrind-s1.xml m_gdbserver/power-linux-valgrind-s2.xml m_gdbserver/power-linux.xml m_gdbserver/powerpc-altivec32l-valgrind.xml m_gdbserver/powerpc-altivec32l.xml m_gdbserver/powerpc-altivec64l-valgrind.xml m_gdbserver/powerpc-altivec64l.xml m_gdbserver/s390-acr-valgrind-s1.xml m_gdbserver/s390-acr-valgrind-s2.xml m_gdbserver/s390-acr.xml m_gdbserver/s390-fpr-valgrind-s1.xml m_gdbserver/s390-fpr-valgrind-s2.xml m_gdbserver/s390-fpr.xml m_gdbserver/s390x-core64-valgrind-s1.xml m_gdbserver/s390x-core64-valgrind-s2.xml m_gdbserver/s390x-core64.xml m_gdbserver/s390x-generic-valgrind.xml m_gdbserver/s390x-generic.xml m_gdbserver/s390x-linux64-valgrind-s1.xml m_gdbserver/s390x-linux64-valgrind-s2.xml m_gdbserver/s390x-linux64.xml m_gdbserver/mips-cp0-valgrind-s1.xml m_gdbserver/mips-cp0-valgrind-s2.xml m_gdbserver/mips-cp0.xml m_gdbserver/mips-cpu-valgrind-s1.xml m_gdbserver/mips-cpu-valgrind-s2.xml m_gdbserver/mips-cpu.xml m_gdbserver/mips-linux.xml '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind'
+ /usr/bin/install -c -m 644 m_gdbserver/mips-linux-valgrind.xml m_gdbserver/mips-fpu-valgrind-s1.xml m_gdbserver/mips-fpu-valgrind-s2.xml m_gdbserver/mips-fpu.xml m_gdbserver/mips64-cp0-valgrind-s1.xml m_gdbserver/mips64-cp0-valgrind-s2.xml m_gdbserver/mips64-cp0.xml m_gdbserver/mips64-cpu-valgrind-s1.xml m_gdbserver/mips64-cpu-valgrind-s2.xml m_gdbserver/mips64-cpu.xml m_gdbserver/mips64-linux.xml m_gdbserver/mips64-linux-valgrind.xml m_gdbserver/mips64-fpu-valgrind-s1.xml m_gdbserver/mips64-fpu-valgrind-s2.xml m_gdbserver/mips64-fpu.xml '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/coregrind'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/coregrind'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/coregrind'
+Making install in .
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind'
+mkdir -p ./.in_place
+rm -f ./.in_place/default.supp
+ln -s ../default.supp ./.in_place
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind'
+make[4]: Nothing to be done for 'install-exec-am'.
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/pkgconfig'
+ /usr/bin/install -c -m 644 valgrind.pc '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/pkgconfig'
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind'
+ /usr/bin/install -c -m 644 config.h '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind'
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind'
+ /usr/bin/install -c -m 644 default.supp '/home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind'
+Making install in memcheck
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck'
+Making install in .
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck'
+mkdir -p ../.in_place; \
+for f in memcheck-amd64-linux  vgpreload_memcheck-amd64-linux.so  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../memcheck/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../memcheck/$f.dSYM ../.in_place; \
+done
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in memcheck-amd64-linux  vgpreload_memcheck-amd64-linux.so ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind'
+ /usr/bin/install -c -m 644 memcheck.h '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck'
+Making install in tests
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck/tests'
+Making install in .
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck/tests'
+make[6]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck/tests'
+make[6]: Nothing to be done for 'install-exec-am'.
+make[6]: Nothing to be done for 'install-data-am'.
+make[6]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck/tests'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck/tests'
+Making install in amd64
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/amd64'
+make[6]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/amd64'
+make[6]: Nothing to be done for 'install-exec-am'.
+make[6]: Nothing to be done for 'install-data-am'.
+make[6]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/amd64'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/amd64'
+Making install in linux
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/linux'
+make[6]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/linux'
+make[6]: Nothing to be done for 'install-exec-am'.
+make[6]: Nothing to be done for 'install-data-am'.
+make[6]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/linux'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/linux'
+Making install in amd64-linux
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/amd64-linux'
+make[6]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/amd64-linux'
+make[6]: Nothing to be done for 'install-exec-am'.
+make[6]: Nothing to be done for 'install-data-am'.
+make[6]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/amd64-linux'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/amd64-linux'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck/tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck'
+Making install in herbgrind
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/herbgrind'
+Making install in .
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/herbgrind'
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT herbgrind_amd64_linux-hg_main.o -MD -MP -MF .deps/herbgrind_amd64_linux-hg_main.Tpo -c -o herbgrind_amd64_linux-hg_main.o `test -f 'hg_main.c' || echo './'`hg_main.c
+mv -f .deps/herbgrind_amd64_linux-hg_main.Tpo .deps/herbgrind_amd64_linux-hg_main.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT helper/herbgrind_amd64_linux-mpfr-valgrind-glue.o -MD -MP -MF helper/.deps/herbgrind_amd64_linux-mpfr-valgrind-glue.Tpo -c -o helper/herbgrind_amd64_linux-mpfr-valgrind-glue.o `test -f 'helper/mpfr-valgrind-glue.c' || echo './'`helper/mpfr-valgrind-glue.c
+mv -f helper/.deps/herbgrind_amd64_linux-mpfr-valgrind-glue.Tpo helper/.deps/herbgrind_amd64_linux-mpfr-valgrind-glue.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT helper/herbgrind_amd64_linux-stack.o -MD -MP -MF helper/.deps/herbgrind_amd64_linux-stack.Tpo -c -o helper/herbgrind_amd64_linux-stack.o `test -f 'helper/stack.c' || echo './'`helper/stack.c
+mv -f helper/.deps/herbgrind_amd64_linux-stack.Tpo helper/.deps/herbgrind_amd64_linux-stack.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT helper/herbgrind_amd64_linux-instrument-util.o -MD -MP -MF helper/.deps/herbgrind_amd64_linux-instrument-util.Tpo -c -o helper/herbgrind_amd64_linux-instrument-util.o `test -f 'helper/instrument-util.c' || echo './'`helper/instrument-util.c
+mv -f helper/.deps/herbgrind_amd64_linux-instrument-util.Tpo helper/.deps/herbgrind_amd64_linux-instrument-util.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT helper/herbgrind_amd64_linux-runtime-util.o -MD -MP -MF helper/.deps/herbgrind_amd64_linux-runtime-util.Tpo -c -o helper/herbgrind_amd64_linux-runtime-util.o `test -f 'helper/runtime-util.c' || echo './'`helper/runtime-util.c
+mv -f helper/.deps/herbgrind_amd64_linux-runtime-util.Tpo helper/.deps/herbgrind_amd64_linux-runtime-util.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT helper/herbgrind_amd64_linux-ir-info.o -MD -MP -MF helper/.deps/herbgrind_amd64_linux-ir-info.Tpo -c -o helper/herbgrind_amd64_linux-ir-info.o `test -f 'helper/ir-info.c' || echo './'`helper/ir-info.c
+mv -f helper/.deps/herbgrind_amd64_linux-ir-info.Tpo helper/.deps/herbgrind_amd64_linux-ir-info.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT helper/herbgrind_amd64_linux-bbuf.o -MD -MP -MF helper/.deps/herbgrind_amd64_linux-bbuf.Tpo -c -o helper/herbgrind_amd64_linux-bbuf.o `test -f 'helper/bbuf.c' || echo './'`helper/bbuf.c
+mv -f helper/.deps/herbgrind_amd64_linux-bbuf.Tpo helper/.deps/herbgrind_amd64_linux-bbuf.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/value-shadowstate/herbgrind_amd64_linux-value-shadowstate.o -MD -MP -MF runtime/value-shadowstate/.deps/herbgrind_amd64_linux-value-shadowstate.Tpo -c -o runtime/value-shadowstate/herbgrind_amd64_linux-value-shadowstate.o `test -f 'runtime/value-shadowstate/value-shadowstate.c' || echo './'`runtime/value-shadowstate/value-shadowstate.c
+mv -f runtime/value-shadowstate/.deps/herbgrind_amd64_linux-value-shadowstate.Tpo runtime/value-shadowstate/.deps/herbgrind_amd64_linux-value-shadowstate.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/value-shadowstate/herbgrind_amd64_linux-shadowval.o -MD -MP -MF runtime/value-shadowstate/.deps/herbgrind_amd64_linux-shadowval.Tpo -c -o runtime/value-shadowstate/herbgrind_amd64_linux-shadowval.o `test -f 'runtime/value-shadowstate/shadowval.c' || echo './'`runtime/value-shadowstate/shadowval.c
+mv -f runtime/value-shadowstate/.deps/herbgrind_amd64_linux-shadowval.Tpo runtime/value-shadowstate/.deps/herbgrind_amd64_linux-shadowval.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/value-shadowstate/herbgrind_amd64_linux-exprs.o -MD -MP -MF runtime/value-shadowstate/.deps/herbgrind_amd64_linux-exprs.Tpo -c -o runtime/value-shadowstate/herbgrind_amd64_linux-exprs.o `test -f 'runtime/value-shadowstate/exprs.c' || echo './'`runtime/value-shadowstate/exprs.c
+mv -f runtime/value-shadowstate/.deps/herbgrind_amd64_linux-exprs.Tpo runtime/value-shadowstate/.deps/herbgrind_amd64_linux-exprs.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/value-shadowstate/herbgrind_amd64_linux-real.o -MD -MP -MF runtime/value-shadowstate/.deps/herbgrind_amd64_linux-real.Tpo -c -o runtime/value-shadowstate/herbgrind_amd64_linux-real.o `test -f 'runtime/value-shadowstate/real.c' || echo './'`runtime/value-shadowstate/real.c
+mv -f runtime/value-shadowstate/.deps/herbgrind_amd64_linux-real.Tpo runtime/value-shadowstate/.deps/herbgrind_amd64_linux-real.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/value-shadowstate/herbgrind_amd64_linux-pos-tree.o -MD -MP -MF runtime/value-shadowstate/.deps/herbgrind_amd64_linux-pos-tree.Tpo -c -o runtime/value-shadowstate/herbgrind_amd64_linux-pos-tree.o `test -f 'runtime/value-shadowstate/pos-tree.c' || echo './'`runtime/value-shadowstate/pos-tree.c
+mv -f runtime/value-shadowstate/.deps/herbgrind_amd64_linux-pos-tree.Tpo runtime/value-shadowstate/.deps/herbgrind_amd64_linux-pos-tree.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/op-shadowstate/herbgrind_amd64_linux-shadowop-info.o -MD -MP -MF runtime/op-shadowstate/.deps/herbgrind_amd64_linux-shadowop-info.Tpo -c -o runtime/op-shadowstate/herbgrind_amd64_linux-shadowop-info.o `test -f 'runtime/op-shadowstate/shadowop-info.c' || echo './'`runtime/op-shadowstate/shadowop-info.c
+mv -f runtime/op-shadowstate/.deps/herbgrind_amd64_linux-shadowop-info.Tpo runtime/op-shadowstate/.deps/herbgrind_amd64_linux-shadowop-info.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/op-shadowstate/herbgrind_amd64_linux-marks.o -MD -MP -MF runtime/op-shadowstate/.deps/herbgrind_amd64_linux-marks.Tpo -c -o runtime/op-shadowstate/herbgrind_amd64_linux-marks.o `test -f 'runtime/op-shadowstate/marks.c' || echo './'`runtime/op-shadowstate/marks.c
+mv -f runtime/op-shadowstate/.deps/herbgrind_amd64_linux-marks.Tpo runtime/op-shadowstate/.deps/herbgrind_amd64_linux-marks.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/op-shadowstate/herbgrind_amd64_linux-output.o -MD -MP -MF runtime/op-shadowstate/.deps/herbgrind_amd64_linux-output.Tpo -c -o runtime/op-shadowstate/herbgrind_amd64_linux-output.o `test -f 'runtime/op-shadowstate/output.c' || echo './'`runtime/op-shadowstate/output.c
+mv -f runtime/op-shadowstate/.deps/herbgrind_amd64_linux-output.Tpo runtime/op-shadowstate/.deps/herbgrind_amd64_linux-output.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/shadowop/herbgrind_amd64_linux-shadowop.o -MD -MP -MF runtime/shadowop/.deps/herbgrind_amd64_linux-shadowop.Tpo -c -o runtime/shadowop/herbgrind_amd64_linux-shadowop.o `test -f 'runtime/shadowop/shadowop.c' || echo './'`runtime/shadowop/shadowop.c
+mv -f runtime/shadowop/.deps/herbgrind_amd64_linux-shadowop.Tpo runtime/shadowop/.deps/herbgrind_amd64_linux-shadowop.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/shadowop/herbgrind_amd64_linux-realop.o -MD -MP -MF runtime/shadowop/.deps/herbgrind_amd64_linux-realop.Tpo -c -o runtime/shadowop/herbgrind_amd64_linux-realop.o `test -f 'runtime/shadowop/realop.c' || echo './'`runtime/shadowop/realop.c
+mv -f runtime/shadowop/.deps/herbgrind_amd64_linux-realop.Tpo runtime/shadowop/.deps/herbgrind_amd64_linux-realop.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/shadowop/herbgrind_amd64_linux-conversions.o -MD -MP -MF runtime/shadowop/.deps/herbgrind_amd64_linux-conversions.Tpo -c -o runtime/shadowop/herbgrind_amd64_linux-conversions.o `test -f 'runtime/shadowop/conversions.c' || echo './'`runtime/shadowop/conversions.c
+mv -f runtime/shadowop/.deps/herbgrind_amd64_linux-conversions.Tpo runtime/shadowop/.deps/herbgrind_amd64_linux-conversions.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/shadowop/herbgrind_amd64_linux-error.o -MD -MP -MF runtime/shadowop/.deps/herbgrind_amd64_linux-error.Tpo -c -o runtime/shadowop/herbgrind_amd64_linux-error.o `test -f 'runtime/shadowop/error.c' || echo './'`runtime/shadowop/error.c
+mv -f runtime/shadowop/.deps/herbgrind_amd64_linux-error.Tpo runtime/shadowop/.deps/herbgrind_amd64_linux-error.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/shadowop/herbgrind_amd64_linux-symbolic-op.o -MD -MP -MF runtime/shadowop/.deps/herbgrind_amd64_linux-symbolic-op.Tpo -c -o runtime/shadowop/herbgrind_amd64_linux-symbolic-op.o `test -f 'runtime/shadowop/symbolic-op.c' || echo './'`runtime/shadowop/symbolic-op.c
+mv -f runtime/shadowop/.deps/herbgrind_amd64_linux-symbolic-op.Tpo runtime/shadowop/.deps/herbgrind_amd64_linux-symbolic-op.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/shadowop/herbgrind_amd64_linux-influence-op.o -MD -MP -MF runtime/shadowop/.deps/herbgrind_amd64_linux-influence-op.Tpo -c -o runtime/shadowop/herbgrind_amd64_linux-influence-op.o `test -f 'runtime/shadowop/influence-op.c' || echo './'`runtime/shadowop/influence-op.c
+mv -f runtime/shadowop/.deps/herbgrind_amd64_linux-influence-op.Tpo runtime/shadowop/.deps/herbgrind_amd64_linux-influence-op.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/shadowop/herbgrind_amd64_linux-mathreplace.o -MD -MP -MF runtime/shadowop/.deps/herbgrind_amd64_linux-mathreplace.Tpo -c -o runtime/shadowop/herbgrind_amd64_linux-mathreplace.o `test -f 'runtime/shadowop/mathreplace.c' || echo './'`runtime/shadowop/mathreplace.c
+mv -f runtime/shadowop/.deps/herbgrind_amd64_linux-mathreplace.Tpo runtime/shadowop/.deps/herbgrind_amd64_linux-mathreplace.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/shadowop/herbgrind_amd64_linux-local-op.o -MD -MP -MF runtime/shadowop/.deps/herbgrind_amd64_linux-local-op.Tpo -c -o runtime/shadowop/herbgrind_amd64_linux-local-op.o `test -f 'runtime/shadowop/local-op.c' || echo './'`runtime/shadowop/local-op.c
+mv -f runtime/shadowop/.deps/herbgrind_amd64_linux-local-op.Tpo runtime/shadowop/.deps/herbgrind_amd64_linux-local-op.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT runtime/shadowop/herbgrind_amd64_linux-exit-float-op.o -MD -MP -MF runtime/shadowop/.deps/herbgrind_amd64_linux-exit-float-op.Tpo -c -o runtime/shadowop/herbgrind_amd64_linux-exit-float-op.o `test -f 'runtime/shadowop/exit-float-op.c' || echo './'`runtime/shadowop/exit-float-op.c
+mv -f runtime/shadowop/.deps/herbgrind_amd64_linux-exit-float-op.Tpo runtime/shadowop/.deps/herbgrind_amd64_linux-exit-float-op.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT herbgrind_amd64_linux-options.o -MD -MP -MF .deps/herbgrind_amd64_linux-options.Tpo -c -o herbgrind_amd64_linux-options.o `test -f 'options.c' || echo './'`options.c
+mv -f .deps/herbgrind_amd64_linux-options.Tpo .deps/herbgrind_amd64_linux-options.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT instrument/herbgrind_amd64_linux-instrument.o -MD -MP -MF instrument/.deps/herbgrind_amd64_linux-instrument.Tpo -c -o instrument/herbgrind_amd64_linux-instrument.o `test -f 'instrument/instrument.c' || echo './'`instrument/instrument.c
+mv -f instrument/.deps/herbgrind_amd64_linux-instrument.Tpo instrument/.deps/herbgrind_amd64_linux-instrument.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT instrument/herbgrind_amd64_linux-instrument-op.o -MD -MP -MF instrument/.deps/herbgrind_amd64_linux-instrument-op.Tpo -c -o instrument/herbgrind_amd64_linux-instrument-op.o `test -f 'instrument/instrument-op.c' || echo './'`instrument/instrument-op.c
+mv -f instrument/.deps/herbgrind_amd64_linux-instrument-op.Tpo instrument/.deps/herbgrind_amd64_linux-instrument-op.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT instrument/herbgrind_amd64_linux-instrument-storage.o -MD -MP -MF instrument/.deps/herbgrind_amd64_linux-instrument-storage.Tpo -c -o instrument/herbgrind_amd64_linux-instrument-storage.o `test -f 'instrument/instrument-storage.c' || echo './'`instrument/instrument-storage.c
+mv -f instrument/.deps/herbgrind_amd64_linux-instrument-storage.Tpo instrument/.deps/herbgrind_amd64_linux-instrument-storage.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT instrument/herbgrind_amd64_linux-conversion.o -MD -MP -MF instrument/.deps/herbgrind_amd64_linux-conversion.Tpo -c -o instrument/herbgrind_amd64_linux-conversion.o `test -f 'instrument/conversion.c' || echo './'`instrument/conversion.c
+mv -f instrument/.deps/herbgrind_amd64_linux-conversion.Tpo instrument/.deps/herbgrind_amd64_linux-conversion.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT instrument/herbgrind_amd64_linux-semantic-op.o -MD -MP -MF instrument/.deps/herbgrind_amd64_linux-semantic-op.Tpo -c -o instrument/herbgrind_amd64_linux-semantic-op.o `test -f 'instrument/semantic-op.c' || echo './'`instrument/semantic-op.c
+mv -f instrument/.deps/herbgrind_amd64_linux-semantic-op.Tpo instrument/.deps/herbgrind_amd64_linux-semantic-op.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT instrument/herbgrind_amd64_linux-floattypes.o -MD -MP -MF instrument/.deps/herbgrind_amd64_linux-floattypes.Tpo -c -o instrument/herbgrind_amd64_linux-floattypes.o `test -f 'instrument/floattypes.c' || echo './'`instrument/floattypes.c
+mv -f instrument/.deps/herbgrind_amd64_linux-floattypes.Tpo instrument/.deps/herbgrind_amd64_linux-floattypes.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -fno-stack-protector -MT instrument/herbgrind_amd64_linux-ownership.o -MD -MP -MF instrument/.deps/herbgrind_amd64_linux-ownership.Tpo -c -o instrument/herbgrind_amd64_linux-ownership.o `test -f 'instrument/ownership.c' || echo './'`instrument/ownership.c
+mv -f instrument/.deps/herbgrind_amd64_linux-ownership.Tpo instrument/.deps/herbgrind_amd64_linux-ownership.Po
+../coregrind/link_tool_exe_linux 0x38000000 gcc  -fno-stack-protector   -o herbgrind-amd64-linux -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -fomit-frame-pointer -g -O2 -Werror -Wall -I../../deps/gmp-64/herbgrind-install/include/ -I../../deps/mpfr-64/herbgrind-install/include/ -static -nodefaultlibs -nostartfiles -u _start  -m64 herbgrind_amd64_linux-hg_main.o helper/herbgrind_amd64_linux-mpfr-valgrind-glue.o helper/herbgrind_amd64_linux-stack.o helper/herbgrind_amd64_linux-instrument-util.o helper/herbgrind_amd64_linux-runtime-util.o helper/herbgrind_amd64_linux-ir-info.o helper/herbgrind_amd64_linux-bbuf.o runtime/value-shadowstate/herbgrind_amd64_linux-value-shadowstate.o runtime/value-shadowstate/herbgrind_amd64_linux-shadowval.o runtime/value-shadowstate/herbgrind_amd64_linux-exprs.o runtime/value-shadowstate/herbgrind_amd64_linux-real.o runtime/value-shadowstate/herbgrind_amd64_linux-pos-tree.o runtime/op-shadowstate/herbgrind_amd64_linux-shadowop-info.o runtime/op-shadowstate/herbgrind_amd64_linux-marks.o runtime/op-shadowstate/herbgrind_amd64_linux-output.o runtime/shadowop/herbgrind_amd64_linux-shadowop.o runtime/shadowop/herbgrind_amd64_linux-realop.o runtime/shadowop/herbgrind_amd64_linux-conversions.o runtime/shadowop/herbgrind_amd64_linux-error.o runtime/shadowop/herbgrind_amd64_linux-symbolic-op.o runtime/shadowop/herbgrind_amd64_linux-influence-op.o runtime/shadowop/herbgrind_amd64_linux-mathreplace.o runtime/shadowop/herbgrind_amd64_linux-local-op.o runtime/shadowop/herbgrind_amd64_linux-exit-float-op.o herbgrind_amd64_linux-options.o instrument/herbgrind_amd64_linux-instrument.o instrument/herbgrind_amd64_linux-instrument-op.o instrument/herbgrind_amd64_linux-instrument-storage.o instrument/herbgrind_amd64_linux-conversion.o instrument/herbgrind_amd64_linux-semantic-op.o instrument/herbgrind_amd64_linux-floattypes.o instrument/herbgrind_amd64_linux-ownership.o ../coregrind/libcoregrind-amd64-linux.a ../VEX/libvex-amd64-linux.a -lgcc ../../deps/mpfr-64/herbgrind-install/lib/libmpfr.a ../../deps/gmp-64/herbgrind-install/lib/libgmp.a ../../deps/openlibm-64/libopenlibm.a 
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -O -g -fno-omit-frame-pointer -fno-strict-aliasing -fpic -fno-builtin -fno-ipa-icf -fno-stack-protector -MT helper/vgpreload_herbgrind_amd64_linux_so-mathwrap.o -MD -MP -MF helper/.deps/vgpreload_herbgrind_amd64_linux_so-mathwrap.Tpo -c -o helper/vgpreload_herbgrind_amd64_linux_so-mathwrap.o `test -f 'helper/mathwrap.c' || echo './'`helper/mathwrap.c
+mv -f helper/.deps/vgpreload_herbgrind_amd64_linux_so-mathwrap.Tpo helper/.deps/vgpreload_herbgrind_amd64_linux_so-mathwrap.Po
+gcc -DHAVE_CONFIG_H -I. -I..  -I.. -I../include -I../VEX/pub -I../VEX/pub -DVGA_amd64=1 -DVGO_linux=1 -DVGP_amd64_linux=1 -DVGPV_amd64_linux_vanilla=1  -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -O -g -fno-omit-frame-pointer -fno-strict-aliasing -fpic -fno-builtin -fno-ipa-icf -fno-stack-protector -MT helper/vgpreload_herbgrind_amd64_linux_so-printf-wrap.o -MD -MP -MF helper/.deps/vgpreload_herbgrind_amd64_linux_so-printf-wrap.Tpo -c -o helper/vgpreload_herbgrind_amd64_linux_so-printf-wrap.o `test -f 'helper/printf-wrap.c' || echo './'`helper/printf-wrap.c
+mv -f helper/.deps/vgpreload_herbgrind_amd64_linux_so-printf-wrap.Tpo helper/.deps/vgpreload_herbgrind_amd64_linux_so-printf-wrap.Po
+gcc -m64 -O2 -g -std=gnu99 -Wall -Wmissing-prototypes -Wshadow -Wpointer-arith -Wstrict-prototypes -Wmissing-declarations -Wcast-align -Wcast-qual -Wwrite-strings -Wempty-body -Wformat -Wformat-security -Wignored-qualifiers -Wmissing-parameter-type -Wold-style-declaration -fno-stack-protector -fno-strict-aliasing -fno-builtin  -O -g -fno-omit-frame-pointer -fno-strict-aliasing -fpic -fno-builtin -fno-ipa-icf -fno-stack-protector -nodefaultlibs -shared -Wl,-z,interpose,-z,initfirst  -m64  -o vgpreload_herbgrind-amd64-linux.so helper/vgpreload_herbgrind_amd64_linux_so-mathwrap.o helper/vgpreload_herbgrind_amd64_linux_so-printf-wrap.o  
+mkdir -p ../.in_place; \
+for f in herbgrind-amd64-linux  vgpreload_herbgrind-amd64-linux.so  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../herbgrind/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../herbgrind/$f.dSYM ../.in_place; \
+done
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/herbgrind'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in herbgrind-amd64-linux  vgpreload_herbgrind-amd64-linux.so ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/herbgrind'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/herbgrind'
+Making install in tests
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/herbgrind/tests'
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/herbgrind/tests'
+make[5]: Nothing to be done for 'install-exec-am'.
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/herbgrind/tests'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/herbgrind/tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/herbgrind'
+Making install in cachegrind
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/cachegrind'
+Making install in .
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/cachegrind'
+mkdir -p ../.in_place; \
+for f in cachegrind-amd64-linux  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../cachegrind/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../cachegrind/$f.dSYM ../.in_place; \
+done
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/cachegrind'
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/bin'
+  /usr/bin/install -c cg_merge '/home/alex/research/herbgrind/valgrind/herbgrind-install/bin'
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/bin'
+ /usr/bin/install -c cg_annotate cg_diff '/home/alex/research/herbgrind/valgrind/herbgrind-install/bin'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in cachegrind-amd64-linux ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/cachegrind'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/cachegrind'
+Making install in tests
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/cachegrind/tests'
+Making install in .
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/cachegrind/tests'
+make[6]: Entering directory '/home/alex/research/herbgrind/valgrind/cachegrind/tests'
+make[6]: Nothing to be done for 'install-exec-am'.
+make[6]: Nothing to be done for 'install-data-am'.
+make[6]: Leaving directory '/home/alex/research/herbgrind/valgrind/cachegrind/tests'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/cachegrind/tests'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/cachegrind/tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/cachegrind'
+Making install in callgrind
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/callgrind'
+Making install in .
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/callgrind'
+mkdir -p ../.in_place; \
+for f in callgrind-amd64-linux  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../callgrind/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../callgrind/$f.dSYM ../.in_place; \
+done
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/callgrind'
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/bin'
+ /usr/bin/install -c callgrind_annotate callgrind_control '/home/alex/research/herbgrind/valgrind/herbgrind-install/bin'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in callgrind-amd64-linux ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind'
+ /usr/bin/install -c -m 644 callgrind.h '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/callgrind'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/callgrind'
+Making install in tests
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/callgrind/tests'
+Making install in .
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/callgrind/tests'
+make[6]: Entering directory '/home/alex/research/herbgrind/valgrind/callgrind/tests'
+make[6]: Nothing to be done for 'install-exec-am'.
+make[6]: Nothing to be done for 'install-data-am'.
+make[6]: Leaving directory '/home/alex/research/herbgrind/valgrind/callgrind/tests'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/callgrind/tests'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/callgrind/tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/callgrind'
+Making install in massif
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/massif'
+Making install in .
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/massif'
+mkdir -p ../.in_place; \
+for f in massif-amd64-linux  vgpreload_massif-amd64-linux.so  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../massif/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../massif/$f.dSYM ../.in_place; \
+done
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/massif'
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/bin'
+ /usr/bin/install -c ms_print '/home/alex/research/herbgrind/valgrind/herbgrind-install/bin'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in massif-amd64-linux  vgpreload_massif-amd64-linux.so ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/massif'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/massif'
+Making install in tests
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/massif/tests'
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/massif/tests'
+make[5]: Nothing to be done for 'install-exec-am'.
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/massif/tests'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/massif/tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/massif'
+Making install in lackey
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/lackey'
+Making install in .
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/lackey'
+mkdir -p ../.in_place; \
+for f in lackey-amd64-linux  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../lackey/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../lackey/$f.dSYM ../.in_place; \
+done
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/lackey'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in lackey-amd64-linux ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/lackey'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/lackey'
+Making install in tests
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/lackey/tests'
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/lackey/tests'
+make[5]: Nothing to be done for 'install-exec-am'.
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/lackey/tests'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/lackey/tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/lackey'
+Making install in none
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/none'
+Making install in .
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/none'
+mkdir -p ../.in_place; \
+for f in none-amd64-linux  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../none/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../none/$f.dSYM ../.in_place; \
+done
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/none'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in none-amd64-linux ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/none'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/none'
+Making install in tests
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/none/tests'
+Making install in .
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/none/tests'
+make[6]: Entering directory '/home/alex/research/herbgrind/valgrind/none/tests'
+make[6]: Nothing to be done for 'install-exec-am'.
+make[6]: Nothing to be done for 'install-data-am'.
+make[6]: Leaving directory '/home/alex/research/herbgrind/valgrind/none/tests'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/none/tests'
+Making install in scripts
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/none/tests/scripts'
+make[6]: Entering directory '/home/alex/research/herbgrind/valgrind/none/tests/scripts'
+make[6]: Nothing to be done for 'install-exec-am'.
+make[6]: Nothing to be done for 'install-data-am'.
+make[6]: Leaving directory '/home/alex/research/herbgrind/valgrind/none/tests/scripts'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/none/tests/scripts'
+Making install in amd64
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/none/tests/amd64'
+make[6]: Entering directory '/home/alex/research/herbgrind/valgrind/none/tests/amd64'
+make[6]: Nothing to be done for 'install-exec-am'.
+make[6]: Nothing to be done for 'install-data-am'.
+make[6]: Leaving directory '/home/alex/research/herbgrind/valgrind/none/tests/amd64'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/none/tests/amd64'
+Making install in linux
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/none/tests/linux'
+make[6]: Entering directory '/home/alex/research/herbgrind/valgrind/none/tests/linux'
+make[6]: Nothing to be done for 'install-exec-am'.
+make[6]: Nothing to be done for 'install-data-am'.
+make[6]: Leaving directory '/home/alex/research/herbgrind/valgrind/none/tests/linux'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/none/tests/linux'
+Making install in amd64-linux
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/none/tests/amd64-linux'
+make[6]: Entering directory '/home/alex/research/herbgrind/valgrind/none/tests/amd64-linux'
+make[6]: Nothing to be done for 'install-exec-am'.
+make[6]: Nothing to be done for 'install-data-am'.
+make[6]: Leaving directory '/home/alex/research/herbgrind/valgrind/none/tests/amd64-linux'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/none/tests/amd64-linux'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/none/tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/none'
+Making install in helgrind
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/helgrind'
+Making install in .
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/helgrind'
+mkdir -p ../.in_place; \
+for f in helgrind-amd64-linux  vgpreload_helgrind-amd64-linux.so  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../helgrind/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../helgrind/$f.dSYM ../.in_place; \
+done
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/helgrind'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in helgrind-amd64-linux  vgpreload_helgrind-amd64-linux.so ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind'
+ /usr/bin/install -c -m 644 helgrind.h '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/helgrind'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/helgrind'
+Making install in tests
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/helgrind/tests'
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/helgrind/tests'
+make[5]: Nothing to be done for 'install-exec-am'.
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/helgrind/tests'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/helgrind/tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/helgrind'
+Making install in drd
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/drd'
+Making install in .
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/drd'
+mkdir -p ../.in_place; \
+for f in drd-amd64-linux  vgpreload_drd-amd64-linux.so  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../drd/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../drd/$f.dSYM ../.in_place; \
+done
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/drd'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in drd-amd64-linux  vgpreload_drd-amd64-linux.so ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind'
+ /usr/bin/install -c -m 644 drd.h '/home/alex/research/herbgrind/valgrind/herbgrind-install/include/valgrind'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/drd'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/drd'
+Making install in tests
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/drd/tests'
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/drd/tests'
+make[5]: Nothing to be done for 'install-exec-am'.
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/drd/tests'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/drd/tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/drd'
+Making install in exp-sgcheck
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-sgcheck'
+Making install in .
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-sgcheck'
+mkdir -p ../.in_place; \
+for f in exp-sgcheck-amd64-linux  vgpreload_exp-sgcheck-amd64-linux.so  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../exp-sgcheck/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../exp-sgcheck/$f.dSYM ../.in_place; \
+done
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-sgcheck'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in exp-sgcheck-amd64-linux  vgpreload_exp-sgcheck-amd64-linux.so ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-sgcheck'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-sgcheck'
+Making install in tests
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-sgcheck/tests'
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-sgcheck/tests'
+make[5]: Nothing to be done for 'install-exec-am'.
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-sgcheck/tests'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-sgcheck/tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-sgcheck'
+Making install in exp-bbv
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-bbv'
+Making install in .
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-bbv'
+mkdir -p ../.in_place; \
+for f in exp-bbv-amd64-linux  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../exp-bbv/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../exp-bbv/$f.dSYM ../.in_place; \
+done
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-bbv'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in exp-bbv-amd64-linux ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-bbv'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-bbv'
+Making install in tests
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-bbv/tests'
+Making install in .
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-bbv/tests'
+make[6]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-bbv/tests'
+make[6]: Nothing to be done for 'install-exec-am'.
+make[6]: Nothing to be done for 'install-data-am'.
+make[6]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-bbv/tests'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-bbv/tests'
+Making install in amd64-linux
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-bbv/tests/amd64-linux'
+make[6]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-bbv/tests/amd64-linux'
+make[6]: Nothing to be done for 'install-exec-am'.
+make[6]: Nothing to be done for 'install-data-am'.
+make[6]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-bbv/tests/amd64-linux'
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-bbv/tests/amd64-linux'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-bbv/tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-bbv'
+Making install in exp-dhat
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-dhat'
+Making install in .
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-dhat'
+mkdir -p ../.in_place; \
+for f in exp-dhat-amd64-linux  vgpreload_exp-dhat-amd64-linux.so  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../exp-dhat/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../exp-dhat/$f.dSYM ../.in_place; \
+done
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-dhat'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in exp-dhat-amd64-linux  vgpreload_exp-dhat-amd64-linux.so ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-dhat'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-dhat'
+Making install in tests
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-dhat/tests'
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/exp-dhat/tests'
+make[5]: Nothing to be done for 'install-exec-am'.
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-dhat/tests'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-dhat/tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/exp-dhat'
+Making install in shared
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/shared'
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/shared'
+make[4]: Nothing to be done for 'install-exec-am'.
+make[4]: Nothing to be done for 'install-data-am'.
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/shared'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/shared'
+Making install in tests
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/tests'
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/tests'
+make[4]: Nothing to be done for 'install-exec-am'.
+make[4]: Nothing to be done for 'install-data-am'.
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/tests'
+Making install in perf
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/perf'
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/perf'
+make[4]: Nothing to be done for 'install-exec-am'.
+make[4]: Nothing to be done for 'install-data-am'.
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/perf'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/perf'
+Making install in gdbserver_tests
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/gdbserver_tests'
+Making install in .
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/gdbserver_tests'
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/gdbserver_tests'
+make[5]: Nothing to be done for 'install-exec-am'.
+make[5]: Nothing to be done for 'install-data-am'.
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/gdbserver_tests'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/gdbserver_tests'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/gdbserver_tests'
+Making install in memcheck/tests/vbit-test
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/vbit-test'
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/vbit-test'
+make[4]: Nothing to be done for 'install-exec-am'.
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/vbit-test'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/memcheck/tests/vbit-test'
+Making install in auxprogs
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/auxprogs'
+mkdir -p ../.in_place; \
+for f in getoff-amd64-linux  ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../auxprogs/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../auxprogs/$f.dSYM ../.in_place; \
+done
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/auxprogs'
+ /bin/mkdir -p '/home/alex/research/herbgrind/valgrind/herbgrind-install/bin'
+  /usr/bin/install -c valgrind-listener valgrind-di-server '/home/alex/research/herbgrind/valgrind/herbgrind-install/bin'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in getoff-amd64-linux ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+make[4]: Nothing to be done for 'install-data-am'.
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/auxprogs'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/auxprogs'
+Making install in mpi
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/mpi'
+mkdir -p ../.in_place; \
+for f in   ; do \
+  rm -f ../.in_place/$f; \
+  ln -f -s ../mpi/$f ../.in_place; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+mkdir -p ../.in_place; \
+for f in ; do \
+  rm -f ../.in_place/$f.dSYM; \
+  ln -f -s ../mpi/$f.dSYM ../.in_place; \
+done
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/mpi'
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in  ; do \
+  /usr/bin/install -c $f /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+for f in ; do \
+  if [ ! -e $f.dSYM  -o  $f -nt $f.dSYM ] ; then \
+      echo "dsymutil $f"; \
+      dsymutil $f; \
+  fi; \
+done
+/bin/sh /home/alex/research/herbgrind/valgrind/install-sh -d /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+for f in ; do \
+  cp -R $f.dSYM /home/alex/research/herbgrind/valgrind/herbgrind-install/lib/valgrind; \
+done
+make[4]: Nothing to be done for 'install-data-am'.
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/mpi'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/mpi'
+Making install in solaris
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/solaris'
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/solaris'
+make[4]: Nothing to be done for 'install-exec-am'.
+make[4]: Nothing to be done for 'install-data-am'.
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/solaris'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/solaris'
+Making install in docs
+make[3]: Entering directory '/home/alex/research/herbgrind/valgrind/docs'
+make[4]: Entering directory '/home/alex/research/herbgrind/valgrind/docs'
+make[4]: Nothing to be done for 'install-exec-am'.
+make  install-data-hook
+make[5]: Entering directory '/home/alex/research/herbgrind/valgrind/docs'
+set -e; \
+if test -r html ; then \
+	mkdir -p /home/alex/research/herbgrind/valgrind/herbgrind-install/share/doc/valgrind; \
+	cp -r html /home/alex/research/herbgrind/valgrind/herbgrind-install/share/doc/valgrind; \
+fi
+for f in *.1 ; do \
+	if test -r $f ; then \
+		mkdir -p /home/alex/research/herbgrind/valgrind/herbgrind-install/share/man/man1; \
+		cp $f /home/alex/research/herbgrind/valgrind/herbgrind-install/share/man/man1; \
+	fi \
+done
+set -e; \
+if test -r index.pdf ; then \
+	mkdir -p /home/alex/research/herbgrind/valgrind/herbgrind-install/share/doc/valgrind; \
+	cp index.pdf /home/alex/research/herbgrind/valgrind/herbgrind-install/share/doc/valgrind/valgrind_manual.pdf; \
+fi
+set -e; \
+if test -r index.ps ; then \
+	mkdir -p /home/alex/research/herbgrind/valgrind/herbgrind-install/share/doc/valgrind; \
+	cp index.ps /home/alex/research/herbgrind/valgrind/herbgrind-install/share/doc/valgrind/valgrind_manual.ps; \
+fi
+make[5]: Leaving directory '/home/alex/research/herbgrind/valgrind/docs'
+make[4]: Leaving directory '/home/alex/research/herbgrind/valgrind/docs'
+make[3]: Leaving directory '/home/alex/research/herbgrind/valgrind/docs'
+make[2]: Leaving directory '/home/alex/research/herbgrind/valgrind'
+make[1]: Leaving directory '/home/alex/research/herbgrind/valgrind'
+make: Leaving directory '/home/alex/research/herbgrind'

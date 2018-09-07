@@ -1,0 +1,3 @@
+
+haswell-test.out: haswell-test.cpp Makefile.haswell-test
+	g++ -Wall -Weffc++ -std=c++14 -Wextra -O3 -march=haswell -I../valgrind/herbgrind/include/ -I/usr/include/eigen3 -o haswell-test.out haswell-test.cpp
