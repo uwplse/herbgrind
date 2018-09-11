@@ -32,10 +32,8 @@ def test(prog):
               "stderr::", last_stderr,
               sep="\n")
         return False
-    if compare_results(actual_text, expected_text):
-        print("Outputs match.")
-        return True
-    else:
+
+    if not compare_results(actual_text, expected_text):
         if actual_text == "":
             print("Empty file at {}!".format(prog + ".gh"))
         if expected_text == "":
@@ -46,6 +44,22 @@ def test(prog):
         print("stdout::", stdout.decode('utf-8'), sep="\n")
         print("stderr::", last_stderr, sep="\n")
         return False
+
+    native_proc = subprocess.Popen([prog], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    native_stdout, native_stderr = native_proc.communicate()
+    native_status = native_proc.poll()
+
+    if native_status:
+        print("Native command failed (status {})".format(native_status))
+
+    if stdout != native_stdout:
+        print("Stdout does not match native")
+        print("Actual::", stdout.decode('utf-8'), sep="\n")
+        print("Expected::", native_stdout.decode('utf-8'), sep="\n")
+        return False
+
+    print("Outputs match.")
+    return True
 
 if __name__ == "__main__":
     for arg in sys.argv[1:]:
