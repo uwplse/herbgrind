@@ -9,19 +9,20 @@ def compare_results(actual, expected):
     return HEX_RE.sub("<addr>", actual) == HEX_RE.sub("<addr>", expected)
 
 def test(prog):
-    global success
     command = ["./valgrind/herbgrind-install/bin/valgrind", "--tool=herbgrind",
                "--output-sexp", prog]
-    print("Calling `{}`...".format(" ".join(command)), end="")
+    print("Calling `{}`...".format(" ".join(command)), end=" ")
     proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = proc.communicate()
     status = proc.poll()
     full_stderr = stderr.decode('utf-8')
     stderr_lines = full_stderr.splitlines()
     last_stderr = "\n".join(stderr_lines[-200:])
+
     if status:
         print("Command failed (status {}).".format(status))
-        success = False
+        return False
+
     try:
         with open(prog + ".gh") as actual, open(prog + ".expected") as expected:
             actual_text, expected_text = actual.read(), expected.read()
