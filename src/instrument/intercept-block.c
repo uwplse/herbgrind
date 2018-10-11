@@ -48,7 +48,7 @@ const char * printfNames[] = {
 void maybeInterceptBlock(IRSB* sbOut, void* blockAddr, void* srcAddr){
   const char * fnname;
   Bool isStart =
-    VG_(get_fnname_if_entry)((uintptr_t)blockAddr, &fnname);
+    VG_(get_fnname_if_entry)(VG_(current_DiEpoch)(), (uintptr_t)blockAddr, &fnname);
   if (isStart){
     const int numPrintfNames = sizeof(printfNames) / sizeof(const char*);
     for(int i = 0; i < numPrintfNames; ++i){

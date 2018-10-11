@@ -93,13 +93,13 @@ void ppAddr(Addr addr){
   const HChar* src_filename;
   const HChar* fnname;
   UInt src_line;
-  if (VG_(get_filename_linenum)(addr, &src_filename,
+  if (VG_(get_filename_linenum)(VG_(current_DiEpoch)(), addr, &src_filename,
                                 NULL, &src_line)){
-    VG_(get_fnname)(addr, &fnname);
+    VG_(get_fnname)(VG_(current_DiEpoch)(), addr, &fnname);
     VG_(printf)("%s:%u in %s (addr %lX)",
                 src_filename, src_line, fnname, addr);
   } else {
-    if (VG_(get_fnname)(addr, &fnname)){
+    if (VG_(get_fnname)(VG_(current_DiEpoch)(), addr, &fnname)){
       VG_(printf)("%s (addr %lX)", fnname, addr);
     } else {
       VG_(printf)("addr %lX", addr);
@@ -107,7 +107,7 @@ void ppAddr(Addr addr){
   }
   if (print_object_files){
     const HChar* objname;
-    if (!VG_(get_objname)(addr, &objname)){
+    if (!VG_(get_objname)(VG_(current_DiEpoch)(), addr, &objname)){
       objname = "Unknown Object";
     }
     VG_(printf)(" in %s", objname);
@@ -121,7 +121,7 @@ char* getAddrString(Addr addr){
   char _buf[MAX_ADDR_STRING_SIZE];
   BBuf* buf = mkBBuf(MAX_ADDR_STRING_SIZE, _buf);
 
-  if (VG_(get_filename_linenum)(addr, &src_filename,
+  if (VG_(get_filename_linenum)(VG_(current_DiEpoch)(), addr, &src_filename,
                                 NULL, &src_line)){
     fnname = getFnName(addr);
     printBBuf(buf, "%s:%u in %s (addr %lX)",
@@ -131,7 +131,7 @@ char* getAddrString(Addr addr){
   }
   if (print_object_files){
     const HChar* objname;
-    if (!VG_(get_objname)(addr, &objname)){
+    if (!VG_(get_objname)(VG_(current_DiEpoch)(), addr, &objname)){
       objname = "Unknown Object";
     }
     printBBuf(buf, " in %s", objname);
@@ -168,7 +168,7 @@ int numFloatArgs(ShadowOpInfo* opinfo){
 // WARNING: this function never frees its result, call sparingly
 const char* getFnName(Addr addr){
   const char* fnname;
-  VG_(get_fnname)(addr, &fnname);
+  VG_(get_fnname)(VG_(current_DiEpoch)(), addr, &fnname);
   if (isPrefix("caml", fnname)){
     char* demangledFnname = VG_(perm_malloc)(sizeof(char) * VG_(strlen)(fnname), 1);
     int n = 0;

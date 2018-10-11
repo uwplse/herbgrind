@@ -973,7 +973,8 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
     VarMap* varMap =
       mkVarMap(groupsWithoutNonVars(expr, expr->branch.groups, MAX_FOLD_DEPTH));
     const char* toplevel_func;
-    if (!VG_(get_fnname)(expr->branch.op->op_addr, &toplevel_func)){
+    if (!VG_(get_fnname)(VG_(current_DiEpoch)(),
+                         expr->branch.op->op_addr, &toplevel_func)){
       toplevel_func = "none";
     }
     char* _buf = VG_(malloc)("buffer data", MAX_EXPR_LEN);
@@ -1096,7 +1097,8 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
           tl_assert(expr->branch.nargs > 1);
           if (arg0->isConst && arg0->constVal == 0.0){
             const char* fnname;
-            if (!(VG_(get_fnname)(expr->branch.op->op_addr, &fnname))){
+            if (!(VG_(get_fnname)(VG_(current_DiEpoch)(),
+                                  expr->branch.op->op_addr, &fnname))){
               fnname = "none";
             }
             if (VG_(strcmp)(fnname, parent_func)){
@@ -1134,7 +1136,7 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
     printBBuf(buf, " ");
 
     const char* fnname;
-    if (!(VG_(get_fnname)(expr->branch.op->op_addr, &fnname))){
+    if (!(VG_(get_fnname)(VG_(current_DiEpoch)(), expr->branch.op->op_addr, &fnname))){
       fnname = "none";
     }
     if (VG_(strcmp)(fnname, parent_func)){
