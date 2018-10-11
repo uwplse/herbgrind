@@ -63,7 +63,7 @@ Addr getCallAddr(void){
     // performance bottleneck, and it might be nice to have the
     // robustness somewhere down the line.
     const HChar* filename;
-    if (VG_(get_filename)(addr, &filename)){
+    if (VG_(get_filename)(VG_(current_DiEpoch)(), addr, &filename)){
       if (VG_(strcmp)(filename, "mathwrap.c") == 0) continue;
       if (VG_(strcmp)(filename, "printf-wrap.c") == 0) continue;
     }

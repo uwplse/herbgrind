@@ -76,7 +76,7 @@ void writeOutput(void){
         continue;
       }
 
-      if (!VG_(get_filename_linenum)(markInfo->addr, &src_filename,
+      if (!VG_(get_filename_linenum)(VG_(current_DiEpoch)(), markInfo->addr, &src_filename,
                                      NULL, &src_line)){
         src_line = -1;
         src_filename = "Unknown";
@@ -99,7 +99,7 @@ void writeOutput(void){
                   markInfo->addr);
         if (print_object_files){
           const char* objfile_name;
-          if (!VG_(get_objname)(markInfo->addr, &objfile_name)){
+          if (!VG_(get_objname)(VG_(current_DiEpoch)(), markInfo->addr, &objfile_name)){
             objfile_name = "Unknown Object";
           }
           printBBuf(buf,
@@ -180,13 +180,13 @@ void writeOutput(void){
     const char* objname;
     unsigned int src_line;
 
-    if (!VG_(get_filename_linenum)(intMarkInfo->addr, &src_filename,
-                                   NULL, &src_line)){
+    if (!VG_(get_filename_linenum)(VG_(current_DiEpoch)(), intMarkInfo->addr,
+                                   &src_filename, NULL, &src_line)){
       src_line = -1;
       src_filename = "Unknown";
     }
     if (print_object_files &&
-        !VG_(get_objname)(intMarkInfo->addr, &objname)){
+        !VG_(get_objname)(VG_(current_DiEpoch)(), intMarkInfo->addr, &objname)){
       objname = "Unknown object";
     }
 
@@ -335,13 +335,13 @@ void writeInfluences(Int fileD, InfluenceList influences){
       varString = symbExprVarString(numVars);
     }
 
-    if (!VG_(get_filename_linenum)(opinfo->op_addr, &src_filename,
+    if (!VG_(get_filename_linenum)(VG_(current_DiEpoch)(), opinfo->op_addr, &src_filename,
                                    NULL, &src_line)){
       src_line = -1;
       src_filename = "Unknown";
     }
     const char* fnname = getFnName(opinfo->op_addr);
-    if (!VG_(get_objname)(opinfo->op_addr, &objname)){
+    if (!VG_(get_objname)(VG_(current_DiEpoch)(), opinfo->op_addr, &objname)){
       objname = "Unknown object";
     }
 

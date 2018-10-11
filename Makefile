@@ -8,10 +8,8 @@ MPFR_VERSION=3.1.3
 OPENLIBM_VERSION=0.4.1
 MPC_VERSION=1.1.0
 # The repo to clone valgrind from.
-VALGRIND_REPO_LOCATION=svn://svn.valgrind.org/valgrind/trunk
-VALGRIND_REVISION=15800
-VEX_REPO_LOCATION=svn://svn.valgrind.org/vex/trunk
-VEX_REVISION=3210
+VALGRIND_REPO_LOCATION=git://sourceware.org/git/valgrind.git
+VALGRIND_COMMIT=ca2f73592e8e74a5328df0a65e0831bc1fc6dd28
 # The architecture thhat we're buiding herbgrind for, in the syntax of
 # valgrind filename conventions for this sort of thing.
 TARGET_PLAT:=$(shell test `uname` = "Darwin" && echo "amd64-darwin" || echo "amd64-linux")
@@ -94,8 +92,8 @@ all: compile
 # repo currently exists.
 valgrind/README:
 # Check out valgrind from source.
-	svn co -q --ignore-externals $(VALGRIND_REPO_LOCATION)@$(VALGRIND_REVISION) valgrind
-	svn co -q $(VEX_REPO_LOCATION)@$(VEX_REVISION) valgrind/VEX
+	git clone $(VALGRIND_REPO_LOCATION)
+	git -C valgrind reset --hard $(VALGRIND_COMMIT)
 # Make a directory for the herbgrind tool
 	mkdir valgrind/herbgrind
 # ...and copy the files from the top level herbgrind folder into it.
@@ -119,7 +117,7 @@ valgrind/herbgrind/Makefile: valgrind/Makefile src/Makefile.am
 valgrind/Makefile: valgrind/README
 # Run a script to modify the setup files to include the herbgrind
 # directory.
-	svn revert --depth=infinity valgrind
+	git -C valgrind reset --hard $(VALGRIND_COMMIT)
 	cd setup && ./modify_makefiles.sh
 # Run the autogen and configure scripts to turn the .am file into a
 # real makefile.
