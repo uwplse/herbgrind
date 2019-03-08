@@ -141,6 +141,7 @@ VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, FloatBlocks numBlocks){
       newTemp->values[i] = values[i];
       ownShadowValue(values[i]);
     }
+    tl_assert(INT(newTemp->num_blocks) > 1 || newTemp->values[0]->type == Vt_Single);
     return newTemp;
   } else {
     return NULL;
@@ -192,6 +193,17 @@ void removeMemShadow(Addr64 addr){
     }
     prevEntry = node;
   }
+}
+
+VG_REGPARM(1) ShadowValue* toSingle(ShadowValue* val){
+  ShadowValue* result = copyShadowValue(val);
+  result->type = Vt_Single;
+  return result;
+}
+VG_REGPARM(1) ShadowValue* toDouble(ShadowValue* val){
+  ShadowValue* result = copyShadowValue(val);
+  result->type = Vt_Double;
+  return result;
 }
 VG_REGPARM(0) TableValueEntry* newTableValueEntry(void){
   return VG_(malloc)("tableEntry", sizeof(TableValueEntry));
@@ -344,6 +356,7 @@ ShadowValue* mkShadowValue(ValueType type, double value){
 
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
   ShadowTemp* result = mkShadowTemp(temp->num_blocks);
+  tl_assert(INT(result->num_blocks) > 1 || result->values[0]->type == Vt_Single);
   tl_assert(INT(result->num_blocks) == INT(temp->num_blocks));
   for(int i = 0; i < INT(temp->num_blocks); ++i){
     ownShadowValue(temp->values[i]);
@@ -372,6 +385,7 @@ VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
                   temp->values[i], temp, result->values[i], result);
     }
   }
+  tl_assert(INT(result->num_blocks) > 1 || result->values[0]->type == Vt_Single);
   return result;
 }
 inline

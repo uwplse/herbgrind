@@ -239,6 +239,11 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
       if (inputPreexisting == NULL){
         vals[0] = runIndex(sbOut, runArrow(sbOut, shadowInputs[0], ShadowTemp, values),
                            ShadowValue*, 0);
+        if (op_code == Iop_F32toF64){
+          vals[0] = runPureCCall64(sbOut, toDouble, vals[0]);
+        } else {
+          vals[0] = runPureCCall64(sbOut, toSingle, vals[0]);
+        }
         tl_assert(shadowInputs[0]);
         shadowOutput = runMkShadowTempValues(sbOut, dest_size, vals);
       } else {
@@ -246,6 +251,11 @@ void instrumentConversion(IRSB* sbOut, IROp op_code, IRExpr** argExprs,
                             runArrowG(sbOut, inputPreexisting,
                                       shadowInputs[0], ShadowTemp, values),
                             ShadowValue*, 0);
+        if (op_code == Iop_F32toF64){
+          vals[0] = runDirtyG_1_1(sbOut, inputPreexisting, toDouble, vals[0]);
+        } else {
+          vals[0] = runDirtyG_1_1(sbOut, inputPreexisting, toSingle, vals[0]);
+        }
         tl_assert(shadowInputs[0]);
         shadowOutput = runMkShadowTempValuesG(sbOut,
                                               inputPreexisting, NULL,
