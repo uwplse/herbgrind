@@ -122,6 +122,8 @@ VG_REGPARM(1) void disownShadowTempNonNull(ShadowTemp* temp);
 VG_REGPARM(1) void disownShadowTemp(ShadowTemp* temp);
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp);
 VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp);
+VG_REGPARM(1) ShadowValue* toSingle(ShadowValue* v);
+VG_REGPARM(1) ShadowValue* toDouble(ShadowValue* v);
 
 ShadowTemp* mkShadowTemp(FloatBlocks num_blocks);
 void freeShadowTemp(ShadowTemp* temp);
