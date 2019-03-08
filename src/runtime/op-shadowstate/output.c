@@ -180,8 +180,8 @@ void writeOutput(void){
     const char* objname;
     unsigned int src_line;
 
-    if (!VG_(get_filename_linenum)(VG_(current_DiEpoch)(), intMarkInfo->addr,
-                                   &src_filename, NULL, &src_line)){
+    if (!VG_(get_filename_linenum)(VG_(current_DiEpoch)(), intMarkInfo->addr, &src_filename,
+                                   NULL, &src_line)){
       src_line = -1;
       src_filename = "Unknown";
     }
