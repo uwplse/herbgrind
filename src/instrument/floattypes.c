@@ -1066,12 +1066,14 @@ void inferTypes(IRSB* sbIn){
               // often polymorphic.
               if (isConversionOp(op)){
                 ValueType arg1Type = conversionArgPrecision(op, 0);
-                if (arg1Type == Vt_Unknown && tempBlockType(destTemp, 0) == Vt_NonFloat){
+                if ((arg1Type == Vt_Unknown || arg1Type == Vt_SingleOrNonFloat)
+                    && tempBlockType(destTemp, 0) == Vt_NonFloat){
                   arg1Type = Vt_NonFloat;
                 }
 
                 ValueType arg2Type = conversionArgPrecision(op, 1);
-                if (arg2Type == Vt_Unknown && tempBlockType(destTemp, 0) == Vt_NonFloat){
+                if ((arg2Type == Vt_Unknown || arg2Type == Vt_SingleOrNonFloat)
+                    && tempBlockType(destTemp, 0) == Vt_NonFloat){
                   arg2Type = Vt_NonFloat;
                 }
 
@@ -1116,7 +1118,8 @@ void inferTypes(IRSB* sbIn){
               IROp op = expr->Iex.Unop.op;
               if (isConversionOp(op)){
                 ValueType srcType = conversionArgPrecision(op, 0);
-                if (srcType == Vt_Unknown && tempBlockType(destTemp, 0) == Vt_NonFloat){
+                if ((srcType == Vt_Unknown || srcType == Vt_SingleOrNonFloat)
+                    && tempBlockType(destTemp, 0) == Vt_NonFloat){
                   srcType = Vt_NonFloat;
                 }
                 for(int i = 0; i < INT(exprSize(sbIn->tyenv, arg)); ++i){
