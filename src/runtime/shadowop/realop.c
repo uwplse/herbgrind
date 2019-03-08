@@ -276,7 +276,7 @@ void execRealOp(IROp op_code, Real* result, ShadowValue** args){
           args[2]->real->RVAL);
     break;
   default:
-    VG_(printf)("Don't recognize (%d) ", op_code);
+    VG_(printf)("Don't recognize (%u) ", op_code);
     ppIROp_Extended(op_code);
     VG_(printf)("\n");
     tl_assert(0);

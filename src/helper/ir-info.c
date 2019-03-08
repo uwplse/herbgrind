@@ -175,7 +175,7 @@ int getNativeNumFloatArgs(IROp_Extended op_code){
   case Iop_MSubF64r32:
     return 3;
   default:
-    VG_(printf)("Op %d: ", op_code);
+    VG_(printf)("Op %u: ", op_code);
     ppIROp_Extended(op_code);
     VG_(printf)("\n");
     tl_assert(0);

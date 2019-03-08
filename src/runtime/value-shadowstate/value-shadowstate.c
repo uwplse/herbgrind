@@ -96,7 +96,7 @@ VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
       if (PRINT_VALUE_MOVES){
         if (temp->values[j] != NULL){
           VG_(printf)("Cleaning up value %p (old rc %lu) "
-                      "from temp %p, block %d in %d at end of block.\n",
+                      "from temp %p, block %d in %u at end of block.\n",
                       temp->values[j], temp->values[j]->ref_count,
                       temp, j, entries[i]);
         }
