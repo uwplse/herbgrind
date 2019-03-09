@@ -60,8 +60,8 @@ void instrumentLoad(IRSB* sbOut, IRTemp dest,
                     IRExpr* addr, IRType type);
 void instrumentLoadSmallButSlow(IRSB* sbOut, IRTemp dest,
                                 IRExpr* addr, IRType type);
-#define LOADG_FALLBACK_THRESHOLD 250
-#define LOAD_FALLBACK_THRESHOLD 315
+#define LOADG_FALLBACK_THRESHOLD 150
+#define LOAD_FALLBACK_THRESHOLD 215
 void instrumentLoadG(IRSB* sbOut, IRTemp dest,
                      IRExpr* altValue, IRExpr* guard,
                      IRExpr* addr, IRLoadGOp conversion);
