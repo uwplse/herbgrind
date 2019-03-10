@@ -430,6 +430,20 @@ void ownShadowValue(ShadowValue* val){
   }
 }
 
+VG_REGPARM(2) ShadowTemp* mkShadowTempDummy(FloatBlocks numBlocks, ValueType valueType){
+  tl_assert(valueType == Vt_Single || valueType == Vt_Double);
+  tl_assert(valueType == Vt_Single || INT(numBlocks) % 2 == 0);
+  ShadowTemp* result = mkShadowTemp(numBlocks);
+  for (int i = 0; i < INT(numBlocks); ++i){
+    if (valueType == Vt_Double && i % 2 == 1){
+      result->values[i] = NULL;
+    } else {
+      result->values[i] = mkShadowValue(valueType, 0.0);
+    }
+  }
+  return result;
+}
+
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(UWord value){
   ShadowTemp* result = mkShadowTemp(FB(2));
   result->values[0] = mkShadowValue(Vt_Double, *(double*)&value);
