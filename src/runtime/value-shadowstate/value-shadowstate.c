@@ -356,8 +356,6 @@ ShadowValue* mkShadowValue(ValueType type, double value){
 
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
   ShadowTemp* result = mkShadowTemp(temp->num_blocks);
-  tl_assert(INT(result->num_blocks) > 1 || result->values[0]->type == Vt_Single);
-  tl_assert(INT(result->num_blocks) == INT(temp->num_blocks));
   for(int i = 0; i < INT(temp->num_blocks); ++i){
     ownShadowValue(temp->values[i]);
     result->values[i] = temp->values[i];
@@ -369,6 +367,8 @@ VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
       }
     }
   }
+  tl_assert(INT(result->num_blocks) > 1 || result->values[0]->type == Vt_Single);
+  tl_assert(INT(result->num_blocks) == INT(temp->num_blocks));
   return result;
 }
 VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
