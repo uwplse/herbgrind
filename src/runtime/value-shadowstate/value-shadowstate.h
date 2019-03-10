@@ -138,6 +138,7 @@ ShadowValue* mkShadowValueBare(ValueType type);
 ShadowValue* mkShadowValue(ValueType type, double value);
 VG_REGPARM(2) ShadowValue* mkShadowValue_wrapper(ValueType type, UWord value);
 
+VG_REGPARM(2) ShadowTemp* mkShadowTempDummy(FloatBlocks numBlocks, ValueType valueTypes);
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(UWord value);
 VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(UWord* values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(UWord value);
