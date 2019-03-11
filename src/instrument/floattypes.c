@@ -108,6 +108,9 @@ Bool refineTempBlockType(int tempIdx, int blockIdx, ValueType type){
              "Temp index %d is invalid!!\n", tempIdx);
   /* VG_(printf)("Refining type of t%d[%d] from %s with %s\n", */
   /*             tempIdx, blockIdx, typeName(tempTypes[tempIdx][blockIdx]), typeName(type)); */
+  if (type == Vt_Double && blockIdx % 2 == 1) {
+    type = Vt_NonFloat;
+  }
   ValueType refinedType = typeMeet(type, tempBlockType(tempIdx, blockIdx));
   if (tempTypes[tempIdx][blockIdx] == refinedType){
     return False;
