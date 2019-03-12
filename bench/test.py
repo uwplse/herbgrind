@@ -4,9 +4,13 @@ import subprocess
 import sys
 import re
 HEX_RE = re.compile(r"\(instr-addr [0-9a-fA-F]+\)")
+LINE_RE = re.compile(r"\(line-num [0-9]+\)")
 
+def sanitize(string):
+    return HEX_RE.sub("<addr>", LINE_RE.sub("line", string))
 def compare_results(actual, expected):
-    return HEX_RE.sub("<addr>", actual) == HEX_RE.sub("<addr>", expected)
+    # print("Comparing: {} and {}".format(sanitize(actual), sanitize(expected)))
+    return sanitize(actual) == sanitize(expected)
 
 def test(prog):
     command = ["./valgrind/herbgrind-install/bin/valgrind", "--tool=herbgrind",
