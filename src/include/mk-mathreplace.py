@@ -433,7 +433,7 @@ def realArgsList(i, argsString):
 def write_switch_run(f, l):
     f.write("  switch(op){ \\\n")
     for op in l:
-        argsString = "((float*)args)" if op.precision == 32 else "args"
+        argsString = "args"
         if op.isComplex:
             f.write("  case {}: \\\n".format(op.enumR()))
             f.write("    result = creal({}({}));\\\n"

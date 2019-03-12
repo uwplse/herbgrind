@@ -60,10 +60,10 @@ static Bool hg_handle_client_request(ThreadId tid, UWord* arg, UWord* ret) {
       double double_args[3];
       double double_result;
       for (int i = 0; i < getWrappedNumArgs((OpType)arg[1]); ++i){
-        double_args[i] = ((float*)arg[2])[i];
+        double_args[i] = ((float*)arg[3])[i];
       }
-      performWrappedOp((OpType)arg[1], double_args, &double_result);
-      *(float*)arg[3] = double_result;
+      performWrappedOp((OpType)arg[1], &double_result, double_args);
+      *(float*)arg[2] = double_result;
     }
     break;
   case VG_USERREQ__PERFORM_SPECIAL_OP:
