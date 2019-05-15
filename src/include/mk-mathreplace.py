@@ -564,6 +564,8 @@ addOp("fma", "fused multiply-add", 3)
 
 addExtraOp("cdivr")
 addExtraOp("cdivi")
+addExtraOp("cmulr")
+addExtraOp("cmuli")
 addComplexOp("log", "log", 1)
 addComplexOp("exp", "exp", 1)
 addComplexOp("pow", "pow", 2)
