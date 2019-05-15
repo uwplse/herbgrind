@@ -256,27 +256,12 @@ void VG_REPLACE_FUNCTION_ZU(LIBM, sincos)(double x, double* p_sin, double* p_cos
   HERBGRIND_PERFORM_SPECIAL_OP(OP_SINCOS, args, p_sin, p_cos);
 }
 
-complex float VG_REPLACE_FUNCTION_ZU(LIBM, __mulsc3)(complex float x, complex float y);
-complex float VG_REPLACE_FUNCTION_ZU(LIBM, __mulsc3)(complex float x, complex float y){
-  return x * y;
-}
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __muldc3)(complex double x, complex double y);
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __muldc3)(complex double x, complex double y){
-  return x * y;
-}
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __multc3)(complex double x, complex double y);
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __multc3)(complex double x, complex double y){
-  return x * y;
-}
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __mulxc3)(complex double x, complex double y);
-complex double VG_REPLACE_FUNCTION_ZU(LIBM, __mulxc3)(complex double x, complex double y){
-  return x * y;
-}
+WRAP_BINARY_COMPLEX_64_BUILTIN(__mulsc3, OP_CMUL);
+WRAP_BINARY_COMPLEX_64_BUILTIN(__muldc3, OP_CMUL);
+WRAP_BINARY_COMPLEX_64_BUILTIN(__multc3, OP_CMUL);
+WRAP_BINARY_COMPLEX_64_BUILTIN(__mulxc3, OP_CMUL);
 
-complex float VG_REPLACE_FUNCTION_ZU(LIBM, __divsc3)(complex float x, complex float y);
-complex float VG_REPLACE_FUNCTION_ZU(LIBM, __divsc3)(complex float x, complex float y){
-  return x / y;
-}
+WRAP_BINARY_COMPLEX_64_BUILTIN(__divsc3, OP_CDIV);
 WRAP_BINARY_COMPLEX_64_BUILTIN(__divdc3, OP_CDIV);
 WRAP_BINARY_COMPLEX_64_BUILTIN(__divtc3, OP_CDIV);
 WRAP_BINARY_COMPLEX_64_BUILTIN(__divxc3, OP_CDIV);
