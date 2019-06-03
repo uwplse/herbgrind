@@ -9,7 +9,7 @@ OPENLIBM_VERSION=0.4.1
 MPC_VERSION=1.1.0
 # The repo to clone valgrind from.
 VALGRIND_REPO_LOCATION=git://sourceware.org/git/valgrind.git
-VALGRIND_COMMIT=ca2f73592e8e74a5328df0a65e0831bc1fc6dd28
+VALGRIND_REVISION=3217459c723df997a0c86c97b55ba539240fa111
 # The architecture thhat we're buiding herbgrind for, in the syntax of
 # valgrind filename conventions for this sort of thing.
 TARGET_PLAT:=$(shell test `uname` = "Darwin" && echo "amd64-darwin" || echo "amd64-linux")
@@ -92,16 +92,13 @@ all: compile
 # repo currently exists.
 valgrind/README:
 # Check out valgrind from source.
-	git clone $(VALGRIND_REPO_LOCATION)
-	git -C valgrind reset --hard $(VALGRIND_COMMIT)
-# Make a directory for the herbgrind tool
-	mkdir valgrind/herbgrind
-# ...and copy the files from the top level herbgrind folder into it.
-	cp -r src/* valgrind/herbgrind/
+	git clone $(VALGRIND_REPO_LOCATION) valgrind
+	git -C valgrind checkout $(VALGRIND_REVISION)
+	cd setup && ./modify_makefiles.sh
 
 # The herbgrind makefile needs to be recreated, if it's source .am
 # file changes or we've just cloned the valgrind repo
-valgrind/herbgrind/Makefile: valgrind/Makefile src/Makefile.am
+valgrind/herbgrind/Makefile: valgrind/README src/Makefile.am
 # Copy over the latest version of all the herbgrind stuff, including
 # the .am file that we need for this step.
 	rm -r -f valgrind/herbgrind/*
@@ -114,24 +111,10 @@ valgrind/herbgrind/Makefile: valgrind/Makefile src/Makefile.am
 		            --enable-only64bit \
 		            --build=$(TARGET_PLAT)
 
-valgrind/Makefile: valgrind/README
-# Run a script to modify the setup files to include the herbgrind
-# directory.
-	git -C valgrind reset --hard $(VALGRIND_COMMIT)
-	cd setup && ./modify_makefiles.sh
-# Run the autogen and configure scripts to turn the .am file into a
-# real makefile.
-	cd valgrind && ./autogen.sh
-	cd valgrind && \
-		CFLAGS="-fno-stack-protector" \
-		./configure --prefix=$(shell pwd)/valgrind/$(HG_LOCAL_INSTALL_NAME) \
-		            --enable-only64bit \
-		            --build=$(TARGET_PLAT)
-
 # This is the target we call to bring in the dependencies, like gmp,
 # mpfr, and valgrind, and to make sure the herbgrind files have been
 # initially copied over.
-setup: valgrind/Makefile $(DEPS)
+setup: valgrind/herbgrind/Makefile $(DEPS)
 
 src/include/mathreplace-funcs.h: src/include/mk-mathreplace.py
 # Then, let's run the python script to generate the mathreplace header
@@ -141,7 +124,7 @@ src/include/mathreplace-funcs.h: src/include/mk-mathreplace.py
 
 # This is the target we call to actually get the executable built so
 # we can run herbgrind.
-valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) valgrind/Makefile src/Makefile.am setup $(DEPS) src/include/mathreplace-funcs.h
+valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT): $(SOURCES) $(HEADERS) src/Makefile.am setup $(DEPS) src/include/mathreplace-funcs.h
 # Copy over the herbgrind sources again, because why the hell not.
 	cp -r src/* valgrind/herbgrind
 # Run make install to build the binaries and put them in the right

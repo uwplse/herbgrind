@@ -172,13 +172,13 @@ ShadowTemp* getArg(int argIdx, IROp op, IRTemp argTemp){
       result->values[j] =
         mkShadowValue(argPrecision, value);
       if (PRINT_VALUE_MOVES){
-        VG_(printf)("Making shadow value %p for argument %d block %d (%p) in t%d.\n",
+        VG_(printf)("Making shadow value %p for argument %d block %d (%p) in t%u.\n",
                     result->values[j], argIdx, j, result, argTemp);
       }
     }
     if (argTemp != -1){
       if (PRINT_TEMP_MOVES){
-        VG_(printf)("Storing shadow temp %p (%d blocks) at t%d for argument\n",
+        VG_(printf)("Storing shadow temp %p (%d blocks) at t%u for argument\n",
                     result, INT(numBlocks), argTemp);
       }
       shadowTemps[argTemp] = result;

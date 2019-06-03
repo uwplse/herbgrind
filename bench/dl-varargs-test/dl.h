@@ -1,0 +1,2 @@
+
+double sum(int nargs, ...);

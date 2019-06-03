@@ -122,6 +122,8 @@ VG_REGPARM(1) void disownShadowTempNonNull(ShadowTemp* temp);
 VG_REGPARM(1) void disownShadowTemp(ShadowTemp* temp);
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp);
 VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp);
+VG_REGPARM(1) ShadowValue* toSingle(ShadowValue* v);
+VG_REGPARM(1) ShadowValue* toDouble(ShadowValue* v);
 
 ShadowTemp* mkShadowTemp(FloatBlocks num_blocks);
 void freeShadowTemp(ShadowTemp* temp);
@@ -136,6 +138,7 @@ ShadowValue* mkShadowValueBare(ValueType type);
 ShadowValue* mkShadowValue(ValueType type, double value);
 VG_REGPARM(2) ShadowValue* mkShadowValue_wrapper(ValueType type, UWord value);
 
+VG_REGPARM(2) ShadowTemp* mkShadowTempDummy(FloatBlocks numBlocks, ValueType valueTypes);
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(UWord value);
 VG_REGPARM(1) ShadowTemp* mkShadowTempTwoDoubles(UWord* values);
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneSingle(UWord value);

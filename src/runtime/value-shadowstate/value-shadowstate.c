@@ -96,7 +96,7 @@ VG_REGPARM(2) void dynamicCleanup(int nentries, IRTemp* entries){
       if (PRINT_VALUE_MOVES){
         if (temp->values[j] != NULL){
           VG_(printf)("Cleaning up value %p (old rc %lu) "
-                      "from temp %p, block %d in %d at end of block.\n",
+                      "from temp %p, block %d in %u at end of block.\n",
                       temp->values[j], temp->values[j]->ref_count,
                       temp, j, entries[i]);
         }
@@ -141,6 +141,7 @@ VG_REGPARM(2) ShadowTemp* dynamicLoad(Addr memSrc, FloatBlocks numBlocks){
       newTemp->values[i] = values[i];
       ownShadowValue(values[i]);
     }
+    tl_assert(INT(newTemp->num_blocks) > 1 || newTemp->values[0]->type == Vt_Single);
     return newTemp;
   } else {
     return NULL;
@@ -192,6 +193,17 @@ void removeMemShadow(Addr64 addr){
     }
     prevEntry = node;
   }
+}
+
+VG_REGPARM(1) ShadowValue* toSingle(ShadowValue* val){
+  ShadowValue* result = copyShadowValue(val);
+  result->type = Vt_Single;
+  return result;
+}
+VG_REGPARM(1) ShadowValue* toDouble(ShadowValue* val){
+  ShadowValue* result = copyShadowValue(val);
+  result->type = Vt_Double;
+  return result;
 }
 VG_REGPARM(0) TableValueEntry* newTableValueEntry(void){
   return VG_(malloc)("tableEntry", sizeof(TableValueEntry));
@@ -344,7 +356,6 @@ ShadowValue* mkShadowValue(ValueType type, double value){
 
 VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
   ShadowTemp* result = mkShadowTemp(temp->num_blocks);
-  tl_assert(INT(result->num_blocks) == INT(temp->num_blocks));
   for(int i = 0; i < INT(temp->num_blocks); ++i){
     ownShadowValue(temp->values[i]);
     result->values[i] = temp->values[i];
@@ -356,6 +367,8 @@ VG_REGPARM(1) ShadowTemp* copyShadowTemp(ShadowTemp* temp){
       }
     }
   }
+  tl_assert(INT(result->num_blocks) > 1 || result->values[0]->type == Vt_Single);
+  tl_assert(INT(result->num_blocks) == INT(temp->num_blocks));
   return result;
 }
 VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
@@ -372,6 +385,7 @@ VG_REGPARM(1) ShadowTemp* deepCopyShadowTemp(ShadowTemp* temp){
                   temp->values[i], temp, result->values[i], result);
     }
   }
+  tl_assert(INT(result->num_blocks) > 1 || result->values[0]->type == Vt_Single);
   return result;
 }
 inline
@@ -414,6 +428,20 @@ void ownShadowValue(ShadowValue* val){
   if (PRINT_VALUE_MOVES){
     VG_(printf)("Owning shadow value %p (new ref count %lu)\n", val, val->ref_count);
   }
+}
+
+VG_REGPARM(2) ShadowTemp* mkShadowTempDummy(FloatBlocks numBlocks, ValueType valueType){
+  tl_assert(valueType == Vt_Single || valueType == Vt_Double);
+  tl_assert(valueType == Vt_Single || INT(numBlocks) % 2 == 0);
+  ShadowTemp* result = mkShadowTemp(numBlocks);
+  for (int i = 0; i < INT(numBlocks); ++i){
+    if (valueType == Vt_Double && i % 2 == 1){
+      result->values[i] = NULL;
+    } else {
+      result->values[i] = mkShadowValue(valueType, 0.0);
+    }
+  }
+  return result;
 }
 
 VG_REGPARM(1) ShadowTemp* mkShadowTempOneDouble(UWord value){

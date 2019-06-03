@@ -38,7 +38,7 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
   for(int i = 0; i < 2; ++i){
     args[i] = getArg(i, info->op_code, info->argTemps[i]);
   }
-  int correctOutput;
+  unsigned int correctOutput;
   if (numSIMDOperands(info->op_code) == 1){
     if (double_comparisons){
       double correctFst = getDouble(args[0]->values[0]->real);
@@ -172,8 +172,8 @@ VG_REGPARM(1) void checkCompare(ShadowCmpInfo* info){
     tl_assert(0);
   }
   if (numSIMDOperands(info->op_code) == 1){
-    int computedOutput =
-      *((int*)&computedResult.f[0]);
+    unsigned int computedOutput =
+      *((unsigned int*)&computedResult.f[0]);
     ShadowValue* values[2];
     for(int i = 0; i < 2; ++i){
       values[i] = args[i]->values[0];
