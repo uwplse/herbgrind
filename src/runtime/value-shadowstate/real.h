@@ -31,6 +31,7 @@
 #define _REAL_H
 
 #include "../../options.h"
+#include "../../helper/runtime-util.h"
 
 #ifdef USE_MPFR
 #include "mpfr.h"
@@ -57,6 +58,8 @@ int realCompare(Real real1, Real real2);
 
 void freeReal(Real real);
 void copyReal(Real src, Real dest);
+void printBBufReal(BBuf* buf, Real real);
+void printBBufFloatAsReal(BBuf* buf, double val);
 void printReal(Real real);
 
 inline void setReal_fast(Real r, double bytes);

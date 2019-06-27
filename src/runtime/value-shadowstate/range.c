@@ -31,6 +31,7 @@
 #include <math.h>
 #include "../../options.h"
 #include "../../helper/runtime-util.h"
+#include "../value-shadowstate/real.h"
 #include "pub_tool_mallocfree.h"
 #include "pub_tool_libcassert.h"
 #include "pub_tool_libcprint.h"
@@ -81,6 +82,15 @@ int nonTrivialRange(RangeRecord* range){
   return range->pos_range.min != -INFINITY || range->pos_range.max != INFINITY;
 }
 
+void pFloat(BBuf* buf, double val);
+void pFloat(BBuf* buf, double val) {
+  if (double_ranges){
+    printBBufFloatAsReal(buf, val);
+  } else {
+    printBBufFloat(buf, val);
+  }
+}
+
 void printRangeAsPreconditionToBBuf(const char* varName,
                                     RangeRecord* totalRange,
                                     BBuf* buf){
@@ -88,49 +98,49 @@ void printRangeAsPreconditionToBBuf(const char* varName,
     if (totalRange->neg_range.min == INFINITY){
       if (totalRange->pos_range.max == INFINITY){
         printBBuf(buf, " (<= ");
-        printBBufFloat(buf, totalRange->pos_range.min);
+        pFloat(buf, totalRange->pos_range.min);
         printBBuf(buf, " %s)", varName);
       } else {
         printBBuf(buf, " (and (<= ");
-        printBBufFloat(buf, totalRange->pos_range.min);
+        pFloat(buf, totalRange->pos_range.min);
         printBBuf(buf, " %s) (<= %s ", varName, varName);
-        printBBufFloat(buf, totalRange->pos_range.max);
+        pFloat(buf, totalRange->pos_range.max);
         printBBuf(buf, "))");
       }
     } else if (totalRange->pos_range.min == INFINITY){
       if (totalRange->neg_range.min == -INFINITY){
         printBBuf(buf, " (<= %s ", varName);
-        printBBufFloat(buf, totalRange->neg_range.max);
+        pFloat(buf, totalRange->neg_range.max);
         printBBuf(buf, ")");
       } else {
         printBBuf(buf, " (and (<= ");
-        printBBufFloat(buf, totalRange->neg_range.min);
+        pFloat(buf, totalRange->neg_range.min);
         printBBuf(buf, " %s) (<= %s ", varName, varName);
-        printBBufFloat(buf, totalRange->neg_range.max);
+        pFloat(buf, totalRange->neg_range.max);
         printBBuf(buf, "))");
       }
     } else {
       printBBuf(buf, " (or");
       if (totalRange->neg_range.min == -INFINITY){
         printBBuf(buf, " (<= %s ", varName);
-        printBBufFloat(buf, totalRange->neg_range.max);
+        pFloat(buf, totalRange->neg_range.max);
         printBBuf(buf, ")");
       } else {
         printBBuf(buf, " (and (<= ");
-        printBBufFloat(buf, totalRange->neg_range.min);
+        pFloat(buf, totalRange->neg_range.min);
         printBBuf(buf, " %s) (<= %s ", varName, varName);
-        printBBufFloat(buf, totalRange->neg_range.max);
+        pFloat(buf, totalRange->neg_range.max);
         printBBuf(buf, "))");
       }
       if (totalRange->pos_range.max == INFINITY){
         printBBuf(buf, " (<= ");
-        printBBufFloat(buf, totalRange->pos_range.min);
+        pFloat(buf, totalRange->pos_range.min);
         printBBuf(buf, " %s)", varName);
       } else {
         printBBuf(buf, "(and (<= ");
-        printBBufFloat(buf, totalRange->pos_range.min);
+        pFloat(buf, totalRange->pos_range.min);
         printBBuf(buf, " %s) (<= %s ", varName, varName);
-        printBBufFloat(buf, totalRange->pos_range.max);
+        pFloat(buf, totalRange->pos_range.max);
         printBBuf(buf, "))");
       }
       printBBuf(buf, ")");
@@ -142,19 +152,19 @@ void printRangeAsPreconditionToBBuf(const char* varName,
       tl_assert2(0, "hey! What? Why is this a non-trivial range?");
     } else if (totalRange->pos_range.min == -INFINITY){
       printBBuf(buf, " (<= %s ", varName);
-      printBBufFloat(buf, totalRange->pos_range.max);
+      pFloat(buf, totalRange->pos_range.max);
       printBBuf(buf, ")");
     } else if (totalRange->pos_range.max == INFINITY){
       printBBuf(buf, " (<= ");
-      printBBufFloat(buf, totalRange->pos_range.min);
+      pFloat(buf, totalRange->pos_range.min);
       printBBuf(buf, " %s)", varName);
     } else {
       /* tl_assert2(totalRange->pos_range.min != totalRange->pos_range.max, */
       /*            "What"); */
       printBBuf(buf, " (and (<= ");
-      printBBufFloat(buf, totalRange->pos_range.min);
+      pFloat(buf, totalRange->pos_range.min);
       printBBuf(buf, " %s) (<= %s ", varName, varName);
-      printBBufFloat(buf, totalRange->pos_range.max);
+      pFloat(buf, totalRange->pos_range.max);
       printBBuf(buf, "))");
     }
   }
