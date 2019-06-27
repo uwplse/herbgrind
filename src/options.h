@@ -85,6 +85,7 @@ extern Bool follow_real_execution;
 extern Bool double_comparisons;
 extern Bool flip_ranges;
 extern Bool generalize_to_constant;
+extern Bool double_ranges;
 
 extern Bool no_exprs;
 extern Bool no_influences;

@@ -91,6 +91,22 @@ void copyReal(Real src, Real dest){
   #endif
 }
 
+void printBBufFloatAsReal(BBuf* buf, double val){
+  Real r_val = mkReal();
+  setReal(r_val, val);
+  printBBufReal(buf, r_val);
+  freeReal(r_val);
+}
+
+void printBBufReal(BBuf* buf, Real real){
+  char* shadowValStr;
+  mpfr_exp_t shadowValExpt;
+
+  shadowValStr = mpfr_get_str(NULL, &shadowValExpt, 10, longprint_len, real->mpfr_val, MPFR_RNDN);
+  printBBuf(buf, "%c.%se%ld", shadowValStr[0], shadowValStr+1, shadowValExpt-1);
+  mpfr_free_str(shadowValStr);
+}
+
 void printReal(Real real){
   #ifdef USE_MPFR
   char* shadowValStr;
