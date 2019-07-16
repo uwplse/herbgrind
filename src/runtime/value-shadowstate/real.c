@@ -97,6 +97,13 @@ void printBBufFloatAsReal(BBuf* buf, double val){
   printBBufReal(buf, r_val);
   freeReal(r_val);
 }
+void pFloat(BBuf* buf, double val) {
+  if (fullprec_exprs){
+    printBBufFloatAsReal(buf, val);
+  } else {
+    printBBufFloat(buf, val);
+  }
+}
 
 void printBBufReal(BBuf* buf, Real real){
   char* shadowValStr;

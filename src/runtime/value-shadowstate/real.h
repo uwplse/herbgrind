@@ -60,6 +60,7 @@ void freeReal(Real real);
 void copyReal(Real src, Real dest);
 void printBBufReal(BBuf* buf, Real real);
 void printBBufFloatAsReal(BBuf* buf, double val);
+void pFloat(BBuf* buf, double val);
 void printReal(Real real);
 
 inline void setReal_fast(Real r, double bytes);

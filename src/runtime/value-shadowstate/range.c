@@ -82,15 +82,6 @@ int nonTrivialRange(RangeRecord* range){
   return range->pos_range.min != -INFINITY || range->pos_range.max != INFINITY;
 }
 
-void pFloat(BBuf* buf, double val);
-void pFloat(BBuf* buf, double val) {
-  if (double_ranges){
-    printBBufFloatAsReal(buf, val);
-  } else {
-    printBBufFloat(buf, val);
-  }
-}
-
 void printRangeAsPreconditionToBBuf(const char* varName,
                                     RangeRecord* totalRange,
                                     BBuf* buf){
