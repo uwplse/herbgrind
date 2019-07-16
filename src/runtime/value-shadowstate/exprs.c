@@ -37,6 +37,7 @@
 #include "../../helper/ir-info.h"
 #include "../../helper/bbuf.h"
 #include "../../helper/runtime-util.h"
+#include "../value-shadowstate/real.h"
 #include "../shadowop/symbolic-op.h"
 #include "../shadowop/mathreplace.h"
 #include <math.h>
@@ -956,7 +957,7 @@ char* symbExprToString(SymbExpr* expr, int* numVarsOut){
     if (expr->isConst){
       char* _buf = VG_(malloc)("buffer data", MAX_EXPR_LEN);
       BBuf* bbuf = mkBBuf(MAX_EXPR_LEN, _buf);
-      printBBufFloat(bbuf, expr->constVal);
+      pFloat(bbuf, expr->constVal);
       VG_(realloc_shrink)(_buf, MAX_EXPR_LEN - bbuf->bound + 10);
       VG_(free)(bbuf);
       return _buf;
@@ -1006,7 +1007,7 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
   if (max_depth == 0 || expr->type == Node_Leaf){
     if (expr->isConst){
       printBBuf(buf, " ");
-      printBBufFloat(buf, expr->constVal);
+      pFloat(buf, expr->constVal);
     } else {
       printBBuf(buf, " %s", getVar(lookupVar(varMap, curPos)));
     }
@@ -1044,7 +1045,7 @@ void recursivelyToString(SymbExpr* expr, BBuf* buf, VarMap* varMap,
           if ((arg0->isConst && arg0->constVal == 0.0) ||
               (arg1->isConst && arg1->constVal == 0.0)){
             printBBuf(buf, " ");
-            printBBufFloat(buf, 0.0);
+            pFloat(buf, 0.0);
             return;
           }
           break;
