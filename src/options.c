@@ -146,7 +146,7 @@ Bool hg_process_cmd_line_option(const HChar* arg){
   else if VG_XACT_CLO(arg, "--no-mark-on-escape", mark_on_escape, False) {}
   else if VG_XACT_CLO(arg, "--no-compensation-detection", compensation_detection, False)
                        {}
-  else if VG_XACT_CLO(arg, "--fullprec-exprs", fullprec_exprs, True) {}
+  else if VG_XACT_CLO(arg, "--full-precision-exprs", fullprec_exprs, True) {}
   else if VG_XACT_CLO(arg, "--no-exprs", no_exprs, True) {}
   else if VG_XACT_CLO(arg, "--no-influences", no_influences, True) {}
   else if VG_XACT_CLO(arg, "--no-reals", no_reals, True) {}
