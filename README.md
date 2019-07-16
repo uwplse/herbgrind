@@ -54,6 +54,9 @@ install these is through [Homebrew](http://brew.sh/):
     $ brew install gawk
     $ brew install gnu-sed --with-default-names
 
+Since January 2019, you'll need to follow these instructions to get default names:
+
+https://stackoverflow.com/questions/30003570/how-to-use-gnu-sed-on-mac-os-x/34815955#34815955
 
 Running
 -------
