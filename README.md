@@ -26,6 +26,14 @@ us know, and we're happy to talk about licensing under other terms.
 Installation Instructions
 -------------------------
 
+### Prerequisites
+
+You'll need `git`, `autotools`, and `python3` installed to build herbgrind. You
+can most likely find them in your linux distributions package repositories,
+or Homebrew if you're on OS X.
+
+### Installing
+
 The project was developed on a 64-bit linux platform that supports
 32-bit compilation. If you're running on a platform like this, running
 just "make" or "make compile" after cloning the repo should just work.
