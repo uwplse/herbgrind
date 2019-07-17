@@ -28,7 +28,7 @@ Installation Instructions
 
 ### Prerequisites
 
-You'll need `git`, `autotools`, and `python3` installed to build herbgrind. You
+You'll need `git`, `autotools`, `gawk`, GNU `sed`, and `python3` installed to build herbgrind. You
 can most likely find them in your linux distributions package repositories,
 or Homebrew if you're on OS X.
 
