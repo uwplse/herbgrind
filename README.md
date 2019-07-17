@@ -32,6 +32,21 @@ You'll need `git`, `autotools`, and `python3` installed to build herbgrind. You
 can most likely find them in your linux distributions package repositories,
 or Homebrew if you're on OS X.
 
+To build on OS X, you need XCode Command Line Tools, which you can install
+with:
+
+    $ xcode-select --install
+
+You will also need the GNU versions of `awk` and `sed`.  The best way to
+install these is through [Homebrew](http://brew.sh/):
+
+    $ brew install gawk
+    $ brew install gnu-sed --with-default-names
+
+Since January 2019, you'll need to follow these instructions to get default names:
+
+https://stackoverflow.com/questions/30003570/how-to-use-gnu-sed-on-mac-os-x/34815955#34815955
+
 ### Installing
 
 The project was developed on a 64-bit linux platform that supports
@@ -50,21 +65,6 @@ setup".
 **NEVER** modify the code in $toplevel/valgrind/herbgrind, only modify
 $toplevel/herbgrind. $toplevel/valgrind/herbgrind gets overwritten on
 every build.
-
-To build on OS X, you need XCode Command Line Tools, which you can install
-with:
-
-    $ xcode-select --install
-
-You will also need the GNU versions of `awk` and `sed`.  The best way to
-install these is through [Homebrew](http://brew.sh/):
-
-    $ brew install gawk
-    $ brew install gnu-sed --with-default-names
-
-Since January 2019, you'll need to follow these instructions to get default names:
-
-https://stackoverflow.com/questions/30003570/how-to-use-gnu-sed-on-mac-os-x/34815955#34815955
 
 Running
 -------
