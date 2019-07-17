@@ -120,7 +120,7 @@ src/include/mathreplace-funcs.h: src/include/mk-mathreplace.py
 # Then, let's run the python script to generate the mathreplace header
 # in src/
 	rm -rf src/include/mathreplace-funcs.h
-	cd src/include/ && python mk-mathreplace.py
+	cd src/include/ && python3 mk-mathreplace.py
 
 # This is the target we call to actually get the executable built so
 # we can run herbgrind.
@@ -167,6 +167,7 @@ deps/mpc-%/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a: setup/mpc-$(MPC_VERSION).tar.g
 	mkdir -p deps
 	rm -rf deps/mpc-$*
 	mv mpc-$(MPC_VERSION) deps/mpc-$*
+	cp deps/gmp-$*/*.h deps/gmp-$*/herbgrind-install/include
 	cd setup && ./patch_mpc.sh $*
 	cd deps/mpc-$*/ && autoconf
 	cd deps/mpc-$*/ && \
@@ -174,7 +175,7 @@ deps/mpc-%/$(HG_LOCAL_INSTALL_NAME)/lib/libmpc.a: setup/mpc-$(MPC_VERSION).tar.g
 		OBJECT_MODE=64 \
 		./configure \
 		--prefix=$(shell pwd)/deps/mpc-64/$(HG_LOCAL_INSTALL_NAME) \
-		--with-gmp=$(shell pwd)/deps/gmp-64 \
+		--with-gmp=$(shell pwd)/deps/gmp-64/$(HG_LOCAL_INSTALL_NAME) \
 		--with-mpfr=$(shell pwd)/deps/mpfr-64/$(HG_LOCAL_INSTALL_NAME)
 	$(MAKE) -C deps/mpc-$*
 	$(MAKE) -C deps/mpc-$* install
