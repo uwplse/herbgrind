@@ -190,7 +190,7 @@ ValueType getWrappedPrecision(OpType type){
 }
 
 const char* getWrappedName(OpType type){
-  const char* namevar;
+  const char* namevar = NULL;
   switch(type){
   case OP_CDIVR:
     return "cdiv-real";
