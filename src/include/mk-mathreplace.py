@@ -509,6 +509,8 @@ addOp("__exp1", "exponentiate", 1,
       mpfr_func="mpfr_exp", native_func="exp")
 
 addOp("exp2", "base-two exponentiate", 1)
+addOp("exp2l", "base-two exponentiate", 1,
+      mpfr_func="mpfr_exp2", hasfloat=False)
 addOp("expm1", "exponentiate minus one", 1)
 
 addOp("log", "log", 1)
