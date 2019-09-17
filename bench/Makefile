@@ -1,4 +1,6 @@
-CFLAGS=-g -std=c11 -lm
+include Makefile.haswell-test
+CXFLAGS=-g -lm
+CFLAGS=$(CXFLAGS) -std=c11
 CAMLFLAGs=
 
 CSRC = $(wildcard *.c)
@@ -23,7 +25,7 @@ testprog.c.out: testprog.c
 	$(CC) -o $@ $< $(CFLAGS)
 	chmod u+x $@
 %.cpp.out: %.cpp
-	$(CXX) -o $@ $< $(CFLAGS)
+	$(CXX) -o $@ $< $(CXFLAGS)
 	chmod u+x $@
 
 %.ml.out: %.ml
