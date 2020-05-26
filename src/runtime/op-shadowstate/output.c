@@ -65,6 +65,8 @@ void writeOutput(void){
     return;
   }
   VG_(HT_ResetIter)(markMap);
+  char* _buf = VG_(malloc)("text buffer", ENTRY_BUFFER_SIZE);
+
   for(MarkInfoArray* markInfoArray = VG_(HT_Next)(markMap);
       markInfoArray != NULL; markInfoArray = VG_(HT_Next)(markMap)){
     const char* src_filename;
@@ -83,7 +85,6 @@ void writeOutput(void){
       }
       fnname = getFnName(markInfo->addr);
 
-      char _buf[ENTRY_BUFFER_SIZE];
       BBuf* buf = mkBBuf(ENTRY_BUFFER_SIZE, _buf);
 
       if (output_sexp){
@@ -190,7 +191,6 @@ void writeOutput(void){
       objname = "Unknown object";
     }
 
-    char _buf[ENTRY_BUFFER_SIZE];
     BBuf* buf = mkBBuf(ENTRY_BUFFER_SIZE, _buf);
 
     if (output_sexp){
@@ -300,7 +300,7 @@ void writeInfluences(Int fileD, InfluenceList influences){
   const char* src_filename;
   const char* objname;
   unsigned int src_line;
-  char _buf[ENTRY_BUFFER_SIZE];
+  char* _buf = VG_(malloc)("Text buffer", ENTRY_BUFFER_SIZE);
   if (influences == NULL){
     if (!output_sexp){
       BBuf* buf = mkBBuf(ENTRY_BUFFER_SIZE, _buf);
