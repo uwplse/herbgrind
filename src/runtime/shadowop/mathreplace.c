@@ -412,5 +412,13 @@ void performSpecialWrappedOp(SpecialOpType type, double* args,
     performWrappedOp(OP_SINF, res1, args);
     performWrappedOp(OP_COSF, res2, args);
     break;
+  case OP_MODF:
+    performWrappedOp(OP_REMAINDER, res1, args);
+    performWrappedOp(OP_RINT, res2, args);
+    break;
+  case OP_MODFF:
+    performWrappedOp(OP_REMAINDERF, res1, args);
+    performWrappedOp(OP_RINTF, res2, args);
+    break;
   }
 }

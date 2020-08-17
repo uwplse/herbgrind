@@ -304,6 +304,25 @@ void VG_REPLACE_FUNCTION_ZU(LIBM, sincos)(double x, double* p_sin, double* p_cos
   HERBGRIND_PERFORM_SPECIAL_OP(OP_SINCOS, args, p_sin, p_cos);
 }
 
+double VG_REPLACE_FUNCTION_ZU(LIBM, modf)(double x, double* intpart);
+double VG_REPLACE_FUNCTION_ZU(LIBM, modf)(double x, double* intpart){
+  double args[2];
+  double fResult;
+  args[0] = x;
+  args[1] = 1.0;
+  HERBGRIND_PERFORM_SPECIAL_OP(OP_MODF, args, &fResult, intpart);
+  return fResult;
+}
+float VG_REPLACE_FUNCTION_ZU(LIBM, modff)(float x, float* intpart);
+float VG_REPLACE_FUNCTION_ZU(LIBM, modff)(float x, float* intpart){
+  float args[2];
+  float fResult;
+  args[0] = x;
+  args[1] = 1.0f;
+  HERBGRIND_PERFORM_SPECIAL_OP(OP_MODF, args, &fResult, intpart);
+  return fResult;
+}
+
 WRAP_BINARY_COMPLEX_64_BUILTIN(__mulsc3, OP_CMUL);
 WRAP_BINARY_COMPLEX_64_BUILTIN(__muldc3, OP_CMUL);
 WRAP_BINARY_COMPLEX_64_BUILTIN(__multc3, OP_CMUL);

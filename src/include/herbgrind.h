@@ -53,7 +53,9 @@ typedef enum {
 
 typedef enum {
   OP_SINCOS,
-  OP_SINCOSF
+  OP_SINCOSF,
+  OP_MODF,
+  OP_MODFF,
 } SpecialOpType;
 
 #define HERBGRIND_BEGIN()                                               \

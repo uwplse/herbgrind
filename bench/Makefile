@@ -43,3 +43,7 @@ testprog.c.out: testprog.c
 
 clean:
 	rm -rf *.out *.sout *.dSYM
+
+
+modf.cpp.out: modf.cpp Makefile.haswell-test
+	g++ -Wall -Weffc++ -std=c++14 -Wextra -O3 -I../valgrind/herbgrind/include/ -o modf.cpp.out modf.cpp
