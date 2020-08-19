@@ -93,8 +93,8 @@ all: compile
 valgrind/README:
 # Check out valgrind from source.
 	git clone $(VALGRIND_REPO_LOCATION) valgrind
-	git -C valgrind checkout $(VALGRIND_REVISION)
-	cd setup && ./modify_makefiles.sh
+	(cd valgrind && git checkout $(VALGRIND_REVISION))
+	(cd setup && ./modify_makefiles.sh)
 
 # The herbgrind makefile needs to be recreated, if it's source .am
 # file changes or we've just cloned the valgrind repo
