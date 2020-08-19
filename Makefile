@@ -92,6 +92,7 @@ all: compile
 # repo currently exists.
 valgrind/README:
 # Check out valgrind from source.
+	git -C . --help &> /dev/null || { echo "Git version with '-C' switch support is mandatory"; exit 1; }
 	git clone $(VALGRIND_REPO_LOCATION) valgrind
 	git -C valgrind checkout $(VALGRIND_REVISION)
 	cd setup && ./modify_makefiles.sh
