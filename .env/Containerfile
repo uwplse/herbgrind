@@ -17,6 +17,12 @@ ENV CC=gcc-12 CXX=g++-12
 
 # TODO: update below URL and branch once merged into uwplse/herbgrind
 RUN git clone --branch add-reproducible-container https://github.com/bjodah/herbgrind /opt/herbgrind \
-    && make -C /opt/herbgrind all
+    && cd /opt/herbgrind \
+    && make valgrind/README   # this will clone valgrind
 
-RUN make -C /opt/herbgrind test
+RUN cd /opt/herbgrind \
+    && git pull \
+    && make all
+
+RUN cd /opt/herbgrind \
+    && make test
