@@ -1,0 +1,41 @@
+FROM docker.io/ubuntu:bionic-20221019  
+#jammy-20221020  is troublesome due to exact requirement on automake-1.15 (and not e.g. automake-1.15.1 from buster's .deb)
+
+RUN apt-get update \
+    && apt-get --quiet --assume-yes --no-install-recommends install \
+        locales sudo tzdata apt-transport-https ca-certificates \
+    && echo "LC_ALL=en_US.UTF-8" >> /etc/environment \
+    && echo "en_US.UTF-8 UTF-8"  >> /etc/locale.gen \
+    && echo "LANG=en_US.UTF-8"    > /etc/locale.conf \
+    && locale-gen en_US.UTF-8 \
+    && update-ca-certificates \    
+    && apt-get --quiet --assume-yes dist-upgrade \
+    && apt-get --quiet --assume-yes --no-install-recommends install \
+        automake autoconf g++-8 gcc-8 git make gawk python3 xz-utils \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+ENV CC=gcc-8 CXX=g++-8
+
+# TODO: update below URL and branch once merged into uwplse/herbgrind
+RUN git clone --branch add-reproducible-container https://github.com/bjodah/herbgrind /opt/herbgrind \
+    && cd /opt/herbgrind \
+    && make valgrind/README   # this will clone valgrind
+
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 20 \
+ && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 20
+
+RUN cd /opt/herbgrind \
+    && git pull \
+    && make all
+
+
+RUN apt-get update \
+    && apt-get --quiet --assume-yes --no-install-recommends install \
+        opam \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN opam init --yes --no-setup --comp 4.06.1
+
+COPY run_herbgrind_tests.sh /opt/
+
+COPY motd /etc/
