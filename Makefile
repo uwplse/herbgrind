@@ -142,7 +142,6 @@ compile: valgrind/$(HG_LOCAL_INSTALL_NAME)/lib/valgrind/herbgrind-$(TARGET_PLAT)
 deps/gmp-%/$(HG_LOCAL_INSTALL_NAME)/lib/libgmp.a: setup/gmp-$(GMP_VERSION).tar.xz setup/patch_gmp.sh
 # Extract gmp, and rename its folder so we don't have to use the
 # version number all over the place.
-	echo $(shell pwd)
 	tar xf setup/gmp-$(GMP_VERSION).tar.xz
 	mkdir -p deps
 	rm -rf deps/gmp-$*
