@@ -1,0 +1,5 @@
+Try runing herbgrind's test suite by issuing:
+
+   $ /opt/run_hergrind_tests.sh
+
+tests should ideally pass.

@@ -36,6 +36,6 @@ RUN apt-get update \
 
 RUN opam init --yes --no-setup --comp 4.06.1
 
-COPY run_tests.sh /opt/herbgrind
+COPY run_herbgrind_tests.sh /opt/
 
-RUN /opt/herbgrind/run_tests.sh
+COPY motd /etc/
