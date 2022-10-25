@@ -8,7 +8,7 @@ MPFR_VERSION=3.1.3
 OPENLIBM_VERSION=0.4.1
 MPC_VERSION=1.1.0
 # The repo to clone valgrind from.
-VALGRIND_REPO_LOCATION=git://sourceware.org/git/valgrind.git
+VALGRIND_REPO_LOCATION=https://sourceware.org/git/valgrind.git
 VALGRIND_REVISION=3217459c723df997a0c86c97b55ba539240fa111
 # The architecture thhat we're buiding herbgrind for, in the syntax of
 # valgrind filename conventions for this sort of thing.
